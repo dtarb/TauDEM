@@ -3,7 +3,7 @@
  Name        : demverifier.c
  Author      : Ahmet Yildirim
  Version     : 1.0
- Description : Reports elevation differences between two DEM files
+ Description : Checks the elevation differences between two DEM files and reports the result.
  ============================================================================
  */
 
