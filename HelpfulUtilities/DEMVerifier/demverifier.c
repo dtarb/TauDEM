@@ -34,6 +34,10 @@ float* get_tif_data(char* tif_file, int* tif_width, int* tif_height) {
 	double nodata1 = GDALGetRasterNoDataValue(hBand, NULL );
 
 	float* data = (float *) CPLMalloc(sizeof(float) * width1 * height1);
+	if (!data) {
+		fprintf(stderr, "ERROR: Failed to allocate data of size %d \n", width1 * height1);
+		return NULL;
+	}
 	GDALRasterIO(hBand, GF_Read, 0, 0, width1, height1, data, width1, height1,
 			GDT_Float32, 0, 0);
 
@@ -48,7 +52,12 @@ void compare_tiffs(char* tif_file1, char* tif_file2) {
 	int tif_width2, tif_height2;
 
 	float* data1 = get_tif_data(tif_file1, &tif_width1, &tif_height1);
+	if (!data1)
+		return;
+		
 	float* data2 = get_tif_data(tif_file2, &tif_width2, &tif_height2);
+	if (!data2)
+		return;
 
 	if ((tif_width1 != tif_width2) || (tif_height1 != tif_height2)) {
 		fprintf(stderr, "ERROR: Resolutions is not matching\n");
