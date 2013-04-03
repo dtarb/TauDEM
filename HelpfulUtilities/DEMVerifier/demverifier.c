@@ -18,14 +18,6 @@
 /* maximum elevation difference between two cells to be regarded as an "error" */
 const float error = 0.000000000001f;
 
-static float* map = NULL;
-static float* map2 = NULL;
-static int* drain = NULL;
-static int width = 0;
-static int height = 0;
-static double nodata;
-static FILE *fp;
-
 float* get_tif_data(char* tif_file, int* tif_width, int* tif_height) {
 	GDALDatasetH hDataset;
 
