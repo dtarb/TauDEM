@@ -1,3 +1,5 @@
+# Makefile to compile demverifier.c
+
 CC=cc
 LIBS=-lgdal
 
