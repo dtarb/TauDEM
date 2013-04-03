@@ -83,6 +83,9 @@ int flood( char* demfile, char* felfile, char *sfdrfile, int usesfdr, bool verbo
       return 1;
     }
   }
+  
+	double headertA = MPI_Wtime();
+  
 	long totalX = dem.getTotalX();
 	long totalY = dem.getTotalY();
 	double dx = dem.getdx();
@@ -95,6 +98,8 @@ int flood( char* demfile, char* felfile, char *sfdrfile, int usesfdr, bool verbo
   if (use_mask)
     maskPartition=CreateNewPartition(depmask->getDatatype(), totalX, totalY, dx, dy, depmask->getNodata());
 
+	double headertB = MPI_Wtime();
+	
 	int nx = elevDEM->getnx();
 	int ny = elevDEM->getny();
 	int xstart, ystart;
@@ -499,14 +504,20 @@ int flood( char* demfile, char* felfile, char *sfdrfile, int usesfdr, bool verbo
 	fel.write(xstart, ystart, ny, nx, planchon->getGridPointer(),prefix,prow,pcol);
 
 	if(verbose)printf("Partition: %d, written\n",rank);
-	double headerRead, dataRead, compute, write, total,temp;
+	double headerRead, headerReadA, headerReadB, dataRead, compute, write, total,temp;
 	double writet = MPI_Wtime();
 	headerRead = headert-begint;
+	headerReadA = headertA - begint;
+	headerReadB = headertB - headertA;
 	dataRead = readt-headert;
 	compute = computet-readt;
 	write = writet-computet;
 	total = writet - begint;
 
+	MPI_Allreduce (&headerReadA, &temp, 1, MPI_DOUBLE, MPI_SUM, MCW);
+	headerReadA = temp/size;
+	MPI_Allreduce (&headerReadB, &temp, 1, MPI_DOUBLE, MPI_SUM, MCW);
+	headerReadB = temp/size;
 	MPI_Allreduce (&headerRead, &temp, 1, MPI_DOUBLE, MPI_SUM, MCW);
 	headerRead = temp/size;
 	MPI_Allreduce (&dataRead, &temp, 1, MPI_DOUBLE, MPI_SUM, MCW);
@@ -519,8 +530,8 @@ int flood( char* demfile, char* felfile, char *sfdrfile, int usesfdr, bool verbo
 	total = temp/size;
 
 	if( rank == 0)
-		printf("Processes: %d\nHeader read time: %f\nData read time: %f\nCompute time: %f\nWrite time: %f\nTotal time: %f\n",
-		  size,headerRead , dataRead, compute, write,total);
+		printf("Processes: %d\nHeader read time: %f\nHeader read time A: %f\nHeader read time B: %f\nData read time: %f\nCompute time: %f\nWrite time: %f\nTotal time: %f\n",
+		  size, headerRead, headerReadA, headerReadB, dataRead, compute, write,total);
 
 
 	//Brackets force MPI-dependent objects to go out of scope before Finalize is called
