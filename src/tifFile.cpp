@@ -40,6 +40,8 @@ email:  dtarb@usu.edu
 
 #include <mpi.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "stdint.h"  // See http://en.wikipedia.org/wiki/Stdint.h for details.
 #include <memory>
 #include "tifFile.h"
@@ -54,7 +56,9 @@ tifFile::tifFile(char *fname, DATA_TYPE newtype){
 	MPI_Comm_size(MCW, &size);
 	MPI_Comm_rank(MCW, &rank);
 
-	//printf("newtype: %d.\n", newtype);
+	int totalbuf;
+	char* buffer;
+
 	int file_error = MPI_File_open( MCW, fname, MPI_MODE_RDONLY , MPI_INFO_NULL, &fh);
 	if( file_error != MPI_SUCCESS) { 
 		printf("Error opening file %s.\n", fname);
@@ -62,6 +66,10 @@ tifFile::tifFile(char *fname, DATA_TYPE newtype){
 		MPI_Abort(MCW,21);
 	}
 	strcpy(filename,fname);  // Copy file name
+
+	if (rank == 0) {
+	//printf("newtype: %d.\n", newtype);
+
 			
 	//Generate datatype constants
 	datatype = newtype;
@@ -267,6 +275,7 @@ tifFile::tifFile(char *fname, DATA_TYPE newtype){
 			//BT bytes = (unsigned long*) malloc( 4*ifds[index].count);
 			//SizeOf bytes = (long*) malloc( 4*ifds[index].count);
 			bytes = (uint32_t*) malloc(sizeof(uint32_t)*ifds[index].count);  //DGT
+			bytesize = ifds[index].count;
 			if( ifds[index].count == 1 )
 				bytes[0] = ifds[index].offset;
 			else if( ifds[index].type == 3 ) {
@@ -400,30 +409,39 @@ tifFile::tifFile(char *fname, DATA_TYPE newtype){
 			//  conversions for all the specific width integers
 			if((sampleFormat == 1) && (dataSizeFileIn == 1)) { 
 				filenodata=new uint8_t;
+				filenodatasize = sizeof(uint8_t);
 				*((uint8_t*)filenodata) = (uint8_t)atoi(noD);
 			} else if ((sampleFormat == 1) && (dataSizeFileIn == 2)) {
 				filenodata=new uint16_t;
+				filenodatasize = sizeof(uint16_t);
 				*((uint16_t*)filenodata) = (uint16_t)atoi(noD);
 			} else if ((sampleFormat == 1) && (dataSizeFileIn == 4)) {
 				filenodata=new uint32_t;
+				filenodatasize = sizeof(uint32_t);
 				*((uint32_t*)filenodata) = (uint32_t)atol(noD);
 			} else if ((sampleFormat == 1) && (dataSizeFileIn == 8)) {
 				filenodata=new uint64_t;
+				filenodatasize = sizeof(uint64_t);
 				*((uint64_t*)filenodata) = (uint64_t)atol(noD);
 			} else if ((sampleFormat == 2) && (dataSizeFileIn == 1)) {
 				filenodata = new int8_t;
+				filenodatasize = sizeof(int8_t);
 				*((int8_t*)filenodata) = (int8_t)atoi(noD);
 			} else if ((sampleFormat == 2) && (dataSizeFileIn == 2)) {
 				filenodata=new int16_t;
+				filenodatasize = sizeof(int16_t);
 				*((int16_t*)filenodata) = (int16_t)atoi(noD);
 			} else if ((sampleFormat == 2) && (dataSizeFileIn == 4)) {
 				filenodata=new int32_t;
+				filenodatasize = sizeof(int32_t);
 				*((int32_t*)filenodata) = (int32_t)atol(noD);
 			} else if ((sampleFormat == 2) && (dataSizeFileIn == 8)) {
 				filenodata=new int64_t;
+				filenodatasize = sizeof(int64_t);
 				*((int64_t*)filenodata) = (int64_t)atol(noD);
 			} else if ((sampleFormat == 3) && (dataSizeFileIn == 4)) {
 				filenodata=new float;
+				filenodatasize = sizeof(float);
 				*((float*)filenodata) = (float) atof(noD);
 			} else {
 				printf("Error opening file %s.\n", fname);
@@ -439,6 +457,7 @@ tifFile::tifFile(char *fname, DATA_TYPE newtype){
 			// Float to int or short use MISSINGSHORT if float typecast of filenodata differs from value read
 			if( datatype == SHORT_TYPE ) { 
 				nodata = new short;
+				nodatasize = sizeof(short);
 				if((sampleFormat == 1) && (dataSizeFileIn == 1)) {
 					*((short*)nodata)=(short)(*((uint8_t*)filenodata));
 				} else if ((sampleFormat == 1) && (dataSizeFileIn == 2)) {
@@ -463,6 +482,7 @@ tifFile::tifFile(char *fname, DATA_TYPE newtype){
 			}
 			else if( datatype == LONG_TYPE) {
 				nodata = new long;
+				nodatasize = sizeof(long);
 				if((sampleFormat == 1) && (dataSizeFileIn == 1)) {
 					*((long*)nodata)=(long)(*((uint8_t*)filenodata));
 				} else if ((sampleFormat == 1) && (dataSizeFileIn == 2)) {
@@ -487,6 +507,7 @@ tifFile::tifFile(char *fname, DATA_TYPE newtype){
 			}
 			else if( datatype == FLOAT_TYPE) {
 				nodata = new float;
+				nodatasize = sizeof(float);
 				if((sampleFormat == 1) && (dataSizeFileIn == 1)) {
 					*((float*)nodata)=(float)(*((uint8_t*)filenodata));
 				} else if ((sampleFormat == 1) && (dataSizeFileIn == 2)) {
@@ -538,40 +559,50 @@ tifFile::tifFile(char *fname, DATA_TYPE newtype){
 		if(datatype==SHORT_TYPE)
 		{
 			nodata = new short;
+			nodatasize = sizeof(short);
 			if((sampleFormat == 1) && (dataSizeFileIn == 1)) { 
 				filenodata=new uint8_t;
+				filenodatasize = sizeof(uint8_t);
 				*((uint8_t*)filenodata) = (uint8_t)255;
 				*((short*)nodata)=(short)(*((uint8_t*)filenodata));
 			} else if ((sampleFormat == 1) && (dataSizeFileIn == 2)) {
 				filenodata=new uint16_t;
+				filenodatasize = sizeof(uint16_t);
 				*((uint16_t*)filenodata) = (uint16_t)32767;
 				*((short*)nodata)=(short)(*((uint16_t*)filenodata));
 			} else if ((sampleFormat == 1) && (dataSizeFileIn == 4)) {
 				filenodata=new uint32_t;
+				filenodatasize = sizeof(uint32_t);
 				*((uint32_t*)filenodata) = (uint32_t)32767;
 				*((short*)nodata)=(short)(*((uint32_t*)filenodata));
 			} else if ((sampleFormat == 1) && (dataSizeFileIn == 8)) {
 				filenodata=new uint64_t;
+				filenodatasize = sizeof(uint64_t);
 				*((uint64_t*)filenodata) = (uint64_t)32767;
 				*((short*)nodata)=(short)(*((uint64_t*)filenodata));
 			} else if ((sampleFormat == 2) && (dataSizeFileIn == 1)) {
 				filenodata = new int8_t;
+				filenodatasize = sizeof(int8_t);
 				*((int8_t*)filenodata) = (int8_t)(-128);
 				*((short*)nodata)=(short)(*((int8_t*)filenodata));
 			} else if ((sampleFormat == 2) && (dataSizeFileIn == 2)) {
 				filenodata=new int16_t;
+				filenodatasize = sizeof(int16_t);
 				*((int16_t*)filenodata) = (int16_t)MISSINGSHORT;
 				*((short*)nodata)=(short)(*((int16_t*)filenodata));
 			} else if ((sampleFormat == 2) && (dataSizeFileIn == 4)) {
 				filenodata=new int32_t;
+				filenodatasize = sizeof(int32_t);
 				*((int32_t*)filenodata) = (int32_t)MISSINGSHORT;
 				*((short*)nodata)=(short)(*((int32_t*)filenodata));
 			} else if ((sampleFormat == 2) && (dataSizeFileIn == 8)) {
 				filenodata=new int64_t;
+				filenodatasize = sizeof(int64_t);
 				*((int64_t*)filenodata) = (int64_t)MISSINGSHORT;
 				*((short*)nodata)=(short)(*((int64_t*)filenodata));
 			} else if ((sampleFormat == 3) && (dataSizeFileIn == 4)) {
 				filenodata=new float;
+				filenodatasize = sizeof(float);
 				*((float*)filenodata) = (float) MISSINGSHORT;
 				*((short*)nodata)=(short)(*((float*)filenodata));
 			}
@@ -579,12 +610,15 @@ tifFile::tifFile(char *fname, DATA_TYPE newtype){
 		}else if(datatype == LONG_TYPE)
 		{
 			nodata = new long;
+			nodatasize = sizeof(long);
 			if((sampleFormat == 1) && (dataSizeFileIn == 1)) { 
 				filenodata=new uint8_t;
+				filenodatasize = sizeof(uint8_t);
 				*((uint8_t*)filenodata) = (uint8_t)255;
 				*((long*)nodata)=(long)(*((uint8_t*)filenodata));
 			} else if ((sampleFormat == 1) && (dataSizeFileIn == 2)) {
 				filenodata=new uint16_t;
+				filenodatasize = sizeof(uint16_t);
 				*((uint16_t*)filenodata) = (uint16_t)32767;
 				*((long*)nodata)=(long)(*((uint16_t*)filenodata));
 			} else if ((sampleFormat == 1) && (dataSizeFileIn == 4)) {
@@ -593,26 +627,32 @@ tifFile::tifFile(char *fname, DATA_TYPE newtype){
 				*((long*)nodata)=(long)(*((uint32_t*)filenodata));
 			} else if ((sampleFormat == 1) && (dataSizeFileIn == 8)) {
 				filenodata=new uint64_t;
+				filenodatasize = sizeof(uint64_t);
 				*((uint64_t*)filenodata) = (uint64_t)2147483647;
 				*((long*)nodata)=(long)(*((uint64_t*)filenodata));
 			} else if ((sampleFormat == 2) && (dataSizeFileIn == 1)) {
 				filenodata = new int8_t;
+				filenodatasize = sizeof(int8_t);
 				*((int8_t*)filenodata) = (int8_t)(-128);
 				*((long*)nodata)=(long)(*((int8_t*)filenodata));
 			} else if ((sampleFormat == 2) && (dataSizeFileIn == 2)) {
 				filenodata=new int16_t;
+				filenodatasize = sizeof(int16_t);
 				*((int16_t*)filenodata) = (int16_t)MISSINGSHORT;
 				*((long*)nodata)=(long)(*((int16_t*)filenodata));
 			} else if ((sampleFormat == 2) && (dataSizeFileIn == 4)) {
 				filenodata=new int32_t;
+				filenodatasize = sizeof(int32_t);
 				*((int32_t*)filenodata) = (int32_t)MISSINGLONG;
 				*((long*)nodata)=(long)(*((int32_t*)filenodata));
 			} else if ((sampleFormat == 2) && (dataSizeFileIn == 8)) {
 				filenodata=new int64_t;
+				filenodatasize = sizeof(int64_t);
 				*((int64_t*)filenodata) = (int64_t)MISSINGLONG;
 				*((long*)nodata)=(long)(*((int64_t*)filenodata));
 			} else if ((sampleFormat == 3) && (dataSizeFileIn == 4)) {
 				filenodata=new float;
+				filenodatasize = sizeof(float);
 				*((float*)filenodata) = (float) MISSINGLONG;
 				*((long*)nodata)=(long)(*((float*)filenodata));
 			}
@@ -621,40 +661,50 @@ tifFile::tifFile(char *fname, DATA_TYPE newtype){
 		else
 		{
 			nodata = new float;
+			nodatasize = sizeof(float);
 			if((sampleFormat == 1) && (dataSizeFileIn == 1)) { 
 				filenodata=new uint8_t;
+				filenodatasize = sizeof(uint8_t);
 				*((uint8_t*)filenodata) = (uint8_t)255;
 				*((float*)nodata)=(float)(*((uint8_t*)filenodata));
 			} else if ((sampleFormat == 1) && (dataSizeFileIn == 2)) {
 				filenodata=new uint16_t;
+				filenodatasize = sizeof(uint16_t);
 				*((uint16_t*)filenodata) = (uint16_t)32767;
 				*((float*)nodata)=(float)(*((uint16_t*)filenodata));
 			} else if ((sampleFormat == 1) && (dataSizeFileIn == 4)) {
 				filenodata=new uint32_t;
+				filenodatasize = sizeof(uint32_t);
 				*((uint32_t*)filenodata) = (uint32_t)4294967295;
 				*((float*)nodata)=(float)(*((uint32_t*)filenodata));
 			} else if ((sampleFormat == 1) && (dataSizeFileIn == 8)) {
 				filenodata=new uint64_t;
+				filenodatasize = sizeof(uint64_t);
 				*((uint64_t*)filenodata) = ((uint64_t)(4294967296))*((uint64_t)(4294967295))+((uint64_t)(4294967295));
 				*((float*)nodata)=(float)(*((uint64_t*)filenodata));
 			} else if ((sampleFormat == 2) && (dataSizeFileIn == 1)) {
 				filenodata = new int8_t;
+				filenodatasize = sizeof(int8_t);
 				*((int8_t*)filenodata) = (int8_t)(-128);
 				*((float*)nodata)=(float)(*((int8_t*)filenodata));
 			} else if ((sampleFormat == 2) && (dataSizeFileIn == 2)) {
 				filenodata=new int16_t;
+				filenodatasize = sizeof(int16_t);
 				*((int16_t*)filenodata) = (int16_t)(MISSINGSHORT);
 				*((float*)nodata)=(float)(*((int16_t*)filenodata));
 			} else if ((sampleFormat == 2) && (dataSizeFileIn == 4)) {
 				filenodata=new int32_t;
+				filenodatasize = sizeof(int32_t);
 				*((int32_t*)filenodata) = (int32_t)MISSINGLONG;
 				*((float*)nodata)=(float)(*((int32_t*)filenodata));
 			} else if ((sampleFormat == 2) && (dataSizeFileIn == 8)) {
 				filenodata=new int64_t;
+				filenodatasize = sizeof(int64_t);
 				*((int64_t*)filenodata) = (int64_t)MISSINGLONG;
 				*((float*)nodata)=(float)(*((int64_t*)filenodata));
 			} else if ((sampleFormat == 3) && (dataSizeFileIn == 4)) {
 				filenodata=new float;
+				filenodatasize = sizeof(float);
 				*((float*)filenodata) = MISSINGFLOAT;
 				*((float*)nodata)=(float)(*((float*)filenodata));
 			}
@@ -667,6 +717,264 @@ tifFile::tifFile(char *fname, DATA_TYPE newtype){
 
 	gxstart = xleftedge / dx;
 	gxend = gxstart + totalX;
+
+	int geotifbufsize = (4 * sizeof(long)) + sizeof(short) + (4 * sizeof(uint32_t)) +
+			(sizeof(uint16_t) * filedata.geoKeySize) + (sizeof(double) * filedata.geoDoubleSize) +
+			(sizeof(char) * filedata.geoAsciiSize) + (sizeof(char) * filedata.gdalAsciiSize);
+	int ifdbufsize = numEntries * (sizeof(unsigned short) + sizeof(unsigned short) + sizeof(uint32_t) + sizeof(uint32_t));
+	int tifbufsize = (6 * sizeof(short)) + (10 * sizeof(uint32_t)) + (numOffsets * sizeof(uint32_t)) +
+			(10 * sizeof(double)) + (3 * sizeof(int)) + (nodatasize + filenodatasize) + (sizeof(uint32_t) * bytesize) + sizeof(DATA_TYPE);
+
+	totalbuf = tifbufsize + geotifbufsize + ifdbufsize;
+	buffer = (char*) malloc(totalbuf);
+
+	int bufi = 0;
+
+	// copy tifFile data members except filedata and ifds
+	memcpy((char*)(buffer + bufi), (char*) &dataSizeFileIn, sizeof(short));
+	bufi += sizeof(short);
+	memcpy((char*)(buffer + bufi), (char*) &dataSizeObj, sizeof(short));
+	bufi += sizeof(short);
+	memcpy((char*)(buffer + bufi), (char*) &sampleFormat, sizeof(short));
+	bufi += sizeof(short);
+	memcpy((char*)(buffer + bufi), (char*) &numOffsets, sizeof(uint32_t));
+	bufi += sizeof(uint32_t);
+	memcpy((char*)(buffer + bufi), (char*) offsets, (numOffsets * sizeof(uint32_t)));
+	bufi += (numOffsets * sizeof(uint32_t));
+	memcpy((char*)(buffer + bufi), (char*) &tileOrRow, sizeof(short));
+	bufi += sizeof(short);
+	memcpy((char*)(buffer + bufi), (char*) &tileLength, sizeof(uint32_t));
+	bufi += sizeof(uint32_t);
+	memcpy((char*)(buffer + bufi), (char*) &tileWidth, sizeof(uint32_t));
+	bufi += sizeof(uint32_t);
+	memcpy((char*)(buffer + bufi), (char*) &bytesize, sizeof(int));
+	bufi += sizeof(int);
+	memcpy((char*)(buffer + bufi), (char*) bytes, (sizeof(uint32_t) * bytesize));
+	bufi += (sizeof(uint32_t) * bytesize);
+	memcpy((char*)(buffer + bufi), (char*) &numEntries, sizeof(unsigned short));
+	bufi += sizeof(unsigned short);
+	memcpy((char*)(buffer + bufi), (char*) &version, sizeof(short));
+	bufi += sizeof(short);
+	memcpy((char*)(buffer + bufi), (char*) &totalX, sizeof(uint32_t));
+	bufi += sizeof(uint32_t);
+	memcpy((char*)(buffer + bufi), (char*) &totalY, sizeof(uint32_t));
+	bufi += sizeof(uint32_t);
+	memcpy((char*)(buffer + bufi), (char*) &dx, sizeof(double));
+	bufi += sizeof(double);
+	memcpy((char*)(buffer + bufi), (char*) &dy, sizeof(double));
+	bufi += sizeof(double);
+	memcpy((char*)(buffer + bufi), (char*) &xllcenter, sizeof(double));
+	bufi += sizeof(double);
+	memcpy((char*)(buffer + bufi), (char*) &yllcenter, sizeof(double));
+	bufi += sizeof(double);
+	memcpy((char*)(buffer + bufi), (char*) &xleftedge, sizeof(double));
+	bufi += sizeof(double);
+	memcpy((char*)(buffer + bufi), (char*) &ytopedge, sizeof(double));
+	bufi += sizeof(double);
+	memcpy((char*)(buffer + bufi), (char*) &datatype, sizeof(DATA_TYPE));
+	bufi += sizeof(DATA_TYPE);
+	memcpy((char*)(buffer + bufi), (char*) &nodatasize, sizeof(int));
+	bufi += sizeof(int);
+	memcpy((char*)(buffer + bufi), (char*) &filenodatasize, sizeof(int));
+	bufi += sizeof(int);
+	memcpy((char*)(buffer + bufi), (char*) nodata, nodatasize);
+	bufi += nodatasize;
+	memcpy((char*)(buffer + bufi), (char*) filenodata, filenodatasize);
+	bufi += filenodatasize;
+	memcpy((char*)(buffer + bufi), (char*) &geoystart, sizeof(double));
+	bufi += sizeof(double);
+	memcpy((char*)(buffer + bufi), (char*) &geoyend, sizeof(double));
+	bufi += sizeof(double);
+	memcpy((char*)(buffer + bufi), (char*) &geoxstart, sizeof(double));
+	bufi += sizeof(double);
+	memcpy((char*)(buffer + bufi), (char*) &geoxend, sizeof(double));
+	bufi += sizeof(double);
+	memcpy((char*)(buffer + bufi), (char*) &gystart, sizeof(uint32_t));
+	bufi += sizeof(uint32_t);
+	memcpy((char*)(buffer + bufi), (char*) &gyend, sizeof(uint32_t));
+	bufi += sizeof(uint32_t);
+	memcpy((char*)(buffer + bufi), (char*) &gxstart, sizeof(uint32_t));
+	bufi += sizeof(uint32_t);
+	memcpy((char*)(buffer + bufi), (char*) &gxend, sizeof(uint32_t));
+	bufi += sizeof(uint32_t);
+
+	// copy file data into buffer
+
+	memcpy((char*)(buffer + bufi), (char*) &(filedata.xresNum), sizeof(long));
+	bufi += sizeof(long);
+	memcpy((char*)(buffer + bufi), (char*) &(filedata.xresDen), sizeof(long));
+	bufi += sizeof(long);
+	memcpy((char*)(buffer + bufi), (char*) &(filedata.yresNum), sizeof(long));
+	bufi += sizeof(long);
+	memcpy((char*)(buffer + bufi), (char*) &(filedata.yresDen), sizeof(long));
+	bufi += sizeof(long);
+	memcpy((char*)(buffer + bufi), (char*) &(filedata.planarConfig), sizeof(short));
+	bufi += sizeof(short);
+	memcpy((char*)(buffer + bufi), (char*) &(filedata.geoKeySize), sizeof(uint32_t));
+	bufi += sizeof(uint32_t);
+	memcpy((char*)(buffer + bufi), (char*) &(filedata.geoDoubleSize), sizeof(uint32_t));
+	bufi += sizeof(uint32_t);
+	memcpy((char*)(buffer + bufi), (char*) &(filedata.geoAsciiSize), sizeof(uint32_t));
+	bufi += sizeof(uint32_t);
+	memcpy((char*)(buffer + bufi), (char*) &(filedata.gdalAsciiSize), sizeof(uint32_t));
+	bufi += sizeof(uint32_t);
+	memcpy((char*)(buffer + bufi), (char*) filedata.geoKeyDir, (sizeof(uint16_t) * filedata.geoKeySize));
+	bufi += (sizeof(uint16_t) * filedata.geoKeySize);
+	memcpy((char*)(buffer + bufi), (char*) filedata.geoDoubleParams, (sizeof(double) * filedata.geoDoubleSize));
+	bufi += (sizeof(double) * filedata.geoDoubleSize);
+	memcpy((char*)(buffer + bufi), (char*) filedata.geoAscii, (sizeof(char) * filedata.geoAsciiSize));
+	bufi += (sizeof(char) * filedata.geoAsciiSize);
+	memcpy((char*)(buffer + bufi), (char*) filedata.gdalAscii, (sizeof(char) * filedata.gdalAsciiSize));
+	bufi += (sizeof(char) * filedata.gdalAsciiSize);
+
+	// copy ifds data into buffer
+	for( index=0; index<numEntries; ++index ) {
+	        memcpy((char*)(buffer + bufi), (char*) &(ifds[index].tag), sizeof(unsigned short));
+	        bufi += sizeof(unsigned short);
+	        memcpy((char*)(buffer + bufi), (char*) &(ifds[index].type), sizeof(unsigned short));
+	        bufi += sizeof(unsigned short);
+	        memcpy((char*)(buffer + bufi), (char*) &(ifds[index].count), sizeof(uint32_t));
+	        bufi += sizeof(uint32_t);
+	        memcpy((char*)(buffer + bufi), (char*) &(ifds[index].offset), sizeof(uint32_t));
+	        bufi += sizeof(uint32_t);
+	}
+
+	}
+
+	MPI_Bcast(&totalbuf, sizeof(int), MPI_INT, 0, MCW);
+
+	if (rank != 0) {
+		buffer = (char*) malloc(totalbuf);
+	}
+
+	MPI_Bcast(buffer, totalbuf, MPI_BYTE, 0, MCW);
+
+	if (rank != 0) {
+		int bufi = 0;
+
+		// construct tifFile data members except filedata and ifds
+		memcpy((char*) &dataSizeFileIn, (char*)(buffer + bufi), sizeof(short));
+		bufi += sizeof(short);
+		memcpy((char*) &dataSizeObj, (char*)(buffer + bufi), sizeof(short));
+		bufi += sizeof(short);
+		memcpy((char*) &sampleFormat, (char*)(buffer + bufi), sizeof(short));
+		bufi += sizeof(short);
+		memcpy((char*) &numOffsets, (char*)(buffer + bufi), sizeof(uint32_t));
+		bufi += sizeof(uint32_t);
+		offsets = (uint32_t*) malloc(sizeof(uint32_t)*numOffsets);
+		memcpy((char*) offsets, (char*)(buffer + bufi), (numOffsets * sizeof(uint32_t)));
+		bufi += (numOffsets * sizeof(uint32_t));
+		memcpy((char*) &tileOrRow, (char*)(buffer + bufi), sizeof(short));
+		bufi += sizeof(short);
+		memcpy((char*) &tileLength, (char*)(buffer + bufi), sizeof(uint32_t));
+		bufi += sizeof(uint32_t);
+		memcpy((char*) &tileWidth, (char*)(buffer + bufi), sizeof(uint32_t));
+		bufi += sizeof(uint32_t);
+		memcpy((char*) &bytesize, (char*)(buffer + bufi), sizeof(int));
+		bufi += sizeof(int);
+		bytes = (uint32_t*) malloc(sizeof(uint32_t)*bytesize);
+		memcpy((char*) bytes, (char*)(buffer + bufi), (sizeof(uint32_t) * bytesize));
+		bufi += (sizeof(uint32_t) * bytesize);
+		memcpy((char*) &numEntries, (char*)(buffer + bufi), sizeof(unsigned short));
+		bufi += sizeof(unsigned short);
+		memcpy((char*) &version, (char*)(buffer + bufi), sizeof(short));
+		bufi += sizeof(short);
+		memcpy((char*) &totalX, (char*)(buffer + bufi), sizeof(uint32_t));
+		bufi += sizeof(uint32_t);
+		memcpy((char*) &totalY, (char*)(buffer + bufi), sizeof(uint32_t));
+		bufi += sizeof(uint32_t);
+		memcpy((char*) &dx, (char*)(buffer + bufi), sizeof(double));
+		bufi += sizeof(double);
+		memcpy((char*) &dy, (char*)(buffer + bufi), sizeof(double));
+		bufi += sizeof(double);
+		memcpy((char*) &xllcenter, (char*)(buffer + bufi), sizeof(double));
+		bufi += sizeof(double);
+		memcpy((char*) &yllcenter, (char*)(buffer + bufi), sizeof(double));
+		bufi += sizeof(double);
+		memcpy((char*) &xleftedge, (char*)(buffer + bufi), sizeof(double));
+		bufi += sizeof(double);
+		memcpy((char*) &ytopedge, (char*)(buffer + bufi), sizeof(double));
+		bufi += sizeof(double);
+		memcpy((char*) &datatype, (char*)(buffer + bufi), sizeof(DATA_TYPE));
+		bufi += sizeof(DATA_TYPE);
+		memcpy((char*) &nodatasize, (char*)(buffer + bufi), sizeof(int));
+		bufi += sizeof(int);
+		memcpy((char*) &filenodatasize, (char*)(buffer + bufi), sizeof(int));
+		bufi += sizeof(int);
+		nodata = malloc(nodatasize);
+		filenodata = malloc(filenodatasize);
+		memcpy((char*) nodata, (char*)(buffer + bufi), nodatasize);
+		bufi += nodatasize;
+		memcpy((char*) filenodata, (char*)(buffer + bufi), filenodatasize);
+		bufi += filenodatasize;
+		memcpy((char*) &geoystart, (char*)(buffer + bufi), sizeof(double));
+		bufi += sizeof(double);
+		memcpy((char*) &geoyend, (char*)(buffer + bufi), sizeof(double));
+		bufi += sizeof(double);
+		memcpy((char*) &geoxstart, (char*)(buffer + bufi), sizeof(double));
+		bufi += sizeof(double);
+		memcpy((char*) &geoxend, (char*)(buffer + bufi), sizeof(double));
+		bufi += sizeof(double);
+		memcpy((char*) &gystart, (char*)(buffer + bufi), sizeof(uint32_t));
+		bufi += sizeof(uint32_t);
+		memcpy((char*) &gyend, (char*)(buffer + bufi), sizeof(uint32_t));
+		bufi += sizeof(uint32_t);
+		memcpy((char*) &gxstart, (char*)(buffer + bufi), sizeof(uint32_t));
+		bufi += sizeof(uint32_t);
+		memcpy((char*) &gxend, (char*)(buffer + bufi), sizeof(uint32_t));
+		bufi += sizeof(uint32_t);
+
+		// copy file data from buffer
+
+		memcpy((char*) &(filedata.xresNum), (char*)(buffer + bufi), sizeof(long));
+		bufi += sizeof(long);
+		memcpy((char*) &(filedata.xresDen), (char*)(buffer + bufi), sizeof(long));
+		bufi += sizeof(long);
+		memcpy((char*) &(filedata.yresNum), (char*)(buffer + bufi), sizeof(long));
+		bufi += sizeof(long);
+		memcpy((char*) &(filedata.yresDen), (char*)(buffer + bufi), sizeof(long));
+		bufi += sizeof(long);
+		memcpy((char*) &(filedata.planarConfig), (char*)(buffer + bufi), sizeof(short));
+		bufi += sizeof(short);
+		memcpy((char*) &(filedata.geoKeySize), (char*)(buffer + bufi), sizeof(uint32_t));
+		bufi += sizeof(uint32_t);
+		memcpy((char*) &(filedata.geoDoubleSize), (char*)(buffer + bufi), sizeof(uint32_t));
+		bufi += sizeof(uint32_t);
+		memcpy((char*) &(filedata.geoAsciiSize), (char*)(buffer + bufi), sizeof(uint32_t));
+		bufi += sizeof(uint32_t);
+		memcpy((char*) &(filedata.gdalAsciiSize), (char*)(buffer + bufi), sizeof(uint32_t));
+		bufi += sizeof(uint32_t);
+		filedata.geoKeyDir = (uint16_t *) malloc( sizeof(uint16_t) * filedata.geoKeySize);
+		memcpy((char*) filedata.geoKeyDir, (char*)(buffer + bufi), (sizeof(uint16_t) * filedata.geoKeySize));
+		bufi += (sizeof(uint16_t) * filedata.geoKeySize);
+		filedata.geoDoubleParams = (double*) malloc( sizeof(double) * filedata.geoDoubleSize );
+		memcpy((char*) filedata.geoDoubleParams, (char*)(buffer + bufi), (sizeof(double) * filedata.geoDoubleSize));
+		bufi += (sizeof(double) * filedata.geoDoubleSize);
+		filedata.geoAscii = (char*) malloc( sizeof(char) * (filedata.geoAsciiSize));
+		memcpy((char*) filedata.geoAscii, (char*)(buffer + bufi), (sizeof(char) * filedata.geoAsciiSize));
+		bufi += (sizeof(char) * filedata.geoAsciiSize);
+		filedata.gdalAscii = (char*) malloc( sizeof(char) * filedata.gdalAsciiSize );
+		memcpy((char*) filedata.gdalAscii, (char*)(buffer + bufi), (sizeof(char) * filedata.gdalAsciiSize));
+		bufi += (sizeof(char) * filedata.gdalAsciiSize);
+
+		ifds = new ifd[numEntries];
+		// copy ifds data into buffer
+		long index;
+		for( index=0; index<numEntries; ++index ) {
+		        memcpy((char*) &(ifds[index].tag), (char*)(buffer + bufi), sizeof(unsigned short));
+		        bufi += sizeof(unsigned short);
+		        memcpy((char*) &(ifds[index].type), (char*)(buffer + bufi), sizeof(unsigned short));
+		        bufi += sizeof(unsigned short);
+		        memcpy((char*) &(ifds[index].count), (char*)(buffer + bufi), sizeof(uint32_t));
+		        bufi += sizeof(uint32_t);
+		        memcpy((char*) &(ifds[index].offset), (char*)(buffer + bufi), sizeof(uint32_t));
+		        bufi += sizeof(uint32_t);
+		}
+
+
+	}
+
+	free(buffer);
 	nowrite = false;
 }
 //copy constructor without an output file.

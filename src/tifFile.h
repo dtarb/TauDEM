@@ -91,15 +91,15 @@ class tifFile{
 		MPI_File fh;			//MPI file handle
 		geotiff filedata;		//data from the GeoTIFF metadata tags
 		ifd* ifds;			//pointer to the complete array of TIFF metadata tags
-		short dataSizeFileIn;   	//unsigned short BT - data value size of tiff file in bytes = BitsPerSample/8, not necessarily the same as the size of data in array
-		short dataSizeObj;      	//unsigned short BT - data value size of each element in the storage array and of the output tiff file in bytes
-		short sampleFormat;     	//unsigned short BT - data type of TIFF file: 1=unsigned interger, 2=signed interger, 3=float, 4=undefined
+		short dataSizeFileIn;   	//#unsigned short BT - data value size of tiff file in bytes = BitsPerSample/8, not necessarily the same as the size of data in array
+		short dataSizeObj;      	//#unsigned short BT - data value size of each element in the storage array and of the output tiff file in bytes
+		short sampleFormat;     	//#unsigned short BT - data type of TIFF file: 1=unsigned interger, 2=signed interger, 3=float, 4=undefined
+		uint32_t numOffsets;		//#DGT	//?? unsigned long BT - number of tiles/strips in the TIFF file, also the number of items in the numOffset and Bytes arrays
 		uint32_t *offsets;		//DGT	//unsigned long long BT - pointer to the array of tile/strip offsets into the TIFF data
-		uint32_t numOffsets;		//DGT	//?? unsigned long BT - number of tiles/strips in the TIFF file, also the number of items in the numOffset and Bytes arrays
-		short tileOrRow;       		//unsigned short - NEED: TIFF 0=undefined, 1=tile, 2=row
-		uint32_t tileLength;		//DGT	// unsigned long - NEED: tile length
-		uint32_t tileWidth;		//DGT	// unsigned long - NEED: tile width
-
+		short tileOrRow;       		//#unsigned short - NEED: TIFF 0=undefined, 1=tile, 2=row
+		uint32_t tileLength;		//#DGT	// unsigned long - NEED: tile length
+		uint32_t tileWidth;		//#DGT	// unsigned long - NEED: tile width
+		int bytesize;
 		uint32_t *bytes;		//DGT	//unsigned long BT - ??pointer into an array of the number of bytes in each TIFF tile or strip
 		unsigned short numEntries;	//?? unsigned long - number of TIFF metadata tags in the Oth IFD (the only one we read/write)
 		short version;			//TIFF Version Code, 42=TIFF/GeoTIFF, 43=BigTIFF
@@ -113,10 +113,11 @@ class tifFile{
 		double xleftedge;		//horizontal coordinate of left edge of grid in geographic coordinates, not grid coordinates
 		double ytopedge;		//vertical coordinate of top edge of grid in geographic coordinates, not grid coordinates
 		DATA_TYPE datatype;		//datatype of the grid values and the nodata value: short, long, or float
+		int nodatasize;
+		int filenodatasize;
 		void *nodata;			//pointer to the nodata value, the nodata value type is indicated by datatype
 		void *filenodata;       	//pointer to no data value from the file.  This may be different from nodata because filedatatype and datatype are not equivalent 
 		char filename[MAXLN];  		//  Save filename for error or warning writes
-
 		double geoystart, geoyend, geoxstart, geoxend;//Used for multiple files.  Represents the Geographic X and Y values for this Tiff File. 
 		uint32_t gystart, gyend, gxstart, gxend;//Used for multiple files.  Represents the Global/Domain X and Y values for this Tiff File. 
 		bool nowrite;
