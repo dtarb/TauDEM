@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Common">
+      <UniqueIdentifier>{d0252362-ce00-46bc-80e3-61442aa41596}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\commonLib.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dirent.c">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\tifFile.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\tiffIO.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\DinfDistDown.cpp" />
+    <ClCompile Include="..\..\src\DinfDistDownmn.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\TauDEM.rc" />
+  </ItemGroup>
+</Project>

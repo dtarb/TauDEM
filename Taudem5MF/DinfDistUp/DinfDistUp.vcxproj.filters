@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Common">
+      <UniqueIdentifier>{706f5f27-6f83-4e74-bd83-220542ee54ad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shape">
+      <UniqueIdentifier>{45dec986-1719-40d2-a9b5-a04826f82937}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\commonLib.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dirent.c">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\tifFile.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\tiffIO.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shape\cell.cpp">
+      <Filter>Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shape\dbf.cpp">
+      <Filter>Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shape\exception.cpp">
+      <Filter>Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shape\field.cpp">
+      <Filter>Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shape\item.cpp">
+      <Filter>Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shape\point.cpp">
+      <Filter>Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shape\record.cpp">
+      <Filter>Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shape\shape.cpp">
+      <Filter>Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shape\shapefile.cpp">
+      <Filter>Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shape\shapemain.cpp">
+      <Filter>Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shape\shp_point.cpp">
+      <Filter>Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shape\shp_polygon.cpp">
+      <Filter>Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shape\shp_polyline.cpp">
+      <Filter>Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\DinfDistUp.cpp" />
+    <ClCompile Include="..\..\src\DinfDistUpmn.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\TauDEM.rc" />
+  </ItemGroup>
+</Project>
