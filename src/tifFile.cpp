@@ -42,7 +42,6 @@ email:  dtarb@usu.edu
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "stdint.h"  // See http://en.wikipedia.org/wiki/Stdint.h for details.
 #include <memory>
 #include "tifFile.h"
 

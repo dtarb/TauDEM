@@ -42,7 +42,8 @@ email:  dtarb@usu.edu
 #define TIFFIO_H
 
 #include <mpi.h>
-#include "stdint.h"   // See http://en.wikipedia.org/wiki/Stdint.h for details.
+#include <stdint.h>  //  see http://code.google.com/p/b-tk/issues/detail?id=30.  As of VS 2010 MS provides stdint.h so can now use <> 
+// rather than "" and use system stdint.h // See http://en.wikipedia.org/wiki/Stdint.h for details.
 #include "commonLib.h"
 #ifdef  _MSC_VER  //  Microsoft compiler
 #include "dirent.h"
