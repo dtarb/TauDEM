@@ -63,7 +63,7 @@ void createStreamNetShapefile(char *streamnetshp)
 	{field f("DOUT_MID",FTDouble,16,1);  shp1.insertField(f,0);}
 	{field f("DOUT_START",FTDouble,16,1);  shp1.insertField(f,0);}
 	{field f("DOUT_END",FTDouble,16,1);  shp1.insertField(f,0);}
-	{field f("WSNO",FTInteger,6,0);  shp1.insertField(f,0);}
+	{field f("WSNO",FTInteger,12,0);  shp1.insertField(f,0);} //rcs 5/22/2013 changed field width to 12 to accomodate more than one million IDs
 	{field f("US_Cont_Area",FTDouble,16,1);  shp1.insertField(f,0);}  //dgt 3/6/2006 changed 4th argument to 1 to force to store as double
 	{field f("Straight_Length",FTDouble,16,1);  shp1.insertField(f,0);}  //dgt 3/6/2006 changed 4th argument to 1 to force to store as double
 	{field f("Slope",FTDouble,16,12);  shp1.insertField(f,0);}
@@ -73,10 +73,10 @@ void createStreamNetShapefile(char *streamnetshp)
 	{field f("Length",FTDouble,16,1);  shp1.insertField(f,0);}
 	{field f("Order",FTInteger,6,0);  shp1.insertField(f,0);}
 	{field f("DSNODEID",FTInteger,12,0);  shp1.insertField(f,0);}
-	{field f("USLINKNO2",FTInteger,6,0);  shp1.insertField(f,0);}
-	{field f("USLINKNO1",FTInteger,6,0);  shp1.insertField(f,0);}
-	{field f("DSLINKNO",FTInteger,6,0);  shp1.insertField(f,0);}
-	{field f("LINKNO",FTInteger,6,0);  shp1.insertField(f,0);}
+	{field f("USLINKNO2",FTInteger,12,0);  shp1.insertField(f,0);} //rcs 5/22/2013 changed field width to 12 to accomodate more than one million IDs
+	{field f("USLINKNO1",FTInteger,12,0);  shp1.insertField(f,0);} //rcs 5/22/2013 changed field width to 12 to accomodate more than one million IDs
+	{field f("DSLINKNO",FTInteger,12,0);  shp1.insertField(f,0);} //rcs 5/22/2013 changed field width to 12 to accomodate more than one million IDs
+	{field f("LINKNO",FTInteger,12,0);  shp1.insertField(f,0);} //rcs 5/22/2013 changed field width to 12 to accomodate more than one million IDs
 }
 
 // Write shape from tardemlib.cpp

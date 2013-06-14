@@ -411,7 +411,8 @@ void setFlow2(int i,int j, tdpartition *flowDir, tdpartition *elevDEM, tdpartiti
 	Case B requires slope to be positive.  Remaining flats are removed by iterating this process*/
 
 	float slope,smax,ed;
-	short in,jn,k;
+	long  in,jn;
+	short k;
 	smax=0.;
 	short tempShort;
 	float tempFloat;
