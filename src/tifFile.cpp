@@ -442,6 +442,9 @@ tifFile::tifFile(char *fname, DATA_TYPE newtype){
 				filenodata=new float;
 				filenodatasize = sizeof(float);
 				*((float*)filenodata) = (float) atof(noD);
+			} else if ((sampleFormat == 3) && (dataSizeFileIn == 8)) {
+				filenodata=new double;
+				*((double*)filenodata) = atof(noD);
 			} else {
 				printf("Error opening file %s.\n", fname);
 				printf("Unsupported TIFF file type or filetype not known when reading nodata tag.  sampleFormat = %d, dataSizeFileIn = %d.\n", sampleFormat, dataSizeFileIn);
@@ -477,6 +480,10 @@ tifFile::tifFile(char *fname, DATA_TYPE newtype){
 					*((short*)nodata)=(short)(*((float*)filenodata));
 					noDataDiff = *((short*)nodata) - (*((float*)filenodata));
 					if(noDataDiff > 1e-6) (*((short*)nodata))=MISSINGSHORT;
+				} else if ((sampleFormat == 3) && (dataSizeFileIn == 8)) {
+					*((short*)nodata)=(short)(*((double*)filenodata));
+					noDataDiff = *((short*)nodata) - (*((double*)filenodata));
+					if(noDataDiff > 1e-6) (*((short*)nodata))=MISSINGSHORT;
 				} 
 			}
 			else if( datatype == LONG_TYPE) {
@@ -502,7 +509,11 @@ tifFile::tifFile(char *fname, DATA_TYPE newtype){
 					*((long*)nodata)=(long)(*((float*)filenodata));
 					noDataDiff = *((long*)nodata) - (*((float*)filenodata));
 					if(noDataDiff > 1e-6) (*((long*)nodata))=MISSINGLONG;
-				} 
+				} else if ((sampleFormat == 3) && (dataSizeFileIn == 8)) {
+					*((long*)nodata)=(long)(*((double*)filenodata));
+					noDataDiff = *((long*)nodata) - (*((double*)filenodata));
+					if(noDataDiff > 1e-6) (*((long*)nodata))=MISSINGLONG;
+				}
 			}
 			else if( datatype == FLOAT_TYPE) {
 				nodata = new float;
@@ -525,6 +536,10 @@ tifFile::tifFile(char *fname, DATA_TYPE newtype){
 					*((float*)nodata)=(float)(*((int64_t*)filenodata));
 				} else if ((sampleFormat == 3) && (dataSizeFileIn == 4)) {
 					*((float*)nodata)=(float)(*((float*)filenodata));
+				} else if ((sampleFormat == 3) && (dataSizeFileIn == 8)) {
+					*((float*)nodata)=(float)(*((double*)filenodata));
+					noDataDiff=abs(*((double*)nodata)-*((double*)filenodata));
+					if(noDataDiff > 1e-6) (*((float*)nodata))=MISSINGFLOAT;
 				} 
 			}
 			}
@@ -604,6 +619,10 @@ tifFile::tifFile(char *fname, DATA_TYPE newtype){
 				filenodatasize = sizeof(float);
 				*((float*)filenodata) = (float) MISSINGSHORT;
 				*((short*)nodata)=(short)(*((float*)filenodata));
+			} else if ((sampleFormat == 3) && (dataSizeFileIn == 8)) {
+				filenodata=new double;
+				*((double*)filenodata) = (double) MISSINGSHORT;
+				*((short*)nodata)=(short)(*((double*)filenodata));
 			}
 			if(rank==0)printf("The value: %d will be used as representing missing data.\n",*((short*)nodata));
 		}else if(datatype == LONG_TYPE)
@@ -654,6 +673,10 @@ tifFile::tifFile(char *fname, DATA_TYPE newtype){
 				filenodatasize = sizeof(float);
 				*((float*)filenodata) = (float) MISSINGLONG;
 				*((long*)nodata)=(long)(*((float*)filenodata));
+			} else if ((sampleFormat == 3) && (dataSizeFileIn == 8)) {
+				filenodata=new double;
+				*((double*)filenodata) = (double) MISSINGLONG;
+				*((long*)nodata)=(long)(*((double*)filenodata));
 			}
 			if(rank==0)printf("The value: %d will be used as representing missing data.\n",*((long*)nodata));
 		}
@@ -706,6 +729,10 @@ tifFile::tifFile(char *fname, DATA_TYPE newtype){
 				filenodatasize = sizeof(float);
 				*((float*)filenodata) = MISSINGFLOAT;
 				*((float*)nodata)=(float)(*((float*)filenodata));
+			} else if ((sampleFormat == 3) && (dataSizeFileIn == 8)) {
+				filenodata=new double;
+				*((double*)filenodata) = MISSINGFLOAT;
+				*((float*)nodata)=(float)(*((double*)filenodata));
 			}
 			if(rank==0)printf("The value: %g will be used as representing missing data.\n",*((float*)nodata));
 		}
@@ -1947,7 +1974,7 @@ void tifFile::read(long xstart, long ystart, long numRows, long numCols, void* d
 	//Find the initial current strip indexes
 	long currentStripFirstRowIndex = firstStripFirstRowIndex;  //index of first row needed within current strip; start with first strip needed
 	long currentStripLastRowIndex;  // index of last row needed within current strip; start with first strip needed
-	if (lastStripIndex > 0) {
+	if ((lastStripIndex - firstStripIndex) > 0) {
 		currentStripLastRowIndex = tileLength-1;
 	} else{
 		currentStripLastRowIndex = lastStripLastRowIndex;
