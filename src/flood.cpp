@@ -533,9 +533,10 @@ int flood( char* demfile, char* felfile, char *sfdrfile, int usesfdr, bool verbo
 		printf("Processes: %d\nHeader read time: %f\nHeader read time A: %f\nHeader read time B: %f\nData read time: %f\nCompute time: %f\nWrite time: %f\nTotal time: %f\n",
 		  size, headerRead, headerReadA, headerReadB, dataRead, compute, write,total);
 
-
 	//Brackets force MPI-dependent objects to go out of scope before Finalize is called
-	}MPI_Finalize();
+	}
+	
+	MPI_Finalize();
 
 	return 0;
 }
