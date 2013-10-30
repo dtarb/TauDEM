@@ -1255,6 +1255,7 @@ void tifFile::read(long xstart, long ystart, long numRows, long numCols, void* d
 
 	MPI_Status status;
 	MPI_Offset mpiOffset;
+		
 	if(tileOrRow == 2)  
 	{  // Strips
 
@@ -1282,7 +1283,7 @@ void tifFile::read(long xstart, long ystart, long numRows, long numCols, void* d
 
 		if(currentStripFirstRowIndex <= currentStripLastRowIndex) {
 		
-		int file_error = MPI_File_open( MCW, filename, MPI_MODE_RDONLY , MPI_INFO_NULL, &fh);
+		int file_error = MPI_File_open( MPI_COMM_SELF, filename, MPI_MODE_RDONLY , MPI_INFO_NULL, &fh);
 		
 		if( file_error != MPI_SUCCESS) { 
 			printf("Error opening file %s.\n", filename);
@@ -1642,7 +1643,7 @@ void tifFile::read(long xstart, long ystart, long numRows, long numCols, void* d
 			rowInTile=y-(tileStart/tilesAcross)*tileLength;
 			
 			if(tileStart <= tileEnd) {
-			int file_error = MPI_File_open(MCW, filename, MPI_MODE_RDONLY , MPI_INFO_NULL, &fh);
+			int file_error = MPI_File_open(MPI_COMM_SELF, filename, MPI_MODE_RDONLY , MPI_INFO_NULL, &fh);
 			if( file_error != MPI_SUCCESS) { 
 			printf("Error opening file %s.\n", filename);
 			printf("TauDEM input files have to be GeoTiff files.\n");
@@ -1979,6 +1980,8 @@ void tifFile::read(long xstart, long ystart, long numRows, long numCols, void* d
 		}
 		}
 	}
+	
+	//MPI_File_close(&fh);
 }
 
 //Create/re-write tiff output file
