@@ -128,7 +128,7 @@ int aread8( char* pfile, char* afile, char *shfile, char *wfile, int useOutlets,
 	double readt = MPI_Wtime();
 
 	//Convert geo coords to grid coords
-	int *outletsX, *outletsY;
+	int *outletsX=NULL, *outletsY=NULL;
 	if(usingShapeFile) {
 		outletsX = new int[numOutlets];
 		outletsY = new int[numOutlets];

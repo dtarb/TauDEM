@@ -315,7 +315,6 @@ tiffIO::tiffIO(char *dirname, DATA_TYPE newtype, void* nd, const tiffIO &copy) {
 }
 
 tiffIO::~tiffIO(){
-
 	//delete all files...
 	if(readwrite == 1){//if it was copy constructed delete what was allocated.
 		delete IOfiles[0];
