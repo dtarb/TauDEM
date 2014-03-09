@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2010
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AreaDinf", "AreaDinf\AreaDinf.vcxproj", "{D7080581-4679-44A8-80BC-78AC2CB34F27}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TiffTest", "TiffTest\TiffTest.vcxproj", "{5394A506-94D2-4838-8221-447575240471}"
@@ -54,6 +54,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StreamNet", "StreamNet\StreamNet.vcxproj", "{26707262-DA99-4C17-862C-73F2FCE8D6C6}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SelectGTThreshold", "SelectGTThreshold\SelectGTThreshold.vcxproj", "{244C8BDD-A9BD-44D1-83EE-C5E6E5855E63}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TWI", "TWI\TWI.vcxproj", "{E987386C-ACDC-4E1F-B187-D47FD31EA7FA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -274,6 +276,13 @@ Global
 		{244C8BDD-A9BD-44D1-83EE-C5E6E5855E63}.Release|Win32.Build.0 = Release|Win32
 		{244C8BDD-A9BD-44D1-83EE-C5E6E5855E63}.Release|x64.ActiveCfg = Release|x64
 		{244C8BDD-A9BD-44D1-83EE-C5E6E5855E63}.Release|x64.Build.0 = Release|x64
+		{E987386C-ACDC-4E1F-B187-D47FD31EA7FA}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E987386C-ACDC-4E1F-B187-D47FD31EA7FA}.Debug|Win32.Build.0 = Debug|Win32
+		{E987386C-ACDC-4E1F-B187-D47FD31EA7FA}.Debug|x64.ActiveCfg = Debug|Win32
+		{E987386C-ACDC-4E1F-B187-D47FD31EA7FA}.Release|Win32.ActiveCfg = Release|Win32
+		{E987386C-ACDC-4E1F-B187-D47FD31EA7FA}.Release|Win32.Build.0 = Release|Win32
+		{E987386C-ACDC-4E1F-B187-D47FD31EA7FA}.Release|x64.ActiveCfg = Release|x64
+		{E987386C-ACDC-4E1F-B187-D47FD31EA7FA}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

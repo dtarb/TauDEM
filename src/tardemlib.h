@@ -231,6 +231,13 @@ int atanbgrid(char *slopefile,char *areafile,char *atanbfile, int prow, int pcol
 	slopefile - the slope grid
 	areafile - the specific catchment area grid
 	atanbfile - the result S/A grid.  */
+int twigrid(char *slopefile,char *areafile,char *twifile, int prow, int pcol);
+/*  Computes slope to area ratio (inverse of TopModel wetness index S/A at each point
+   Inverse to avoid divide by 0 for 0 slope    
+	slopefile - the slope grid
+	areafile - the specific catchment area grid
+	atanbfile - the result S/A grid.  */
+
 //int distgrid(char *pfile, char *srcfile, char *distfile, int thresh, int diskbasedflag);
 int distgrid(char *pfile, char *srcfile, char *distfile, int thresh);
 
