@@ -98,6 +98,7 @@ class linearpart : public tdpartition {
 		void setData(long x, long y, datatype val);
 		void addToData(long x, long y, datatype val);
 				
+		datatype getData(long x, long y);
 		//void areaD(queue<node> *que);
 
 		//inherited from partition
@@ -105,16 +106,15 @@ class linearpart : public tdpartition {
 		//int *before2;
 		//int *after1;
 		//int *after2;
-
 };
 
 
 //Destructor.  Just frees up memory.
 template <class datatype>
 linearpart<datatype>::~linearpart(){
-	delete [] gridData;
-	delete [] bottomBorder;
-	delete [] topBorder;
+	//delete [] gridData;
+	//delete [] bottomBorder;
+	delete[] topBorder;
 }
 
 //Init routine.  Takes the total number of rows and columns in the ENTIRE grid to be partitioned,
@@ -139,10 +139,17 @@ void linearpart<datatype>::init(long totalx, long totaly, double dx_in, double d
 	uint64_t prod;  //   use long 64 bit number to hold the product to allocate
 	try
 	{
-		prod=nx*ny;
-		gridData = new datatype[prod];
-		topBorder = new datatype[nx];
-		bottomBorder = new datatype[nx];
+	    // We store the borders right before and after the grid.
+	    // This way y=-1 and ny can be safely used with getData 
+	    // without additional checks
+	    
+		prod=nx*ny+2*nx;
+
+        datatype* ptr = new datatype[prod];
+
+		gridData = ptr + nx;
+		topBorder = ptr; 
+		bottomBorder = ptr + nx + nx*ny;
 	}
 	catch(bad_alloc&)
 	{
@@ -154,7 +161,8 @@ void linearpart<datatype>::init(long totalx, long totaly, double dx_in, double d
 	}
 
 	for(uint64_t j=0; j<nx; j++){
-		for(uint64_t i=0; i<ny; i++) gridData[i*nx+j] = noData;
+		for(uint64_t i=0; i<ny; i++)
+		    gridData[i*nx+j] = noData;
 		topBorder[j] = noData;
 		bottomBorder[j] = noData;
 	}
@@ -493,6 +501,14 @@ void linearpart<datatype>::setToNodata(long inx, long iny){
 		else if(y==ny) bottomBorder[x] = noData;
 	}
 }
+
+//Returns the element in the grid with coordinate (x,y).
+template <class datatype>
+inline datatype linearpart<datatype>::getData(long x, long y)
+{
+    return gridData[x+y*nx];
+}
+
 
 //Returns the element in the grid with coordinate (x,y).
 template <class datatype>
