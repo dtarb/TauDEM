@@ -396,7 +396,7 @@ long setPosDir(linearpart<float>& elevDEM, linearpart<short>& flowDir, linearpar
 }
 
 //  Function to set flow direction based on incremented artificial elevations
-void setFlow2(int i,int j, tdpartition *flowDir, tdpartition *elevDEM, tdpartition *elev2, tdpartition *dn)
+void setFlow2(int i, int j, linearpart<short>& flowDir, linearpart<float>& elevDEM, linearpart<short>& elev2, linearpart<short>& dn)
 {
     /*  This function sets directions based upon secondary elevations for
       assignment of flow directions across flats according to Garbrecht and Martz
@@ -407,29 +407,30 @@ void setFlow2(int i,int j, tdpartition *flowDir, tdpartition *elevDEM, tdpartiti
     	Case B requires slope to be positive.  Remaining flats are removed by iterating this process
     */
 
-    float slope,smax,ed;
-    long  in,jn;
-    short k;
-    smax=0.;
-    short tempShort;
-    float tempFloat;
-    short order[8]= {1,3,5,7,2,4,6,8};
-    for (int ii=0; ii<8; ii++) { //k=1; k<=8; k=k+1)
-        k=order[ii];
-        jn=j+d2[k];  //y
-        in=i+d1[k];  //x
-        dn->getData(in,jn,tempShort);
-        if (tempShort > 0) { // In flat
-            slope = fact[k]*(elev2->getData(i,j,tempShort)-elev2->getData(in,jn,tempShort));
-            if (slope > smax) {
-                flowDir->setData(i,j,k);
-                smax=slope;
+    const short order[8]= {1,3,5,7,2,4,6,8};
+
+    float slopeMax = 0;
+    long in,jn;
+
+    for (int ii=0; ii<8; ii++) {
+        int k = order[ii];
+        in = i+d1[k];
+        jn = j+d2[k];
+
+        if (dn.getData(in, jn) > 0) {
+            // Neighbor is in flat
+            float slope = fact[k]*(elev2.getData(i, j) - elev2.getData(in, jn));
+            if (slope > slopeMax) {
+                flowDir.setData(i, j, k);
+                slopeMax = slope;
             }
-        } else { // neighbor is not in flat
-            ed=elevDEM->getData(i,j,tempFloat)-elevDEM->getData(in,jn,tempFloat);
+        } else {
+            // Neighbor is not in flat
+            float ed = elevDEM.getData(i, j) - elevDEM.getData(in, jn);
             if (ed >= 0) {
-                flowDir->setData(i,j,k);
-                break;  // Found a way out - this is outlet
+                // Found a way out - this is outlet
+                flowDir.setData(i, j, k);
+                break;  
             }
         }
     }
@@ -693,7 +694,7 @@ long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, queue<
         i=temp.x;
         j=temp.y; //  Do not push que on this last one - so que is empty at end
 
-        setFlow2(i, j, &flowDir, &elevDEM, &elev2, &dn);
+        setFlow2(i, j, flowDir, elevDEM, elev2, dn);
 
         if (flowDir.getData(i,j) == 0) {
             que->push(temp);
