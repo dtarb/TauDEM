@@ -76,11 +76,6 @@ class tdpartition{
 		double getdx(){return dx;}
 		double getdy(){return dy;}
 
-		int *before1;
-		int *before2;
-		int *after1;
-		int *after2;
-		
 		//There are multiple copies of these functions so that classes that inherit
 		//from tdpartition can be template classes.  These classes MUST declare as
 		//their template type one of the types declared for these functions.

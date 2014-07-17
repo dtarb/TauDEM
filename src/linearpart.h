@@ -97,19 +97,13 @@ class linearpart : public tdpartition {
 		datatype getData(long x, long y, datatype &val);
 		void setData(long x, long y, datatype val);
 		void addToData(long x, long y, datatype val);
-				
+
 		datatype getData(long x, long y);
 		//void areaD(queue<node> *que);
-
-		//inherited from partition
-		//int *before1;
-		//int *before2;
-		//int *after1;
-		//int *after2;
 };
 
 
-//Destructor.  Just frees up memory.
+//Destructor. Just frees up memory.
 template <class datatype>
 linearpart<datatype>::~linearpart(){
 	//delete [] gridData;
@@ -117,7 +111,7 @@ linearpart<datatype>::~linearpart(){
 	delete[] topBorder;
 }
 
-//Init routine.  Takes the total number of rows and columns in the ENTIRE grid to be partitioned,
+//Init routine. Takes the total number of rows and columns in the ENTIRE grid to be partitioned,
 //dx and dy for the grid, MPI datatype (should match the template declaration), and noData value.
 template <class datatype>
 void linearpart<datatype>::init(long totalx, long totaly, double dx_in, double dy_in, MPI_Datatype MPIt, datatype nd){
@@ -166,9 +160,6 @@ void linearpart<datatype>::init(long totalx, long totaly, double dx_in, double d
 		topBorder[j] = noData;
 		bottomBorder[j] = noData;
 	}
-
-	//TODO: find out what these are for
-	after1=after2=before1=before2=NULL;
 }
 
 
