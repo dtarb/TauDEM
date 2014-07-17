@@ -37,11 +37,11 @@ email:  dtarb@usu.edu
 */
 
 //  This software is distributed from http://hydrology.usu.edu/taudem/
-
-#include "commonLib.h"
-#include <stdio.h>
 #ifndef PARTITION_H
 #define PARTITION_H
+
+#include <mpi.h>
+#include <cstdio>
 
 class tdpartition{
 	protected:
@@ -88,15 +88,18 @@ class tdpartition{
 
 		virtual short getData(long, long, short&){
 			printf("Attempt to access short grid with incorrect data type\n");
-			MPI_Abort(MCW,41);return 0;
+			MPI_Abort(MPI_COMM_WORLD,41);
+			return 0;
 		}
 		virtual long getData(long, long, long&){
 			printf("Attempt to access long grid with incorrect data type\n");
-			MPI_Abort(MCW,42);return 0;
+			MPI_Abort(MPI_COMM_WORLD,42);
+			return 0;
 		}
 		virtual float getData(long, long, float&){
 			printf("Attempt to access float grid with incorrect data type\n");
-			MPI_Abort(MCW,43);return 0;
+			MPI_Abort(MPI_COMM_WORLD,43);
+			return 0;
 		}
 
 		virtual void setData(long, long, short){}

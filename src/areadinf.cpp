@@ -47,7 +47,6 @@ email:  dtarb@usu.edu
 #include "createpart.h"
 #include "tiffIO.h"
 #include "shape/shapefile.h"
-#include "initneighbor.h"
 using namespace std;
 
 int area( char* angfile, char* scafile, char *shfile, char *wfile, int useOutlets, int usew, int contcheck, int prow, int pcol) {

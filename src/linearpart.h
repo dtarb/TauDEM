@@ -37,20 +37,18 @@ email:  dtarb@usu.edu
 */
 
 //  This software is distributed from http://hydrology.usu.edu/taudem/
+#ifndef LINEARPART_H
+#define LINEARPART_H
 
 #include "mpi.h"
 #include "partition.h"
 #include "commonLib.h"
-#include <queue>
 #include <stdio.h>
 #include <stdlib.h>
 #include "stdint.h"
 #include <string.h>
 #include <math.h>
 #include <exception>
-#ifndef LINEARPART_H
-#define LINEARPART_H
-using namespace std;
 
 template <class datatype>
 class linearpart : public tdpartition {
@@ -151,7 +149,7 @@ void linearpart<datatype>::init(long totalx, long totaly, double dx_in, double d
 		topBorder = rawData; 
 		bottomBorder = rawData + nx + nx*ny;
 	}
-	catch(bad_alloc&)
+	catch(std::bad_alloc&)
 	{
 	//  DGT added clause below to try trap for insufficient memory in the computer.
 		fprintf(stdout,"Memory allocation error during partition initialization in process %d.\n",rank);

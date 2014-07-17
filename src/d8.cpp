@@ -286,7 +286,7 @@ int setdird8( char* demfile, char* pointfile, char *slopefile, char *flowfile, i
         fflush(stderr);
     }
 
-    queue<node> que;  //  que to be used in resolveflats
+    std::queue<node> que;  //  que to be used in resolveflats
     bool first=true;  //  Variable to be used in iteration to know whether first or subsequent iteration
     if (totalNumFlat > 0) {
         lastNumFlat=totalNumFlat;
@@ -439,7 +439,7 @@ void setFlow2(int i, int j, linearpart<short>& flowDir, linearpart<float>& elevD
 //************************************************************************
 
 //Resolve flat cells according to Garbrecht and Martz
-long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, queue<node> *que, bool& first)
+long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, std::queue<node> *que, bool& first)
 {
     elevDEM.share();
     flowDir.share();

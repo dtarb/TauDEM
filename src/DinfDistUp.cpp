@@ -48,7 +48,6 @@ email:  dtarb@usu.edu
 #include "tiffIO.h"
 #include "shape/shapefile.h"
 #include "DinfDistUp.h"
-#include "initneighbor.h"
 using namespace std;
 
 

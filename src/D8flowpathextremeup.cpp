@@ -53,7 +53,6 @@ email:  dtarb@usu.edu
 #include "createpart.h"
 #include "tiffIO.h"
 #include "shape/shapefile.h"
-#include "initneighbor.h"
 using namespace std;
 
 int d8flowpathextremeup(char *pfile, char*safile, char *ssafile, int usemax, char *outletsfile, int useOutlets, int contcheck, int prow, int pcol)

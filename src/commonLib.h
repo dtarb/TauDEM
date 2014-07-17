@@ -97,9 +97,9 @@ int readoutlets(char *outletsfile, int *noutlets, double*& x, double*& y, int*& 
 
 bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData);
 
-/* void initNeighborDinfup(tdpartition* neighbor,tdpartition* flowData,queue<node> *que,
+void initNeighborDinfup(tdpartition* neighbor,tdpartition* flowData, std::queue<node> *que,
 					  int nx,int ny,int useOutlets, int *outletsX,int *outletsY,long numOutlets);
-void initNeighborD8up(tdpartition* neighbor,tdpartition* flowData,queue<node> *que,
-					  int nx,int ny,int useOutlets, int *outletsX,int *outletsY,long numOutlets);  */
+void initNeighborD8up(tdpartition* neighbor,tdpartition* flowData, std::queue<node> *que,
+					  int nx,int ny,int useOutlets, int *outletsX,int *outletsY,long numOutlets); 
 #endif
 

@@ -41,10 +41,13 @@ email:  dtarb@usu.edu
 
 #include <stdio.h>
 #include <string.h>
+
+#include <queue>
+
 #include "commonLib.h"
 #include <math.h>
 
-
+using std::queue;
 
 //==================================
 /*  Nameadd(..)  Utility for adding suffixes to file names prior to
