@@ -62,12 +62,21 @@ class linearpart : public tdpartition {
 		int rank, size;
 		MPI_Datatype MPI_type;
 		datatype noData;
+
+        datatype *rawData;
+
 		datatype *gridData;
 		datatype *topBorder;
 		datatype *bottomBorder;
 
 	public:
 		linearpart():tdpartition(){}
+        linearpart(long totalx, long totaly, double dx, double dy, MPI_Datatype MPItype, datatype noData)
+        {
+            init(totalx, totaly, dx, dy, MPItype, noData);
+        }
+
+
 		~linearpart();
 
 		void init(long totalx, long totaly, double dx_in, double dy_in, MPI_Datatype MPIt, datatype nd);
@@ -83,8 +92,8 @@ class linearpart : public tdpartition {
 		bool globalToLocal(int globalX, int globalY, int &localX, int &localY);
 		void localToGlobal(int localX, int localY, int &globalX, int &globalY);
 
-		int getGridXY( int x,int y, int *i, int *j);
-		void transferPack( int *, int *, int *, int*);
+		int getGridXY(int x,int y, int *i, int *j);
+		void transferPack(int *, int *, int *, int*);
 
 		// Member functions inherited from partition
 		//int getnx() {return nx;}
@@ -102,13 +111,10 @@ class linearpart : public tdpartition {
 		//void areaD(queue<node> *que);
 };
 
-
 //Destructor. Just frees up memory.
 template <class datatype>
 linearpart<datatype>::~linearpart(){
-	//delete [] gridData;
-	//delete [] bottomBorder;
-	delete[] topBorder;
+	delete[] rawData;
 }
 
 //Init routine. Takes the total number of rows and columns in the ENTIRE grid to be partitioned,
@@ -139,11 +145,11 @@ void linearpart<datatype>::init(long totalx, long totaly, double dx_in, double d
 	    
 		prod=nx*ny+2*nx;
 
-        datatype* ptr = new datatype[prod];
+        rawData = new datatype[prod];
 
-		gridData = ptr + nx;
-		topBorder = ptr; 
-		bottomBorder = ptr + nx + nx*ny;
+		gridData = rawData + nx;
+		topBorder = rawData; 
+		bottomBorder = rawData + nx + nx*ny;
 	}
 	catch(bad_alloc&)
 	{

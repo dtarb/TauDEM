@@ -204,8 +204,7 @@ int setdird8( char* demfile, char* pointfile, char *slopefile, char *flowfile, i
     double dx = dem.getdx();
     double dy = dem.getdy();
 
-    linearpart<float> elevDEM;//CreateNewPartition(dem.getDatatype(), totalX, totalY, dx, dy, *(float*)dem.getNodata());
-    elevDEM.init(totalX, totalY, dx, dy, MPI_FLOAT, *(float*) dem.getNodata());
+    linearpart<float> elevDEM(totalX, totalY, dx, dy, MPI_FLOAT, *(float*) dem.getNodata());
 
     int xstart, ystart;
     int nx = elevDEM.getnx();
@@ -229,22 +228,15 @@ int setdird8( char* demfile, char* pointfile, char *slopefile, char *flowfile, i
 
     //Creates empty partition to store new flow direction
     short flowDirNodata = MISSINGSHORT;
-    linearpart<short> flowDir;//CreateNewPartition(SHORT_TYPE, totalX, totalY, dx, dy, flowDirNodata);
-    flowDir.init(totalX, totalY, dx, dy, MPI_SHORT, flowDirNodata);
+    linearpart<short> flowDir(totalX, totalY, dx, dy, MPI_SHORT, flowDirNodata);
+    linearpart<long> area(totalX, totalY, dx, dy, MPI_LONG, -1);
 
-//	flowDir = new linearpart<short>;
-//	flowDir->init(totalX, totalY, dx, dy, MPI_SHORT, short(-32768));
-
-    //If using flowfile is enabled, read it in
-
-    linearpart<long> area;
-    area.init(totalX, totalY, dx, dy, MPI_LONG, -1);
-
+    //If using a flowfile, read it in
     if (useflowfile == 1) {
         tiffIO flow(flowfile,SHORT_TYPE);
 
-        linearpart<short> imposedflow;
-        imposedflow.init(flow.getTotalX(), flow.getTotalY(), flow.getdx(), flow.getdy(), MPI_SHORT, *(short*) flow.getNodata());
+        linearpart<short> imposedflow(flow.getTotalX(), flow.getTotalY(),
+                flow.getdx(), flow.getdy(), MPI_SHORT, *(short*) flow.getNodata());
 
         if (!dem.compareTiff(flow)) {
             printf("Error using imposed flow file.\n");
@@ -273,9 +265,7 @@ int setdird8( char* demfile, char* pointfile, char *slopefile, char *flowfile, i
     {
         //Creates empty partition to store new slopes
         float slopeNodata = -1.0f;
-
-        linearpart<float> slope;
-        slope.init(totalX, totalY, dx, dy, MPI_FLOAT, slopeNodata);
+        linearpart<float> slope(totalX, totalY, dx, dy, MPI_FLOAT, slopeNodata);
 
         numFlat = setPosDir(elevDEM, flowDir, area, useflowfile);
         calcSlope(flowDir, elevDEM, slope);
@@ -468,21 +458,17 @@ long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, queue<
     short tempShort;
     long numInc, numIncOld, numIncTotal;
 
-    //create and initialize temporary storage for Garbrecht and Martz
-    //elev2 = CreateNewPartition(SHORT_TYPE, totalx, totaly, dx, dy, 1);
+    // Create and initialize temporary storage for Garbrecht and Martz
+    linearpart<short> elev2(totalx, totaly, dx, dy, MPI_SHORT, 1);
 
-    linearpart<short> elev2;// = new linearpart<short>;
-    elev2.init(totalx, totaly, dx, dy, MPI_SHORT, 1);
-
-    //  The assumption here is that resolving a flat does not increment a cell value
-    //  more than fits in a short
-    linearpart<short> dn;// CreateNewPartition(SHORT_TYPE, totalx, totaly, dx, dy, 0);
-    dn.init(totalx, totaly, dx, dy, MPI_SHORT, 0);
+    // The assumption here is that resolving a flat does not increment a cell value
+    // more than fits in a short
+    linearpart<short> dn(totalx, totaly, dx, dy, MPI_SHORT, 0);
 
     node temp;
     long nflat=0, iflat;
-    //  First time through add flat grid cells indicated by flowdir = 0 on to queue
-    //  The queue is retained for later passes so this only needs be done at beginning
+    // First time through add flat grid cells indicated by flowdir = 0 on to queue
+    // The queue is retained for later passes so this only needs be done at beginning
     if (first) {
         first=false;
         for (j=0; j<ny; j++) {
@@ -616,10 +602,9 @@ long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, queue<
         //if (numIncOld == 0)
         //	done = true;
     }
-    //  DGT moved from above - write directly into elev2
-    //s = CreateNewPartition(SHORT_TYPE, totalx, totaly, dx, dy, 0);  //  Use 0 as no data to avoid need to initialize
-    linearpart<short> s;
-    s.init(totalx, totaly, dx, dy, MPI_SHORT, 0);
+    // DGT moved from above - write directly into elev2
+    // Use 0 as no data to avoid need to initialize
+    linearpart<short> s(totalx, totaly, dx, dy, MPI_SHORT, 0);
 
     //incrise - drain away from higher ground
     done = false;
