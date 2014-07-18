@@ -102,7 +102,6 @@ void setFlow(int i, int j, linearpart<short>& flowDir, linearpart<float>& elevDE
     float slope,smax=0;
     long in,jn;
     short k,dirnb;
-    short tempShort;
     int aneigh = -1;
     int amax=0;
 
@@ -118,7 +117,7 @@ void setFlow(int i, int j, linearpart<short>& flowDir, linearpart<float>& elevDE
 
         if (aneigh > amax && slope >= 0) {
             amax = aneigh;
-            dirnb = flowDir.getData(in,jn,tempShort);
+            dirnb = flowDir.getData(in,jn);
             if (dirnb > 0 && abs(dirnb - k) != 4) {
                 flowDir.setData(i, j, k);
             }
@@ -156,8 +155,6 @@ void setFlow(int i, int j, linearpart<short>& flowDir, linearpart<float>& elevDE
 //Calculate the slope information of flowDir to slope
 void calcSlope(linearpart<short>& flowDir, linearpart<float>& elevDEM, linearpart<float>& slope)
 {
-    float elevDiff;
-
     int nx = elevDEM.getnx();
     int ny = elevDEM.getny();
 
@@ -173,7 +170,7 @@ void calcSlope(linearpart<short>& flowDir, linearpart<float>& elevDEM, linearpar
                 int in = i + d1[flowDirection];
                 int jn = j + d2[flowDirection];
 
-                elevDiff = elevDEM.getData(i,j) - elevDEM.getData(in,jn);
+                float elevDiff = elevDiff = elevDEM.getData(i,j) - elevDEM.getData(in,jn);
                 slope.setData(i,j, float(elevDiff*fact[flowDirection]));
             }
         }
@@ -182,7 +179,7 @@ void calcSlope(linearpart<short>& flowDir, linearpart<float>& elevDEM, linearpar
 
 
 //Open files, Initialize grid memory, makes function calls to set flowDir, slope, and resolvflats, writes files
-int setdird8( char* demfile, char* pointfile, char *slopefile, char *flowfile, int useflowfile, int prow, int pcol)
+int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, int useflowfile, int prow, int pcol)
 {
     MPI_Init(NULL,NULL);
 
@@ -245,8 +242,8 @@ int setdird8( char* demfile, char* pointfile, char *slopefile, char *flowfile, i
 
         for (int j=0; j < elevDEM.getny(); j++) {
             for (int i=0; i < elevDEM.getnx(); i++ ) {
-                short data;
-                imposedflow.getData(i,j,data);
+                short data = imposedflow.getData(i,j);
+
                 if (imposedflow.isNodata(i,j) || !imposedflow.hasAccess(i-1,j) || !imposedflow.hasAccess(i+1,j) ||
                         !imposedflow.hasAccess(i,j-1) || !imposedflow.hasAccess(i,j+1)) {
                     //Do nothing
@@ -259,7 +256,7 @@ int setdird8( char* demfile, char* pointfile, char *slopefile, char *flowfile, i
         //darea( &flowDir, &area, NULL, NULL, 0, 1, NULL, 0, 0 );
     }
 
-    long numFlat, totalNumFlat, lastNumFlat;
+    long numFlat = 0, totalNumFlat = 0;
 
     double computeSlopet;
     {
@@ -280,26 +277,36 @@ int setdird8( char* demfile, char* pointfile, char *slopefile, char *flowfile, i
 
     double writeSlopet = MPI_Wtime();
 
-    MPI_Allreduce(&numFlat,&totalNumFlat,1,MPI_LONG,MPI_SUM,MCW);
+    MPI_Allreduce(&numFlat, &totalNumFlat, 1, MPI_LONG, MPI_SUM, MCW);
     if (rank == 0) {
         fprintf(stderr, "All slopes evaluated. %ld flats to resolve.\n", totalNumFlat);
         fflush(stderr);
     }
 
-    std::queue<node> que;  //  que to be used in resolveflats
-    bool first=true;  //  Variable to be used in iteration to know whether first or subsequent iteration
     if (totalNumFlat > 0) {
-        lastNumFlat=totalNumFlat;
-        totalNumFlat = resolveflats(elevDEM, flowDir, &que, first);
+        std::vector<node> flats;
+            
+        for (int j=0; j<ny; j++) {
+            for (int i=0; i<nx; i++) {
+                if (flowDir.getData(i,j)==0) {
+                    flats.push_back(node(i, j));
+                }
+            }
+        }
+
+        size_t lastNumFlat;
         //Repeatedly call resolve flats until there is no change
-        while (totalNumFlat > 0 && totalNumFlat < lastNumFlat) {
+        do {
+            lastNumFlat = flats.size();
+
+            resolveflats(elevDEM, flowDir, flats); 
+
             if (rank==0) {
-                fprintf(stderr,"Iteration complete. Number of flats remaining: %ld\n",totalNumFlat);
+                fprintf(stderr, "Iteration complete. Number of flats remaining: %ld\n", flats.size());
                 fflush(stderr);
             }
-            lastNumFlat=totalNumFlat;
-            totalNumFlat = resolveflats(elevDEM, flowDir, &que, first);
-        }
+        } while(!flats.empty() && flats.size() < lastNumFlat);
+
     }
 
     //Timing info
@@ -359,6 +366,7 @@ long setPosDir(linearpart<float>& elevDEM, linearpart<short>& flowDir, linearpar
 
     for (int j = 0; j < ny; j++) {
         for (int i=0; i < nx; i++ ) {
+
             //FlowDir is nodata if it is on the border OR elevDEM has no data
             if (elevDEM.isNodata(i,j) || !elevDEM.hasAccess(i-1,j) || !elevDEM.hasAccess(i+1,j) ||
                     !elevDEM.hasAccess(i,j-1) || !elevDEM.hasAccess(i,j+1)) {
@@ -439,7 +447,7 @@ void setFlow2(int i, int j, linearpart<short>& flowDir, linearpart<float>& elevD
 //************************************************************************
 
 //Resolve flat cells according to Garbrecht and Martz
-long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, std::queue<node> *que, bool& first)
+long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, std::vector<node>& flats)
 {
     elevDEM.share();
     flowDir.share();
@@ -454,7 +462,7 @@ long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, std::q
     int rank;
     MPI_Comm_rank(MCW, &rank);
 
-    long i,j,k,in,jn;
+    long k,in,jn;
     bool doNothing, done;
     short tempShort;
     long numInc, numIncOld, numIncTotal;
@@ -466,26 +474,7 @@ long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, std::q
     // more than fits in a short
     linearpart<short> dn(totalx, totaly, dx, dy, MPI_SHORT, 0);
 
-    node temp;
-    long nflat=0, iflat;
     // First time through add flat grid cells indicated by flowdir = 0 on to queue
-    // The queue is retained for later passes so this only needs be done at beginning
-    if (first) {
-        first=false;
-        for (j=0; j<ny; j++) {
-            for (i=0; i<nx; i++) {
-                if (flowDir.getData(i,j)==0) {
-                    temp.x=i;
-                    temp.y=j;
-                    que->push(temp);
-                    nflat++;
-                }
-            }
-        }
-    } else {
-        nflat=que->size();
-    }
-
     dn.share();
     elev2.share();
 
@@ -506,21 +495,18 @@ long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, std::q
     while(numIncTotal != numIncOld) { 
         numInc = 0;
         numIncOld = numIncTotal;
-        for (iflat=0; iflat < nflat; iflat++) {
-            temp=que->front();
-            que->pop();
-            i=temp.x;
-            j=temp.y;
-            que->push(temp);
+        for (std::size_t iflat=0; iflat < flats.size(); iflat++) {
+            node flat = flats[iflat];
 
             doNothing=false;
 
-            float elev = elevDEM.getData(i, j);
+            float elev = elevDEM.getData(flat.x, flat.y);
 
             for (k=1; k<=8; k++) {
-                if (dontCross(k,i,j, flowDir)==0) {
-                    jn = j + d2[k];
-                    in = i + d1[k];
+                if (dontCross(k, flat.x, flat.y, flowDir)==0) {
+                    in = flat.x + d1[k];
+                    jn = flat.y + d2[k];
+
                     elevDiff = elev - elevDEM.getData(in,jn);
                     tempShort=flowDir.getData(in,jn);
 
@@ -537,7 +523,7 @@ long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, std::q
                 }
             }
             if (!doNothing) {
-                elev2.addToData(i, j, 1);
+                elev2.addToData(flat.x, flat.y, 1);
                 numInc++;
             }
         }
@@ -558,18 +544,15 @@ long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, std::q
     if (numIncTotal > 0)          
     {
         //There are pits remaining - set direction to no data
-        for (iflat=0; iflat < nflat; iflat++) {
-            temp=que->front();
-            que->pop();
-            i=temp.x;
-            j=temp.y;
-            que->push(temp);
+        for (std::size_t iflat=0; iflat < flats.size(); iflat++) {
+            node flat = flats[iflat];
+
             doNothing=false;
             for (k=1; k<=8; k++) {
-                if (dontCross(k,i,j, flowDir)==0) {
-                    jn = j + d2[k];
-                    in = i + d1[k];
-                    elevDiff = elevDEM.getData(i,j) - elevDEM.getData(in,jn);
+                if (dontCross(k, flat.x, flat.y, flowDir)==0) {
+                    jn = flat.y + d2[k];
+                    in = flat.x + d1[k];
+                    elevDiff = elevDEM.getData(flat.x, flat.y) - elevDEM.getData(in, jn);
                     tempShort=flowDir.getData(in,jn);
                     
                     // Adjacent cell drains and is equal or lower in elevation so this is a low boundary
@@ -589,7 +572,7 @@ long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, std::q
             
             // mark pit
             if (!doNothing) {
-                flowDir.setToNodata(i,j);
+                flowDir.setToNodata(flat.x, flat.y);
             }  
             //flowDir->setData(i,j,short(9));  // mark pit
         }
@@ -617,32 +600,29 @@ long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, std::q
 
     while(!done) {
         numInc = 0;
-        for (iflat=0; iflat < nflat; iflat++) {
-            temp=que->front();
-            que->pop();
-            i=temp.x;
-            j=temp.y;
-            que->push(temp);
+        for (std::size_t iflat=0; iflat < flats.size(); iflat++) {
+            node flat = flats[iflat];
 
             for (k=1; k<=8; k++) {
-                jn = j + d2[k];
-                in = i + d1[k];
+                in = flat.x + d1[k];
+                jn = flat.y + d2[k];
     
                 // Adjacent cell is higher
-                if (elevDEM.getData(i,j) - elevDEM.getData(in,jn) < 0) {
-                    dn.setData(i, j, 1);
+                if (elevDEM.getData(flat.x, flat.y) - elevDEM.getData(in,jn) < 0) {
+                    dn.setData(flat.x, flat.y, 1);
                 }
 
                 // Adjacent cell has been marked already
                 if (dn.getData(in,jn) > 0 && s.getData(in,jn) > 0) {
-                    dn.setData(i, j, 1);
+                    dn.setData(flat.x, flat.y, 1);
                 }
             }
         }
+
         dn.share();
 
-        for (j=0; j<ny; j++) {
-            for (i=0; i<nx; i++) {
+        for (int j=0; j<ny; j++) {
+            for (int i=0; i<nx; i++) {
                 tempShort = dn.getData(i,j);
 
                 s.addToData(i, j, (tempShort>0 ? 1 : 0));
@@ -668,14 +648,10 @@ long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, std::q
         }
     }
 
-    for (iflat=0; iflat < nflat; iflat++) {
-        temp=que->front();
-        que->pop();
-        i=temp.x;
-        j=temp.y;
-        que->push(temp);
+    for (std::size_t iflat=0; iflat < flats.size(); iflat++) {
+        node flat = flats[iflat];
 
-        elev2.addToData(i,j, s.getData(i,j));
+        elev2.addToData(flat.x, flat.y, s.getData(flat.x, flat.y));
     }
 
     elev2.share();;
@@ -688,26 +664,26 @@ long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, std::q
         fflush(stderr);
     }
 
-    for (iflat=0; iflat < nflat; iflat++) {
-        temp=que->front();
-        que->pop();
-        i=temp.x;
-        j=temp.y; //  Do not push que on this last one - so que is empty at end
+    // Iterate backwards to prevent costly erases
+    for (std::size_t iflat=flats.size(); iflat > 0; iflat--) {
+        node flat = flats[iflat];
 
-        setFlow2(i, j, flowDir, elevDEM, elev2, dn);
+        setFlow2(flat.x, flat.y, flowDir, elevDEM, elev2, dn);
 
-        if (flowDir.getData(i,j) == 0) {
-            que->push(temp);
+        if (flowDir.getData(flat.x, flat.y) == 0) {
             localStillFlat++;
+        } else {
+            // Remove if point is no longer flat
+            flats.erase(flats.begin() + iflat);
         }
     }
 
     MPI_Allreduce(&localStillFlat, &totalStillFlat, 1, MPI_LONG, MPI_SUM, MCW);
 
     if (totalStillFlat > 0) { //  We will have to iterate again so overwrite original elevation with the modified ones and hope for the best
-        for (j=0; j<ny; j++) {
-            for (i=0; i<nx; i++) {
-                elevDEM.setData(i,j,(float) elev2.getData(i,j));//set/add change jjn friday
+        for (int j=0; j<ny; j++) {
+            for (int i=0; i<nx; i++) {
+                elevDEM.setData(i, j, (float) elev2.getData(i,j));//set/add change jjn friday
             }
         }
     }

@@ -72,6 +72,9 @@ enum DATA_TYPE
 struct node {
 	int x;
 	int y;
+
+    node() {}
+	node(int x_, int y_): x(x_), y(y_) {}
 };
 
 const double PI =  3.14159265359;
