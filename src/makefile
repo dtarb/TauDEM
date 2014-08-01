@@ -73,6 +73,7 @@ SLOPEAREARATIO = SlopeAreaRatio.o SlopeAreaRatiomn.o $(OBJFILES)
 SLOPEAVEDOWN = SlopeAveDown.o SlopeAveDownmn.o $(OBJFILES)
 STREAMNET = streamnetmn.o streamnet.o $(OBJFILES) $(SHAPEFILES)
 THRESHOLD = Threshold.o Thresholdmn.o $(OBJFILES)
+TWI = TWI.o TWImn.o $(OBJFILES)
 READTIFFILES = ReadTif.o ReadTifmn.o $(OBJFILES) 
 
 TIFFTEST = tiffTest.o $(OBJFILES)
@@ -86,7 +87,7 @@ LARGEFILEFLAG= -D_FILE_OFFSET_BITS=64
 INCDIRS=-I/usr/lib/openmpi/include
 
 #Rules: when and how to make a file
-all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ../gridnet ../dinfflowdir ../d8flowdir ../d8flowpathextremeup ../d8hdisttostrm ../dinfavalanche ../dinfconclimaccum ../dinfdecayaccum ../dinfdistdown ../dinfdistup ../dinfrevaccum ../dinftranslimaccum ../dinfupdependence ../lengtharea ../peukerdouglas ../pitremove ../slopearea ../slopearearatio ../slopeavedown ../threshold clean 
+all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ../gridnet ../dinfflowdir ../d8flowdir ../d8flowpathextremeup ../d8hdisttostrm ../dinfavalanche ../dinfconclimaccum ../dinfdecayaccum ../dinfdistdown ../dinfdistup ../dinfrevaccum ../dinftranslimaccum ../dinfupdependence ../lengtharea ../peukerdouglas ../pitremove ../slopearea ../slopearearatio ../slopeavedown ../threshold ../twi clean 
 
 ../aread8 : $(D8FILES)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(D8FILES) $(LDLIBS) $(LDFLAGS)
@@ -163,6 +164,9 @@ all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ..
 ../threshold : $(THRESHOLD)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(THRESHOLD) $(LDLIBS) $(LDFLAGS) 
 
+../twi : $(TWI)
+	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(TWI) $(LDLIBS) $(LDFLAGS)
+
 ../ReadTif : $(READTIFFILES)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(READTIFFILES) $(LDLIBS) $(LDFLAGS)
 
@@ -177,7 +181,7 @@ all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ..
 	
 #Inference rule - states a general rule for compiling .o files
 %.o : %.cpp
-	$(CC) $(CFLAGS) $(INCDIRS) -c $<
+	$(CC) $(CFLAGS) $(INCDIRS) -c $< -o $@
 
 clean :
 	rm *.o 
