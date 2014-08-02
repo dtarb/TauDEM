@@ -74,18 +74,19 @@ SLOPEAVEDOWN = SlopeAveDown.o SlopeAveDownmn.o $(OBJFILES)
 STREAMNET = streamnetmn.o streamnet.o $(OBJFILES) $(SHAPEFILES)
 THRESHOLD = Threshold.o Thresholdmn.o $(OBJFILES)
 TWI = TWI.o TWImn.o $(OBJFILES)
+GAGEWATERSHED = gagewatershed.o gagewatershedmn.o $(OBJFILES) $(SHAPEFILES)
 READTIFFILES = ReadTif.o ReadTifmn.o $(OBJFILES) 
 
 TIFFTEST = tiffTest.o $(OBJFILES)
 
 #The following are compiler flags common to all building rules
-CC ?= mpic++
+CC = mpic++
 CFLAGS += -O2
 LARGEFILEFLAG = -D_FILE_OFFSET_BITS=64
 INCDIRS =-I/usr/lib/openmpi/include
 
 #Rules: when and how to make a file
-all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ../gridnet ../dinfflowdir ../d8flowdir ../d8flowpathextremeup ../d8hdisttostrm ../dinfavalanche ../dinfconclimaccum ../dinfdecayaccum ../dinfdistdown ../dinfdistup ../dinfrevaccum ../dinftranslimaccum ../dinfupdependence ../lengtharea ../peukerdouglas ../pitremove ../slopearea ../slopearearatio ../slopeavedown ../threshold ../twi clean 
+all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ../gridnet ../dinfflowdir ../d8flowdir ../d8flowpathextremeup ../d8hdisttostrm ../dinfavalanche ../dinfconclimaccum ../dinfdecayaccum ../dinfdistdown ../dinfdistup ../dinfrevaccum ../dinftranslimaccum ../dinfupdependence ../lengtharea ../peukerdouglas ../pitremove ../slopearea ../slopearearatio ../slopeavedown ../threshold ../twi ../gagewatershed clean 
 
 ../aread8 : $(D8FILES)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(D8FILES) $(LDLIBS) $(LDFLAGS)
@@ -164,6 +165,9 @@ all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ..
 
 ../twi : $(TWI)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(TWI) $(LDLIBS) $(LDFLAGS)
+
+../gagewatershed : $(GAGEWATERSHED)
+	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(GAGEWATERSHED) $(LDLIBS) $(LDFLAGS)
 
 ../ReadTif : $(READTIFFILES)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(READTIFFILES) $(LDLIBS) $(LDFLAGS)
