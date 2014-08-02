@@ -79,12 +79,10 @@ READTIFFILES = ReadTif.o ReadTifmn.o $(OBJFILES)
 TIFFTEST = tiffTest.o $(OBJFILES)
 
 #The following are compiler flags common to all building rules
-CC = mpic++
-CFLAGS=-O2
-CFLAGS=-g -Wall
-CFLAGS=-g
-LARGEFILEFLAG= -D_FILE_OFFSET_BITS=64
-INCDIRS=-I/usr/lib/openmpi/include
+CC ?= mpic++
+CFLAGS += -O2
+LARGEFILEFLAG = -D_FILE_OFFSET_BITS=64
+INCDIRS =-I/usr/lib/openmpi/include
 
 #Rules: when and how to make a file
 all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ../gridnet ../dinfflowdir ../d8flowdir ../d8flowpathextremeup ../d8hdisttostrm ../dinfavalanche ../dinfconclimaccum ../dinfdecayaccum ../dinfdistdown ../dinfdistup ../dinfrevaccum ../dinftranslimaccum ../dinfupdependence ../lengtharea ../peukerdouglas ../pitremove ../slopearea ../slopearearatio ../slopeavedown ../threshold ../twi clean 
