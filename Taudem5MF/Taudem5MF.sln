@@ -57,6 +57,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SelectGTThreshold", "Select
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TWI", "TWI\TWI.vcxproj", "{E987386C-ACDC-4E1F-B187-D47FD31EA7FA}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GageWatershed", "GageWatershed\GageWatershed.vcxproj", "{E8EEAF6A-6129-4511-810D-145B8FB84137}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -283,6 +285,13 @@ Global
 		{E987386C-ACDC-4E1F-B187-D47FD31EA7FA}.Release|Win32.Build.0 = Release|Win32
 		{E987386C-ACDC-4E1F-B187-D47FD31EA7FA}.Release|x64.ActiveCfg = Release|x64
 		{E987386C-ACDC-4E1F-B187-D47FD31EA7FA}.Release|x64.Build.0 = Release|x64
+		{E8EEAF6A-6129-4511-810D-145B8FB84137}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E8EEAF6A-6129-4511-810D-145B8FB84137}.Debug|Win32.Build.0 = Debug|Win32
+		{E8EEAF6A-6129-4511-810D-145B8FB84137}.Debug|x64.ActiveCfg = Debug|Win32
+		{E8EEAF6A-6129-4511-810D-145B8FB84137}.Release|Win32.ActiveCfg = Release|Win32
+		{E8EEAF6A-6129-4511-810D-145B8FB84137}.Release|Win32.Build.0 = Release|Win32
+		{E8EEAF6A-6129-4511-810D-145B8FB84137}.Release|x64.ActiveCfg = Release|x64
+		{E8EEAF6A-6129-4511-810D-145B8FB84137}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

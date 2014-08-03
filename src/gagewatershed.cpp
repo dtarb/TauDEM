@@ -302,7 +302,7 @@ int gagewatershed( char *pfile, char *wfile, char *shfile, char *idfile, int wri
 
 	//Create and write TIFF file
 	long lNodata = MISSINGLONG;
-	char prefix[5] = "src";
+	char prefix[5] = "gw";
 	tiffIO wshedIO(wfile, LONG_TYPE, &lNodata, p);
 	wshedIO.write(xstart, ystart, ny, nx, wshed->getGridPointer(), prefix, prow, pcol);
 
