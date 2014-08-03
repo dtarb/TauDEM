@@ -7,9 +7,6 @@ More information will be forthcoming as I get a chance.
 
 Details on the TauDEM software are at: http://hydrology.usu.edu/taudem
 
-This project is in the process of being migrated to GitHUB.  I am new to GitHUB so welcome suggestions as to how to better use GitHUB and set up this project.  You may email me at dtarb@usu.edu
-
-David Tarboton
 
 
 
