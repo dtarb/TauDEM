@@ -40,15 +40,16 @@ email:  dtarb@usu.edu
 #ifndef LINEARPART_H
 #define LINEARPART_H
 
-#include "mpi.h"
+#include <mpi.h>
+#include <cstdio>
+#include <cstdlib>
+#include <stdint.h>
+#include <cstring>
+#include <cmath>
+#include <exception>
+
 #include "partition.h"
 #include "commonLib.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include "stdint.h"
-#include <string.h>
-#include <math.h>
-#include <exception>
 
 template <class datatype>
 class linearpart : public tdpartition {
@@ -166,7 +167,6 @@ void linearpart<datatype>::init(long totalx, long totaly, double dx_in, double d
 	}
 }
 
-
 //Returns true if (x,y) is in partition
 template <class datatype>
 bool linearpart<datatype>::isInPartition(int x, int y) {
@@ -176,14 +176,14 @@ bool linearpart<datatype>::isInPartition(int x, int y) {
 
 //Returns true if (x,y) is in or on borders of partition
 template <class datatype>
-bool linearpart<datatype>::hasAccess( int x, int y) {
+bool linearpart<datatype>::hasAccess(int x, int y) {
 	//isInPartition takes care of the case where (x,y) is inside the grid
 	if(x>=0 && x<nx && y>=0 && y<ny) return true;   // DGT reducing function nesting for efficiency
 //	if(isInPartition(x,y)) return true;	
 
 	//Now we only need to worry about borders.
 	//x must be bounded by 0 and nx, y may be -1 to ny
-	else if(x>=0 && x<nx ) {
+	else if(x>=0 && x<nx) {
 		if(rank !=0 && y==-1) return true;
 		if(rank !=size-1 && y==ny) return true;
 	}
@@ -194,30 +194,42 @@ bool linearpart<datatype>::hasAccess( int x, int y) {
 //in the "topBorder" and "bottomBorder" arrays of each process.
 template <class datatype>
 void linearpart<datatype>::share() {
-	MPI_Status status;
 	if(size<=1) return; //if there is only one process, we're all done sharing
 
+    if(rank < size - 1) {
+        // Share bottom border
+        MPI_Sendrecv(gridData + ((ny-1) * nx), nx, MPI_type, rank+1, 0,
+                    bottomBorder, nx, MPI_type, rank+1, 0,
+                    MCW, MPI_STATUS_IGNORE);
+    }
 
-	datatype *ptr;
-	int place;
-	datatype *buf;
-	int bsize=nx*sizeof(datatype)+MPI_BSEND_OVERHEAD; 
-	buf = new datatype[bsize];
+    if(rank > 0) {
+        // Share top border
+        MPI_Sendrecv(gridData, nx, MPI_type, rank-1, 0,
+                    topBorder, nx, MPI_type, rank-1, 0,
+                    MCW, MPI_STATUS_IGNORE);
+    }
 
-	if(rank<size-1){
-		MPI_Buffer_attach(buf,bsize);
-		MPI_Bsend(gridData+((ny-1)*nx), nx, MPI_type, rank+1, 0, MCW);
-		MPI_Buffer_detach(&ptr,&place);
-	}
-	if(rank >0)	MPI_Recv(topBorder, nx, MPI_type, rank-1, 0, MCW, &status);
-	if(rank>0){
-		MPI_Buffer_attach(buf,bsize);
-		MPI_Bsend(gridData, nx, MPI_type, rank-1, 0, MCW);
-		MPI_Buffer_detach(&ptr,&place);
-	}
-	if(rank<size-1) MPI_Recv(bottomBorder, nx, MPI_type, rank+1, 0, MCW, &status);
+	//datatype *ptr;
+	//int place;
+	//datatype *buf;
+	//int bsize=nx*sizeof(datatype)+MPI_BSEND_OVERHEAD; 
+	//buf = new datatype[bsize];
 
-	delete [] buf;   // added by dww -- why not elsewhere?
+	//if(rank<size-1){
+		//MPI_Buffer_attach(buf,bsize);
+		//MPI_Bsend(gridData+((ny-1)*nx), nx, MPI_type, rank+1, 0, MCW);
+		//MPI_Buffer_detach(&ptr,&place);
+	//}
+	//if(rank >0)	MPI_Recv(topBorder, nx, MPI_type, rank-1, 0, MCW, &status);
+	//if(rank>0){
+		//MPI_Buffer_attach(buf,bsize);
+		//MPI_Bsend(gridData, nx, MPI_type, rank-1, 0, MCW);
+		//MPI_Buffer_detach(&ptr,&place);
+	//}
+	//if(rank<size-1) MPI_Recv(bottomBorder, nx, MPI_type, rank+1, 0, MCW, &status);
+
+	//delete [] buf;   // added by dww -- why not elsewhere?
 
 /*
 	if(rank == 0){ //Top partition in grid - only send and receive the bottom
@@ -281,10 +293,7 @@ void linearpart<datatype>::passBorders() {
 	delete [] buf;   // added by dww -- why not elsewhere?
 	delete [] tempBorder;
 
-
 /*
-
-
 	if(rank == 0){ //Top partition in grid - only send and receive the bottom
 		MPI_Bsend(bottomBorder, nx, MPI_type, rank+1, 0, MCW);
 		MPI_Recv(bottomBorder, nx, MPI_type, rank+1, 0, MCW, &status);
@@ -473,13 +482,14 @@ bool linearpart<datatype>::isNodata(long inx, long iny){
 	int64_t x, y;//int64 because it oculd be -1.
 	x = inx;
 	y = iny;
-//DGT to avoid nested calls and type inconsistency
-	if(x>=0 && x<nx && y>=0 && y<ny)return (abs((float)(gridData[x+y*nx]-noData))<MINEPS);  
-//	if(isInPartition(x,y)) return (abs(gridData[x+y*nx]-noData)<MINEPS);
-	else if(x>=0 && x<nx){
-		if(y==-1) return (abs((float)(topBorder[x]-noData))<MINEPS);
-		else if(y==ny) return (abs((float)(bottomBorder[x]-noData))<MINEPS);
+
+	if(x>=0 && x<nx && y>=0 && y<ny) {
+	    return std::abs((float)(gridData[x+y*nx]-noData))<MINEPS;  
+    } else if(x>=0 && x<nx) {
+		if(y==-1) return (std::abs((float)(topBorder[x]-noData))<MINEPS);
+		else if(y==ny) return (std::abs((float)(bottomBorder[x]-noData))<MINEPS);
 	}
+
 	return true;
 }
 
