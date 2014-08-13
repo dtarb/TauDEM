@@ -256,7 +256,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
         //darea( &flowDir, &area, NULL, NULL, 0, 1, NULL, 0, 0 );
     }
 
-    long numFlat = 0, totalNumFlat = 0;
+    long numFlat = 0;
 
     double computeSlopet;
     {
@@ -277,7 +277,9 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
 
     double writeSlopet = MPI_Wtime();
 
+    size_t totalNumFlat = 0;
     MPI_Allreduce(&numFlat, &totalNumFlat, 1, MPI_LONG, MPI_SUM, MCW);
+   
     if (rank == 0) {
         fprintf(stderr, "All slopes evaluated. %ld flats to resolve.\n", totalNumFlat);
         fflush(stderr);
@@ -297,16 +299,14 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
         size_t lastNumFlat;
         //Repeatedly call resolve flats until there is no change
         do {
-            lastNumFlat = flats.size();
-
-            resolveflats(elevDEM, flowDir, flats); 
+            lastNumFlat = totalNumFlat;
+            totalNumFlat = resolveflats(elevDEM, flowDir, flats); 
 
             if (rank==0) {
-                fprintf(stderr, "Iteration complete. Number of flats remaining: %ld\n", flats.size());
+                fprintf(stderr, "Iteration complete. Number of flats remaining: %ld\n", totalNumFlat);
                 fflush(stderr);
             }
-        } while(!flats.empty() && flats.size() < lastNumFlat);
-
+        } while(totalNumFlat > 0 && totalNumFlat < lastNumFlat);
     }
 
     //Timing info
@@ -495,6 +495,7 @@ long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, std::v
     while(numIncTotal != numIncOld) { 
         numInc = 0;
         numIncOld = numIncTotal;
+
         for (std::size_t iflat=0; iflat < flats.size(); iflat++) {
             node flat = flats[iflat];
 
@@ -513,13 +514,17 @@ long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, std::v
                     if (elevDiff >= 0 && tempShort > 0 && tempShort < 9) {
                         //adjacent cell drains and is equal or lower in elevation so this is a low boundary
                         doNothing = true;
+                        break;
                     } else if (elevDiff == 0) {
                         //if neighbor is in flat
                         if (elev2.getData(in, jn) >= 0 && elev2.getData(in, jn) < st) {
                             //neighbor is not being incremented
                             doNothing = true;
+                            break;
                         }
-                    }
+                    }     
+                } else {
+                    printf("DEBUG: CROSSED %d, %d to %d, %d\n", flat.x, flat.y, flat.x+d1[k], flat.y+d2[k]);
                 }
             }
             if (!doNothing) {
@@ -536,8 +541,6 @@ long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, std::v
             fflush(stderr);
         }
     }
-
-    fprintf(stderr, "\n");
 
     // Not all grid cells were resolved - pits remain
     // Remaining grid cells are unresolvable pits
@@ -574,7 +577,6 @@ long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, std::v
             if (!doNothing) {
                 flowDir.setToNodata(flat.x, flat.y);
             }  
-            //flowDir->setData(i,j,short(9));  // mark pit
         }
         flowDir.share();
 
@@ -586,6 +588,7 @@ long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, std::v
         //if (numIncOld == 0)
         //	done = true;
     }
+
     // DGT moved from above - write directly into elev2
     // Use 0 as no data to avoid need to initialize
     linearpart<short> s(totalx, totaly, dx, dy, MPI_SHORT, 0);
@@ -594,7 +597,7 @@ long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, std::v
     done = false;
     numIncOld = 0;
     if (rank == 0) {
-        fprintf(stderr,"Draining flats away from higher adjacent terrain\n");
+        fprintf(stderr,"\nDraining flats away from higher adjacent terrain\n");
         fflush(stderr);
     }
 
@@ -654,7 +657,7 @@ long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, std::v
         elev2.addToData(flat.x, flat.y, s.getData(flat.x, flat.y));
     }
 
-    elev2.share();;
+    elev2.share();
 
     long localStillFlat = 0;
     long totalStillFlat = 0;
