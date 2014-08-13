@@ -38,11 +38,12 @@ email:  dtarb@usu.edu
 
 //  This software is distributed from http://hydrology.usu.edu/taudem/
 
-#pragma once
+#ifndef LINKLIB_H
+#define LINKLIB_H
+
 #include <iostream>
 #include <cmath>
 #include <mpi.h>
-#include <math.h>
 #include <iomanip>
 #include <queue>
 #include "commonLib.h"
@@ -51,12 +52,8 @@ email:  dtarb@usu.edu
 #include "partition.h"
 #include "tiffIO.h"
 #include "shape/shapefile.h"
-//#ifndef LINKLIB_H
-//#define LINKLIB_H
-using namespace std;
 
 long LAST_ID = -1;
-
 
 struct point{
 	long x;
@@ -77,7 +74,7 @@ struct streamlink{
 	double elevD;
 	double length;
 	short order;
-	queue <point>coord; //  We store the coordinates of a link in a queue
+    std::queue<point> coord; //  We store the coordinates of a link in a queue
 	long numCoords;
 	bool terminated;
 	
@@ -921,3 +918,5 @@ bool ReceiveWaitingLinks(int rank, int size)
 	}
 	return(true);
 }
+
+#endif
