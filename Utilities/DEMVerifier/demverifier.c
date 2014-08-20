@@ -10,8 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
-#include <gdal/gdal.h>
-#include <gdal/cpl_conv.h>
+#include <gdal.h>
+#include <cpl_conv.h>
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -73,7 +73,7 @@ int compare_tiffs(char* tif_file1, char* tif_file2) {
 			d2 = data2[y * tif_width1 + x];
 
 			if (abs(d1 - d2) > error) {
-				printf("Inconsistency detected at x:%d, y:%d\n", x, y);
+				printf("Inconsistency detected at x:%d, y:%d - ", x, y);
 				printf("Data1: %f, Data2: %f\n", d1, d2);
 				insdetected = 1;
 			}
