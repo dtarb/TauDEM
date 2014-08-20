@@ -38,6 +38,7 @@ email:  dtarb@usu.edu
 */
 
 //  This software is distributed from http://hydrology.usu.edu/taudem/
+
 #include "d8.h"
 #include <mpi.h>
 #include "linearpart.h"
@@ -667,23 +668,25 @@ long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, std::v
         fflush(stderr);
     }
 
-    // Iterate backwards to prevent costly erases
-    for (std::size_t iflat=flats.size(); iflat > 0; iflat--) {
+    std::vector<node> remaining_flats;
+    for (std::size_t iflat=0; iflat < flats.size(); iflat++) {
         node flat = flats[iflat];
 
         setFlow2(flat.x, flat.y, flowDir, elevDEM, elev2, dn);
 
         if (flowDir.getData(flat.x, flat.y) == 0) {
             localStillFlat++;
-        } else {
-            // Remove if point is no longer flat
-            flats.erase(flats.begin() + iflat);
+            remaining_flats.push_back(flat);
         }
     }
 
+    // Replace flats with remaining_flats
+    flats.swap(remaining_flats);
+
     MPI_Allreduce(&localStillFlat, &totalStillFlat, 1, MPI_LONG, MPI_SUM, MCW);
 
-    if (totalStillFlat > 0) { //  We will have to iterate again so overwrite original elevation with the modified ones and hope for the best
+    //  We will have to iterate again so overwrite original elevation with the modified ones and hope for the best
+    if (totalStillFlat > 0) {
         for (int j=0; j<ny; j++) {
             for (int i=0; i<nx; i++) {
                 elevDEM.setData(i, j, (float) elev2.getData(i,j));//set/add change jjn friday
