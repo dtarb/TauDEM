@@ -52,26 +52,32 @@ using std::queue;
 //==================================
 /*  Nameadd(..)  Utility for adding suffixes to file names prior to
    "." extension   */
-int nameadd(char *full,char *arg,char *suff)
+int nameadd(char *full, char *arg, const char *suff)
 {
-        char *ext, *extsuff;
-        long nmain;
+    const char *ext, *extsuff;
+    int nmain;
+
     ext=strrchr(arg,'.');
-	extsuff=strrchr(suff,'.');
+    extsuff=strrchr(suff,'.');
+    
     if(ext == NULL)
-        {
-                nmain=(long)strlen(arg);
-                sprintf(full,"%s%s",arg,suff);
-        }
-        else
-        {
-                nmain=(long)(strlen(arg)-strlen(ext));
-                strcpy(full,"");
-                strncat(full,arg,nmain);
-                strcat(full,suff);
-				if(extsuff == NULL)strcat(full,ext);  //  Only append original extension if suffix does not have an extension already
-        }
-        return(nmain);
+    {
+        nmain= strlen(arg);
+        sprintf(full,"%s%s",arg,suff);
+    }
+    else
+    {
+        nmain = strlen(arg)-strlen(ext);
+        strcpy(full,"");
+        strncat(full,arg,nmain);
+        strcat(full,suff);
+        
+        //  Only append original extension if suffix does not have an extension already
+        if(extsuff == NULL)
+            strcat(full,ext);  
+    }
+
+    return nmain;
 }
 
 //TODO - does this function go here, or in areadinf?

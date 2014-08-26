@@ -64,7 +64,7 @@ void record::setValue( double value )
 {	recordDoubleValue = value;
 }
 
-char * record::StringValue()
+const char* record::StringValue()
 {	if( recordStringValue != NULL )
 		return recordStringValue;
 	else

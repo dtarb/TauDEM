@@ -371,7 +371,10 @@ int linearpart<datatype>::ringTerm(int isFinished) {
 			//cout << rank << " reciving ..." << endl;
  			MPI_Recv( &ringBool, 1,MPI_INT, rank-1,1,MCW,&status);
 			//cout << rank << " sending ..." << endl;
-			if( isFinished == NOTFINISHED ) ringBool = NOTFINISHED;
+			
+			if(isFinished == false)
+			    ringBool = false;
+
 			MPI_Send( &ringBool, 1,MPI_INT, (rank+1)%size, 1, MCW);
 			//cout << rank << " finished ..." << endl;
 		}

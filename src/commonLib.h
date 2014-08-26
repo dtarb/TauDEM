@@ -40,7 +40,9 @@ email:  dtarb@usu.edu
 #ifndef COMMON_H
 #define COMMON_H
 #include <cmath>
-#include <float.h>
+#include <cfloat>
+#include <queue>
+
 #include "mpi.h"
 
 #define MCW MPI_COMM_WORLD
@@ -53,9 +55,6 @@ email:  dtarb@usu.edu
 //#define LEFT 3
 //#define RIGHT 4
 //
-
-#define NOTFINISHED 0
-#define FINISHED 1
 
 #define TDVERSION "5.2.1"
 
@@ -91,11 +90,11 @@ const int d2[9] = { 0,0,-1,-1,-1, 0, 1,1,1};
 const double aref[10] = { -atan2((double)1,(double)1), 0., -aref[0],(double)(0.5*PI),PI-aref[2],(double)PI,
                         PI+aref[2],(double)(1.5*PI),2.*PI-aref[2],(double)(2.*PI) };   // DGT is concerned that this assumes square grids.  For different dx and dx needs adjustment
 
-int nameadd( char*,char*,char*);
+int nameadd(char* full, char* arg, const char* suff);
 double prop( float a, int k);
 int readoutlets(char *outletsfile, int *noutlets, double*& x, double*& y);
 int readoutlets(char *outletsfile, int *noutlets, double*& x, double*& y, int*& id);
-#include <queue>
+
 #include "linearpart.h"
 
 bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData);

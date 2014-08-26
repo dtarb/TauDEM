@@ -26,7 +26,7 @@ class cell
 		void setValue( const char * value );
 		void setValue( int value );
 		void setValue( double value );
-		char * StringValue();
+		const char* StringValue();
 		int IntegerValue();
 		double DoubleValue();
 		

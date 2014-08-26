@@ -64,7 +64,7 @@ void cell::setValue( double value )
 {	cellDoubleValue = value;
 }
 
-char * cell::StringValue()
+const char* cell::StringValue()
 {	if( cellStringValue != NULL )
 		return cellStringValue;
 	else

@@ -33,8 +33,6 @@ item::~item()
 item item::operator=( const item & r )
 {	if( r.itemStringValue == NULL )
 		itemStringValue = NULL;
-	else if( strlen( r.itemStringValue ) < 0 )
-		itemStringValue = NULL;
 	else
 	{	itemStringValue = new char[ strlen( r.itemStringValue ) + 1];
 		strcpy( itemStringValue, r.itemStringValue );
@@ -63,7 +61,7 @@ void item::setValue( double value )
 {	itemDoubleValue = value;
 }
 
-char * item::StringValue()
+const char* item::StringValue()
 {	if( itemStringValue != NULL )
 		return itemStringValue;
 	else
