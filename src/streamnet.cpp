@@ -959,11 +959,11 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 				for(int iref=0; iref<9; iref++)
 					cnet[iref]=LinkIdU1U2DMagShapeidCoords[ilink][iref];
 				reachshape(cnet,lengthd,elev,area,pointx,pointy,i2-i1+1);
-				delete lengthd; // DGT to free memory
-				delete elev;
-				delete area;
-				delete pointx;
-				delete pointy;
+				delete[] lengthd; // DGT to free memory
+				delete[] elev;
+				delete[] area;
+				delete[] pointx;
+				delete[] pointy;
 				//if(ilink > nextdot)  // Indicating progress
 				//{
 				//	fprintf(stderr,".");

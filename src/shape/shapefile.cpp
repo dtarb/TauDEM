@@ -185,7 +185,7 @@ bool shapefile::writeShxFile( const char * p_shapefilename )
 		else
 			throw( Exception( "Could not open " + (std::string)shxFile + " for writing." ) );
 
-		delete shxFile;
+		delete[] shxFile;
 	}
 	catch( Exception e )
 	{	return false;
@@ -565,7 +565,7 @@ bool shapefile::readDBFFile()
 		else
 			throw( Exception( "Could not open " + (std::string)dbfFile ) );
 
-		delete dbfFile;
+		delete[] dbfFile;
 	}
 	catch( Exception e )
 	{	return false;
@@ -648,7 +648,7 @@ bool shapefile::writeDBFFile( const char * p_shapefilename )
 		else
 			throw( Exception( "Could not open " + (std::string)dbfFile + " for writing." ) );
 
-		delete dbfFile;
+		delete[] dbfFile;
 	}
 	catch( Exception e )
 	{	return false;

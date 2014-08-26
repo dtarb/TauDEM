@@ -1700,7 +1700,7 @@ void tifFile::read(long xstart, long ystart, long numRows, long numCols, void* d
 							//else
 								((float*)dest)[destOffset+k]=(float)tempVal;
 						}
-				delete tempDataRow;
+				delete[] tempDataRow;
 				}
 				else if ((sampleFormat == 1) && (dataSizeFileIn == 2)) 
 				{
@@ -1744,7 +1744,7 @@ void tifFile::read(long xstart, long ystart, long numRows, long numCols, void* d
 							//else
 								((float*)dest)[destOffset+k]=(float)tempVal;
 						}
-					delete tempDataRow;
+					delete[] tempDataRow;
 				}
 				else if ((sampleFormat == 1) && (dataSizeFileIn == 4)) 
 				{
@@ -1788,7 +1788,7 @@ void tifFile::read(long xstart, long ystart, long numRows, long numCols, void* d
 							//else
 								((float*)dest)[destOffset+k]=(float)tempVal;
 						}
-					delete tempDataRow;
+					delete[] tempDataRow;
 				}
 				else if ((sampleFormat == 2) && (dataSizeFileIn == 1)) 
 				{
@@ -1833,7 +1833,7 @@ void tifFile::read(long xstart, long ystart, long numRows, long numCols, void* d
 							//else
 								((float*)dest)[destOffset+k]=(float)tempVal;
 						}
-					delete tempDataRow;
+					delete[] tempDataRow;
 				}
 				else if ((sampleFormat == 2) && (dataSizeFileIn == 2)) 
 				{
@@ -1879,7 +1879,7 @@ void tifFile::read(long xstart, long ystart, long numRows, long numCols, void* d
 							//else
 								((float*)dest)[destOffset+k]=(float)tempVal;
 						}
-					delete tempDataRow;
+					delete[] tempDataRow;
 				}
 				else if ((sampleFormat == 2) && (dataSizeFileIn == 4)) 
 				{
@@ -1925,7 +1925,7 @@ void tifFile::read(long xstart, long ystart, long numRows, long numCols, void* d
 							//else
 								((float*)dest)[destOffset+k]=(float)tempVal;
 						}
-					delete tempDataRow;
+					delete[] tempDataRow;
 				}
 				else if(sampleFormat == 3 && dataSizeFileIn == 4)
 				{
@@ -1972,7 +1972,7 @@ void tifFile::read(long xstart, long ystart, long numRows, long numCols, void* d
 								((float*)dest)[destOffset+k]=(float)tempVal;
 						}
 //					cout <<"Releasing";
-					delete tempDataRow;
+					delete[] tempDataRow;
 				}
 			}
 			
@@ -2762,7 +2762,7 @@ void tifFile::write(long xstart, long ystart, long numRows, long numCols, void* 
 			next+=DomainX;
 		}
 
-		delete tempDataRow;
+		delete[] tempDataRow;
 	}
 	else if( datatype == FLOAT_TYPE ){//set the write position in the file
 		mpiOffset = dataOffset + (dataSizeObj*((totalX*ystart) + xstart));
@@ -3200,7 +3200,7 @@ void tifFile::write(long xstart, long ystart, long numRows, long numCols, void* 
 			next+=numCols;
 		}
 
-		delete tempDataRow;
+		delete[] tempDataRow;
 	}
 	else if( datatype == FLOAT_TYPE ) {
 		mpiOffset = dataOffset + (dataSizeObj*((totalX*ystart) + xstart));

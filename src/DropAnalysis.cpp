@@ -673,8 +673,8 @@ int dropan(char *areafile, char *dirfile, char *elevfile, char *ssafile, char *d
 	// *** free memory and go home
 	delete  ssaData;
 	delete  dirData;
-	delete  xnode;
-	delete  ynode;
+	delete[]  xnode;
+	delete[]  ynode;
 	delete  elevData;
 
 	}MPI_Finalize();
