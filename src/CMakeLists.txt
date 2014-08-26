@@ -14,6 +14,15 @@ file(GLOB SHAPE_SRC shape/*.cpp)
 # Classes, structures, and constants common to all files
 set(COMMON_SRC commonLib.cpp tiffIO.cpp tifFile.cpp)
 
+if(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION} GREATER 2.8.7)
+    # Don't recompile common files by using CMake's 2.8.8 OBJECT "libraries"
+    add_library(shape_lib OBJECT ${SHAPE_SRC})
+    set(SHAPE_SRC $<TARGET_OBJECTS:shape_lib>)
+
+    add_library(common_lib OBJECT ${COMMON_SRC})
+    set(COMMON_SRC $<TARGET_OBJECTS:common_lib>)
+endif()
+
 add_executable(aread8 aread8mn.cpp aread8.cpp ${COMMON_SRC} ${SHAPE_SRC})
 add_executable(areadinf areadinfmn.cpp areadinf.cpp ${COMMON_SRC} ${SHAPE_SRC})
 
