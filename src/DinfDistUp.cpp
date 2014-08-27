@@ -63,29 +63,30 @@ float dist[9];
 
 //Calling function
 int dinfdistup(char *angfile,char *felfile,char *slpfile,char *wfile, char *rtrfile,
-			   int statmethod,int typemethod,int usew, int concheck, float thresh, int prow, int pcol)
+        int statmethod,int typemethod,int usew, int concheck, float thresh, int prow, int pcol)
 {
-	int er;
-switch (typemethod)
-{
-case 0:
-	er=hdisttoridgegrd(angfile,wfile,rtrfile,statmethod, 
-		concheck,thresh,usew, prow, pcol);
-break;
-case 1:
-	er=vrisetoridgegrd(angfile,felfile,rtrfile, 
-		statmethod,concheck,thresh, prow, pcol);
-break;
-case 2:
-	er=pdisttoridgegrd(angfile,felfile,wfile,rtrfile, 
-					statmethod,usew,concheck,thresh, prow, pcol);
-break;
-case 3:
-	er=sdisttoridgegrd(angfile,felfile,wfile,rtrfile, 
-					statmethod,usew,concheck,thresh, prow, pcol);
-break;
-}
-return (er);
+    switch (typemethod)
+    {
+        case 0:
+            return hdisttoridgegrd(angfile,wfile,rtrfile,statmethod, 
+                    concheck,thresh,usew, prow, pcol);
+            break;
+        case 1:
+            return vrisetoridgegrd(angfile,felfile,rtrfile, 
+                    statmethod,concheck,thresh, prow, pcol);
+            break;
+        case 2:
+            return pdisttoridgegrd(angfile,felfile,wfile,rtrfile, 
+                    statmethod,usew,concheck,thresh, prow, pcol);
+            break;
+        case 3:
+            return sdisttoridgegrd(angfile,felfile,wfile,rtrfile, 
+                    statmethod,usew,concheck,thresh, prow, pcol);
+            break;
+    }
+
+    printf("Unknown typemethod\n");
+    return -1;
 }
 
 //*****************************//

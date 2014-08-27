@@ -65,29 +65,30 @@ float dist[9];
 
 //Calling function
 int dinfdistdown(char *angfile,char *felfile,char *slpfile,char *wfile,char *srcfile,
-				char *dtsfile,int statmethod,int typemethod,int usew, int concheck, int prow, int pcol)
+        char *dtsfile,int statmethod,int typemethod,int usew, int concheck, int prow, int pcol)
 {
-	int er;
-switch (typemethod)
-{
-case 0:
-	er=hdisttostreamgrd(angfile, wfile, srcfile, dtsfile, 
-					 statmethod,  usew,  concheck, prow, pcol);
-break;
-case 1:
-	er=vdroptostreamgrd(angfile, felfile, srcfile, dtsfile, 
-		 statmethod, concheck, prow, pcol);
-break;
-case 2:
-	er=pdisttostreamgrd(angfile, felfile, wfile, srcfile, dtsfile, 
-					 statmethod,  usew,  concheck, prow, pcol);
-break;
-case 3:
-	er=sdisttostreamgrd(angfile, felfile, wfile, srcfile, dtsfile, 
-					 statmethod,  usew,  concheck, prow, pcol);
-break;
-}
-return (er);
+    switch (typemethod)
+    {
+        case 0:
+            return hdisttostreamgrd(angfile, wfile, srcfile, dtsfile, 
+                    statmethod,  usew,  concheck, prow, pcol);
+            break;
+        case 1:
+            return vdroptostreamgrd(angfile, felfile, srcfile, dtsfile, 
+                    statmethod, concheck, prow, pcol);
+            break;
+        case 2:
+            return pdisttostreamgrd(angfile, felfile, wfile, srcfile, dtsfile, 
+                    statmethod,  usew,  concheck, prow, pcol);
+            break;
+        case 3:
+            return sdisttostreamgrd(angfile, felfile, wfile, srcfile, dtsfile, 
+                    statmethod,  usew,  concheck, prow, pcol);
+            break;
+    }
+
+    printf("Unknown typemethod\n");
+    return -1;
 }
 
 //*****************************//

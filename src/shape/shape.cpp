@@ -13,12 +13,8 @@ shape::shape( const shape & s )
 	topLeft = s.topLeft;
 	bottomRight = s.bottomRight;
 
-	allPoints.clear();
-
-	for( int i = 0; i < s.allPoints.size(); i++ )
-		allPoints.push_back( s.allPoints[i] );
-	for( int j = 0; j < s.shapeRecord.size(); j++ )
-		shapeRecord.push_back( s.shapeRecord[j] );
+    allPoints.assign(s.allPoints.begin(), s.allPoints.end());
+    shapeRecord.assign(s.shapeRecord.begin(), s.shapeRecord.end());
 }
 
 int shape::recordbyteLength()
@@ -40,7 +36,6 @@ bool shape::read( FILE * f, int & bytesRead )
 	//get content length -- BIG ENDIAN
 	fread(intbuf,sizeof(char),sizeof(int),f);
 	SwapEndian(intbuf,sizeof(int));
-	int recordLen = *(int*)intbuf;
 
 	bytesRead = sizeof(int);
 	bytesRead += sizeof(int);
@@ -57,7 +52,7 @@ shape shape::operator=( shape & s )
 
 	for( int i = 0; i < s.size(); i++ )
 		allPoints.push_back( s[i] );
-	for( int j = 0; j < s.shapeRecord.size(); j++ )
+	for(size_t j = 0; j < s.shapeRecord.size(); j++ )
 		shapeRecord.push_back( s.shapeRecord[j] );
 	
 	return *this;
@@ -178,7 +173,7 @@ void shape::writeRecordHeader( FILE * out, int recordNumber )
 
 void shape::bounds()
 {	
-	for( int i = 0; i < allPoints.size(); i++ )
+	for(size_t i = 0; i < allPoints.size(); i++)
 	{	api_point shapebottomRight = allPoints[i];
 		api_point shapetopLeft = allPoints[i];
 

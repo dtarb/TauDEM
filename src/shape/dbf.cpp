@@ -253,8 +253,12 @@ DBFHandle DBFOpen( const char * pszFilename, const char * pszAccess )
     psDBF = (DBFHandle) calloc( 1, sizeof(DBFInfo) );
     psDBF->fp = fopen( pszFullname, pszAccess );
     free( pszFullname );
-    if( psDBF->fp == NULL )
-        return( NULL );
+
+    if(psDBF->fp == NULL)
+    {
+        free(psDBF);
+        return NULL;
+    }
 
     psDBF->bNoHeader = FALSE;
     psDBF->nCurrentRecord = -1;
@@ -420,14 +424,20 @@ DBFHandle DBFCreate( const char * pszFilename )
 /* -------------------------------------------------------------------- */
     fp = fopen( pszFullname, "wb" );
     if( fp == NULL )
-        return( NULL );
+    {
+        free(pszFullname);
+        return NULL;
+    }
 
     fputc( 0, fp );
     fclose( fp );
 
     fp = fopen( pszFullname, "rb+" );
-    if( fp == NULL )
-        return( NULL );
+    if(fp == NULL)
+    {
+        free(pszFullname);
+        return NULL;
+    }
 
     free( pszFullname );
 
@@ -1035,8 +1045,8 @@ DBFHandle DBFCloneEmpty(DBFHandle psDBF, const char * pszFilename )
    memcpy ( newDBF->panFieldSize, psDBF->panFieldSize, sizeof(int) * psDBF->nFields );
    newDBF->panFieldDecimals = (int *) malloc ( sizeof(int) * psDBF->nFields );
    memcpy ( newDBF->panFieldDecimals, psDBF->panFieldDecimals, sizeof(int) * psDBF->nFields );
-   newDBF->pachFieldType = (char *) malloc ( sizeof(int) * psDBF->nFields );
-   memcpy ( newDBF->pachFieldType, psDBF->pachFieldType, sizeof(int) * psDBF->nFields );
+   newDBF->pachFieldType = (char *) malloc ( sizeof(char) * psDBF->nFields );
+   memcpy ( newDBF->pachFieldType, psDBF->pachFieldType, sizeof(char) * psDBF->nFields );
 
    newDBF->bNoHeader = TRUE;
    newDBF->bUpdated = TRUE;

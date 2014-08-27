@@ -464,7 +464,7 @@ long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, std::v
     MPI_Comm_rank(MCW, &rank);
 
     long k,in,jn;
-    bool doNothing, done;
+    bool doNothing;
     short tempShort;
     long numInc, numIncOld, numIncTotal;
 
@@ -481,7 +481,6 @@ long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, std::v
 
     //incfall - drain toward lower ground
     // Setting up while loop to calculate elev2 - the grid draining to lower ground
-    done = false;
     numIncOld = -1; //holds number of grid cells incremented on previous iteration
     //  use -1 to force inequality on first pass through
     short st = 1; // used to indicate the level to which elev2 has been incremented
@@ -595,14 +594,13 @@ long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, std::v
     linearpart<short> s(totalx, totaly, dx, dy, MPI_SHORT, 0);
 
     //incrise - drain away from higher ground
-    done = false;
     numIncOld = 0;
     if (rank == 0) {
         fprintf(stderr,"\nDraining flats away from higher adjacent terrain\n");
         fflush(stderr);
     }
 
-    while(!done) {
+    while(true) {
         numInc = 0;
         for (std::size_t iflat=0; iflat < flats.size(); iflat++) {
             node flat = flats[iflat];
@@ -642,7 +640,7 @@ long resolveflats(linearpart<float>& elevDEM, linearpart<short>& flowDir, std::v
         MPI_Allreduce(&numInc, &numIncTotal, 1, MPI_LONG, MPI_SUM, MCW);
 
         if (numIncTotal==numIncOld) {
-            done=true;
+            break;
         }
 
         numIncOld = numIncTotal;

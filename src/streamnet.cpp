@@ -82,78 +82,74 @@ void createStreamNetShapefile(char *streamnetshp)
 // Write shape from tardemlib.cpp
 int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *pointx, double *pointy, long np)
 {
-// Function to write stream network shapefile
+    // Function to write stream network shapefile
 
-shape * sh = new shp_polyline();
-double x,y,length,glength,x1,y1,xlast,ylast,usarea,dsarea,dslast,dl,drop,slope;
-int istart,iend,j;
+    shape * sh = new shp_polyline();
+    double x,y,length,glength,x1,y1,xlast,ylast,usarea,dsarea,dslast,dl,drop,slope;
+    
+    x1=pointx[0];
+    y1=pointy[0];
+    length=0.;
+    xlast=x1;
+    ylast=y1;
+    usarea=area[0];
+    dslast=usarea;
+    dsarea=usarea;
 
-istart=cnet[1];  //  start coord for first link
-iend=cnet[2];//  end coord for first link
-x1=pointx[0];
-y1=pointy[0];
-length=0.;
-xlast=x1;
-ylast=y1;
-usarea=area[0];
-dslast=usarea;
-dsarea=usarea;
-long prt = 0;
+    for(int j=0; j<np; j++)  //  loop over points
+    {
+        x=pointx[j];
+        y=pointy[j];
+        dl=sqrt((x-xlast)*(x-xlast)+(y-ylast)*(y-ylast));
+        if(dl > 0.)
+        {
+            length=length+dl;
+            xlast=x;  ylast=y;
+            dsarea=dslast;   // keeps track of last ds area
+            dslast=area[j];
+        }
 
-for(j=0; j<np; j++)  //  loop over points
-{
-x=pointx[j];
-y=pointy[j];
-dl=sqrt((x-xlast)*(x-xlast)+(y-ylast)*(y-ylast));
-if(dl > 0.)
-{
-length=length+dl;
-xlast=x;  ylast=y;
-dsarea=dslast;   // keeps track of last ds area
-dslast=area[j];
-}
+        api_point p(x,y);
+        sh ->insertPoint(p,0);
 
-api_point p(x,y);
-sh ->insertPoint(p,0);
+    }
+    if(np<2){   //  DGT 8/17/04 A polyline seems to require at least 2 data points
+        //  so where there was only one repeat it.
+        api_point p(x,y);
+        sh ->insertPoint(p,0);
 
-}
-if(np<2){   //  DGT 8/17/04 A polyline seems to require at least 2 data points
-//  so where there was only one repeat it.
-api_point p(x,y);
-sh ->insertPoint(p,0);
+    }
+    drop=elev[0]-elev[np-1];
+    slope=0.;
+    float dsdist=lengthd[np-1];
+    float usdist=lengthd[0];
+    float middist=(dsdist+usdist)*0.5;
+    if(length > 0.)slope=drop/length;
+    glength=sqrt((x-x1)*(x-x1)+(y-y1)*(y-y1));
 
-}
-drop=elev[0]-elev[np-1];
-slope=0.;
-float dsdist=lengthd[np-1];
-float usdist=lengthd[0];
-float middist=(dsdist+usdist)*0.5;
-if(length > 0.)slope=drop/length;
-glength=sqrt((x-x1)*(x-x1)+(y-y1)*(y-y1));
+    shp1.insertShape(sh,0);
+    cell v;
+    v.setValue((int)cnet[0]);                              shp1[0]->setCell(v,0);
+    v.setValue((int)cnet[3]);             shp1[0]->setCell(v,1);
+    v.setValue((int)cnet[4]);             shp1[0]->setCell(v,2);
+    v.setValue((int)cnet[5]);             shp1[0]->setCell(v,3);
+    v.setValue((int)cnet[7]);   shp1[0]->setCell(v,4);
+    v.setValue((int)cnet[6]);             shp1[0]->setCell(v,5);
+    v.setValue(length);                             shp1[0]->setCell(v,6);
+    v.setValue((int)cnet[8]);                                shp1[0]->setCell(v,7);
+    v.setValue(dsarea);                             shp1[0]->setCell(v,8);
+    v.setValue(drop);                               shp1[0]->setCell(v,9);
+    v.setValue(slope);                              shp1[0]->setCell(v,10);
+    v.setValue(glength);                    shp1[0]->setCell(v,11);
+    v.setValue(usarea);                             shp1[0]->setCell(v,12);
+    v.setValue((int)cnet[0]);                                 shp1[0]->setCell(v,13);
+    v.setValue(dsdist);                             shp1[0]->setCell(v,14);
+    v.setValue(usdist);                             shp1[0]->setCell(v,15);
+    v.setValue(middist);                    shp1[0]->setCell(v,16);
 
-shp1.insertShape(sh,0);
-cell v;
-v.setValue((int)cnet[0]);                              shp1[0]->setCell(v,0);
-v.setValue((int)cnet[3]);             shp1[0]->setCell(v,1);
-v.setValue((int)cnet[4]);             shp1[0]->setCell(v,2);
-v.setValue((int)cnet[5]);             shp1[0]->setCell(v,3);
-v.setValue((int)cnet[7]);   shp1[0]->setCell(v,4);
-v.setValue((int)cnet[6]);             shp1[0]->setCell(v,5);
-v.setValue(length);                             shp1[0]->setCell(v,6);
-v.setValue((int)cnet[8]);                                shp1[0]->setCell(v,7);
-v.setValue(dsarea);                             shp1[0]->setCell(v,8);
-v.setValue(drop);                               shp1[0]->setCell(v,9);
-v.setValue(slope);                              shp1[0]->setCell(v,10);
-v.setValue(glength);                    shp1[0]->setCell(v,11);
-v.setValue(usarea);                             shp1[0]->setCell(v,12);
-v.setValue((int)cnet[0]);                                 shp1[0]->setCell(v,13);
-v.setValue(dsdist);                             shp1[0]->setCell(v,14);
-v.setValue(usdist);                             shp1[0]->setCell(v,15);
-v.setValue(middist);                    shp1[0]->setCell(v,16);
+    //delete sh;  // DGT attempt to minimize memory leaks.  This causes a MPI error
 
-//delete sh;  // DGT attempt to minimize memory leaks.  This causes a MPI error
-
-return(0);
+    return(0);
 }
 
 struct Slink{
@@ -472,7 +468,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 		}
 		//  Indicate progress by about 10 dots per loop
 		long nque=que.size();
-		long deltaque=nque/10+10;  // + 10 to not give so many dots for small jobs
+		//long deltaque=nque/10+10;  // + 10 to not give so many dots for small jobs
 
 
 		if(verbose)
@@ -482,7 +478,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 		finished=false;
 		while(!finished){
 			bool linksToReceive=true;
-			nque=que.size(); //  used for indicating progress
+			//nque=que.size(); //  used for indicating progress
 			contribs->clearBorders();
 			while(!que.empty()){
 				t=que.front();
@@ -877,15 +873,11 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 
 		long **LinkIdU1U2DMagShapeidCoords;
 		double **LinkElevUElevDLength;
-		long *buf;
 		long *ptr;
 		int place;
-		int bsize = sizeof(long)+ MPI_BSEND_OVERHEAD;  
-		buf = new long[bsize];
 		getNumLinksAndPoints(myNumLinks,myNumPoints);
 		//MPI_Barrier(MCW);
 
-		i = 0;
 		if(myNumLinks > 0){
 			LinkIdU1U2DMagShapeidCoords = new long*[myNumLinks];
 			for(i=0;i<myNumLinks;i++)
@@ -930,9 +922,9 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 			//  Open shapefile
 			createStreamNetShapefile(streamnetshp);
 
-			long ndots=100/size+4;  // number of dots to print per process
-			long nextdot=0;
-			long dotinc=myNumLinks/ndots;
+			//long ndots=100/size+4;  // number of dots to print per process
+			//long nextdot=0;
+			//long dotinc=myNumLinks/ndots;
 
 			for(ilink=0;ilink<myNumLinks;ilink++){//only once per link
 				fprintf(fTreeOut,"\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",LinkIdU1U2DMagShapeidCoords[ilink][0],LinkIdU1U2DMagShapeidCoords[ilink][1],LinkIdU1U2DMagShapeidCoords[ilink][2],LinkIdU1U2DMagShapeidCoords[ilink][3],LinkIdU1U2DMagShapeidCoords[ilink][4],LinkIdU1U2DMagShapeidCoords[ilink][5],LinkIdU1U2DMagShapeidCoords[ilink][6],LinkIdU1U2DMagShapeidCoords[ilink][7],LinkIdU1U2DMagShapeidCoords[ilink][8]);
@@ -982,8 +974,8 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 				MPI_Recv(&procNumLinks,1,MPI_INT,i,0,MCW,&mystatus);//get points one at a time and print them to file
 				if(procNumLinks > 0)
 				{
-					dotinc=procNumLinks/ndots;  // For tracking progress
-					nextdot=0;
+					//dotinc=procNumLinks/ndots;  // For tracking progress
+					//nextdot=0;
 					for(ilink=0;ilink<procNumLinks;++ilink){
 						MPI_Recv(&treeBuf,9,MPI_LONG,i,1,MCW,&mystatus);
 						fprintf(fTreeOut,"\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",treeBuf[0],treeBuf[1]+numPointsPrinted,treeBuf[2]+numPointsPrinted,treeBuf[3],treeBuf[4],treeBuf[5],treeBuf[6],treeBuf[7],treeBuf[8]);
