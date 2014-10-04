@@ -64,6 +64,14 @@ struct node {
 
     node() {}
 	node(int x_, int y_): x(x_), y(y_) {}
+
+	bool operator==(const node &n) const {
+        return x == n.x && y == n.y;
+    }
+
+    bool operator<(const node &n) const {
+        return y < n.y || (y == n.y && x < n.x);
+    }
 };
 
 const double PI =  3.14159265359;
