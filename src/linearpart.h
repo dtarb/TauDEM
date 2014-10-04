@@ -48,8 +48,8 @@ email:  dtarb@usu.edu
 #include <cmath>
 #include <exception>
 
+#include "const.h"
 #include "partition.h"
-#include "commonLib.h"
 
 template <class datatype>
 class linearpart : public tdpartition {
@@ -120,8 +120,8 @@ linearpart<datatype>::~linearpart(){
 //dx and dy for the grid, MPI datatype (should match the template declaration), and noData value.
 template <class datatype>
 void linearpart<datatype>::init(long totalx, long totaly, double dx_in, double dy_in, MPI_Datatype MPIt, datatype nd){
-	MPI_Comm_rank(MCW,&rank);
-	MPI_Comm_size(MCW,&size);
+	MPI_Comm_rank(MCW, &rank);
+	MPI_Comm_size(MCW, &size);
 
 	//Store all the initialization variables in their appropriate places
 	this->totalx = totalx;
@@ -156,7 +156,7 @@ void linearpart<datatype>::init(long totalx, long totaly, double dx_in, double d
 		fprintf(stdout,"Memory allocation error during partition initialization in process %d.\n",rank);
 		fprintf(stdout,"NCols: %ld, NRows: %ld, NCells: %ld\n",nx,ny,prod);
 		fflush(stdout);
-		MPI_Abort(MCW,-999);
+		MPI_Abort(MCW, -999);
 	}
 
 	for(uint64_t j=0; j<nx; j++){
@@ -517,13 +517,9 @@ inline datatype linearpart<datatype>::getData(long x, long y)
     return gridData[x+y*nx];
 }
 
-
 //Returns the element in the grid with coordinate (x,y).
 template <class datatype>
-datatype linearpart<datatype>::getData(long inx, long iny, datatype &val) {
-	int64_t x, y;
-	x = inx;
-	y = iny;
+datatype linearpart<datatype>::getData(long x, long y, datatype &val) {
 //	if(isInPartition(x,y)) val = gridData[x+y*nx];
 	if(x>=0 && x<nx && y>=0 && y<ny) val = gridData[x+y*nx];
 	else if(x>=0 && x<nx){
@@ -535,10 +531,7 @@ datatype linearpart<datatype>::getData(long inx, long iny, datatype &val) {
 
 //Sets the element in the grid to the specified value.
 template <class datatype>
-void linearpart<datatype>::setData(long inx, long iny, datatype val){
-	int64_t x, y;
-	x = inx;
-	y = iny;
+void linearpart<datatype>::setData(long x, long y, datatype val){
 //	if(isInPartition(x,y)) gridData[x+y*nx] = val;
 	if(x>=0 && x<nx && y>=0 && y<ny) gridData[x+y*nx] = val;
 	else if(x>=0 && x<nx){
@@ -549,15 +542,12 @@ void linearpart<datatype>::setData(long inx, long iny, datatype val){
 
 //Increments the element in the grid by the specified value.
 template <class datatype>
-void linearpart<datatype>::addToData(long inx, long iny, datatype val){
-	int64_t x, y;
-	x = inx;
-	y = iny;
-//	if(isInPartition(x,y)) gridData[x+y*nx] += val;
-	if(x>=0 && x<nx && y>=0 && y<ny) gridData[x+y*nx] += val;
-	else if(x>=0 && x<nx){
-		if(y==-1) topBorder[x] += val;
-		else if(y==ny) bottomBorder[x] += val;
-	}
+inline void linearpart<datatype>::addToData(long x, long y, datatype val) {
+    gridData[x+y*nx] += val;
+
+#if NDEBUG
+    if (!isInPartition(x, y))
+        printf("Invalid addToData(%l, %l, %d) call\n", x, y, val);
+#endif
 }
 #endif
