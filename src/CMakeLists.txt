@@ -3,6 +3,8 @@ find_package(MPI REQUIRED)
 set(CMAKE_CXX_COMPILE_FLAGS ${CMAKE_CXX_COMPILE_FLAGS} ${MPI_CXX_COMPILE_FLAGS})
 set(CMAKE_CXX_LINK_FLAGS ${CMAKE_CXX_LINK_FLAGS} ${MPI_CXX_LINK_FLAGS})
 
+add_definitions(-std=c++11)
+
 include_directories(${MPI_CXX_INCLUDE_PATH})
 link_libraries(${MPI_CXX_LIBRARIES})
 

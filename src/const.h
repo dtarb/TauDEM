@@ -74,7 +74,7 @@ struct node {
     }
 };
 
-const double PI =  3.14159265359;
+const double PI = 3.14159265359;
 const short MISSINGSHORT = -32768;
 const long MISSINGLONG = -2147483647;
 const float MISSINGFLOAT = -1*FLT_MAX;
