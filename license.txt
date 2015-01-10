@@ -1,0 +1,32 @@
+Copyright (C) 2014  David Tarboton, Utah State University
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License 
+version 3, 2007 as published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+A copy of the full GNU General Public License is included in file 
+GPLv3license.txt. This is also available at:
+http://www.gnu.org/copyleft/gpl.html.
+
+TauDEM may also be available under alternative licenses (multi licensing model).  
+This is so that it may be sold or licensed for use in proprietary applications.
+If you wish to use or incorporate this program (or parts of it) into 
+other software that does not meet the GNU General Public License 
+conditions contact the author to discuss a licensing agreement.
+David G. Tarboton  
+Utah State University 
+8200 Old Main Hill 
+Logan, UT 84322-8200 
+USA 
+http://www.engineering.usu.edu/dtarb/ 
+email:  dtarb@usu.edu 
+
+If you contribute code to this repository you grant permission for the copyright for 
+the code you contribute to be assigned to  David Tarboton, Utah State University and 
+distributed according to the GPL license above and any other licensing agreement that 
+he may choose.
