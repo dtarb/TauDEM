@@ -96,7 +96,7 @@ class tiffIO{
 		~tiffIO();
 		//read and write functions
 		void read(long xstart, long ystart, long numRows, long numCols, void* dest);
-		void write(long xstart, long ystart, long numRows, long numCols, void* source,char prefix[],int prow, int pcol);
+		void write(long xstart, long ystart, long numRows, long numCols, void* source, const char *prefix, int prow, int pcol);
 		
 		//Analisys functions
 		bool compareTiff(const tiffIO &comp);

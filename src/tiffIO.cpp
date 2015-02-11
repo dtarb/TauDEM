@@ -408,154 +408,154 @@ void tiffIO::read(long xstart, long ystart, long numRows, long numCols, void* de
 }
 
 //Create/re-write tiff output file
-void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* source,char prefix[],int prow,int pcol) {
-//write output files.
-	xsize = 0;
-	ysize = 0;
-	tifFile *outFile;
-	bool byPartition = false;
-	if(prow>0 && pcol>0)
-		byPartition = true;
-	long tempXleft = 0, tempYtop = 0;
-	if(byPartition == true){
+void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* source, const char *prefix, int prow, int pcol)
+{
+    xsize = 0;
+    ysize = 0;
+    tifFile *outFile;
 
-		
-	//filex and filey are size of partiton.
-	fileX = gTotalX;
-	fileY = gTotalY / size;
+    bool byPartition = false;
+
+    if(prow>0 && pcol>0)
+        byPartition = true;
+
+    if(byPartition == true){
+        //filex and filey are size of partiton.
+        fileX = gTotalX;
+        fileY = gTotalY / size;
         if(rank == size -1)
-        	fileY += (gTotalY - size*((long)(gTotalY / size)));
-	//make filex and file y size of file wanted
-	int numXFiles = pcol;
-	int numYFiles = prow;
-	fileX = fileX/numXFiles;
-	fileY = fileY/numYFiles;
+            fileY += (gTotalY - size*((long)(gTotalY / size)));
+        //make filex and file y size of file wanted
+        int numXFiles = pcol;
+        int numYFiles = prow;
+        fileX = fileX/numXFiles;
+        fileY = fileY/numYFiles;
 
-	PYS = rank * (gTotalY / size) + 0;
-	PYE = PYS + gTotalY / size;
-	if(rank == size -1)
-		PYE += (gTotalY - size*((long)(gTotalY / size)));
-	long numY = PYE-PYS;
-	for(int i = 0; i < gTotalX / fileX ; i++){
-		for(int j = 0; j < numY / fileY ; j++){
-			//calculate the number of x and y values to write to the file.
-			if(fileX*(i+1) - gTotalX < 0)// while xfile
-				xsize = fileX;
-			else if(fileX*(i+1) == gTotalX)//exact size, no more x files
-				xsize = fileX ;
-			else if(fileX*(i+1) - gTotalX  > 0)//remainder file size
-				xsize = fileX - (fileX*(i+1) - gTotalX); 
-			if(i == numXFiles-1)
-				xsize = fileX + gTotalX%fileX;//%numXFiles;
+        PYS = rank * (gTotalY / size) + 0;
+        PYE = PYS + gTotalY / size;
+        if(rank == size -1)
+            PYE += (gTotalY - size*((long)(gTotalY / size)));
+        long numY = PYE-PYS;
+        for(int i = 0; i < gTotalX / fileX ; i++){
+            for(int j = 0; j < numY / fileY ; j++){
+                //calculate the number of x and y values to write to the file.
+                if(fileX*(i+1) - gTotalX < 0)// while xfile
+                    xsize = fileX;
+                else if(fileX*(i+1) == gTotalX)//exact size, no more x files
+                    xsize = fileX ;
+                else if(fileX*(i+1) - gTotalX  > 0)//remainder file size
+                    xsize = fileX - (fileX*(i+1) - gTotalX); 
+                if(i == numXFiles-1)
+                    xsize = fileX + gTotalX%fileX;//%numXFiles;
 
-			if(fileY*(j+1) - numY < 0)// while yfile
-				ysize = fileY;
-			else if(fileY*(j+1) == numY)//exact size, no more y files
-				ysize = fileY;
-			else if(fileY*(j+1) - numY > 0)//remainder file size
-				ysize = fileY - (fileY*(j+1) - numY); 
-			if(j == numYFiles-1)
-				ysize = fileY + numY%fileY;//;numYFiles;
+                if(fileY*(j+1) - numY < 0)// while yfile
+                    ysize = fileY;
+                else if(fileY*(j+1) == numY)//exact size, no more y files
+                    ysize = fileY;
+                else if(fileY*(j+1) - numY > 0)//remainder file size
+                    ysize = fileY - (fileY*(j+1) - numY); 
+                if(j == numYFiles-1)
+                    ysize = fileY + numY%fileY;//;numYFiles;
 
-			FYS = PYS+fileY*j;
-			FYE = FYS + ysize;
+                FYS = PYS+fileY*j;
+                FYE = FYS + ysize;
 
-			//if file has information to be written write it.
-			char outName[NAME_MAX];
-			strncpy(outName,dirn,NAME_MAX);
-			char buff[40];//biggest at zz
-			strncat(outName,"/",2);//add trailing slash.
-			strcat(outName,prefix);
-			sprintf(buff,"p%d",rank);//TODO - out put in format (char)(char)(num).tif
-			strcat(outName,buff);
-			sprintf(buff,"r%d",j);//TODO - out put in format (char)(char)(num).tif
-			strcat(outName,buff);
-			sprintf(buff,"c%d",i);
-			strcat(outName,buff);
-			strcat(outName, ".tif");
+                //if file has information to be written write it.
+                char outName[NAME_MAX];
+                strncpy(outName,dirn,NAME_MAX);
+                char buff[40];//biggest at zz
+                strncat(outName,"/",2);//add trailing slash.
+                strcat(outName,prefix);
+                sprintf(buff,"p%d",rank);//TODO - out put in format (char)(char)(num).tif
+                strcat(outName,buff);
+                sprintf(buff,"r%d",j);//TODO - out put in format (char)(char)(num).tif
+                strcat(outName,buff);
+                sprintf(buff,"c%d",i);
+                strcat(outName,buff);
+                strcat(outName, ".tif");
 
-			outFile = new tifFile(outName, datatype, nodata, *IOfiles[0]);
-			outFile->setTotalXYtopYleftX(xsize, ysize, xleft + i * fileX * dx, ytop - PYS * dy - j * fileY * dy);
-			if(PYS >= FYS && PYE < FYE)
-			{//part is contained in the y coords being writtin to file.
-				outFile->write(0, PYS - FYS, PYE - PYS, xsize, source,i * fileX, gTotalX, byPartition);//ysize - (PYS - FYS) - (FYE - PYE)
-			}else if(PYS >= FYS && PYS < FYE && PYE >= FYE)
-			{//top part of part in file
-				outFile->write(0,PYS - FYS, FYE - PYS, xsize, source, i * fileX, gTotalX, byPartition); //ysize - (PYS - FYS)
-			}else if(PYS < FYS && FYS < PYE && PYE < FYE)
-			{//bottum of part in file
-				outFile->write(0, 0, PYE - FYS, xsize, source, (FYS - PYS) * gTotalX + i * fileX, gTotalX, byPartition);//ysize - (FYS - PYS)
-			}else if(PYS < FYS && FYE <= PYE)
-			{//the files y coords are contained in this part.
-				outFile->write(0, 0, FYE - FYS, xsize, source, (FYS - PYS) * gTotalX + i * fileX, gTotalX, byPartition);//ysize
-			}else{//this part has no data for this file
-				;//do nothing
-			}
-			delete outFile;
+                outFile = new tifFile(outName, datatype, nodata, *IOfiles[0]);
+                outFile->setTotalXYtopYleftX(xsize, ysize, xleft + i * fileX * dx, ytop - PYS * dy - j * fileY * dy);
+                if(PYS >= FYS && PYE < FYE)
+                {//part is contained in the y coords being writtin to file.
+                    outFile->write(0, PYS - FYS, PYE - PYS, xsize, source,i * fileX, gTotalX, byPartition);//ysize - (PYS - FYS) - (FYE - PYE)
+                }else if(PYS >= FYS && PYS < FYE && PYE >= FYE)
+                {//top part of part in file
+                    outFile->write(0,PYS - FYS, FYE - PYS, xsize, source, i * fileX, gTotalX, byPartition); //ysize - (PYS - FYS)
+                }else if(PYS < FYS && FYS < PYE && PYE < FYE)
+                {//bottum of part in file
+                    outFile->write(0, 0, PYE - FYS, xsize, source, (FYS - PYS) * gTotalX + i * fileX, gTotalX, byPartition);//ysize - (FYS - PYS)
+                }else if(PYS < FYS && FYE <= PYE)
+                {//the files y coords are contained in this part.
+                    outFile->write(0, 0, FYE - FYS, xsize, source, (FYS - PYS) * gTotalX + i * fileX, gTotalX, byPartition);//ysize
+                }else{//this part has no data for this file
+                    ;//do nothing
+                }
+                delete outFile;
 
-		}
-	}
-	}else{
-	for(int i = 0; i < gTotalX / fileX + 1; i++){
-		for(int j = 0; j < gTotalY / fileY + 1; j++){
-			//calculate the number of x and y values to write to the file.
-			if(fileX*(i+1) - gTotalX < 0)// while xfile
-				xsize = fileX;
-			else if(fileX*(i+1) == gTotalX)//exact size, no more x files
-				xsize = fileX ;
-			else if(fileX*(i+1) - gTotalX  > 0)//remainder file size
-				xsize = fileX - (fileX*(i+1) - gTotalX); 
+            }
+        }
+    }else{
+        for(int i = 0; i < gTotalX / fileX + 1; i++){
+            for(int j = 0; j < gTotalY / fileY + 1; j++){
+                //calculate the number of x and y values to write to the file.
+                if(fileX*(i+1) - gTotalX < 0)// while xfile
+                    xsize = fileX;
+                else if(fileX*(i+1) == gTotalX)//exact size, no more x files
+                    xsize = fileX ;
+                else if(fileX*(i+1) - gTotalX  > 0)//remainder file size
+                    xsize = fileX - (fileX*(i+1) - gTotalX); 
 
-			if(fileY*(j+1) - gTotalY < 0)// while yfile
-				ysize = fileY;
-			else if(fileY*(j+1) == gTotalY)//exact size, no more y files
-				ysize = fileY;
-			else if(fileY*(j+1) - gTotalY > 0)//remainder file size
-				ysize = fileY - (fileY*(j+1) - gTotalY); 
-			
-			PYS = rank * (gTotalY / size) + 0;
-			PYE = PYS + gTotalY / size;
-			if(rank == size -1)
-				PYE += (gTotalY - size*((long)(gTotalY / size)));
-			FYS = fileY*j;
-			FYE = FYS + ysize;
-			if(ysize ==0 || xsize == 0)
-				continue;// exact break condition.  TODO- use Dr. Tarbotons arithmatic in for loops instead.
+                if(fileY*(j+1) - gTotalY < 0)// while yfile
+                    ysize = fileY;
+                else if(fileY*(j+1) == gTotalY)//exact size, no more y files
+                    ysize = fileY;
+                else if(fileY*(j+1) - gTotalY > 0)//remainder file size
+                    ysize = fileY - (fileY*(j+1) - gTotalY); 
 
-			//if file has information to be written write it.
-			char outName[NAME_MAX];
-			strncpy(outName,dirn,NAME_MAX);
-			char buff[40];//biggest at zz
-			strncat(outName,"/",2);//add trailing slash.
-			strcat(outName,prefix);
-			sprintf(buff,"r%d",j);//TODO - out put in format (char)(char)(num).tif
-			strcat(outName,buff);
-			sprintf(buff,"c%d",i);
-			strcat(outName,buff);
-			strcat(outName, ".tif");
+                PYS = rank * (gTotalY / size) + 0;
+                PYE = PYS + gTotalY / size;
+                if(rank == size -1)
+                    PYE += (gTotalY - size*((long)(gTotalY / size)));
+                FYS = fileY*j;
+                FYE = FYS + ysize;
+                if(ysize ==0 || xsize == 0)
+                    continue;// exact break condition.  TODO- use Dr. Tarbotons arithmatic in for loops instead.
 
-			outFile = new tifFile(outName, datatype, nodata, *IOfiles[0]);
-			outFile->setTotalXYtopYleftX(xsize, ysize, xleft + i * fileX * dx, ytop - j * fileY * dy);
-			if(PYS >= FYS && PYE < FYE)
-			{//part is contained in the y coords being writtin to file.
-				outFile->write(0, PYS - FYS, PYE - PYS, xsize, source,i * fileX, gTotalX, byPartition);//ysize - (PYS - FYS) - (FYE - PYE)
-			}else if(PYS >= FYS && PYS < FYE && PYE >= FYE)
-			{//top part of part in file
-				outFile->write(0,PYS - FYS, FYE - PYS, xsize, source, i * fileX, gTotalX, byPartition); //ysize - (PYS - FYS)
-			}else if(PYS < FYS && FYS < PYE && PYE < FYE)
-			{//bottum of part in file
-				outFile->write(0, 0, PYE - FYS, xsize, source, (FYS - PYS) * gTotalX + i * fileX, gTotalX, byPartition);//ysize - (FYS - PYS)
-			}else if(PYS < FYS && FYE <= PYE)
-			{//the files y coords are contained in this part.
-				outFile->write(0, 0, FYE - FYS, xsize, source, (FYS - PYS) * gTotalX + i * fileX, gTotalX, byPartition);//ysize
-			}else{//this part has no data for this file
-				outFile->write(0, 0, 0, 0, source, 0, 0,byPartition);//so process 0 will write out the header.
-			}
-			delete outFile;
+                //if file has information to be written write it.
+                char outName[NAME_MAX];
+                strncpy(outName,dirn,NAME_MAX);
+                char buff[40];//biggest at zz
+                strncat(outName,"/",2);//add trailing slash.
+                strcat(outName,prefix);
+                sprintf(buff,"r%d",j);//TODO - out put in format (char)(char)(num).tif
+                strcat(outName,buff);
+                sprintf(buff,"c%d",i);
+                strcat(outName,buff);
+                strcat(outName, ".tif");
 
-		}
-	}
-	}
+                outFile = new tifFile(outName, datatype, nodata, *IOfiles[0]);
+                outFile->setTotalXYtopYleftX(xsize, ysize, xleft + i * fileX * dx, ytop - j * fileY * dy);
+                if(PYS >= FYS && PYE < FYE)
+                {//part is contained in the y coords being writtin to file.
+                    outFile->write(0, PYS - FYS, PYE - PYS, xsize, source,i * fileX, gTotalX, byPartition);//ysize - (PYS - FYS) - (FYE - PYE)
+                }else if(PYS >= FYS && PYS < FYE && PYE >= FYE)
+                {//top part of part in file
+                    outFile->write(0,PYS - FYS, FYE - PYS, xsize, source, i * fileX, gTotalX, byPartition); //ysize - (PYS - FYS)
+                }else if(PYS < FYS && FYS < PYE && PYE < FYE)
+                {//bottum of part in file
+                    outFile->write(0, 0, PYE - FYS, xsize, source, (FYS - PYS) * gTotalX + i * fileX, gTotalX, byPartition);//ysize - (FYS - PYS)
+                }else if(PYS < FYS && FYE <= PYE)
+                {//the files y coords are contained in this part.
+                    outFile->write(0, 0, FYE - FYS, xsize, source, (FYS - PYS) * gTotalX + i * fileX, gTotalX, byPartition);//ysize
+                }else{//this part has no data for this file
+                    outFile->write(0, 0, 0, 0, source, 0, 0,byPartition);//so process 0 will write out the header.
+                }
+                delete outFile;
+
+            }
+        }
+    }
 }
 
 bool tiffIO::compareTiff(const tiffIO &comp){
