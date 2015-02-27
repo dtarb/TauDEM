@@ -1,121 +1,267 @@
-#  This file used for make on the CSDMS system
+#############################################################
+# CMake settings
+
+CMAKE_MINIMUM_REQUIRED(VERSION 2.6.0)
+
+SET(CMAKE_COLOR_MAKEFILE ON)
+SET(BUILD_SHARED_LIBS OFF)
+
+#############################################################
+# search for dependencies
+FIND_PACKAGE(MPI REQUIRED)
+IF (NOT MPI_CXX_FOUND)
+  MESSAGE(FATAL_ERROR "Couldn't find MPI CXX compiler")
+ENDIF (NOT MPI_CXX_FOUND)
+
+#############################################################
+# SHAPE_SRCS includes all files in the shapefile library
+# These should be compiled using the makefile in the shape directory
+SET(SHAPE_SRCS
+  shape/cell.cpp
+  shape/dbf.cpp
+  shape/exception.cpp
+  shape/field.cpp
+  shape/item.cpp
+  shape/point.cpp
+  shape/record.cpp
+  shape/shape.cpp
+  shape/shapefile.cpp
+  shape/shapemain.cpp
+  shape/shp_point.cpp
+  shape/shp_polygon.cpp
+  shape/shp_polyline.cpp
+  shape/ReadOutlets.cpp
+)
+
+#############################################################
+# COMMON_SRCS includes classes, structures, and constants common to all files
+SET(COMMON_SRCS
+  commonLib.cpp
+  tiffIO.cpp
+  tifFile.cpp
+)
+
+#############################################################
 #
-cmake_minimum_required(VERSION 2.6)
 
-set (BUILD_SHARED_LIBS OFF)
+SET(D8FILES
+  aread8mn.cpp
+  aread8.cpp
+  ${COMMON_SRCS}
+  ${SHAPE_SRCS}
+)
 
-#SHAPEFILES includes all files in the shapefile library
-#These should be compiled using the makefile in the shape directory
-set (shape_srcs
-     shape/cell.cpp
-     shape/dbf.cpp
-     shape/exception.cpp
-     shape/field.cpp
-     shape/item.cpp
-     shape/point.cpp
-     shape/record.cpp
-     shape/shape.cpp
-     shape/shapefile.cpp
-     shape/shapemain.cpp
-     shape/shp_point.cpp
-     shape/shp_polygon.cpp
-     shape/shp_polyline.cpp
-     shape/ReadOutlets.cpp)
+SET(DINFFILES
+  areadinfmn.cpp
+  areadinf.cpp
+  ${COMMON_SRCS}
+  ${SHAPE_SRCS}
+)
 
-#OBJFILES includes classes, structures, and constants common to all files
-set (common_srcs commonLib.cpp tiffIO.cpp tifFile.cpp)
+SET(D8
+  D8FlowDirmn.cpp
+  d8.cpp
+  Node.cpp
+  ${COMMON_SRCS}
+  ${SHAPE_SRCS}
+)
 
-set (D8FILES aread8mn.cpp aread8.cpp ${common_srcs} ${shape_srcs})
-set (DINFFILES areadinfmn.cpp areadinf.cpp
-     ${common_srcs} ${shape_srcs})
-set (D8 D8FlowDirmn.cpp d8.cpp Node.cpp ${common_srcs} ${shape_srcs})
-set (D8EXTREAMUP D8flowpathextremeup.cpp D8FlowPathExtremeUpmn.cpp
-     ${common_srcs} ${shape_srcs})
-set (D8HDIST D8HDistToStrm.cpp D8HDistToStrmmn.cpp ${common_srcs})
-set (DINFAVA DinfAvalanche.cpp DinfAvalanchemn.cpp ${common_srcs})
-set (DINFCONCLIM DinfConcLimAccum.cpp DinfConcLimAccummn.cpp
-     ${common_srcs} ${shape_srcs})
-set (DINFDECAY dinfdecayaccum.cpp DinfDecayAccummn.cpp
-     ${common_srcs} ${shape_srcs})
-set (DINFDISTDOWN DinfDistDown.cpp DinfDistDownmn.cpp ${common_srcs})
-set (DINFDISTUP DinfDistUp.cpp DinfDistUpmn.cpp ${common_srcs})
-set (DINF DinfFlowDirmn.cpp dinf.cpp Node.cpp
-     ${common_srcs} ${shape_srcs})
-set (DINFREVACCUM DinfRevAccum.cpp DinfRevAccummn.cpp ${common_srcs})
-set (DINFTRANSLIMACCUM DinfTransLimAccum.cpp DinfTransLimAccummn.cpp
-     ${common_srcs} ${shape_srcs})
-set (DINFUPDEPEND DinfUpDependence.cpp DinfUpDependencemn.cpp ${common_srcs})
-set (DROPANALYSISFILES DropAnalysis.cpp DropAnalysismn.cpp
-     ${common_srcs} ${shape_srcs})
-set (GRIDNET gridnetmn.cpp gridnet.cpp
-     ${common_srcs} ${shape_srcs})
-set (LENGTHAREA LengthArea.cpp LengthAreamn.cpp ${common_srcs})
-set (MVOUTLETSTOSTRMFILES MoveOutletsToStrm.cpp MoveOutletsToStrmmn.cpp
-     ${common_srcs} ${shape_srcs})
-set (PEUKERDOUGLAS PeukerDouglas.cpp PeukerDouglasmn.cpp ${common_srcs})
-set (PITREMOVE flood.cpp PitRemovemn.cpp ${common_srcs})
-set (SLOPEAREA SlopeArea.cpp SlopeAreamn.cpp ${common_srcs})
-set (SLOPEAREARATIO SlopeAreaRatio.cpp SlopeAreaRatiomn.cpp ${common_srcs})
-set (SLOPEAVEDOWN SlopeAveDown.cpp SlopeAveDownmn.cpp ${common_srcs})
-set (STREAMNET streamnetmn.cpp streamnet.cpp
-     ${common_srcs} ${shape_srcs})
-set (THRESHOLD Threshold.cpp Thresholdmn.cpp ${common_srcs})
-#set (READTIFFILES ReadTif.cpp ReadTifmn.cpp ${common_srcs})
+SET(D8EXTREAMUP
+  D8flowpathextremeup.cpp
+  D8FlowPathExtremeUpmn.cpp
+  ${COMMON_SRCS}
+  ${SHAPE_SRCS}
+)
 
+SET(D8HDIST
+  D8HDistToStrm.cpp
+  D8HDistToStrmmn.cpp
+  ${COMMON_SRCS}
+)
 
-add_executable (aread8 ${D8FILES})
-add_executable (areadinf ${DINFFILES})
-add_executable (d8flowdir ${D8})
-add_executable (d8flowpathextremeup ${D8EXTREAMUP})
-add_executable (d8hdisttostrm ${D8HDIST})
-add_executable (dinfavalanche ${DINFAVA})
-add_executable (dinfconclimaccum ${DINFCONCLIM})
-add_executable (dinfdecayaccum ${DINFDECAY})
-add_executable (dinfdistdown ${DINFDISTDOWN})
-add_executable (dinfdistup ${DINFDISTUP})
-add_executable (dinfflowdir ${DINF})
-add_executable (dinfrevaccum ${DINFREVACCUM})
-add_executable (dinftranslimaccum ${DINFTRANSLIMACCUM})
-add_executable (dinfupdependence ${DINFUPDEPEND})
-add_executable (dropanalysis ${DROPANALYSISFILES})
-add_executable (gridnet ${GRIDNET})
-add_executable (lengtharea ${LENGTHAREA})
-add_executable (moveoutletstostrm ${MVOUTLETSTOSTRMFILES})
-add_executable (peukerdouglas ${PEUKERDOUGLAS})
-add_executable (pitremove ${PITREMOVE})
-add_executable (slopearea ${SLOPEAREA})
-add_executable (slopearearatio ${SLOPEAREARATIO})
-add_executable (slopeavedown ${SLOPEAVEDOWN})
-add_executable (streamnet ${STREAMNET})
-add_executable (threshold ${THRESHOLD})
-#add_executable (ReadTif ${READTIFFILES})
-#add_executable (compare ${OBJFILES} compare.cpp)
-#add_executable (extract ${OBJFILES} extract.cpp)
+SET(DINFAVA
+  DinfAvalanche.cpp
+  DinfAvalanchemn.cpp
+  ${COMMON_SRCS}
+)
 
-install(TARGETS aread8 
-                areadinf
-                d8flowdir
-                d8flowpathextremeup
-                d8hdisttostrm
-                dinfavalanche
-                dinfconclimaccum
-                dinfdecayaccum
-                dinfdistdown
-                dinfdistup
-                dinfflowdir
-                dinfrevaccum
-                dinftranslimaccum
-                dinfupdependence
-                dropanalysis
-                gridnet
-                lengtharea
-                moveoutletstostrm
-                peukerdouglas
-                pitremove
-                slopearea
-                slopearearatio
-                slopeavedown
-                streamnet
-                threshold
-        DESTINATION bin)
+SET(DINFCONCLIM
+  DinfConcLimAccum.cpp
+  DinfConcLimAccummn.cpp
+  ${COMMON_SRCS}
+  ${SHAPE_SRCS}
+)
 
+SET(DINFDECAY
+  dinfdecayaccum.cpp
+  DinfDecayAccummn.cpp
+  ${COMMON_SRCS}
+  ${SHAPE_SRCS}
+)
+
+SET(DINFDISTDOWN
+  DinfDistDown.cpp
+  DinfDistDownmn.cpp
+  ${COMMON_SRCS}
+)
+
+SET(DINFDISTUP
+  DinfDistUp.cpp
+  DinfDistUpmn.cpp
+  ${COMMON_SRCS}
+)
+
+SET(DINF
+  DinfFlowDirmn.cpp
+  dinf.cpp
+  Node.cpp
+  ${COMMON_SRCS}
+  ${SHAPE_SRCS}
+)
+
+SET(DINFREVACCUM
+  DinfRevAccum.cpp
+  DinfRevAccummn.cpp
+  ${COMMON_SRCS}
+)
+
+SET(DINFTRANSLIMACCUM
+  DinfTransLimAccum.cpp
+  DinfTransLimAccummn.cpp
+  ${COMMON_SRCS}
+  ${SHAPE_SRCS}
+)
+
+SET(DINFUPDEPEND
+  DinfUpDependence.cpp
+  DinfUpDependencemn.cpp
+  ${COMMON_SRCS}
+)
+
+SET(DROPANALYSISFILES
+  DropAnalysis.cpp
+  DropAnalysismn.cpp
+  ${COMMON_SRCS}
+  ${SHAPE_SRCS}
+)
+
+SET(GRIDNET
+  gridnetmn.cpp
+  gridnet.cpp
+  ${COMMON_SRCS}
+  ${SHAPE_SRCS}
+)
+
+SET(LENGTHAREA
+  LengthArea.cpp
+  LengthAreamn.cpp
+  ${COMMON_SRCS}
+)
+
+SET(MVOUTLETSTOSTRMFILES
+  MoveOutletsToStrm.cpp
+  MoveOutletsToStrmmn.cpp
+  ${COMMON_SRCS}
+  ${SHAPE_SRCS}
+)
+
+SET(PEUKERDOUGLAS
+  PeukerDouglas.cpp
+  PeukerDouglasmn.cpp
+  ${COMMON_SRCS}
+)
+
+SET(PITREMOVE
+  flood.cpp
+  PitRemovemn.cpp
+  ${COMMON_SRCS}
+)
+
+SET(SLOPEAREA
+  SlopeArea.cpp
+  SlopeAreamn.cpp
+  ${COMMON_SRCS}
+)
+
+SET(SLOPEAREARATIO
+  SlopeAreaRatio.cpp
+  SlopeAreaRatiomn.cpp
+  ${COMMON_SRCS}
+)
+
+SET(SLOPEAVEDOWN
+  SlopeAveDown.cpp
+  SlopeAveDownmn.cpp
+  ${COMMON_SRCS}
+)
+
+SET(STREAMNET
+  streamnetmn.cpp
+  streamnet.cpp
+  ${COMMON_SRCS}
+  ${SHAPE_SRCS}
+)
+
+SET(THRESHOLD
+  Threshold.cpp
+  Thresholdmn.cpp
+  ${COMMON_SRCS}
+)
+
+#############################################################
+# TauDEM tools
+ADD_EXECUTABLE(aread8 ${D8FILES})
+ADD_EXECUTABLE(areadinf ${DINFFILES})
+ADD_EXECUTABLE(d8flowdir ${D8})
+ADD_EXECUTABLE(d8flowpathextremeup ${D8EXTREAMUP})
+ADD_EXECUTABLE(d8hdisttostrm ${D8HDIST})
+ADD_EXECUTABLE(dinfavalanche ${DINFAVA})
+ADD_EXECUTABLE(dinfconclimaccum ${DINFCONCLIM})
+ADD_EXECUTABLE(dinfdecayaccum ${DINFDECAY})
+ADD_EXECUTABLE(dinfdistdown ${DINFDISTDOWN})
+ADD_EXECUTABLE(dinfdistup ${DINFDISTUP})
+ADD_EXECUTABLE(dinfflowdir ${DINF})
+ADD_EXECUTABLE(dinfrevaccum ${DINFREVACCUM})
+ADD_EXECUTABLE(dinftranslimaccum ${DINFTRANSLIMACCUM})
+ADD_EXECUTABLE(dinfupdependence ${DINFUPDEPEND})
+ADD_EXECUTABLE(dropanalysis ${DROPANALYSISFILES})
+ADD_EXECUTABLE(gridnet ${GRIDNET})
+ADD_EXECUTABLE(lengtharea ${LENGTHAREA})
+ADD_EXECUTABLE(moveoutletstostrm ${MVOUTLETSTOSTRMFILES})
+ADD_EXECUTABLE(peukerdouglas ${PEUKERDOUGLAS})
+ADD_EXECUTABLE(pitremove ${PITREMOVE})
+ADD_EXECUTABLE(slopearea ${SLOPEAREA})
+ADD_EXECUTABLE(slopearearatio ${SLOPEAREARATIO})
+ADD_EXECUTABLE(slopeavedown ${SLOPEAVEDOWN})
+ADD_EXECUTABLE(streamnet ${STREAMNET})
+ADD_EXECUTABLE(threshold ${THRESHOLD})
+
+#############################################################
+# Install
+INSTALL(TARGETS
+  aread8
+  areadinf
+  d8flowdir
+  d8flowpathextremeup
+  d8hdisttostrm
+  dinfavalanche
+  dinfconclimaccum
+  dinfdecayaccum
+  dinfdistdown
+  dinfdistup
+  dinfflowdir
+  dinfrevaccum
+  dinftranslimaccum
+  dinfupdependence
+  dropanalysis
+  gridnet
+  lengtharea
+  moveoutletstostrm
+  peukerdouglas
+  pitremove
+  slopearea
+  slopearearatio
+  slopeavedown
+  streamnet
+  threshold
+DESTINATION bin)
