@@ -67,7 +67,7 @@ char * item::StringValue()
 {	if( itemStringValue != NULL )
 		return itemStringValue;
 	else
-		return "";
+		return (char *)"";
 }
 
 int item::IntegerValue()

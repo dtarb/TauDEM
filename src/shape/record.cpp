@@ -68,7 +68,7 @@ char * record::StringValue()
 {	if( recordStringValue != NULL )
 		return recordStringValue;
 	else
-		return "";
+		return (char *)"";
 }
 
 int record::IntegerValue()
