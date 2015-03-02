@@ -68,7 +68,7 @@ char * cell::StringValue()
 {	if( cellStringValue != NULL )
 		return cellStringValue;
 	else
-		return "";
+		return (char *)"";
 }
 
 int cell::IntegerValue()
