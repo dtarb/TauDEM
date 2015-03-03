@@ -145,6 +145,13 @@ SET(DROPANALYSISFILES
   ${SHAPE_SRCS}
 )
 
+SET(GAGEWATERSHED
+  gagewatershed.cpp
+  gagewatershedmn.cpp
+  ${COMMON_SRCS}
+  ${SHAPE_SRCS}
+)
+
 SET(GRIDNET
   gridnetmn.cpp
   gridnet.cpp
@@ -174,6 +181,12 @@ SET(PEUKERDOUGLAS
 SET(PITREMOVE
   flood.cpp
   PitRemovemn.cpp
+  ${COMMON_SRCS}
+)
+
+SET(SELECTGTTHRESHOLD
+  selgtThreshold.cpp
+  SelectGTThresholdmn.cpp
   ${COMMON_SRCS}
 )
 
@@ -208,6 +221,12 @@ SET(THRESHOLD
   ${COMMON_SRCS}
 )
 
+SET(TWI
+  TWI.cpp
+  TWImn.cpp
+  ${COMMON_SRCS}
+)
+
 #############################################################
 # TauDEM tools
 ADD_EXECUTABLE(aread8 ${D8FILES})
@@ -225,16 +244,19 @@ ADD_EXECUTABLE(dinfrevaccum ${DINFREVACCUM})
 ADD_EXECUTABLE(dinftranslimaccum ${DINFTRANSLIMACCUM})
 ADD_EXECUTABLE(dinfupdependence ${DINFUPDEPEND})
 ADD_EXECUTABLE(dropanalysis ${DROPANALYSISFILES})
+ADD_EXECUTABLE(gagewatershed ${GAGEWATERSHED})
 ADD_EXECUTABLE(gridnet ${GRIDNET})
 ADD_EXECUTABLE(lengtharea ${LENGTHAREA})
 ADD_EXECUTABLE(moveoutletstostrm ${MVOUTLETSTOSTRMFILES})
 ADD_EXECUTABLE(peukerdouglas ${PEUKERDOUGLAS})
 ADD_EXECUTABLE(pitremove ${PITREMOVE})
+ADD_EXECUTABLE(selectgtthreshold ${SELECTGTTHRESHOLD})
 ADD_EXECUTABLE(slopearea ${SLOPEAREA})
 ADD_EXECUTABLE(slopearearatio ${SLOPEAREARATIO})
 ADD_EXECUTABLE(slopeavedown ${SLOPEAVEDOWN})
 ADD_EXECUTABLE(streamnet ${STREAMNET})
 ADD_EXECUTABLE(threshold ${THRESHOLD})
+ADD_EXECUTABLE(twi ${TWI})
 
 #############################################################
 # Install
@@ -254,14 +276,17 @@ INSTALL(TARGETS
   dinftranslimaccum
   dinfupdependence
   dropanalysis
+  gagewatershed
   gridnet
   lengtharea
   moveoutletstostrm
   peukerdouglas
   pitremove
+  selectgtthreshold
   slopearea
   slopearearatio
   slopeavedown
   streamnet
   threshold
+  twi
 DESTINATION bin)
