@@ -178,7 +178,7 @@ int gagewatershed( char *pfile, char *wfile, char *shfile, char *idfile, int wri
 	bool con=false, finished;
 	float tempFloat=0.0;
 	short tempShort=0;
-	long tempLong=0;
+	int32_t tempLong=0;
 
 	tdpartition *neighbor;
 	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, MISSINGSHORT);
