@@ -48,7 +48,10 @@ email:  dtarb@usu.edu
 #include "tiffIO.h"
 using namespace std;
 
-int gagewatershed( char *pfile, char *wfile, char *shfile, char *idfile, int writeid, int prow, int pcol) 
+
+
+
+int gagewatershed( char *pfile, char *wfile, char *shfile, char *idfile, int writeid) 
 {//1
 
 	MPI_Init(NULL,NULL);{
@@ -113,8 +116,8 @@ int gagewatershed( char *pfile, char *wfile, char *shfile, char *idfile, int wri
 	tiffIO p(pfile,SHORT_TYPE);
 	long totalX = p.getTotalX();
 	long totalY = p.getTotalY();
-	double dx = p.getdx();
-	double dy = p.getdy();
+	double dxA = p.getdxA();
+	double dyA = p.getdyA();
 	if(rank==0)
 		{
 			float timeestimate=(1.2e-6*totalX*totalY/pow((double) size,0.65))/60+1;  // Time estimate in minutes
@@ -127,7 +130,7 @@ int gagewatershed( char *pfile, char *wfile, char *shfile, char *idfile, int wri
 
 	//Create partition and read data
 	tdpartition *flowData;
-	flowData = CreateNewPartition(p.getDatatype(), totalX, totalY, dx, dy, p.getNodata());
+	flowData = CreateNewPartition(p.getDatatype(), totalX, totalY, dxA, dyA, p.getNodata());
 	int nx = flowData->getnx();
 	int ny = flowData->getny();
 	int xstart, ystart;
@@ -142,7 +145,7 @@ int gagewatershed( char *pfile, char *wfile, char *shfile, char *idfile, int wri
 
 	//Create empty partition to store new information
 	tdpartition *wshed;
-	wshed = CreateNewPartition(LONG_TYPE, totalX, totalY, dx, dy, MISSINGLONG);
+	wshed = CreateNewPartition(LONG_TYPE, totalX, totalY, dxA, dyA, MISSINGLONG);
 
 	//Convert geo coords to grid coords
 	int *outletsX, *outletsY;
@@ -178,7 +181,7 @@ int gagewatershed( char *pfile, char *wfile, char *shfile, char *idfile, int wri
 	long tempLong=0;
 
 	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dx, dy, MISSINGSHORT);
+	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, MISSINGSHORT);
 
 	//  Initialize neighbors to 1 if flow direction exists
 		for(j=0; j<ny; j++) {
@@ -302,9 +305,8 @@ int gagewatershed( char *pfile, char *wfile, char *shfile, char *idfile, int wri
 
 	//Create and write TIFF file
 	long lNodata = MISSINGLONG;
-	char prefix[5] = "gw";
 	tiffIO wshedIO(wfile, LONG_TYPE, &lNodata, p);
-	wshedIO.write(xstart, ystart, ny, nx, wshed->getGridPointer(), prefix, prow, pcol);
+	wshedIO.write(xstart, ystart, ny, nx, wshed->getGridPointer());
 
 	double writet = MPI_Wtime();
 	if( rank == 0) 

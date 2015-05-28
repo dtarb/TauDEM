@@ -40,13 +40,11 @@
 
 #SHAPEFILES includes all files in the shapefile library
 #These should be compiled using the makefile in the shape directory
-SHAPEFILES = shape/cell.o shape/dbf.o shape/exception.o shape/field.o shape/item.o \
-             shape/point.o shape/record.o shape/shape.o shape/shapefile.o \
-             shape/shapemain.o shape/shp_point.o shape/shp_polygon.o shape/shp_polyline.o \
-	     shape/ReadOutlets.o
+SHAPEFILES = shapelib/dbfopen.o shapelib/safileio.o shapelib/shpopen.o \
+	     shapelib/shptree.o ReadOutlets.o
 
 #OBJFILES includes classes, structures, and constants common to all files
-OBJFILES = commonLib.o tiffIO.o tifFile.o
+OBJFILES = commonLib.o tiffIO.o
 
 D8FILES = aread8mn.o aread8.o $(OBJFILES) $(SHAPEFILES)
 DINFFILES = areadinfmn.o areadinf.o $(OBJFILES) $(SHAPEFILES)
@@ -73,20 +71,21 @@ SLOPEAREARATIO = SlopeAreaRatio.o SlopeAreaRatiomn.o $(OBJFILES)
 SLOPEAVEDOWN = SlopeAveDown.o SlopeAveDownmn.o $(OBJFILES)
 STREAMNET = streamnetmn.o streamnet.o $(OBJFILES) $(SHAPEFILES)
 THRESHOLD = Threshold.o Thresholdmn.o $(OBJFILES)
-TWI = TWI.o TWImn.o $(OBJFILES)
-GAGEWATERSHED = gagewatershed.o gagewatershedmn.o $(OBJFILES) $(SHAPEFILES)
 READTIFFILES = ReadTif.o ReadTifmn.o $(OBJFILES) 
 
 TIFFTEST = tiffTest.o $(OBJFILES)
 
 #The following are compiler flags common to all building rules
 CC = mpic++
-CFLAGS += -O2
-LARGEFILEFLAG = -D_FILE_OFFSET_BITS=64
-INCDIRS =-I/usr/lib/openmpi/include
+CFLAGS=-O2
+CFLAGS=-g -Wall
+CFLAGS=-g
+LARGEFILEFLAG= -D_FILE_OFFSET_BITS=64
+INCDIRS=-I/usr/lib/openmpi/include -I/usr/include/gdal
+LIBDIRS=-lgdal
 
 #Rules: when and how to make a file
-all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ../gridnet ../dinfflowdir ../d8flowdir ../d8flowpathextremeup ../d8hdisttostrm ../dinfavalanche ../dinfconclimaccum ../dinfdecayaccum ../dinfdistdown ../dinfdistup ../dinfrevaccum ../dinftranslimaccum ../dinfupdependence ../lengtharea ../peukerdouglas ../pitremove ../slopearea ../slopearearatio ../slopeavedown ../threshold ../twi ../gagewatershed clean 
+all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ../gridnet ../dinfflowdir ../d8flowdir ../d8flowpathextremeup ../d8hdisttostrm ../dinfavalanche ../dinfconclimaccum ../dinfdecayaccum ../dinfdistdown ../dinfdistup ../dinfrevaccum ../dinftranslimaccum ../dinfupdependence ../lengtharea ../peukerdouglas ../pitremove ../slopearea ../slopearearatio ../slopeavedown ../threshold clean 
 
 ../aread8 : $(D8FILES)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(D8FILES) $(LDLIBS) $(LDFLAGS)
@@ -163,12 +162,6 @@ all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ..
 ../threshold : $(THRESHOLD)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(THRESHOLD) $(LDLIBS) $(LDFLAGS) 
 
-../twi : $(TWI)
-	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(TWI) $(LDLIBS) $(LDFLAGS)
-
-../gagewatershed : $(GAGEWATERSHED)
-	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(GAGEWATERSHED) $(LDLIBS) $(LDFLAGS)
-
 ../ReadTif : $(READTIFFILES)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(READTIFFILES) $(LDLIBS) $(LDFLAGS)
 
@@ -183,7 +176,7 @@ all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ..
 	
 #Inference rule - states a general rule for compiling .o files
 %.o : %.cpp
-	$(CC) $(CFLAGS) $(INCDIRS) -c $< -o $@
+	$(CC) $(CFLAGS) $(INCDIRS) -c $<
 
 clean :
 	rm *.o 

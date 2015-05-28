@@ -49,7 +49,7 @@ email:  dtarb@usu.edu
 int main(int argc,char **argv)
 {
   char demfile[MAXLN], pointfile[MAXLN], slopefile[MAXLN], flowfile[MAXLN];
-  int err, i, prow = 0, pcol = 0;
+  int err, i;
     short useflowfile=0;
 
    if(argc < 2)
@@ -79,24 +79,6 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-                else if(strcmp(argv[i],"-mf")==0)
-                {
-                        i++;
-                        if(argc > i)
-                        {
-                                prow = atoi(argv[i]);
-                                i++;
-                                if(argc > i)
-                                {
-                                        pcol = atoi(argv[i]);
-                                        i++;
-                                }
-                                else goto errexit;
-                        }
-                        else goto errexit;
-                        if(prow <=0 || pcol <=0)
-                                goto errexit;
-                }
 		else if(strcmp(argv[i],"-sd8")==0)
 		{
 			i++;
@@ -140,7 +122,7 @@ int main(int argc,char **argv)
 		nameadd(slopefile,argv[1],"sd8");		
 	}
 
-    if((err=setdird8(demfile, pointfile, slopefile,flowfile,useflowfile, prow, pcol)) != 0)
+    if((err=setdird8(demfile, pointfile, slopefile,flowfile,useflowfile)) != 0)
         printf("setdird8 error %d\n",err);
 
 	return 0;

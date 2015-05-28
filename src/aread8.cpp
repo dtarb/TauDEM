@@ -45,12 +45,12 @@ email:  dtarb@usu.edu
 #include "linearpart.h"
 #include "createpart.h"
 #include "tiffIO.h"
-#include "shape/shapefile.h"
+#include <iostream>
 #include "initneighbor.h"
 using namespace std;
 
 
-int aread8( char* pfile, char* afile, char *shfile, char *wfile, int useOutlets, int usew, int contcheck, int prow, int pcol){
+int aread8( char* pfile, char* afile, char *shfile, char *wfile, int useOutlets, int usew, int contcheck) {
 
 	MPI_Init(NULL,NULL);{
 
@@ -90,8 +90,9 @@ int aread8( char* pfile, char* afile, char *shfile, char *wfile, int useOutlets,
 	tiffIO p(pfile,SHORT_TYPE);
 	long totalX = p.getTotalX();
 	long totalY = p.getTotalY();
-	double dx = p.getdx();
-	double dy = p.getdy();
+    double dxA = p.getdxA();
+	double dyA = p.getdyA();
+
 
 	if(rank==0)
 		{
@@ -104,7 +105,7 @@ int aread8( char* pfile, char* afile, char *shfile, char *wfile, int useOutlets,
 
 	//Create partition and read data
 	tdpartition *flowData;
-	flowData = CreateNewPartition(p.getDatatype(), totalX, totalY, dx, dy, p.getNodata());
+	flowData = CreateNewPartition(p.getDatatype(), totalX, totalY, dxA, dyA, p.getNodata()); 
 	int nx = flowData->getnx();
 	int ny = flowData->getny();
 	int xstart, ystart;
@@ -120,25 +121,30 @@ int aread8( char* pfile, char* afile, char *shfile, char *wfile, int useOutlets,
 			MPI_Abort(MCW,5);
 			return 1;  
 		} 
-		weightData = CreateNewPartition(w.getDatatype(), totalX, totalY, dx, dy, w.getNodata());
+		weightData = CreateNewPartition(w.getDatatype(), totalX, totalY, dxA, dyA, w.getNodata()); 
 		w.read(xstart, ystart, weightData->getny(), weightData->getnx(), weightData->getGridPointer());
 	}
 
 	//Begin timer
 	double readt = MPI_Wtime();
+	
 
 	//Convert geo coords to grid coords
-	int *outletsX=NULL, *outletsY=NULL;
+	int *outletsX; int *outletsY;
 	if(usingShapeFile) {
 		outletsX = new int[numOutlets];
 		outletsY = new int[numOutlets];
-		for( int i=0; i<numOutlets; i++)
+	
+		for( int i=0; i<numOutlets; i++){
+	 
 			p.geoToGlobalXY(x[i], y[i], outletsX[i], outletsY[i]);
+		 
+		}
 	}
 
 	//Create empty partition to store new information
 	tdpartition *aread8;
-	aread8 = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, -1.0f);
+	aread8 = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, -1.0f); // modified by Nazmus
 
 	// con is used to check for contamination at the edges
 	long i,j;
@@ -150,7 +156,7 @@ int aread8( char* pfile, char* afile, char *shfile, char *wfile, int useOutlets,
 	short tempShort=0;
 
 	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dx, dy, MISSINGSHORT);
+	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, MISSINGSHORT); //modified by Nazmus
 	
 	//Share information and set borders to zero
 	flowData->share();
@@ -256,28 +262,12 @@ int aread8( char* pfile, char* afile, char *shfile, char *wfile, int useOutlets,
 
 	//Create and write TIFF file
 	float aNodata = -1.0f;
-	char prefix[5] = "ad8";
 	tiffIO a(afile, FLOAT_TYPE, &aNodata, p);
-	a.write(xstart, ystart, ny, nx, aread8->getGridPointer(),prefix,prow,pcol);
+	a.write(xstart, ystart, ny, nx, aread8->getGridPointer());
 	double writet = MPI_Wtime();
- 	double dataRead, compute, write, total,tempd;
-        dataRead = readt-begint;
-        compute = computet-readt;
-        write = writet-computet;
-        total = writet - begint;
-
-        MPI_Allreduce (&dataRead, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        dataRead = tempd/size;
-        MPI_Allreduce (&compute, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        compute = tempd/size;
-        MPI_Allreduce (&write, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        write = tempd/size;
-        MPI_Allreduce (&total, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        total = tempd/size;
-
-        if( rank == 0)
+	if( rank == 0) 
 		printf("Size: %d\nRead time: %f\nCompute time: %f\nWrite time: %f\nTotal time: %f\n",
-                  size, dataRead, compute, write,total);
+		  size,readt-begint, computet-readt, writet-computet,writet-begint);
 
 	//Brackets force MPI-dependent objects to go out of scope before Finalize is called
 	}MPI_Finalize();

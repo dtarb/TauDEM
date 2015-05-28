@@ -37,17 +37,18 @@ email:  dtarb@usu.edu
 */
 
 //  This software is distributed from http://hydrology.usu.edu/taudem/
-#include "d8.h"
+
 #include <mpi.h>
-#include "linearpart.h"
+//#include "linearpart.h"   Part of CommonLib
 #include "createpart.h"
 #include "commonLib.h"
-#include "tiffIO.h"
+#include "d8.h"
+//#include "tiffIO.h"    Part of Commonlib
 #include "Node.h"
 
 using namespace std;
 
-double fact[9];
+double **fact;
 
 //Checks if cells cross
 int dontCross( int k, int i, int j, tdpartition *flowDir) {
@@ -113,7 +114,7 @@ void setFlow(int i, int j, tdpartition *flowDir, tdpartition *elevDEM, tdpartiti
 		in=i+d1[k];
 		jn=j+d2[k];
 
-		slope = fact[k] * ( elevDEM->getData(i,j,tempFloat) - elevDEM->getData(in,jn,tempFloat) );
+		slope = fact[j][k] * ( elevDEM->getData(i,j,tempFloat) - elevDEM->getData(in,jn,tempFloat) );
 		if( useflowfile == 1) {	
 			aneigh = area->getData(in,jn,tempShort);
 		}
@@ -136,7 +137,7 @@ void setFlow(int i, int j, tdpartition *flowDir, tdpartition *elevDEM, tdpartiti
 		in=i+d1[k];
 		jn=j+d2[k];
 
-		slope = fact[k] * ( elevDEM->getData(i,j,tempFloat) - elevDEM->getData(in,jn,tempFloat) );
+		slope = fact[j][k] * ( elevDEM->getData(i,j,tempFloat) - elevDEM->getData(in,jn,tempFloat) );
 
 		if( slope > smax  && dontCross(k,i,j,flowDir)==0 ) {
 			smax = slope;
@@ -169,7 +170,7 @@ void calcSlope( tdpartition *flowDir, tdpartition *elevDEM, tdpartition *slope) 
 				in = i + d1[tempShort];	
 				jn = j + d2[tempShort];	
 				elevDiff = elevDEM->getData(i,j,tempFloat) - elevDEM->getData(in,jn,tempFloat);
-				slope->setData(i,j,float(elevDiff*fact[tempShort]));
+				slope->setData(i,j,float(elevDiff*fact[j][tempShort]));
 			}
 		}
 	}
@@ -177,7 +178,7 @@ void calcSlope( tdpartition *flowDir, tdpartition *elevDEM, tdpartition *slope) 
 
 
 //Open files, Initialize grid memory, makes function calls to set flowDir, slope, and resolvflats, writes files
-int setdird8( char* demfile, char* pointfile, char *slopefile, char *flowfile, int useflowfile, int prow, int pcol) {
+int setdird8( char* demfile, char* pointfile, char *slopefile, char *flowfile, int useflowfile) {
 
 	MPI_Init(NULL,NULL);{
 
@@ -197,15 +198,17 @@ int setdird8( char* demfile, char* pointfile, char *slopefile, char *flowfile, i
 	tiffIO dem(demfile, FLOAT_TYPE);
 	long totalX = dem.getTotalX();
 	long totalY = dem.getTotalY();
-	double dx = dem.getdx();
-	double dy = dem.getdy();
+	double dxA = dem.getdxA();
+	double dyA = dem.getdyA();
 	
+
 	tdpartition *elevDEM;
-	elevDEM = CreateNewPartition(dem.getDatatype(), totalX, totalY, dx, dy, dem.getNodata());
+	elevDEM = CreateNewPartition(dem.getDatatype(), totalX, totalY, dxA, dyA, dem.getNodata());
 	int xstart, ystart;
 	int nx = elevDEM->getnx();
 	int ny = elevDEM->getny();
 	elevDEM->localToGlobal(0, 0, xstart, ystart);
+	elevDEM->savedxdyc(dem);
 	double headert = MPI_Wtime();
 
 	if(rank==0)
@@ -225,8 +228,8 @@ int setdird8( char* demfile, char* pointfile, char *slopefile, char *flowfile, i
 	
 	//Creates empty partition to store new flow direction 
 	tdpartition *flowDir;
-	short flowDirNodata = MISSINGSHORT;
-	flowDir = CreateNewPartition(SHORT_TYPE, totalX, totalY, dx, dy, flowDirNodata);
+	short flowDirNodata = -32768;
+	flowDir = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, flowDirNodata);
 
 //	flowDir = new linearpart<short>;
 
@@ -235,11 +238,11 @@ int setdird8( char* demfile, char* pointfile, char *slopefile, char *flowfile, i
 	//If using flowfile is enabled, read it in
 	tdpartition *imposedflow, *area;
 	area = new linearpart<long>;
-	area->init(totalX, totalY, dx, dy, MPI_LONG, long(-1));
+	area->init(totalX, totalY, dxA, dyA, MPI_LONG, long(-1));
 
 	if( useflowfile == 1) {
 		tiffIO flow(flowfile,SHORT_TYPE);
-		imposedflow = CreateNewPartition(flow.getDatatype(), flow.getTotalX(), flow.getTotalY(), flow.getdx(), flow.getdy(), flow.getNodata());
+		imposedflow = CreateNewPartition(flow.getDatatype(), flow.getTotalX(), flow.getTotalY(), flow.getdxA(), flow.getdyA(), flow.getNodata());
 
 		if(!dem.compareTiff(flow)) {
 			printf("Error using imposed flow file.\n");	
@@ -273,16 +276,16 @@ int setdird8( char* demfile, char* pointfile, char *slopefile, char *flowfile, i
 		//Creates empty partition to store new slopes
 		tdpartition *slope;
 		float slopeNodata = -1.0f;
-		slope = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, slopeNodata);
+		slope = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, slopeNodata);
 	
 		numFlat = setPosDir(elevDEM, flowDir, area, useflowfile);
 		calcSlope( flowDir, elevDEM, slope);
 
 		//Stop timer
 		computeSlopet = MPI_Wtime();
-		char prefix[6]="sd8";
+
 		tiffIO slopeIO(slopefile, FLOAT_TYPE, &slopeNodata, dem);
-		slopeIO.write(xstart, ystart, ny, nx, slope->getGridPointer(),prefix,prow,pcol);
+		slopeIO.write(xstart, ystart, ny, nx, slope->getGridPointer());
 	}  // This bracket intended to destruct slope partition and release memory
 
 	double writeSlopet = MPI_Wtime();
@@ -315,9 +318,9 @@ int setdird8( char* demfile, char* pointfile, char *slopefile, char *flowfile, i
 
 	//Timing info
 	double computeFlatt = MPI_Wtime();
-	char prefix[6] = "p";
+
 	tiffIO pointIO(pointfile, SHORT_TYPE, &flowDirNodata, dem);
-	pointIO.write(xstart, ystart, ny, nx, flowDir->getGridPointer(),prefix,prow,pcol);
+	pointIO.write(xstart, ystart, ny, nx, flowDir->getGridPointer());
 	double writet = MPI_Wtime();
  	double headerRead, dataRead, computeSlope, writeSlope, computeFlat,writeFlat, write, total,temp;
         headerRead = headert-begint;
@@ -354,18 +357,24 @@ int setdird8( char* demfile, char* pointfile, char *slopefile, char *flowfile, i
 // Sets only flowDir only where there is a positive slope
 // Returns number of cells which are flat
 long setPosDir(tdpartition *elevDEM, tdpartition *flowDir, tdpartition *area, int useflowfile) {
-	double dx = elevDEM->getdx();
-	double dy = elevDEM->getdy();
+	double dxA = elevDEM->getdxA();
+	double dyA = elevDEM->getdyA();
 	long nx = elevDEM->getnx();
 	long ny = elevDEM->getny();
 	short tempShort;
 	int i,j,k,in,jn, con;
 	long numFlat = 0;
-
+    double tempdxc,tempdyc;
 	//Set direction factors
-	for( k=1; k<= 8; k++ ){
-		fact[k] = (double) (1./sqrt(d1[k]*dx*d1[k]*dx + d2[k]*d2[k]*dy*dy));
-	}
+    fact = new double*[ny]; // initialize 2d array by Nazmus 2/16
+    for(int m = 0; m<ny;m++)
+    fact[m] = new double [9];
+    for(int m=0;m<ny;m++){
+	  for( k=1; k<= 8; k++ ){
+		  elevDEM->getdxdyc(m,tempdxc,tempdyc);
+		  fact[m][k] = (double) (1./sqrt(d1[k]*d1[k]*tempdxc*tempdxc + d2[k]*d2[k]*tempdyc*tempdyc));
+	  }
+    }
 
 	tempShort = 0;
 	for( j = 0; j < ny; j++) {
@@ -411,8 +420,7 @@ void setFlow2(int i,int j, tdpartition *flowDir, tdpartition *elevDEM, tdpartiti
 	Case B requires slope to be positive.  Remaining flats are removed by iterating this process*/
 
 	float slope,smax,ed;
-	long  in,jn;
-	short k;
+	short in,jn,k;
 	smax=0.;
 	short tempShort;
 	float tempFloat;
@@ -425,7 +433,7 @@ void setFlow2(int i,int j, tdpartition *flowDir, tdpartition *elevDEM, tdpartiti
 		dn->getData(in,jn,tempShort);
 		if(tempShort > 0)  // In flat
 		{
-			slope = fact[k]*(elev2->getData(i,j,tempShort)-elev2->getData(in,jn,tempShort));
+			slope = fact[j][k]*(elev2->getData(i,j,tempShort)-elev2->getData(in,jn,tempShort));
 			if(slope > smax)
 			{
 				flowDir->setData(i,j,k);
@@ -455,8 +463,8 @@ long resolveflats( tdpartition *elevDEM, tdpartition *flowDir, queue<node> *que,
 	long totaly = elevDEM->gettotaly();
 	long nx = elevDEM->getnx();
 	long ny = elevDEM->getny();
-	double dx = elevDEM->getdx();
-	double dy = elevDEM->getdy();
+	double dxA = elevDEM->getdxA();
+	double dyA = elevDEM->getdyA();
 
 	int rank;
 	MPI_Comm_rank(MCW,&rank);
@@ -471,10 +479,10 @@ long resolveflats( tdpartition *elevDEM, tdpartition *flowDir, queue<node> *que,
 
 	//create and initialize temporary storage for Garbrecht and Martz
 	tdpartition *elev2, *dn, *s;
-	elev2 = CreateNewPartition(SHORT_TYPE, totalx, totaly, dx, dy, 1);
+	elev2 = CreateNewPartition(SHORT_TYPE, totalx, totaly, dxA, dyA, 1);
 	   //  The assumption here is that resolving a flat does not increment a cell value 
 	   //  more than fits in a short
-	dn = CreateNewPartition(SHORT_TYPE, totalx, totaly, dx, dy, 0);
+	dn = CreateNewPartition(SHORT_TYPE, totalx, totaly, dxA, dyA, 0);
 
 	node temp;
 	long nflat=0, iflat;
@@ -583,7 +591,7 @@ long resolveflats( tdpartition *elevDEM, tdpartition *flowDir, queue<node> *que,
 		//	done = true;
 	}
 	//  DGT moved from above - write directly into elev2
-	s = CreateNewPartition(SHORT_TYPE, totalx, totaly, dx, dy, 0);  //  Use 0 as no data to avoid need to initialize
+	s = CreateNewPartition(SHORT_TYPE, totalx, totaly, dxA, dyA, 0);  //  Use 0 as no data to avoid need to initialize
 
 	//incrise - drain away from higher ground
 	done = false;

@@ -46,7 +46,7 @@ email:  dtarb@usu.edu
 #include "tiffIO.h"
 using namespace std;
 
-int twigrid(char *slopefile,char *areafile,char *twifile, int prow, int pcol)
+int twigrid(char *slopefile,char *areafile,char *twifile)
 {
 	MPI_Init(NULL,NULL);{
 
@@ -62,8 +62,8 @@ int twigrid(char *slopefile,char *areafile,char *twifile, int prow, int pcol)
 	tiffIO slp(slopefile, FLOAT_TYPE);
 	long totalX = slp.getTotalX();
 	long totalY = slp.getTotalY();
-	double dx = slp.getdx();
-	double dy = slp.getdy();
+	double dxA = slp.getdxA();
+	double dyA = slp.getdyA();
 	if(rank==0)
 		{
 			float timeestimate=(1e-7*totalX*totalY/pow((double) size,1))/60+1;  // Time estimate in minutes
@@ -74,7 +74,7 @@ int twigrid(char *slopefile,char *areafile,char *twifile, int prow, int pcol)
 
 	//Create partition and read data
 	tdpartition *slpData;
-	slpData = CreateNewPartition(slp.getDatatype(), totalX, totalY, dx, dy, slp.getNodata());
+	slpData = CreateNewPartition(slp.getDatatype(), totalX, totalY, dxA, dyA, slp.getNodata());
 	int nx = slpData->getnx();
 	int ny = slpData->getny();
 	int xstart, ystart;
@@ -84,7 +84,7 @@ int twigrid(char *slopefile,char *areafile,char *twifile, int prow, int pcol)
 	tdpartition *scaData;
 	tiffIO sca(areafile, FLOAT_TYPE);
 	if(!slp.compareTiff(sca)) return 1;  //And maybe an unhappy error message
-	scaData = CreateNewPartition(sca.getDatatype(), totalX, totalY, dx, dy, sca.getNodata());
+	scaData = CreateNewPartition(sca.getDatatype(), totalX, totalY, dxA, dyA, sca.getNodata());
 	sca.read(xstart, ystart, scaData->getny(), scaData->getnx(), scaData->getGridPointer());
 	
 	//Begin timer
@@ -92,7 +92,7 @@ int twigrid(char *slopefile,char *areafile,char *twifile, int prow, int pcol)
 
 	//Create empty partition to store new information
 	tdpartition *sar;
-	sar = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, -1.0f);
+	sar = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, -1.0f);
 
 	long i,j;
 	float tempslp=0;
@@ -144,7 +144,7 @@ int twigrid(char *slopefile,char *areafile,char *twifile, int prow, int pcol)
 	float aNodata = -1.0f;
 	char prefix[5] = "twi";
 	tiffIO sarr(twifile, FLOAT_TYPE, &aNodata, slp);
-	sarr.write(xstart, ystart, ny, nx, sar->getGridPointer(),prefix,prow,pcol);
+	sarr.write(xstart, ystart, ny, nx, sar->getGridPointer());
 
 	//Brackets force MPI-dependent objects to go out of scope before Finalize is called
 	}MPI_Finalize();

@@ -40,11 +40,11 @@ email:  dtarb@usu.edu
 
 #include "mpi.h"
 #include "partition.h"
-#include "commonLib.h"
+
 #include <queue>
 #include <stdio.h>
 #include <stdlib.h>
-#include "stdint.h"
+#include <stdint.h>
 #include <string.h>
 #include <math.h>
 #include <exception>
@@ -96,6 +96,8 @@ class linearpart : public tdpartition {
 		void setToNodata(long x, long y);
 		datatype getData(long x, long y, datatype &val);
 		void setData(long x, long y, datatype val);
+		void savedxdyc(tiffIO &obj);
+		void getdxdyc(long iny, double &val_dxc,double &val_dyc);
 		void addToData(long x, long y, datatype val);
 				
 		//void areaD(queue<node> *que);
@@ -130,8 +132,8 @@ void linearpart<datatype>::init(long totalx, long totaly, double dx_in, double d
 	nx = totalx;
 	ny = totaly / size;
 	if(rank == size-1)  ny += (totaly % size); //Add extra rows to the last process
-	dx = dx_in;
-	dy = dy_in;
+	dxA = dx_in;
+	dyA = dy_in;
 	MPI_type = MPIt;
 	noData = nd;
 
@@ -508,6 +510,30 @@ datatype linearpart<datatype>::getData(long inx, long iny, datatype &val) {
 	}
 	return val;
 }
+
+
+
+template <class datatype>
+void linearpart<datatype>::savedxdyc( tiffIO &obj) {
+    dxc=new double[ny];
+	dyc=new double[ny];
+    for (int i=0;i<ny;i++){
+		int globalY = rank * ny +i;
+	if(rank == size-1) globalY = rank * (ny - totaly%size) + i;
+	    dxc[i]=obj.getdxc(globalY);
+		dyc[i]=obj.getdyc(globalY);
+
+	         }
+    }
+	
+
+template <class datatype>
+void linearpart<datatype>::getdxdyc(long iny, double &val_dxc,double &val_dyc){
+	 int64_t y;y = iny;
+	 if(y>=0 && y<ny){ val_dxc=dxc[y];val_dyc=dyc[y];}
+}
+
+
 
 //Sets the element in the grid to the specified value.
 template <class datatype>

@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\src\DropAnalysis.cpp" />
+    <ClCompile Include="..\..\src\DropAnalysismn.cpp" />
+    <ClCompile Include="..\..\src\commonLib.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\tiffIO.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ReadOutlets.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shapelib\dbfopen.c">
+      <Filter>Shapelib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shapelib\safileio.c">
+      <Filter>Shapelib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shapelib\shpopen.c">
+      <Filter>Shapelib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shapelib\shptree.c">
+      <Filter>Shapelib</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\TauDEM.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Common">
+      <UniqueIdentifier>{092986fd-3bc2-4b60-bb67-2cfbf3bbad38}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shapelib">
+      <UniqueIdentifier>{55b1c8e6-7d75-4fbd-a489-88ced65782d1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\shapelib\shapefil.h">
+      <Filter>Shapelib</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

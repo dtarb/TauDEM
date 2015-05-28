@@ -44,11 +44,11 @@ email:  dtarb@usu.edu
 #include <math.h>
 #include <iomanip>
 #include <queue>
+#include <iostream>
 #include "commonLib.h"
 #include "linearpart.h"
 #include "createpart.h"
 #include "tiffIO.h"
-#include "shape/shapefile.h"
 #include "DropAnalysis.h"
 using namespace std;
 
@@ -160,7 +160,7 @@ short newOrder(short nOrder[8], bool &junction, bool &source){
 
 int dropan(char *areafile, char *dirfile, char *elevfile, char *ssafile, char *dropfile,
                            char *outletfile, float threshmin, float threshmax, int nthresh, int steptype,
-                           float *threshopt, int prow, int pcol)
+                           float *threshopt)
 {
 
 	// MPI Init section
@@ -177,7 +177,7 @@ int dropan(char *areafile, char *dirfile, char *elevfile, char *ssafile, char *d
 	// *** initialize thresholds array and directions table
 	float s1,s2,s1sq,s2sq;
 	float tempFloat;
-	short tempShort;
+	short tempShort;double tempdxc,tempdyc;
 	bool finished;
 	long n1,n2;
 	bool optnotset=true;
@@ -188,8 +188,10 @@ int dropan(char *areafile, char *dirfile, char *elevfile, char *ssafile, char *d
 	tiffIO ssa(ssafile, FLOAT_TYPE);  // DGT changed from short type
 	long ssaTotalX = ssa.getTotalX();
 	long ssaTotalY = ssa.getTotalY();
-	double ssadx = ssa.getdx();
-	double ssady = ssa.getdy();
+	double ssadxA = ssa.getdxA();
+	double ssadyA = ssa.getdyA();
+
+	
 	if(rank==0)
 		{
 			float timeestimate=(2e-7*ssaTotalX*ssaTotalY*nthresh/pow((double) size,0.65))/60+1;  // Time estimate in minutes
@@ -201,29 +203,30 @@ int dropan(char *areafile, char *dirfile, char *elevfile, char *ssafile, char *d
 
 	//Create partition and read data
 	tdpartition *ssaData;
-	ssaData = CreateNewPartition(ssa.getDatatype(), ssaTotalX, ssaTotalY, ssadx, ssady, ssa.getNodata());
+	ssaData = CreateNewPartition(ssa.getDatatype(), ssaTotalX, ssaTotalY, ssadxA, ssadyA, ssa.getNodata());
 	int ssanx = ssaData->getnx();
 	int ssany = ssaData->getny();
 	int ssaxstart, ssaystart;  
 	ssaData->localToGlobal(0, 0, ssaxstart, ssaystart);  
+	ssaData->savedxdyc(ssa);
 	ssa.read((long)ssaxstart, (long)ssaystart, (long)ssany, (long)ssanx, ssaData->getGridPointer());
 
 	float ssadiag;
-	ssadiag=sqrt((ssadx*ssadx)+(ssady*ssady));
+	//ssadiag=sqrt((ssadx*ssadx)+(ssady*ssady));
 			
 	//  *** initiate sdir grid partition from dirfile
 	//printf("file %s\n",dirfile);
 	tiffIO dir(dirfile, SHORT_TYPE);
 	long dirTotalX = dir.getTotalX();
 	long dirTotalY = dir.getTotalY();
-	double dirdx = dir.getdx();
-	double dirdy = dir.getdy();
+	double dirdxA = dir.getdxA();
+	double dirdyA = dir.getdyA();
 	//printf("header read\n");
 	//short ndv=*(short*) dir.getNodata();
 	//printf("No data value %d",ndv);
 	//Create partition and read data
 	tdpartition *dirData;
-	dirData = CreateNewPartition(dir.getDatatype(), dirTotalX, dirTotalY, dirdx, dirdy, dir.getNodata());
+	dirData = CreateNewPartition(dir.getDatatype(), dirTotalX, dirTotalY, dirdxA, dirdyA, dir.getNodata());
 	int dirnx = dirData->getnx();
 	int dirny = dirData->getny();
 	int dirxstart, dirystart; 
@@ -235,11 +238,11 @@ int dropan(char *areafile, char *dirfile, char *elevfile, char *ssafile, char *d
 	tiffIO area(areafile, FLOAT_TYPE);
 	long areaTotalX = area.getTotalX();
 	long areaTotalY = area.getTotalY();
-	double areadx = area.getdx();
-	double aready = area.getdy();
+	double areadxA = area.getdxA();
+	double areadyA = area.getdyA();
 	//Create partition and read data
 	tdpartition *areaData;
-	areaData = CreateNewPartition(area.getDatatype(), areaTotalX, areaTotalY, areadx, aready, area.getNodata());
+	areaData = CreateNewPartition(area.getDatatype(), areaTotalX, areaTotalY, areadxA, areadyA, area.getNodata());
 	int areanx = areaData->getnx();
 	int areany = areaData->getny();
 	int areaxstart, areaystart;
@@ -310,7 +313,7 @@ int dropan(char *areafile, char *dirfile, char *elevfile, char *ssafile, char *d
 		}
 	}
 	MPI_Allreduce(&totalAreaProcessed,&ta,1,MPI_FLOAT,MPI_SUM,MCW);
-	totalAreaProcessed = ta*areadx*aready;
+	totalAreaProcessed = ta*areadxA*areadyA;
 	// if(!rank)cout << "totalAreaProcessed = " << totalAreaProcessed << endl;
 
 	// *** fareada no longer needed, so it's memory can be free'd up
@@ -320,11 +323,11 @@ int dropan(char *areafile, char *dirfile, char *elevfile, char *ssafile, char *d
 	tiffIO elev(elevfile, FLOAT_TYPE);
 	long elevTotalX = elev.getTotalX();
 	long elevTotalY = elev.getTotalY();
-	double elevdx = elev.getdx();
-	double elevdy = elev.getdy();
+	double elevdxA = elev.getdxA();
+	double elevdyA = elev.getdyA();
 	//Create partition and read data
 	tdpartition *elevData;
-	elevData = CreateNewPartition(elev.getDatatype(), elevTotalX, elevTotalY, elevdx, elevdy, elev.getNodata());
+	elevData = CreateNewPartition(elev.getDatatype(), elevTotalX, elevTotalY, elevdxA, elevdyA, elev.getNodata());
 	int elevnx = elevData->getnx();
 	int elevny = elevData->getny();
 	int elevxstart, elevystart;  
@@ -372,13 +375,13 @@ int dropan(char *areafile, char *dirfile, char *elevfile, char *ssafile, char *d
 		tdpartition *orderOut;
 		//tdpartition *length;
 		tdpartition *elevOut;
-		contribs = CreateNewPartition(SHORT_TYPE, ssaTotalX, ssaTotalY, ssadx, ssady, MISSINGSHORT);
+		contribs = CreateNewPartition(SHORT_TYPE, ssaTotalX, ssaTotalY, ssadxA, ssadyA, MISSINGSHORT);
 		//Create partitions for orderOut,length,elevOut
-		orderOut = CreateNewPartition(SHORT_TYPE, ssaTotalX, ssaTotalY, ssadx, ssady, MISSINGSHORT);
+		orderOut = CreateNewPartition(SHORT_TYPE, ssaTotalX, ssaTotalY, ssadxA, ssadyA, MISSINGSHORT);
 		//length = CreateNewPartition(FLOAT_TYPE, ssaTotalX, ssaTotalY, ssadx, ssady, MISSINGFLOAT);
 		//  Dont need length partition - just accumulate in each partition
 		double length=0.0;  // Double so as not to lose little bits when the number is big due to rounding
-		elevOut = CreateNewPartition(FLOAT_TYPE, ssaTotalX, ssaTotalY, ssadx, ssady, MISSINGFLOAT);
+		elevOut = CreateNewPartition(FLOAT_TYPE, ssaTotalX, ssaTotalY, ssadxA, ssadyA, MISSINGFLOAT);
 
 		s1=0.0;
 		s2=0.0;
@@ -475,9 +478,10 @@ int dropan(char *areafile, char *dirfile, char *elevfile, char *ssafile, char *d
 						pd=m;  //DGT changed from d to m to record direction of neighbor
 						pi=nexti;
 						pj=nextj;
-						if(pd==1||pd==5)length=length+ssadx;
-						if(pd==3||pd==7)length=length+ssady;
-						if(pd%2==0)length=length+ssadiag;
+						ssaData->getdxdyc(j,tempdxc,tempdyc);
+						if(pd==1||pd==5)length=length+tempdxc;
+						if(pd==3||pd==7)length=length+tempdyc;
+						if(pd%2==0)length=length+sqrt(tempdxc*tempdxc+tempdyc*tempdyc);
 					}
 				}
 

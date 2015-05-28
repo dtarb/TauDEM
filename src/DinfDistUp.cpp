@@ -46,7 +46,6 @@ email:  dtarb@usu.edu
 #include "linearpart.h"
 #include "createpart.h"
 #include "tiffIO.h"
-#include "shape/shapefile.h"
 #include "DinfDistUp.h"
 #include "initneighbor.h"
 using namespace std;
@@ -60,30 +59,30 @@ using namespace std;
 //const short d2[9] = { 0,1, 1, 0,-1,-1,-1,0,1};
 // moved to commonlib.h
 
-float dist[9];
+float **dist;
 
 //Calling function
 int dinfdistup(char *angfile,char *felfile,char *slpfile,char *wfile, char *rtrfile,
-			   int statmethod,int typemethod,int usew, int concheck, float thresh, int prow, int pcol)
+			   int statmethod,int typemethod,int usew, int concheck, float thresh)
 {
 	int er;
 switch (typemethod)
 {
 case 0:
 	er=hdisttoridgegrd(angfile,wfile,rtrfile,statmethod, 
-		concheck,thresh,usew, prow, pcol);
+		concheck,thresh,usew);
 break;
 case 1:
 	er=vrisetoridgegrd(angfile,felfile,rtrfile, 
-		statmethod,concheck,thresh, prow, pcol);
+		statmethod,concheck,thresh);
 break;
 case 2:
 	er=pdisttoridgegrd(angfile,felfile,wfile,rtrfile, 
-					statmethod,usew,concheck,thresh, prow, pcol);
+					statmethod,usew,concheck,thresh);
 break;
 case 3:
 	er=sdisttoridgegrd(angfile,felfile,wfile,rtrfile, 
-					statmethod,usew,concheck,thresh, prow, pcol);
+					statmethod,usew,concheck,thresh);
 break;
 }
 return (er);
@@ -93,7 +92,7 @@ return (er);
 //Horizontal distance to ridge //
 //*****************************//
 int hdisttoridgegrd(char *angfile, char *wfile, char *rtrfile, int statmethod, 
-					int concheck, float thresh,int usew, int prow, int pcol)
+					int concheck, float thresh,int usew)
 {
 	MPI_Init(NULL,NULL);{
 
@@ -104,7 +103,7 @@ int hdisttoridgegrd(char *angfile, char *wfile, char *rtrfile, int statmethod,
 	if(rank==0)printf("DinfDistUp -h version %s\n",TDVERSION);
 
 	float wt=1.0,angle,sump,distr,dtss;
-	double p;
+	double p,tempdxc,tempdyc;
 
 	//  Keep track of time
 	double begint = MPI_Wtime();
@@ -113,8 +112,8 @@ int hdisttoridgegrd(char *angfile, char *wfile, char *rtrfile, int statmethod,
 	tiffIO ang(angfile, FLOAT_TYPE);
 	long totalX = ang.getTotalX();
 	long totalY = ang.getTotalY();
-	double dx = ang.getdx();
-	double dy = ang.getdy();
+	double dxA = ang.getdxA();
+	double dyA = ang.getdyA();
 	if(rank==0)
 		{
 			float timeestimate=(1.2e-6*totalX*totalY/pow((double) size,0.65))/60+1;  // Time estimate in minutes
@@ -124,20 +123,37 @@ int hdisttoridgegrd(char *angfile, char *wfile, char *rtrfile, int statmethod,
 		}
 
 	//  Calculate horizontal distances in each direction
-	int kk;
-	for(kk=1; kk<=8; kk++)
-	{
-		dist[kk]=sqrt(dx*dx*d2[kk]*d2[kk]+dy*dy*d1[kk]*d1[kk]);
-	}
+	//int kk;
+	//for(kk=1; kk<=8; kk++)
+	//{
+		//dist[kk]=sqrt(dx*dx*d2[kk]*d2[kk]+dy*dy*d1[kk]*d1[kk]);
+	//}
+
+
+
 
 	//Create partition and read data
 	tdpartition *flowData;
-	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dx, dy, ang.getNodata());
+	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dxA, dyA, ang.getNodata());
 	int nx = flowData->getnx();
 	int ny = flowData->getny();
 	int xstart, ystart;
 	flowData->localToGlobal(0, 0, xstart, ystart);
+	flowData->savedxdyc(ang);
 	ang.read(xstart, ystart, ny, nx, flowData->getGridPointer());
+
+    dist = new float*[ny];
+    for(int m = 0; m <ny; m++)
+    dist[m] = new float[9];
+	for (int m=0; m<ny;m++){
+		flowData->getdxdyc(m,tempdxc,tempdyc);
+		for(int kk=1; kk<=8; kk++)
+	{
+		dist[m][kk]=sqrt(tempdxc*tempdxc*d1[kk]*d1[kk]+tempdyc*tempdyc*d2[kk]*d2[kk]);
+	}
+
+	}
+
 
 	//if using weightData, get information from file
 	tdpartition *weightData;
@@ -148,7 +164,7 @@ int hdisttoridgegrd(char *angfile, char *wfile, char *rtrfile, int statmethod,
 			MPI_Abort(MCW,5);
 		return 1; 
 		}
-		weightData = CreateNewPartition(w.getDatatype(), totalX, totalY, dx, dy, w.getNodata());
+		weightData = CreateNewPartition(w.getDatatype(), totalX, totalY, dxA, dyA, w.getNodata());
 		w.read(xstart, ystart, weightData->getny(), weightData->getnx(), weightData->getGridPointer());
 	}
 	
@@ -157,7 +173,7 @@ int hdisttoridgegrd(char *angfile, char *wfile, char *rtrfile, int statmethod,
 
 	//Create empty partition to store new information
 	tdpartition *dts;
-	dts = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, MISSINGFLOAT);
+	dts = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
 
 	// con is used to check for contamination at the edges
 	long i,j;
@@ -168,7 +184,7 @@ int hdisttoridgegrd(char *angfile, char *wfile, char *rtrfile, int statmethod,
 	short tempShort=0;
 
 	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dx, dy, MISSINGSHORT);
+	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, MISSINGSHORT);
 	
 	//Share information and set borders to zero
 	flowData->share();
@@ -200,6 +216,7 @@ int hdisttoridgegrd(char *angfile, char *wfile, char *rtrfile, int statmethod,
 			sump=0.;
 			bool first=true;
 			con=false;  // Start off not edge contaminated
+		
 			for(k=1; k<=8; k++) {
 				in = i+d1[k];
 				jn = j+d2[k];
@@ -207,7 +224,8 @@ int hdisttoridgegrd(char *angfile, char *wfile, char *rtrfile, int statmethod,
 					con=true;
 				else{
 					flowData->getData(in,jn, angle);
-					p = prop(angle, (k+4)%8);
+					flowData->getdxdyc(jn,tempdxc,tempdyc);
+					p = prop(angle, (k+4)%8,tempdxc,tempdyc);
 					if(p>0. && p>thresh){
 						if(dts->isNodata(in,jn))con=true;
 						else
@@ -222,18 +240,20 @@ int hdisttoridgegrd(char *angfile, char *wfile, char *rtrfile, int statmethod,
 									weightData->getData(in,jn,wt);
 							}	
 							if(statmethod==0){//average
-								distr=distr+p*(dist[k]*wt+dtss);
+							
+								distr=distr+p*(dist[j][k]*wt+dtss);
+								
 							}
 							else if(statmethod==1){// maximum
-								if(dist[k]*wt+dtss>distr)distr=dist[k]*wt+dtss;
+								if(dist[j][k]*wt+dtss>distr)distr=dist[j][k]*wt+dtss;
 							}
 							else{ // Minimum
 								if(first){  
-									distr=dist[k]*wt+dtss;
+									distr=dist[j][k]*wt+dtss;
 									first=false;
 								}else
 								{
-									if(dist[k]*wt+dtss<distr)distr=dist[k]*wt+dtss;
+									if(dist[j][k]*wt+dtss<distr)distr=dist[j][k]*wt+dtss;
 								}
 							}
 						}
@@ -249,8 +269,9 @@ int hdisttoridgegrd(char *angfile, char *wfile, char *rtrfile, int statmethod,
 			//  END UP FLOW ALGEBRA EVALUATION
 			//  Decrement neighbor dependence of downslope cell
 			flowData->getData(i, j, angle);
+			flowData->getdxdyc(j,tempdxc,tempdyc);
 			for(k=1; k<=8; k++) {			
-				p = prop(angle, k);
+				p = prop(angle, k,tempdxc,tempdyc);
 				if(p>0.0) {
 					in = i+d1[k];  jn = j+d2[k];
 					//Decrement the number of contributing neighbors in neighbor
@@ -297,9 +318,8 @@ int hdisttoridgegrd(char *angfile, char *wfile, char *rtrfile, int statmethod,
 
 	//Create and write TIFF file
 	float ddNodata = MISSINGFLOAT;
-	char prefix[5] = "du";
 	tiffIO dd(rtrfile, FLOAT_TYPE, &ddNodata, ang);
-	dd.write(xstart, ystart, ny, nx, dts->getGridPointer(),prefix,prow,pcol);
+	dd.write(xstart, ystart, ny, nx, dts->getGridPointer());
 
 	double writet = MPI_Wtime();
         double dataRead, compute, write, total,tempd;
@@ -333,7 +353,7 @@ int hdisttoridgegrd(char *angfile, char *wfile, char *rtrfile, int statmethod,
 //Vertical rise to the ridge //
 //**************************//
 int vrisetoridgegrd(char *angfile, char *felfile, char *rtrfile, int statmethod, 
-					int concheck, float thresh, int prow, int pcol)
+					int concheck, float thresh)
 {
 	MPI_Init(NULL,NULL);{
 
@@ -344,7 +364,7 @@ int vrisetoridgegrd(char *angfile, char *felfile, char *rtrfile, int statmethod,
 	if(rank==0)printf("DinfDistUp -v version %s\n",TDVERSION);
 
 	float wt=1.0,angle,sump,distr,dtss,elv,elvn,distk;
-	double p;
+	double p,tempdxc,tempdyc;
 
 	//  Keep track of time
 	double begint = MPI_Wtime();
@@ -353,8 +373,8 @@ int vrisetoridgegrd(char *angfile, char *felfile, char *rtrfile, int statmethod,
 	tiffIO ang(angfile, FLOAT_TYPE);
 	long totalX = ang.getTotalX();
 	long totalY = ang.getTotalY();
-	double dx = ang.getdx();
-	double dy = ang.getdy();
+	double dxA = ang.getdxA();
+	double dyA = ang.getdyA();
 	if(rank==0)
 		{
 			float timeestimate=(1.2e-6*totalX*totalY/pow((double) size,0.65))/60+1;  // Time estimate in minutes
@@ -365,11 +385,12 @@ int vrisetoridgegrd(char *angfile, char *felfile, char *rtrfile, int statmethod,
 
 	//Create partition and read data
 	tdpartition *flowData;
-	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dx, dy, ang.getNodata());
+	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dxA, dyA, ang.getNodata());
 	int nx = flowData->getnx();
 	int ny = flowData->getny();
 	int xstart, ystart;
 	flowData->localToGlobal(0, 0, xstart, ystart);
+	flowData->savedxdyc(ang);
 	ang.read(xstart, ystart, ny, nx, flowData->getGridPointer());
 
 	//  Elevation data
@@ -380,7 +401,7 @@ int vrisetoridgegrd(char *angfile, char *felfile, char *rtrfile, int statmethod,
 		MPI_Abort(MCW,5);
 	return 1; 
 	}
-	felData = CreateNewPartition(fel.getDatatype(), totalX, totalY, dx, dy, fel.getNodata());
+	felData = CreateNewPartition(fel.getDatatype(), totalX, totalY, dxA, dyA, fel.getNodata());
 	fel.read(xstart, ystart, felData->getny(), felData->getnx(), felData->getGridPointer());
 
 	//Begin timer
@@ -388,7 +409,7 @@ int vrisetoridgegrd(char *angfile, char *felfile, char *rtrfile, int statmethod,
 
 	//Create empty partition to store new information
 	tdpartition *dts;
-	dts = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, MISSINGFLOAT);
+	dts = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
 
 	// con is used to check for contamination at the edges
 	long i,j;
@@ -399,7 +420,7 @@ int vrisetoridgegrd(char *angfile, char *felfile, char *rtrfile, int statmethod,
 	short tempShort=0;
 
 	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dx, dy, MISSINGSHORT);
+	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, MISSINGSHORT);
 	
 	//Share information and set borders to zero
 	flowData->share();
@@ -439,7 +460,8 @@ int vrisetoridgegrd(char *angfile, char *felfile, char *rtrfile, int statmethod,
 					con=true;
 				else{
 					flowData->getData(in,jn, angle);
-					p = prop(angle, (k+4)%8);
+					flowData->getdxdyc(jn,tempdxc,tempdyc);
+					p = prop(angle, (k+4)%8,tempdxc,tempdyc);
 					if(p>0. && p > thresh)
 					{
 						if(dts->isNodata(in,jn))con=true;
@@ -491,8 +513,9 @@ int vrisetoridgegrd(char *angfile, char *felfile, char *rtrfile, int statmethod,
 			//  END UP FLOW ALGEBRA EVALUATION
 			//  Decrement neighbor dependence of downslope cell
 			flowData->getData(i, j, angle);
+			flowData->getdxdyc(j,tempdxc,tempdyc);
 			for(k=1; k<=8; k++) {			
-				p = prop(angle, k);
+				p = prop(angle, k,tempdxc,tempdyc);
 				if(p>0.0) {
 					in = i+d1[k];  jn = j+d2[k];
 					//Decrement the number of contributing neighbors in neighbor
@@ -539,9 +562,8 @@ int vrisetoridgegrd(char *angfile, char *felfile, char *rtrfile, int statmethod,
 
 	//Create and write TIFF file
 	float ddNodata = MISSINGFLOAT;
-	char prefix[5]="du";
 	tiffIO dd(rtrfile, FLOAT_TYPE, &ddNodata, ang);
-	dd.write(xstart, ystart, ny, nx, dts->getGridPointer(),prefix,prow,pcol);
+	dd.write(xstart, ystart, ny, nx, dts->getGridPointer());
 
 	double writet = MPI_Wtime();
         double dataRead, compute, write, total,tempd;
@@ -573,7 +595,7 @@ int vrisetoridgegrd(char *angfile, char *felfile, char *rtrfile, int statmethod,
 //Pythagoras distance to the ridge //
 //********************************//
 int pdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile, 
-					int statmethod, int usew, int concheck, float thresh, int prow, int pcol)
+					int statmethod, int usew, int concheck, float thresh)
 {
 	MPI_Init(NULL,NULL);{
 
@@ -584,7 +606,7 @@ int pdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 	if(rank==0)printf("DinfDistUp -p version %s\n",TDVERSION);
 
 	float wt=1.0,angle,sump,distrh,distrv,dtssh,dtssv,elvn,elv,distk;
-	double p;
+	double p,tempdxc,tempdyc;
 
 	//  Keep track of time
 	double begint = MPI_Wtime();
@@ -593,8 +615,8 @@ int pdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 	tiffIO ang(angfile, FLOAT_TYPE);
 	long totalX = ang.getTotalX();
 	long totalY = ang.getTotalY();
-	double dx = ang.getdx();
-	double dy = ang.getdy();
+	double dxA = ang.getdxA();
+	double dyA = ang.getdyA();
 	if(rank==0)
 		{
 			float timeestimate=(1.2e-6*totalX*totalY/pow((double) size,0.65))/60+1;  // Time estimate in minutes
@@ -604,20 +626,33 @@ int pdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 		}
 
 	//  Calculate horizontal distances in each direction
-	int kk;
-	for(kk=1; kk<=8; kk++)
-	{
-		dist[kk]=sqrt(dx*dx*d2[kk]*d2[kk]+dy*dy*d1[kk]*d1[kk]);
-	}
+	//int kk;
+	//for(kk=1; kk<=8; kk++)
+	//{
+		//dist[kk]=sqrt(dx*dx*d2[kk]*d2[kk]+dy*dy*d1[kk]*d1[kk]);
+	//}
 
 	//Create partition and read data
 	tdpartition *flowData;
-	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dx, dy, ang.getNodata());
+	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dxA, dyA, ang.getNodata());
 	int nx = flowData->getnx();
 	int ny = flowData->getny();
 	int xstart, ystart;
 	flowData->localToGlobal(0, 0, xstart, ystart);
+	flowData->savedxdyc(ang);
 	ang.read(xstart, ystart, ny, nx, flowData->getGridPointer());
+
+	 dist = new float*[ny];
+    for(int m = 0; m <ny; m++)
+    dist[m] = new float[9];
+	for (int m=0; m<ny;m++){
+		flowData->getdxdyc(m,tempdxc,tempdyc);
+		for(int kk=1; kk<=8; kk++)
+	{
+		dist[m][kk]=sqrt(tempdxc*tempdxc*d1[kk]*d1[kk]+tempdyc*tempdyc*d2[kk]*d2[kk]);
+	}
+
+	}
 
 	//  Elevation data
 	tdpartition *felData;
@@ -627,7 +662,7 @@ int pdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 		MPI_Abort(MCW,5);
 	return 1; 
 	}
-	felData = CreateNewPartition(fel.getDatatype(), totalX, totalY, dx, dy, fel.getNodata());
+	felData = CreateNewPartition(fel.getDatatype(), totalX, totalY, dxA, dyA, fel.getNodata());
 	fel.read(xstart, ystart, felData->getny(), felData->getnx(), felData->getGridPointer());
 
 	//if using weightData, get information from file
@@ -639,7 +674,7 @@ int pdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 			MPI_Abort(MCW,5);
 		return 1; 
 		}
-		weightData = CreateNewPartition(w.getDatatype(), totalX, totalY, dx, dy, w.getNodata());
+		weightData = CreateNewPartition(w.getDatatype(), totalX, totalY, dxA, dyA, w.getNodata());
 		w.read(xstart, ystart, weightData->getny(), weightData->getnx(), weightData->getGridPointer());
 	}
 
@@ -648,10 +683,10 @@ int pdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 
 	//Create empty partitions to store new information
 	tdpartition *dtsh;  // horizontal distance
-	dtsh = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, MISSINGFLOAT);
+	dtsh = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
 
 	tdpartition *dtsv;  // vertical distance
-	dtsv = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, MISSINGFLOAT);
+	dtsv = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
 
 	// con is used to check for contamination at the edges
 	long i,j;
@@ -662,7 +697,7 @@ int pdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 	short tempShort=0;
 
 	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dx, dy, MISSINGSHORT);
+	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, MISSINGSHORT);
 	
 	//Share information and set borders to zero
 	flowData->share();
@@ -711,7 +746,8 @@ int pdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 						con=true;
 					else{
 						flowData->getData(in,jn, angle);
-						p = prop(angle, (k+4)%8);
+						flowData->getdxdyc(jn,tempdxc,tempdyc);
+						p = prop(angle, (k+4)%8,tempdxc,tempdyc);
 						if(p>0. && p > thresh)
 						{
 							if(dtsh->isNodata(in,jn))con=true;
@@ -731,28 +767,28 @@ int pdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 										weightData->getData(in,jn,wt);
 								}	
 								if(statmethod==0){//average
-									distrh=distrh+p*(dist[k]*wt+dtssh);
+									distrh=distrh+p*(dist[j][k]*wt+dtssh);
 									distrv=distrv+p*(distk+dtssv);
 								}
 								else if(statmethod==1){// maximum
 									if(first){  //  do not assume that maximum elevation diff is positive in case of wierd (or not pit filled) elevations
-										distrh=dist[k]*wt+dtssh;
+										distrh=dist[j][k]*wt+dtssh;
 										distrv=distk+dtssv;
 										first=false;
 									}else
 									{
-										if(dist[k]*wt+dtssh>distrh)distrh=dist[k]*wt+dtssh;
+										if(dist[j][k]*wt+dtssh>distrh)distrh=dist[j][k]*wt+dtssh;
 										if(distk+dtssv>distrv)distrv=distk+dtssv;
 									}
 								}
 								else{ // Minimum
 									if(first){  
-										distrh=dist[k]*wt+dtssh;
+										distrh=dist[j][k]*wt+dtssh;
 										distrv=distk+dtssv;
 										first=false;
 									}else
 									{
-										if(dist[k]*wt+dtssh<distrh)distrh=dist[k]*wt+dtssh;
+										if(dist[j][k]*wt+dtssh<distrh)distrh=dist[j][k]*wt+dtssh;
 										if(distk+dtssv<distrv)distrv=distk+dtssv;
 									}
 								}
@@ -781,8 +817,9 @@ int pdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 			//  END UP FLOW ALGEBRA EVALUATION
 			//  Decrement neighbor dependence of downslope cell
 			flowData->getData(i, j, angle);
+			flowData->getdxdyc(j,tempdxc,tempdyc);
 			for(k=1; k<=8; k++) {			
-				p = prop(angle, k);
+				p = prop(angle, k,tempdxc,tempdyc);
 				if(p>0.0) {
 					in = i+d1[k];  jn = j+d2[k];
 					//Decrement the number of contributing neighbors in neighbor
@@ -845,9 +882,8 @@ int pdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 
 	//Create and write TIFF file
 	float ddNodata = MISSINGFLOAT;
-	char prefix[5] = "du";
 	tiffIO dd(rtrfile, FLOAT_TYPE, &ddNodata, ang);
-	dd.write(xstart, ystart, ny, nx, dtsh->getGridPointer(),prefix,prow,pcol);
+	dd.write(xstart, ystart, ny, nx, dtsh->getGridPointer());
 
 	double writet = MPI_Wtime();
         double dataRead, compute, write, total,tempd;
@@ -880,7 +916,7 @@ int pdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 //Surface distance to the ridge //
 //*****************************//
 int sdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile, 
-					int statmethod, int usew, int concheck, float thresh, int prow, int pcol)
+					int statmethod, int usew, int concheck, float thresh)
 {
 	MPI_Init(NULL,NULL);{
 
@@ -891,7 +927,7 @@ int sdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 	if(rank==0)printf("DinfDistUp -s version %s\n",TDVERSION);
 
 	float wt=1.0,angle,sump,distr,dtss,elvn,elv,distk;
-	double p;
+	double p,tempdxc,tempdyc;
 
 	//  Keep track of time
 	double begint = MPI_Wtime();
@@ -900,8 +936,8 @@ int sdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 	tiffIO ang(angfile, FLOAT_TYPE);
 	long totalX = ang.getTotalX();
 	long totalY = ang.getTotalY();
-	double dx = ang.getdx();
-	double dy = ang.getdy();
+	double dxA = ang.getdxA();
+	double dyA = ang.getdyA();
 	if(rank==0)
 		{
 			float timeestimate=(1.2e-6*totalX*totalY/pow((double) size,0.65))/60+1;  // Time estimate in minutes
@@ -911,21 +947,34 @@ int sdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 		}
 
 	//  Calculate horizontal distances in each direction
-	int kk;
-	for(kk=1; kk<=8; kk++)
-	{
-		dist[kk]=sqrt(dx*dx*d2[kk]*d2[kk]+dy*dy*d1[kk]*d1[kk]);
-	}
+	//int kk;
+	//for(kk=1; kk<=8; kk++)
+	//{
+		//dist[kk]=sqrt(dx*dx*d2[kk]*d2[kk]+dy*dy*d1[kk]*d1[kk]);
+	//}
 
 	//Create partition and read data
 	tdpartition *flowData;
-	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dx, dy, ang.getNodata());
+	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dxA, dyA, ang.getNodata());
 	int nx = flowData->getnx();
 	int ny = flowData->getny();
 	int xstart, ystart;
 	flowData->localToGlobal(0, 0, xstart, ystart);
+	flowData->savedxdyc(ang);
 	ang.read(xstart, ystart, ny, nx, flowData->getGridPointer());
 
+
+	 dist = new float*[ny];
+    for(int m = 0; m <ny; m++)
+    dist[m] = new float[9];
+	for (int m=0; m<ny;m++){
+		flowData->getdxdyc(m,tempdxc,tempdyc);
+		for(int kk=1; kk<=8; kk++)
+	{
+		dist[m][kk]=sqrt(tempdxc*tempdxc*d1[kk]*d1[kk]+tempdyc*tempdyc*d2[kk]*d2[kk]);
+	}
+
+	}
 	//  Elevation data
 	tdpartition *felData;
 	tiffIO fel(felfile, FLOAT_TYPE);
@@ -934,7 +983,7 @@ int sdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 		MPI_Abort(MCW,5);
 	return 1; 
 	}
-	felData = CreateNewPartition(fel.getDatatype(), totalX, totalY, dx, dy, fel.getNodata());
+	felData = CreateNewPartition(fel.getDatatype(), totalX, totalY, dxA, dyA, fel.getNodata());
 	fel.read(xstart, ystart, felData->getny(), felData->getnx(), felData->getGridPointer());
 
 	//if using weightData, get information from file
@@ -946,7 +995,7 @@ int sdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 			MPI_Abort(MCW,5);
 		return 1; 
 		}
-		weightData = CreateNewPartition(w.getDatatype(), totalX, totalY, dx, dy, w.getNodata());
+		weightData = CreateNewPartition(w.getDatatype(), totalX, totalY, dxA, dyA, w.getNodata());
 		w.read(xstart, ystart, weightData->getny(), weightData->getnx(), weightData->getGridPointer());
 	}
 
@@ -955,7 +1004,7 @@ int sdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 
 	//Create empty partitions to store new information
 	tdpartition *dts;  // surface distance
-	dts = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, MISSINGFLOAT);
+	dts = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
 
 	// con is used to check for contamination at the edges
 	long i,j;
@@ -966,7 +1015,7 @@ int sdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 	short tempShort=0;
 
 	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dx, dy, MISSINGSHORT);
+	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, MISSINGSHORT);
 	
 	//Share information and set borders to zero
 	flowData->share();
@@ -1012,7 +1061,8 @@ int sdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 						con=true;
 					else{
 						flowData->getData(in,jn, angle);
-						p = prop(angle, (k+4)%8);
+						flowData->getdxdyc(jn,tempdxc,tempdyc);
+						p = prop(angle, (k+4)%8,tempdxc,tempdyc);
 						if(p>0. && p > thresh)
 						{
 							if(dts->isNodata(in,jn))con=true;
@@ -1029,7 +1079,7 @@ int sdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 									else
 										weightData->getData(in,jn,wt);
 								}	
-								distk=sqrt((elv-elvn)*(elv-elvn)+(dist[k]*wt)*(dist[k]*wt));
+								distk=sqrt((elv-elvn)*(elv-elvn)+(dist[j][k]*wt)*(dist[j][k]*wt));
 								if(statmethod==0){//average
 									distr=distr+p*(distk+dtss);
 								}
@@ -1073,8 +1123,9 @@ int sdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 			//  END UP FLOW ALGEBRA EVALUATION
 			//  Decrement neighbor dependence of downslope cell
 			flowData->getData(i, j, angle);
+			flowData->getdxdyc(j,tempdxc,tempdyc);
 			for(k=1; k<=8; k++) {			
-				p = prop(angle, k);
+				p = prop(angle, k,tempdxc,tempdyc);
 				if(p>0.0) {
 					in = i+d1[k];  jn = j+d2[k];
 					//Decrement the number of contributing neighbors in neighbor
@@ -1121,9 +1172,8 @@ int sdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 
 	//Create and write TIFF file
 	float ddNodata = MISSINGFLOAT;
-	char prefix[5] = "du";
 	tiffIO dd(rtrfile, FLOAT_TYPE, &ddNodata, ang);
-	dd.write(xstart, ystart, ny, nx, dts->getGridPointer(),prefix,prow,pcol);
+	dd.write(xstart, ystart, ny, nx, dts->getGridPointer());
 
 	double writet = MPI_Wtime();
         double dataRead, compute, write, total,tempd;

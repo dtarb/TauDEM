@@ -42,6 +42,8 @@ email:  dtarb@usu.edu
 #include <cmath>
 #include <float.h>
 #include "mpi.h"
+#include <stdint.h>
+
 
 #define MCW MPI_COMM_WORLD
 #define MAX_STRING_LENGTH 255
@@ -57,7 +59,7 @@ email:  dtarb@usu.edu
 #define NOTFINISHED 0
 #define FINISHED 1
 
-#define TDVERSION "5.2.1"
+#define TDVERSION "5.1.2"
 
 enum DATA_TYPE
 	{ SHORT_TYPE,
@@ -76,6 +78,7 @@ struct node {
 
 const double PI =  3.14159265359;
 const short MISSINGSHORT = -32768;
+
 const long MISSINGLONG = -2147483647;
 const float MISSINGFLOAT = -1*FLT_MAX;
 const float MINEPS = 1E-5f;
@@ -85,11 +88,11 @@ const int d2[9] = { 0,0,-1,-1,-1, 0, 1,1,1};
 
 
 //  TODO adjust this for different dx and dy
-const double aref[10] = { -atan2((double)1,(double)1), 0., -aref[0],(double)(0.5*PI),PI-aref[2],(double)PI,
-                        PI+aref[2],(double)(1.5*PI),2.*PI-aref[2],(double)(2.*PI) };   // DGT is concerned that this assumes square grids.  For different dx and dx needs adjustment
+//const double aref[10] = { -atan2((double)1,(double)1), 0., -aref[0],(double)(0.5*PI),PI-aref[2],(double)PI,
+                       // PI+aref[2],(double)(1.5*PI),2.*PI-aref[2],(double)(2.*PI) };   // DGT is concerned that this assumes square grids.  For different dx and dx needs adjustment
 
 int nameadd( char*,char*,char*);
-double prop( float a, int k);
+double prop( float a, int k, double dx1 , double dy1);
 int readoutlets(char *outletsfile, int *noutlets, double*& x, double*& y);
 int readoutlets(char *outletsfile, int *noutlets, double*& x, double*& y, int*& id);
 #include <queue>

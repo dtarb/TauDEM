@@ -46,15 +46,14 @@ email:  dtarb@usu.edu
 #include <stdlib.h>
 //#include "gridCodes.h"
 #include "commonLib.h"
-#include "shape/shapefile.h"
 //#include "tardemlib.h"
 
-int peukerdouglas(char *felfile,char *ssfile,float *p, int prow, int pcol);
+int peukerdouglas(char *felfile,char *ssfile,float *p);
 
 int main(int argc,char **argv)  
 {
    char felfile[MAXLN],ssfile[MAXLN];
-   int err,prow=0,pcol=0;
+   int err;
    float p[3];
       
    if(argc < 2) goto errexit;
@@ -92,24 +91,6 @@ int main(int argc,char **argv)
 				}
 				else goto errexit;
 			}
-                else if(strcmp(argv[i],"-mf")==0)
-                {
-                        i++;
-                        if(argc > i)
-                        {
-                                prow = atoi(argv[i]);
-                                i++;
-                                if(argc > i)
-                                {
-                                        pcol = atoi(argv[i]);
-                                        i++;
-                                }
-                                else goto errexit;
-                        }
-                        else goto errexit;
-                        if(prow <=0 || pcol <=0)
-                                goto errexit;
-                }
 		   else if(strcmp(argv[i],"-par")==0)
 			{
 				i++;
@@ -127,7 +108,7 @@ int main(int argc,char **argv)
 		   else goto errexit;
 		}
    }
-    if( (err=peukerdouglas(felfile,ssfile,p,prow,pcol)) != 0)
+    if( (err=peukerdouglas(felfile,ssfile,p)) != 0)
         printf("Peuker Douglas Error %d\n",err);
 
 	return 0;

@@ -47,7 +47,8 @@ email:  dtarb@usu.edu
 #include "Node.h"
 using namespace std;
 
-double fact[9];
+//double fact[9];
+double **fact;
 
 //int setPosDirDinf(tdpartition *elevDEM, tdpartition *flowDir, tdpartition *slope, tdpartition *area, int useflowfile);
 long setPosDirDinf(tdpartition *elevDEM, tdpartition *flowDir, tdpartition *slope, int useflowfile);
@@ -104,7 +105,7 @@ int dontCross( int k, int i, int j, tdpartition *flowDir) {
 
 //Set positive flowdirections of elevDEM
 
-int setdir( char* demfile, char* angfile, char *slopefile, char *flowfile, int useflowfile, int prow, int pcol) {
+int setdir( char* demfile, char* angfile, char *slopefile, char *flowfile, int useflowfile) {
 
 	MPI_Init(NULL,NULL);{
 
@@ -125,15 +126,17 @@ int setdir( char* demfile, char* angfile, char *slopefile, char *flowfile, int u
 	tiffIO dem(demfile, FLOAT_TYPE);
 	long totalX = dem.getTotalX();
 	long totalY = dem.getTotalY();
-	double dx = dem.getdx();
-	double dy = dem.getdy();
+	double dxA = dem.getdxA();
+	double dyA = dem.getdyA();
+	
 	
 	tdpartition *elevDEM;
-	elevDEM = CreateNewPartition(dem.getDatatype(), totalX, totalY, dx, dy, dem.getNodata());
+	elevDEM = CreateNewPartition(dem.getDatatype(), totalX, totalY, dxA, dyA, dem.getNodata());
 	int xstart, ystart;
 	int nx = elevDEM->getnx();
 	int ny = elevDEM->getny();
 	elevDEM->localToGlobal(0, 0, xstart, ystart);
+	elevDEM->savedxdyc(dem);
 	double headert = MPI_Wtime();
 
 	if(rank==0)
@@ -153,7 +156,7 @@ int setdir( char* demfile, char* angfile, char *slopefile, char *flowfile, int u
 	
 	//Creates empty partition to store new flow direction 
 	tdpartition *flowDir;
-	flowDir = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, MISSINGFLOAT);
+	flowDir = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
 
 	//If using flowfile is enabled, read it in
 	//tdpartition *imposedflow, *area;
@@ -196,16 +199,15 @@ int setdir( char* demfile, char* angfile, char *slopefile, char *flowfile, int u
 	{
 	tdpartition *slope;
 	float slopeNodata = -1.0f;
-	slope = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, slopeNodata);
+	slope = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, slopeNodata);
 
 	//numFlat = setPosDirDinf(elevDEM, flowDir, slope, area, useflowfile);
 	numFlat = setPosDirDinf(elevDEM, flowDir, slope, useflowfile);
 
 	//Stop timer
 	computeSlopet = MPI_Wtime();
-	char prefix[6] = "slp";
 	tiffIO slopeIO(slopefile, FLOAT_TYPE, &slopeNodata, dem);
-	slopeIO.write(xstart, ystart, ny, nx, slope->getGridPointer(),prefix,prow,pcol);
+	slopeIO.write(xstart, ystart, ny, nx, slope->getGridPointer());
 	}  // This bracket intended to destruct slope partition and release memory
 
 	double writeSlopet = MPI_Wtime();
@@ -240,9 +242,8 @@ int setdir( char* demfile, char* angfile, char *slopefile, char *flowfile, int u
 	double computeFlatt = MPI_Wtime();
 //	printf("Before angwrite rank: %d\n",rank);
 	float flowDirNodata=MISSINGFLOAT;
-	char prefix[5] = "ang";
 	tiffIO flowIO(angfile, FLOAT_TYPE, &flowDirNodata, dem);
-	flowIO.write(xstart, ystart, ny, nx, flowDir->getGridPointer(),prefix,prow,pcol);
+	flowIO.write(xstart, ystart, ny, nx, flowDir->getGridPointer());
 
 	double writet = MPI_Wtime();
 
@@ -313,8 +314,8 @@ void   VSLOPE(float E0,float E1, float E2,
 
 void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition *flowDir, tdpartition *slope)
 {
-	double dx = elevDEM->getdx();
-	double dy = elevDEM->getdy();
+	double dxA = elevDEM->getdxA();
+	double dyA = elevDEM->getdyA();
 	float SK[9];
 	float ANGLE[9];
 	float SMAX;
@@ -522,22 +523,28 @@ void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition 
 }
 //int setPosDirDinf(tdpartition *elevDEM, tdpartition *flowDir, tdpartition *slope, tdpartition *area, int useflowfile)
 long setPosDirDinf(tdpartition *elevDEM, tdpartition *flowDir, tdpartition *slope, int useflowfile) {
-	double dx = elevDEM->getdx();
-	double dy = elevDEM->getdy();
+	double dxA = elevDEM->getdxA();
+	double dyA = elevDEM->getdyA();
 	long nx = elevDEM->getnx();
 	long ny = elevDEM->getny();
-	float tempFloat;
+	float tempFloat;double tempdxc,tempdyc;
 	int i,j,k,in,jn, con;
 	long numFlat = 0;
 
 	//Set direction factors
-	for( k=1; k<= 8; k++ ){
-		fact[k] = (double) (1./sqrt(d1[k]*dx*d1[k]*dx + d2[k]*d2[k]*dy*dy));
-	}
+	//for( k=1; k<= 8; k++ ){
+	//	fact[k] = (double) (1./sqrt(d1[k]*dx*d1[k]*dx + d2[k]*d2[k]*dy*dy));
+	//}
+
+	
+
+
 
 	tempFloat = 0;
 	for( j = 0; j < ny; j++) {
 		for( i=0; i < nx; i++ ) {
+
+		
 			//FlowDir is nodata if it is on the border OR elevDEM has no data
 			if ( elevDEM->isNodata(i,j) || !elevDEM->hasAccess(i-1,j) || !elevDEM->hasAccess(i+1,j) || 
 						!elevDEM->hasAccess(i,j-1) || !elevDEM->hasAccess(i,j+1) )  {
@@ -557,9 +564,11 @@ long setPosDirDinf(tdpartition *elevDEM, tdpartition *flowDir, tdpartition *slop
 				else {
 					tempFloat= -1.;
 					flowDir->setData(i,j,tempFloat);//set to -1
+					elevDEM->getdxdyc(j,tempdxc,tempdyc);
+		        
 					
-					float DXX[3] = {0,dx,dy};//tardemlib.cpp ln 1291
-					float DD = sqrt(dx*dx+dy*dy);//tardemlib.cpp ln 1293
+					float DXX[3] = {0,tempdxc,tempdyc};//tardemlib.cpp ln 1291
+					float DD = sqrt(tempdxc*tempdxc+tempdyc*tempdyc);//tardemlib.cpp ln 1293
 					SET2(j,i,DXX,DD, elevDEM,flowDir,slope);//i=y in function form old code j is x switched on purpose
 					//  Use SET2 from serial code here modified to get what it has as felevg.d from elevDEM partition
 					//  Modify to return 0 if there is a 0 slope.  Modify SET2 to output flowDIR as no data (do nothing 
@@ -585,14 +594,14 @@ long resolveflats( tdpartition *elevDEM, tdpartition *flowDir, queue<node> *que,
 	long totaly = elevDEM->gettotaly();
 	long nx = elevDEM->getnx();
 	long ny = elevDEM->getny();
-	double dx = elevDEM->getdx();
-	double dy = elevDEM->getdy();
+	double dxA = elevDEM->getdxA();
+	double dyA = elevDEM->getdyA();
 
 	int rank;
 	MPI_Comm_rank(MCW,&rank);
 
 	long i,j,k,in,jn;
-	bool doNothing, done;
+	bool doNothing, done; double tempdxc,tempdyc;
 	long numFlat;
 	short tempShort;
 	long tempLong;
@@ -601,10 +610,10 @@ long resolveflats( tdpartition *elevDEM, tdpartition *flowDir, queue<node> *que,
 
 	//create and initialize temporary storage for Garbrecht and Martz
 	tdpartition *elev2, *dn, *s;
-	elev2 = CreateNewPartition(SHORT_TYPE, totalx, totaly, dx, dy, 1);
+	elev2 = CreateNewPartition(SHORT_TYPE, totalx, totaly, dxA, dyA, 1);
 	   //  The assumption here is that resolving a flat does not increment a cell value 
 	   //  more than fits in a short
-	dn = CreateNewPartition(SHORT_TYPE, totalx, totaly, dx, dy, 0);
+	dn = CreateNewPartition(SHORT_TYPE, totalx, totaly, dxA, dyA, 0);
 
 	node temp;
 	long nflat=0, iflat;
@@ -715,7 +724,7 @@ long resolveflats( tdpartition *elevDEM, tdpartition *flowDir, queue<node> *que,
 		//	done = true;
 	}
 	//  DGT moved from above - write directly into elev2
-	s = CreateNewPartition(SHORT_TYPE, totalx, totaly, dx, dy, 0);  //  Use 0 as no data to avoid need to initialize
+	s = CreateNewPartition(SHORT_TYPE, totalx, totaly, dxA, dyA, 0);  //  Use 0 as no data to avoid need to initialize
 
 	//incrise - drain away from higher ground
 	done = false;
@@ -768,11 +777,12 @@ long resolveflats( tdpartition *elevDEM, tdpartition *flowDir, queue<node> *que,
 	}
 	elev2->share();
 
+		
 	long localStillFlat = 0;
 	long totalStillFlat = 0;
-
-	float DXX[3] = {0,dx,dy};//tardemlib.cpp ln 1291
-	float DD = sqrt(dx*dx+dy*dy);//tardemlib.cpp ln 1293
+	////elevDEM->getdxdyc(j,tempdxc,tempdyc);
+	//float DXX[3] = {0,tempdxc,tempdyc};//tardemlib.cpp ln 1291
+	//float DD = sqrt(tempdxc*tempdxc+tempdyc*tempdyc);//tardemlib.cpp ln 1293
 	if(rank==0)
 	{
 		fprintf(stderr,"\nSetting directions\n");  
@@ -780,9 +790,17 @@ long resolveflats( tdpartition *elevDEM, tdpartition *flowDir, queue<node> *que,
 	}
 	for(iflat=0; iflat < nflat; iflat++)
 	{
-			temp=que->front(); que->pop(); i=temp.x; j=temp.y; //  Do not push que on this last one - so que is empty at end
+
+
+
+	temp=que->front(); que->pop(); i=temp.x; j=temp.y; //  Do not push que on this last one - so que is empty at end
 				//  The logic here was to replace SETFLOW2 from D8 with SET2 so that it computes a DINF flow 
-				//  direction based on the artificial elevations 
+				//  direction based on the artificial elevations
+
+	elevDEM->getdxdyc(j,tempdxc,tempdyc);
+	float DXX[3] = {0,tempdxc,tempdyc};//tardemlib.cpp ln 1291
+	float DD = sqrt(tempdxc*tempdxc+tempdyc*tempdyc);//tardemlib.cpp ln 1293
+
 			SET2(j,i,DXX,DD,elevDEM,elev2,flowDir,dn);	//use new elevations to calculate flowDir.	
 			if(!flowDir->isNodata(i,j)&& flowDir->getData(i,j,tempFloat)< 0.) //this is still a flat
 			{

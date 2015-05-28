@@ -48,7 +48,7 @@ email:  dtarb@usu.edu
 #include "tiffIO.h"
 using namespace std;
 
-int lengtharea(char *plenfile, char*ad8file, char *ssfile, float *p, int prow, int pcol)
+int lengtharea(char *plenfile, char*ad8file, char *ssfile, float *p)
 {
 	MPI_Init(NULL,NULL);{
 
@@ -63,8 +63,8 @@ int lengtharea(char *plenfile, char*ad8file, char *ssfile, float *p, int prow, i
 	tiffIO plen(plenfile, FLOAT_TYPE);
 	long totalX = plen.getTotalX();
 	long totalY = plen.getTotalY();
-	double dx = plen.getdx();
-	double dy = plen.getdy();
+	double dxA = plen.getdxA();
+	double dyA = plen.getdyA();
 	if(rank==0)
 		{
 			float timeestimate=(1e-7*totalX*totalY/pow((double) size,1))/60+1;  // Time estimate in minutes
@@ -76,7 +76,7 @@ int lengtharea(char *plenfile, char*ad8file, char *ssfile, float *p, int prow, i
 
 	//Create partition and read data
 	tdpartition *plenData;
-	plenData = CreateNewPartition(plen.getDatatype(), totalX, totalY, dx, dy, plen.getNodata());
+	plenData = CreateNewPartition(plen.getDatatype(), totalX, totalY, dxA, dyA, plen.getNodata());
 	int nx = plenData->getnx();
 	int ny = plenData->getny();
 	int xstart, ystart;
@@ -86,7 +86,7 @@ int lengtharea(char *plenfile, char*ad8file, char *ssfile, float *p, int prow, i
 	tdpartition *ad8Data;
 	tiffIO ad8(ad8file, LONG_TYPE);
 	if(!plen.compareTiff(ad8)) return 1;  //And maybe an unhappy error message
-	ad8Data = CreateNewPartition(ad8.getDatatype(), totalX, totalY, dx, dy, ad8.getNodata());
+	ad8Data = CreateNewPartition(ad8.getDatatype(), totalX, totalY, dxA, dyA, ad8.getNodata());
 	ad8.read(xstart, ystart, ad8Data->getny(), ad8Data->getnx(), ad8Data->getGridPointer());
 	
 	//Begin timer
@@ -94,7 +94,7 @@ int lengtharea(char *plenfile, char*ad8file, char *ssfile, float *p, int prow, i
 
 	//Create empty partition to store new information
 	tdpartition *ss;
-	ss = CreateNewPartition(SHORT_TYPE, totalX, totalY, dx, dy, -32768);
+	ss = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -32768);
 
 	long i,j;
 	float tempplen=0.0;
@@ -139,9 +139,8 @@ int lengtharea(char *plenfile, char*ad8file, char *ssfile, float *p, int prow, i
 
 	//Create and write TIFF file
 	short aNodata = -32768;
-	char prefix[5] = "ss";
 	tiffIO sss(ssfile, SHORT_TYPE, &aNodata, ad8);
-	sss.write(xstart, ystart, ny, nx, ss->getGridPointer(),prefix,prow,pcol);
+	sss.write(xstart, ystart, ny, nx, ss->getGridPointer());
 
 	//Brackets force MPI-dependent objects to go out of scope before Finalize is called
 	}MPI_Finalize();

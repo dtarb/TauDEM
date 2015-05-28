@@ -38,25 +38,28 @@ email:  dtarb@usu.edu
 
 //  This software is distributed from http://hydrology.usu.edu/taudem/
 
-#include "commonLib.h"
+//#include "commonLib.h"
 #include <stdio.h>
 #ifndef PARTITION_H
 #define PARTITION_H
-
+#include "tiffIO.h"
+class tiffIO;
 class tdpartition{
 	protected:
 		long totalx, totaly;
 		long nx, ny;
-		double dx, dy;
+		double dxA, dyA, *dxc,*dyc;
+		
 
 	public:
 		tdpartition(){}
 		virtual ~tdpartition(){}
 
+		
 		virtual bool isInPartition(int, int) = 0;
  		virtual bool hasAccess(int, int) = 0;
 		virtual bool isNodata(long x, long y) = 0;
-
+	    
 		virtual void share() = 0;
 		virtual void passBorders() = 0;
 		virtual void addBorders() = 0;
@@ -73,8 +76,8 @@ class tdpartition{
 		int getny(){return ny;}
 		int gettotalx(){return totalx;}
 		int gettotaly(){return totaly;}
-		double getdx(){return dx;}
-		double getdy(){return dy;}
+		double getdxA(){return dxA;}
+		double getdyA(){return dyA;}
 
 		int *before1;
 		int *before2;
@@ -88,28 +91,32 @@ class tdpartition{
 		virtual void setToNodata(long x, long y) = 0;
 
 		virtual void init(long totalx, long totaly, double dx_in, double dy_in, MPI_Datatype MPIt, short nd){}
-		virtual void init(long totalx, long totaly, double dx_in, double dy_in, MPI_Datatype MPIt, long nd){}
+		virtual void init(long totalx, long totaly, double dx_in, double dy_in ,MPI_Datatype MPIt, int32_t nd){}
 		virtual void init(long totalx, long totaly, double dx_in, double dy_in, MPI_Datatype MPIt, float nd){}
+
 
 		virtual short getData(long, long, short&){
 			printf("Attempt to access short grid with incorrect data type\n");
 			MPI_Abort(MCW,41);return 0;
 		}
-		virtual long getData(long, long, long&){
-			printf("Attempt to access long grid with incorrect data type\n");
+		virtual long getData(long, long, int32_t&){
+			printf("Attempt to access int32_t grid with incorrect data type\n");
 			MPI_Abort(MCW,42);return 0;
 		}
 		virtual float getData(long, long, float&){
 			printf("Attempt to access float grid with incorrect data type\n");
 			MPI_Abort(MCW,43);return 0;
 		}
+	   
 
-		virtual void setData(long, long, short){}
-		virtual void setData(long, long, long){}
+		virtual void savedxdyc(tiffIO &obj ){}
+		virtual void getdxdyc(long, double&, double&){}
+	    virtual void setData(long, long, short){}
+		virtual void setData(long, long, int32_t){}
 		virtual void setData(long, long, float){}
 
 		virtual void addToData(long, long, short){}
-		virtual void addToData(long, long, long){}
+		virtual void addToData(long, long, int32_t){}
 		virtual void addToData(long, long, float){}
 };
 #endif

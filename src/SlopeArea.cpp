@@ -49,7 +49,7 @@ email:  dtarb@usu.edu
 using namespace std;
 
 
-int slopearea(char *slopefile, char*scafile, char *safile, float *p, int prow, int pcol)
+int slopearea(char *slopefile, char*scafile, char *safile, float *p)
 {
 	MPI_Init(NULL,NULL);{
 
@@ -64,8 +64,8 @@ int slopearea(char *slopefile, char*scafile, char *safile, float *p, int prow, i
 	tiffIO slp(slopefile, FLOAT_TYPE);
 	long totalX = slp.getTotalX();
 	long totalY = slp.getTotalY();
-	double dx = slp.getdx();
-	double dy = slp.getdy();
+	double dxA = slp.getdxA();
+	double dyA = slp.getdyA();
 	if(rank==0)
 		{
 			float timeestimate=(1e-7*totalX*totalY/pow((double) size,1))/60+1;  // Time estimate in minutes
@@ -77,7 +77,7 @@ int slopearea(char *slopefile, char*scafile, char *safile, float *p, int prow, i
 
 	//Create partition and read data
 	tdpartition *slpData;
-	slpData = CreateNewPartition(slp.getDatatype(), totalX, totalY, dx, dy, slp.getNodata());
+	slpData = CreateNewPartition(slp.getDatatype(), totalX, totalY, dxA, dyA, slp.getNodata());
 	int nx = slpData->getnx();
 	int ny = slpData->getny();
 	int xstart, ystart;
@@ -87,7 +87,7 @@ int slopearea(char *slopefile, char*scafile, char *safile, float *p, int prow, i
 	tdpartition *scaData;
 	tiffIO sca(scafile, FLOAT_TYPE);
 	if(!slp.compareTiff(sca)) return 1;  //And maybe an unhappy error message
-	scaData = CreateNewPartition(sca.getDatatype(), totalX, totalY, dx, dy, sca.getNodata());
+	scaData = CreateNewPartition(sca.getDatatype(), totalX, totalY, dxA, dyA, sca.getNodata());
 	sca.read(xstart, ystart, scaData->getny(), scaData->getnx(), scaData->getGridPointer());
 	
 	//Begin timer
@@ -95,7 +95,7 @@ int slopearea(char *slopefile, char*scafile, char *safile, float *p, int prow, i
 
 	//Create empty partition to store new information
 	tdpartition *sa;
-	sa = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, -1.0f);
+	sa = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, -1.0f);
 
 	// con is used to check for contamination at the edges
 	long i,j;
@@ -142,9 +142,8 @@ int slopearea(char *slopefile, char*scafile, char *safile, float *p, int prow, i
 
 	//Create and write TIFF file
 	float aNodata = -1.0f;
-	char prefix[5] = "sa";
 	tiffIO saa(safile, FLOAT_TYPE, &aNodata, slp);
-	saa.write(xstart, ystart, ny, nx, sa->getGridPointer(),prefix,prow,pcol);
+	saa.write(xstart, ystart, ny, nx, sa->getGridPointer());
 
 	//Brackets force MPI-dependent objects to go out of scope before Finalize is called
 	}MPI_Finalize();

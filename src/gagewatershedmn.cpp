@@ -46,12 +46,11 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 #include "tardemlib.h"
 
-int gagewatershed( char *pfile, char *wfile, char *shfile, char *idfile, int writeid, int prow, int pcol);
 
 int main(int argc,char **argv)
 {
    char pfile[MAXLN],wfile[MAXLN],shfile[MAXLN],idfile[MAXLN];
-   int err,useOutlets=0,useMask=0,thresh=0,i=1,writeid=0,prow=0, pcol=0;
+   int err,useOutlets=0,useMask=0,thresh=0,i=1,writeid=0;
    if(argc <= 2)
     {  	
 	   goto errexit;
@@ -69,24 +68,6 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-                else if(strcmp(argv[i],"-mf")==0)
-                {
-                        i++;
-                        if(argc > i)
-                        {
-                                prow = atoi(argv[i]);
-                                i++;
-                                if(argc > i)
-                                {
-                                        pcol = atoi(argv[i]);
-                                        i++;
-                                }
-                                else goto errexit;
-                        }
-                        else goto errexit;
-                        if(prow <=0 || pcol <=0)
-                                goto errexit;
-                }
 		else if(strcmp(argv[i],"-o")==0)
 		{
 			i++;
@@ -124,7 +105,7 @@ int main(int argc,char **argv)
 		}
 	}
 
-    if( (err=gagewatershed(pfile,wfile,shfile,idfile,writeid,prow,pcol)) != 0)
+    if( (err=gagewatershed(pfile,wfile,shfile,idfile,writeid)) != 0)
         printf("Gage watershed error %d\n",err);
 
 	return 0;

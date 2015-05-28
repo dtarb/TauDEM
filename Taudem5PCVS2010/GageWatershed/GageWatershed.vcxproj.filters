@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\src\gagewatershed.cpp" />
+    <ClCompile Include="..\..\src\gagewatershedmn.cpp" />
+    <ClCompile Include="..\..\src\commonLib.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\tiffIO.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ReadOutlets.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shapelib\dbfopen.c">
+      <Filter>Shapelib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shapelib\safileio.c">
+      <Filter>Shapelib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shapelib\shpopen.c">
+      <Filter>Shapelib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shapelib\shptree.c">
+      <Filter>Shapelib</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\TauDEM.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Common">
+      <UniqueIdentifier>{ddcf7342-7706-407b-b983-5d6dbbfa4fea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shapelib">
+      <UniqueIdentifier>{b010e386-d386-47bd-bf99-4362ae158fc0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\shapelib\shapefil.h">
+      <Filter>Shapelib</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
