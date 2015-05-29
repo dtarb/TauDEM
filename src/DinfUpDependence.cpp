@@ -61,7 +61,7 @@ int depgrd(char* angfile, char* dgfile, char* depfile)
 	if(rank==0)printf("DinfUpDependence version %s\n",TDVERSION);
 
 	float angle,depp;
-	long dgg;
+	int32_t dgg;
 	double p,tempdxc,tempdyc;
 
 	//  Keep track of time

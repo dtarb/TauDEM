@@ -162,14 +162,14 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 
 
 	// Parse to find maximum
-	long wmax=0;  // This assumes that the maximum will be positive
+	int32_t wmax=0;  // This assumes that the maximum will be positive
 	long i,j;	
 	for(j=0; j<ny; j++) {
 			for(i=0; i<nx; i++ ) 
 			{					
 				if(!wData->isNodata(i,j)) 
 				{
-					long templong;
+					int32_t templong;
 					wData->getData(i,j,templong);
 					if(templong > wmax)wmax=templong;
 				}				
@@ -201,7 +201,7 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 			{					
 				if(!wData->isNodata(i,j)) 
 				{
-					long ii;
+					int32_t ii;
 					wData->getData(i,j,ii);
 					if(ii == 469)
 						ii=ii;
@@ -396,7 +396,7 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 			else part_has[i]=-1;  // some other partition has control
 			if(flowData->isInPartition(tx,ty) &&dist_moved[i]>=0){
 					dirn = flowData->getData(tx,ty,dirn);
-					long tempLong;
+					int32_t tempLong;
 					widdown[i] = wData->getData(tx,ty,tempLong);  //  initialize down identifier
 					if(dirn>=1 && dirn<=8 && dist_moved[i] < movedist){
 						nextx=outletsX[i]+d2[dirn];

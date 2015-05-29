@@ -99,7 +99,7 @@ class tdpartition{
 			printf("Attempt to access short grid with incorrect data type\n");
 			MPI_Abort(MCW,41);return 0;
 		}
-		virtual long getData(long, long, int32_t&){
+		virtual int32_t getData(long, long, int32_t&){
 			printf("Attempt to access int32_t grid with incorrect data type\n");
 			MPI_Abort(MCW,42);return 0;
 		}

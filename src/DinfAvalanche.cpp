@@ -72,7 +72,7 @@ int avalancherunoutgrd(char *angfile, char *felfile, char *assfile, char *rzfile
 	if(rank==0)printf("DinfAvalanche version %s\n",TDVERSION);
 
 	float area,angle,asss,dmm,rzz,zmm;
-	long imm,jmm;
+	int32_t imm,jmm;
 	double p,tempdxc,tempdyc;
 
 	//  Keep track of time
@@ -222,8 +222,8 @@ int avalancherunoutgrd(char *angfile, char *felfile, char *assfile, char *rzfile
 					rz->setData(i,j,alpha);
 					int ig,jg;
 					flowData->localToGlobal((int)i,(int)j,ig,jg);
-					im->setData(i,j,(long)ig);  //  record global row and column so that lookup across partitions works
-					jm->setData(i,j,(long)jg);
+					im->setData(i,j,(int32_t)ig);  //  record global row and column so that lookup across partitions works
+					jm->setData(i,j,(int32_t)jg);
 					zm->setData(i,j,felData->getData(i,j,tempFloat));  //  Record max elevation in partition as global lookup later does not work across partitions
 					dm->setData(i,j,(float)0.0);
 				}

@@ -65,7 +65,7 @@ MPI_Init(NULL,NULL);
 	int i,j,in,jn;
 	float tempFloat; double tempdxc,tempdyc;
 	short tempShort,k;
-	long tempLong;
+	int32_t tempLong;
 	bool finished;
 
  //  Begin timer

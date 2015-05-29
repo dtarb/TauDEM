@@ -98,7 +98,7 @@ int lengtharea(char *plenfile, char*ad8file, char *ssfile, float *p)
 
 	long i,j;
 	float tempplen=0.0;
-	long tempad8=0;
+	int32_t tempad8=0;
 	short tempss=0;
 	
 	//Share information and set borders to zero

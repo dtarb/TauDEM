@@ -39,9 +39,10 @@ email:  dtarb@usu.edu
 //  This software is distributed from http://hydrology.usu.edu/taudem/
 
 #include <mpi.h>
+
+#include "commonLib.h"
 #include "linearpart.h"
 #include "createpart.h"
-#include "commonLib.h"
 #include "tiffIO.h"
 #include <math.h>
 #include "Node.h"
@@ -604,7 +605,7 @@ long resolveflats( tdpartition *elevDEM, tdpartition *flowDir, queue<node> *que,
 	bool doNothing, done; double tempdxc,tempdyc;
 	long numFlat;
 	short tempShort;
-	long tempLong;
+	int32_t tempLong;
 	float tempFloat;
 	long numInc, numIncOld, numIncTotal;
 

@@ -222,7 +222,8 @@ int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *de
 			que.pop();
 			i = temp.x;
 			j = temp.y;
-			//  FLOW ALGEBRA EXPRESSION EVALUATION			
+			//  FLOW ALGEBRA EXPRESSION EVALUATION		
+		
 			if(flowData->isInPartition(i,j)  && (!tsupData->isNodata(i,j)) && (!tcData->isNodata(i,j))){
 			  if(usec==0 || !cinData->isNodata(i,j)){
 				//  Initialize the result
@@ -244,7 +245,11 @@ int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *de
 							if(usec==1)
 							{
 								if(csout->isNodata(in,jn))con=true;
-								else loadin=loadin+p*tempFloat*csout->getData(in,jn,tempFloat);
+								
+								else {
+									
+								float dd=csout->getData(in,jn,tempFloat);
+								loadin=loadin+p*tempFloat*dd;}
 							}
 						}
 					}

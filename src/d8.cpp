@@ -237,8 +237,8 @@ int setdird8( char* demfile, char* pointfile, char *slopefile, char *flowfile, i
 
 	//If using flowfile is enabled, read it in
 	tdpartition *imposedflow, *area;
-	area = new linearpart<long>;
-	area->init(totalX, totalY, dxA, dyA, MPI_LONG, long(-1));
+	area = new linearpart<int32_t>;
+	area->init(totalX, totalY, dxA, dyA, MPI_LONG, int32_t(-1));
 
 	if( useflowfile == 1) {
 		tiffIO flow(flowfile,SHORT_TYPE);
@@ -473,7 +473,7 @@ long resolveflats( tdpartition *elevDEM, tdpartition *flowDir, queue<node> *que,
 	bool doNothing, done;
 	long numFlat;
 	short tempShort;
-	long tempLong;
+	int32_t tempLong;
 	float tempFloat;
 	long numInc, numIncOld, numIncTotal;
 

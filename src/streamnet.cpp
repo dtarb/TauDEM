@@ -239,7 +239,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 
 		//  Used throughout
 		float tempFloat;
-		long tempLong;
+		int32_t tempLong;
 		short tempShort;
 		double tempdxc,tempdyc;
 		//  Keep track of time
@@ -365,7 +365,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 				int xlocal, ylocal;
 				idGrid->globalToLocal(xOutlets[i], yOutlets[i],xlocal,ylocal);
 				if(idGrid->isInPartition(xlocal,ylocal)){   //xOutlets[i], yOutlets[i])){
-					idGrid->setData(xlocal,ylocal,(long)ids[i]);  //xOutlets[i], yOutlets[i], (long)ids[i]);
+					idGrid->setData(xlocal,ylocal,(int32_t)ids[i]);  //xOutlets[i], yOutlets[i], (long)ids[i]);
 				}
 			}
 			idGrid->share();
@@ -573,7 +573,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 				short nOrder[8];  // neighborOrders
 				short inneighbors[8];  // inflowing neighbors
 				bool junction; // junction set to true/false in newOrder
-				long Id;
+				int32_t Id;
 
 				//  Count number of grid cells on stream that point to me.  
 				// (There will be no more than 8, usually only 0, 1,2 or 3.  The queue and 
@@ -601,7 +601,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 
 				// Determine if mandatory junction indicated by a value in idGrid
 				bool mandatoryJunction=false;
-				long shapeID;
+				int32_t shapeID;
 				if(!idGrid->isNodata(i,j))
 				{
 					mandatoryJunction=true;
@@ -623,7 +623,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 					//  This is the start of a stream - instantiate new link
 					streamlink *thisLink;
 					thisLink = createLink(-1, -1, -1, addPoint); //,1); //, dx,dy);
-					long u1= thisLink->Id;
+					int32_t u1= thisLink->Id;
 					idGrid->setData(i,j, u1);
 					wsGrid->setData(i,j, u1);
 					lengths->setData(i,j,(float)thisLink->order);
@@ -652,7 +652,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 
 				//  Case for ongoing flow path with single inflow
 				else if(k==1){
-					long u1=idGrid->getData(i+d1[inneighbors[0]],j+d2[inneighbors[0]],tempLong);
+					int32_t u1=idGrid->getData(i+d1[inneighbors[0]],j+d2[inneighbors[0]],tempLong);
 					appendPoint(u1, addPoint);
 					streamlink *thisLink;
 					//TODO DGT Thinks
@@ -706,7 +706,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 					}else{
 						oOut=nOrder[k-1];
 					}
-					long u1, u2;
+					int32_t u1, u2;
 					u1 = idGrid->getData(i+d1[inneighbors[k-1]],j+d2[inneighbors[k-1]],tempLong);
 					u2 = idGrid->getData(i+d1[inneighbors[k-2]],j+d2[inneighbors[k-2]],tempLong);
 					appendPoint(u1, addPoint);
@@ -1291,7 +1291,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 		}
 	
 
-		long wsGridNodata=MISSINGLONG;
+		int32_t wsGridNodata=MISSINGLONG;
 		short ordNodata=MISSINGSHORT;
 		tiffIO wsIO(wfile, LONG_TYPE,&wsGridNodata,ad8IO);
 		wsIO.write(xstart, ystart, ny, nx, wsGrid->getGridPointer());
