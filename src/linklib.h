@@ -820,7 +820,7 @@ void setLinkInfo(long **LinkIdU1U2DMagShapeid,double **LinkElevUElevDLength,doub
 			LinkElevUElevDLength[counter][2] = current->data->length;
 	*/		
 			long i=0;
-			double cellarea = elev->getdxA()*elev->getdyA();
+			double cellarea = (elev->getdxA())*(elev->getdyA());
 			for(i=0;i<current->data->numCoords;i++){
 				//elevIO->globalXYToGeo(current->data->coord[i].x, current->data->coord[i].y,PointXY[pointsSoFar][0],PointXY[pointsSoFar][1]);
 				elevIO->globalXYToGeo(current->data->coord.front().x, current->data->coord.front().y,PointXY[pointsSoFar][0],PointXY[pointsSoFar][1]);	
