@@ -868,8 +868,8 @@ if (rank == 0) {
 	MPI_File_close(&fh);
 	}
 
-	MPI_Bcast(&totalbuf, sizeof(int), MPI_INT, 0, MCW);
-
+	MPI_Bcast(&totalbuf, 1, MPI_INT, 0, MCW);
+	
 	if (rank != 0) {
 		buffer = (char*) malloc(totalbuf);
 	}

@@ -40,21 +40,33 @@ email:  dtarb@usu.edu
 //  This software is distributed from http://hydrology.usu.edu/taudem/
 
 #include <algorithm>
+#include <set>
+
+#include <mpi.h>
 
 #include "d8.h"
-#include <mpi.h>
 #include "linearpart.h"
 #include "createpart.h"
 #include "commonLib.h"
 #include "tiffIO.h"
 #include "Node.h"
 
+template<typename T> long resolveFlats(T& elev, BlockPartition<short>& inc, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands);
+template<typename T> long resolveFlats_parallel(T& elevDEM, BlockPartition<short>& inc, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands);
+
+template<typename T> void flowTowardsLower(T& elev, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, BlockPartition<short>& inc);
+template<typename T> void flowFromHigher(T& elevDEM, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, BlockPartition<short>& inc);
+template<typename T> int markPits(T& elevDEM, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, BlockPartition<short>& inc);
+
+int propagateIncrements(linearpart<short>& flowDir, BlockPartition<short>& inc, std::vector<node>& queue);
+int propagateBorderIncrements(linearpart<short>& flowDir, BlockPartition<short>& inc);
+
 double fact[9];
 
 //Checks if cells cross
 int dontCross(int k, int i, int j, linearpart<short>& flowDir)
 {
-    long in1,jn1,in2,jn2;
+    long in1, jn1, in2, jn2;
     int n1, c1, n2, c2;
 
     switch(k) {
@@ -102,51 +114,54 @@ int dontCross(int k, int i, int j, linearpart<short>& flowDir)
 //Set positive flowdirections of elevDEM
 void setFlow(int i, int j, linearpart<short>& flowDir, linearpart<float>& elevDEM, BlockPartition<long>& area, int useflowfile)
 {
-    float slope,smax=0;
-    long in,jn;
-    short k,dirnb;
-    int aneigh = -1;
+    int in,jn;
     int amax=0;
+    float smax=0;
 
-    for (k=1; k<=8 && !flowDir.isNodata(i,j); k+=2) {
+    float elev = elevDEM.getData(i, j);
+
+    for (short k=1; k<=8 && !flowDir.isNodata(i,j); k+=2) {
         in=i+d1[k];
         jn=j+d2[k];
 
-        slope = fact[k] * (elevDEM.getData(i,j) - elevDEM.getData(in,jn));
+        float slope = fact[k] * (elev - elevDEM.getData(in,jn));
 
         if (useflowfile == 1) {
-            aneigh = area.getData(in,jn);
-        }
+            int aneigh = area.getData(in,jn);
 
-        if (aneigh > amax && slope >= 0) {
-            amax = aneigh;
-            dirnb = flowDir.getData(in,jn);
-            if (dirnb > 0 && abs(dirnb - k) != 4) {
-                flowDir.setData(i, j, k);
+            if (aneigh > amax && slope >= 0) {
+                amax = aneigh;
+
+                short dirnb = flowDir.getData(in,jn);
+                if (dirnb > 0 && abs(dirnb - k) != 4) {
+                    flowDir.setData(i, j, k);
+                }
             }
         }
+
         if (slope > smax) {
             smax=slope;
-            dirnb=flowDir.getData(in,jn);
+            short dirnb=flowDir.getData(in,jn);
 
-            if (dirnb >0 && abs(dirnb-k) == 4)
-            { flowDir.setToNodata(i,j); }
-            else
-            { flowDir.setData(i,j,k); }
+            if (dirnb > 0 && abs(dirnb-k) == 4) {
+                flowDir.setToNodata(i,j);
+            } else {
+                flowDir.setData(i,j,k);
+            }
         }
     }
 
-    for (k=2; k<=8 && !flowDir.isNodata(i,j); k+=2) {
+    for (short k=2; k<=8 && !flowDir.isNodata(i,j); k+=2) {
         in=i+d1[k];
         jn=j+d2[k];
 
-        slope = fact[k] * (elevDEM.getData(i,j) - elevDEM.getData(in,jn));
+        float slope = fact[k] * (elev - elevDEM.getData(in,jn));
 
         if (slope > smax && dontCross(k,i,j,flowDir)==0) {
             smax = slope;
-            dirnb = flowDir.getData(in,jn);
+            short dirnb = flowDir.getData(in,jn);
 
-            if (dirnb >0 && abs(dirnb-k) == 4) { 
+            if (dirnb > 0 && abs(dirnb-k) == 4) { 
                 flowDir.setToNodata(i,j);
             } else {
                 flowDir.setData(i,j,k);
@@ -166,7 +181,7 @@ void calcSlope(linearpart<short>& flowDir, linearpart<float>& elevDEM, linearpar
             // If i,j is on the border or flowDir has no data, set slope(i,j) to slopeNoData
             if (flowDir.isNodata(i,j) || !flowDir.hasAccess(i-1,j) || !flowDir.hasAccess(i+1,j) ||
                     !flowDir.hasAccess(i,j-1) || !flowDir.hasAccess(i,j+1)) {
-                slope.setData(i,j,-1.0f);
+                slope.setToNodata(i, j);
             } else {
                 short flowDirection = flowDir.getData(i,j);
 
@@ -180,14 +195,6 @@ void calcSlope(linearpart<short>& flowDir, linearpart<float>& elevDEM, linearpar
     }
 }
 
-template<typename T>
-long resolveflats(linearpart<T>& elev, linearpart<short>& flowDir, std::vector<node>& flats, std::vector<std::vector<node>>&);
-
-tiffIO* tiff_ref;
-char* tiff_pointfile;
-long tiff_xstart, tiff_ystart, tiff_nx, tiff_ny;
-int tiff_prow, tiff_pcol;
-
 //Open files, Initialize grid memory, makes function calls to set flowDir, slope, and resolvflats, writes files
 int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, int useflowfile, int prow, int pcol)
 {
@@ -200,12 +207,6 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
     if (rank==0) {
         printf("D8FlowDir version %s\n",TDVERSION);
         fflush(stdout);
-    }
-
-    if (size > 1) {
-        printf("Currently limited to 1 rank\n");
-        MPI_Finalize();
-        return -1;
     }
 
     double begint = MPI_Wtime();
@@ -238,28 +239,18 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
     dem.read(xstart, ystart, ny, nx, elevDEM.getGridPointer());
     elevDEM.share();
 
-    // FOR DEBUGGING,
-    // used to copy tiff parameters
-    tiff_pointfile = pointfile;
-    tiff_ref = &dem;
-    tiff_xstart = xstart;
-    tiff_ystart = ystart;
-    tiff_nx = nx;
-    tiff_ny = ny;
-    tiff_prow = prow;
-    tiff_pcol = pcol;
-
     double readt = MPI_Wtime();
 
     //Creates empty partition to store new flow direction
     short flowDirNodata = MISSINGSHORT;
+
     linearpart<short> flowDir(totalX, totalY, dx, dy, MPI_SHORT, flowDirNodata);
     //linearpart<long> area(totalX, totalY, dx, dy, MPI_LONG, -1);
     BlockPartition<long> area(totalX, totalY, -1);
 
     //If using a flowfile, read it in
     if (useflowfile == 1) {
-        tiffIO flow(flowfile,SHORT_TYPE);
+        tiffIO flow(flowfile, SHORT_TYPE);
 
         linearpart<short> imposedflow(flow.getTotalX(), flow.getTotalY(),
                 flow.getdx(), flow.getdy(), MPI_SHORT, *(short*) flow.getNodata());
@@ -307,6 +298,8 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
 
     double writeSlopet = MPI_Wtime();
     
+    flowDir.share();
+
     size_t totalNumFlat = 0;
     MPI_Allreduce(&numFlat, &totalNumFlat, 1, MPI_LONG, MPI_SUM, MCW);
    
@@ -318,7 +311,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
     if (totalNumFlat > 0) {
         std::vector<node> flats;
 
-        // should do this during slope calculation
+        // FIXME: Should do this during slope calculation
         for (int j=0; j<ny; j++) {
             for (int i=0; i<nx; i++) {
                 if (flowDir.getData(i,j)==0) {
@@ -327,74 +320,134 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
             }
         }
 
-        fprintf(stderr, "Finding flat islands\n");
+        if (rank == 0) {
+            fprintf(stderr, "Finding flat islands...\n");
+        }
 
         double flatFindStart = MPI_Wtime();
-
         int numIslands = 0;
 
-        long* islands = new long[ny*nx];
-        memset(islands, 0, sizeof(long) * ny*nx);
+        std::vector<std::vector<node>> islands;
+        std::set<int> bordering_island_labels;
 
-        std::vector<std::vector<node>> isl;
-
-        for(size_t i = 0; i < flats.size(); i++)
         {
-            node flat = flats[i];
+            BlockPartition<int> island_marker(nx, ny, 0);
 
-            if (islands[flat.y*nx + flat.x] != 0) {
-                continue;
-            }
-
-            std::queue<node> q;
-            q.push(flat);
-
-            int label = ++numIslands;
-            isl.push_back(std::vector<node>());
-
-            while(!q.empty()) {
-                node kek = q.front();
-                q.pop();
-
-                if (islands[kek.y*nx + kek.x] != 0) {
+            for(node flat : flats)
+            {
+                if (island_marker.getData(flat.x, flat.y) != 0) {
                     continue;
                 }
 
-                islands[kek.y*nx + kek.x] = label;
-                isl[(label - 1)].push_back(kek);
+                std::vector<node> q;
+                q.push_back(flat);
 
-                for (int k=1; k<=8; k++) {
-                    //if neighbor is in flat
-                    int in = kek.x + d1[k];
-                    int jn = kek.y + d2[k];
+                int label = ++numIslands;
+                islands.push_back(std::vector<node>());
 
-                    if (in < 0 || jn < 0 || in >= nx || jn >= ny)
+                while(!q.empty()) {
+                    node flat = q.back();
+                    q.pop_back();
+
+                    if (island_marker.getData(flat.x, flat.y) != 0) {
                         continue;
+                    }
 
-                    if (flowDir.getData(in, jn) == 0)
-                        q.push(node(in, jn));
+                    island_marker.setData(flat.x, flat.y, label);
+                    islands[label - 1].push_back(flat);
+
+                    for (int k=1; k<=8; k++) {
+                        //if neighbor is in flat
+                        int in = flat.x + d1[k];
+                        int jn = flat.y + d2[k];
+
+                        if ((jn == -1 || jn == ny) && flowDir.hasAccess(in, jn)) {
+                            if (flowDir.getData(in, jn) == 0)
+                            {
+                                bordering_island_labels.insert(label);
+                            }
+                        }
+
+                        if (!flowDir.isInPartition(in, jn))
+                            continue;
+
+                        if (flowDir.getData(in, jn) == 0)
+                            q.push_back(node(in, jn));
+                    }
                 }
             }
         }
 
-        delete[] islands;
+        std::vector<std::vector<node>> borderingIslands;
+        int localSharedFlats = 0, sharedFlats = 0;
 
-        printf("Done, %d islands. Took %.2f seconds\n", numIslands, MPI_Wtime() - flatFindStart);
+        for (auto& label : bordering_island_labels) {
+            std::vector<node> island = std::move(islands[label - 1]);
 
-        
-        //Repeatedly call resolve flats until there is no change
-        size_t lastNumFlat = 0;
-        do {
-            lastNumFlat = totalNumFlat;
-            
-            // FIXME: currently uses recursion internally due to tdpartition/linearpart/blockpartition incompatability 
-            totalNumFlat = resolveflats(elevDEM, flowDir, flats, isl); 
+            localSharedFlats += island.size(); 
+            borderingIslands.push_back(island);
+        }
+
+        //printf("rank %d: Done, %d islands. Took %.2f seconds\n", rank, numIslands, MPI_Wtime() - flatFindStart);
+        //printf("rank %d: %lu bordering islands with %d flats\n", rank, bordering_islands.size(), localSharedFlats);
+
+        if (rank == 0) {
+            printf("Finding flat islands took %.2f seconds\n", MPI_Wtime() - flatFindStart);
+        }
+
+        if (!islands.empty()) {
+            BlockPartition<short> inc(nx, ny, 0);
+            size_t lastNumFlat = resolveFlats(elevDEM, inc, flowDir, islands);
 
             if (rank==0) {
-                fprintf(stderr, "Iteration complete. Number of flats remaining: %ld\n", totalNumFlat);
+                fprintf(stderr, "Iteration complete. Number of flats remaining: %ld\n\n", lastNumFlat);
                 fflush(stderr);
             }
-        } while(totalNumFlat > 0 && totalNumFlat < lastNumFlat);
+
+            // Repeatedly call resolve flats until there is no change
+            while (lastNumFlat > 0)
+            {
+                BlockPartition<short> newInc(nx, ny, 0);
+
+                lastNumFlat = resolveFlats(inc, newInc, flowDir, islands); 
+                inc = std::move(newInc);
+
+                if (rank==0) {
+                    fprintf(stderr, "Iteration complete. Number of flats remaining: %ld\n\n", lastNumFlat);
+                    fflush(stderr);
+                }
+            } 
+        }
+
+        MPI_Allreduce(&localSharedFlats, &sharedFlats, 1, MPI_INT, MPI_SUM, MCW);
+
+        if (rank == 0) {
+            fprintf(stderr, "Processing partial flats\n");
+            printf("PRL: %d flats shared across processors\n", sharedFlats);
+        }
+
+        if (sharedFlats > 0) {
+            BlockPartition<short> inc(nx, ny, 0);
+            size_t lastNumFlat = resolveFlats_parallel(elevDEM, inc, flowDir, borderingIslands);
+
+            if (rank==0) {
+                fprintf(stderr, "PRL: Iteration complete. Number of flats remaining: %ld\n", lastNumFlat);
+                fflush(stderr);
+            }
+
+            // Repeatedly call resolve flats until there is no change across all processors
+            while (lastNumFlat > 0) {
+                BlockPartition<short> newInc(nx, ny, 0);
+
+                lastNumFlat = resolveFlats_parallel(inc, newInc, flowDir, borderingIslands); 
+                inc = std::move(newInc);
+
+                if (rank==0) {
+                    fprintf(stderr, "PRL: Iteration complete. Number of flats remaining: %ld\n", lastNumFlat);
+                    fflush(stderr);
+                }
+            }
+        }
     }
 
     //Timing info
@@ -454,7 +507,6 @@ long setPosDir(linearpart<float>& elevDEM, linearpart<short>& flowDir, BlockPart
 
     for (int j = 0; j < ny; j++) {
         for (int i=0; i < nx; i++ ) {
-
             //FlowDir is nodata if it is on the border OR elevDEM has no data
             if (elevDEM.isNodata(i,j) || !elevDEM.hasAccess(i-1,j) || !elevDEM.hasAccess(i+1,j) ||
                     !elevDEM.hasAccess(i,j-1) || !elevDEM.hasAccess(i,j+1)) {
@@ -493,7 +545,7 @@ long setPosDir(linearpart<float>& elevDEM, linearpart<short>& flowDir, BlockPart
 
 // Function to set flow direction based on incremented artificial elevations
 template<typename T>
-void setFlow2(int i, int j, linearpart<short>& flowDir, linearpart<T>& elevDEM, linearpart<short>& elev2, linearpart<short>& dn)
+void setFlow2(int i, int j, linearpart<short>& flowDir, T& elev, BlockPartition<short>& inc)
 {
     /*  This function sets directions based upon secondary elevations for
       assignment of flow directions across flats according to Garbrecht and Martz
@@ -503,27 +555,31 @@ void setFlow2(int i, int j, linearpart<short>& flowDir, linearpart<T>& elevDEM, 
     	In the case of A the input elevations are used and if a draining neighbor is found it is selected.
     	Case B requires slope to be positive.  Remaining flats are removed by iterating this process
     */
+    int nx = flowDir.getnx();
+    int ny = flowDir.getny();
 
     const short order[8]= {1,3,5,7,2,4,6,8};
 
     float slopeMax = 0;
-    long in,jn;
 
-    for (int ii=0; ii<8; ii++) {
-        int k = order[ii];
-        in = i+d1[k];
-        jn = j+d2[k];
+    for (int k : order) {
+        int in = i+d1[k];
+        int jn = j+d2[k];
 
-        if (dn.getData(in, jn) > 0) {
+        if (!flowDir.hasAccess(in, jn))
+            continue;
+
+        if (inc.getData(in, jn) > 0) {
             // Neighbor is in flat
-            float slope = fact[k]*(elev2.getData(i, j) - elev2.getData(in, jn));
+            float slope = fact[k]*(inc.getData(i, j) - inc.getData(in, jn));
             if (slope > slopeMax) {
                 flowDir.setData(i, j, k);
                 slopeMax = slope;
             }
         } else {
             // Neighbor is not in flat
-            T ed = elevDEM.getData(i, j) - elevDEM.getData(in, jn);
+            auto ed = elev.getData(i, j) - elev.getData(in, jn);
+
             if (ed >= 0) {
                 // Found a way out - this is outlet
                 flowDir.setData(i, j, k);
@@ -533,397 +589,451 @@ void setFlow2(int i, int j, linearpart<short>& flowDir, linearpart<T>& elevDEM, 
     }
 }
 
-// Function to set flow direction based on incremented artificial elevations
-//
-// FIXME: same as setFlow2, merge when linearpart/BlockPartition incompatability is resolved
-template<typename T>
-void setFlow3(int i, int j, linearpart<short>& flowDir, linearpart<T>& elevDEM, linearpart<short>& elev2, BlockPartition<short>& s)
-{
-    /*  This function sets directions based upon secondary elevations for
-      assignment of flow directions across flats according to Garbrecht and Martz
-      scheme.  There are two possibilities:
-    	A.  The neighbor is outside the flat set
-    	B.  The neighbor is in the flat set.
-    	In the case of A the input elevations are used and if a draining neighbor is found it is selected.
-    	Case B requires slope to be positive.  Remaining flats are removed by iterating this process
-    */
-
-    const short order[8]= {1,3,5,7,2,4,6,8};
-
-    float slopeMax = 0;
-    long in,jn;
-
-    for (int ii=0; ii<8; ii++) {
-        int k = order[ii];
-        in = i+d1[k];
-        jn = j+d2[k];
-
-        if (s.getData(in, jn) > 0) {
-            // Neighbor is in flat
-            float slope = fact[k]*(elev2.getData(i, j) - elev2.getData(in, jn));
-            if (slope > slopeMax) {
-                flowDir.setData(i, j, k);
-                slopeMax = slope;
-            }
-        } else {
-            // Neighbor is not in flat
-            // is this right? should we pick max slope here too?
-            T ed = elevDEM.getData(i, j) - elevDEM.getData(in, jn);
-            if (ed >= 0) {
-                // Found a way out - this is outlet
-                flowDir.setData(i, j, k);
-                break;  
-            }
-        }
-    }
-}
 //************************************************************************
 
 template<typename T>
-void flow_towards_lower(linearpart<T>& elevDEM, linearpart<short>& flowDir, std::vector<node>& flats, linearpart<short>& elev2)
+void flowTowardsLower(T& elev, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, BlockPartition<short>& inc)
 {
-    int st = 0;
-    long numInc = 0, numIncOld = -1;
+    long nx = flowDir.getnx();
+    long ny = flowDir.getny();
 
-    std::vector<node> low_boundaries;
+    std::vector<node> lowBoundaries;
 
-    // Find low boundaries. We will 
-    for(node flat : flats) {
-        T elev = elevDEM.getData(flat.x, flat.y);
-
-        for (int k = 1; k <= 8; k++) {
-            if (dontCross(k, flat.x, flat.y, flowDir) == 0) {
-                int in = flat.x + d1[k];
-                int jn = flat.y + d2[k];
-
-                float elevDiff = elev - elevDEM.getData(in,jn);
-                short flow = flowDir.getData(in,jn);
-
-                if (elevDiff >= 0 && flow > 0) {
-                    //adjacent cell drains and is equal or lower in elevation so this is a low boundary
-                    low_boundaries.push_back(flat);
-                    
-                    // prevent marking the low boundary
-                    elev2.setData(flat.x, flat.y, -1);
-                    break;
-                } else if (elevDiff == 0) {
-                    //node n(in, jn);
-                    //queue.push_back(n);
-                    //break;
-                }
-            }
-        }
-    }
-
-    std::vector<node> queue(low_boundaries);
-    printf("Got %lu low boundaries\n", queue.size());
-
-    st = 0;
-
-    while (!queue.empty()) {
-        std::vector<node> new_flats;
-
-        numIncOld = numInc;
-        numInc = 0;
-
-        //printf("%lu -> ", queue.size());
-        //printf("Iteration %d - %lu flats (did %lu last it)\n", st, queue.size(), numIncOld);
-
-        for(node flat : queue) {
-            // Duplicate. already set
-            if (elev2.getData(flat.x, flat.y) > 0)
-                continue;
-
-            T elev = elevDEM.getData(flat.x, flat.y);
+    // Find low boundaries. 
+    for(auto& island : islands) {
+        for(node flat : island) {
+            float flatElev = elev.getData(flat.x, flat.y);
 
             for (int k = 1; k <= 8; k++) {
                 if (dontCross(k, flat.x, flat.y, flowDir) == 0) {
                     int in = flat.x + d1[k];
                     int jn = flat.y + d2[k];
 
-                    short flow = flowDir.getData(in, jn);
+                    if (!flowDir.hasAccess(in, jn))
+                        continue;
 
-                    if (flow == 0) {
-                        if (elev2.getData(in, jn) == 0) {
-                            new_flats.push_back(node(in, jn));
-                            elev2.setData(in, jn, -1);
-                        }
+                    auto elevDiff = flatElev - elev.getData(in,jn);
+                    short flow = flowDir.getData(in,jn);
+                    
+                    bool edgeDrain = flowDir.isNodata(in, jn);
 
-                        //adjacent cell drains and is equal or lower in elevation so this is a low boundary
-                    }
+                    // Adjacent cell drains and is equal or lower in elevation so this is a low boundary
+                    if ((elevDiff >= 0 && flow > 0) || edgeDrain) {
+                        lowBoundaries.push_back(flat);
+                        inc.setData(flat.x, flat.y, -1);
+
+                        // No need to check the other neighbors
+                        break;
+                    } 
                 }
             }
-
-            elev2.setData(flat.x, flat.y, st);
-            numInc++;
         }
-
-        fprintf(stderr, ".");
-        fflush(stderr);
-
-        st++;
-        queue.swap(new_flats);
     }
 
-    fprintf(stderr, "\n");
-
-    // Reset low boundaries to 0 from -1
-    for (node flat : low_boundaries) {
-        elev2.setData(flat.x, flat.y, 0);
-    }
+    int numInc = propagateIncrements(flowDir, inc, lowBoundaries);
 
     // Not all grid cells were resolved - pits remain
     // Remaining grid cells are unresolvable pits
     if (numInc > 0)          
     {
-        int numPits = 0;
-        //There are pits remaining - set direction to no data
-        for (std::size_t iflat=0; iflat < flats.size(); iflat++) {
-            node flat = flats[iflat];
+        markPits(elev, flowDir, islands, inc);
+    }
+}
 
-            bool doNothing=false;
+template<typename T>
+void flowFromHigher(T& elev, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, BlockPartition<short>& inc)
+{
+    long nx = flowDir.getnx();
+    long ny = flowDir.getny();
+
+    // Find high boundaries
+    for (auto& island : islands) {
+        std::vector<node> highBoundaries;
+
+        for (node flat : island) {
+            float flatElev = elev.getData(flat.x, flat.y);
+            bool highBoundary = false;
+
+            for (int k = 1; k <= 8; k++) {
+                if (dontCross(k, flat.x, flat.y, flowDir) == 0) {
+                    int in = flat.x + d1[k];
+                    int jn = flat.y + d2[k];
+
+                    if (!flowDir.hasAccess(in, jn))
+                        continue;
+
+                    auto elevDiff = flatElev - elev.getData(in, jn);
+                    
+                    if (elevDiff < 0) {
+                        // Adjacent cell has higher elevation so this is a high boundary
+                        highBoundary = true;
+                        break;
+                    }
+                }
+            }
+
+            if (highBoundary) {
+                inc.setData(flat.x, flat.y, -1);
+                highBoundaries.push_back(flat);
+            }
+        }
+
+        propagateIncrements(flowDir, inc, highBoundaries);
+    }
+}
+
+template<typename T>
+int markPits(T& elevDEM, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, BlockPartition<short>& inc)
+{
+    int nx = flowDir.getnx();
+    int ny = flowDir.getny();
+
+    int numPits = 0;
+
+    //There are pits remaining - set direction to no data
+    for (auto& island : islands) {
+        for (node flat : island) {
+            bool skip = false;
+
             for (int k=1; k<=8; k++) {
                 if (dontCross(k, flat.x, flat.y, flowDir)==0) {
                     int jn = flat.y + d2[k];
                     int in = flat.x + d1[k];
-                    
-                    float elevDiff = elevDEM.getData(flat.x, flat.y) - elevDEM.getData(in, jn);
+
+                    if (!flowDir.hasAccess(in, jn)) 
+                        continue;
+
+                    auto elevDiff = elevDEM.getData(flat.x, flat.y) - elevDEM.getData(in, jn);
                     short flow = flowDir.getData(in,jn);
                     
                     // Adjacent cell drains and is equal or lower in elevation so this is a low boundary
                     if (elevDiff >= 0 && flow > 0) {
-                        doNothing = true;
-                    } else if (elevDiff == 0) {
+                        skip = true;
+                        break;
+                    } else if (flow == 0) {
                         // If neighbor is in flat
-                        //
-                        // Neighbor is not being incremented
 
-                        if (elev2.getData(in,jn) >= 0 && elev2.getData(in,jn)<st) {
-                            doNothing = true;
+                        // FIXME: check if this is correct
+                        if (inc.getData(in,jn) >= 0){ // && inc.getData(in,jn)<st) {
+                            skip = true;
+                            break;
                         }
                     }
                 }
             }
             
             // mark pit
-            if (!doNothing) {
-                //printf("Marked pit %d %d\n", flat.x, flat.y);
+            if (!skip) {
                 numPits++;
                 flowDir.setToNodata(flat.x, flat.y);
             }  
         }
-
-        if (numPits > 0) {
-            printf("Marked %d unresolvable pits.\n", numPits);
-        }
-
-        flowDir.share();
     }
+
+    return numPits;
+}
+
+
+template<typename T>
+long resolveFlats(T& elevDEM, BlockPartition<short>& inc, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands)
+{
+    long nx = flowDir.getnx();
+    long ny = flowDir.getny();
+
+    int rank;
+    MPI_Comm_rank(MCW, &rank);
+    
+    if (rank==0) {
+        fprintf(stderr,"Resolving flats\n");
+        fflush(stderr);
+    }
+
+    flowTowardsLower(elevDEM, flowDir, islands, inc);
+
+    // Drain flats away from higher adjacent terrain
+    BlockPartition<short> s(nx, ny, 0);
+    
+    flowFromHigher(elevDEM, flowDir, islands, s);
+
+    // High flow must be inverted before it is combined
+    //
+    // higherFlowMax has to be greater than all of the increments
+    // higherFlowMax can be maximum value of the data type but it will cause overflow problems if more than one iteration is needed
+    short higherFlowMax = 0;
+
+    for (auto& island : islands) {
+        for (node flat : island) {    
+            short val = s.getData(flat.x, flat.y);
+
+            if (val > higherFlowMax)
+                higherFlowMax = val;
+        }
+    }
+
+    for (auto& island : islands) {
+        for (auto flat : island) {
+            inc.addToData(flat.x, flat.y, higherFlowMax - s.getData(flat.x, flat.y));
+        }
+    }
+
+    if (rank==0) {
+        fprintf(stderr,"Setting directions\n");
+        fflush(stderr);
+    }
+
+    long flatsRemaining = 0;
+    for (auto& island : islands) {
+        for (node flat : island) {
+            setFlow2(flat.x, flat.y, flowDir, elevDEM, inc);
+
+            if (flowDir.getData(flat.x, flat.y) == 0) {
+                flatsRemaining++;
+            }
+        }
+    }
+
+    auto hasFlowDirection = [&](const node& n) { return flowDir.getData(n.x, n.y) != 0; };
+    auto isEmpty = [&](const std::vector<node>& i) { return i.empty(); };
+    
+    // Remove flats which have flow direction set
+    for (auto& island : islands) {
+        island.erase(std::remove_if(island.begin(), island.end(), hasFlowDirection), island.end());
+    }
+
+    // Remove empty islands
+    islands.erase(std::remove_if(islands.begin(), islands.end(), isEmpty), islands.end());
+
+    return flatsRemaining;
 }
 
 template<typename T>
-void flow_from_higher(linearpart<T>& elevDEM, linearpart<short>& flowDir, std::vector<std::vector<node>>& flats, BlockPartition<short>& s)
+long resolveFlats_parallel(T& elev, BlockPartition<short>& inc, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands)
 {
-    long totalx = elevDEM.gettotalx();
-    long totaly = elevDEM.gettotaly();
+    long nx = flowDir.getnx();
+    long ny = flowDir.getny();
 
-    BlockPartition<short> nh(totalx, totaly, 0);
+    int rank;
+    MPI_Comm_rank(MCW, &rank);
 
-    // Find high boundaries
-    int total = 0;
-    std::vector<int> stats;
+    int numFlatsChanged = 0, totalNumFlatsChanged = 0;
 
-    printf("Draining away from higher terrain:\n");
+    flowTowardsLower(elev, flowDir, islands, inc);
 
-    for (auto& island : flats) {
-        std::vector<node> queue;
+    do {
+        inc.share();
+        numFlatsChanged = propagateBorderIncrements(flowDir, inc);
 
+        MPI_Allreduce(&numFlatsChanged, &totalNumFlatsChanged, 1, MPI_INT, MPI_SUM, MCW);
+
+        if (rank == 0) {
+            printf("PRL: Lower gradient processed %d flats this iteration\n", totalNumFlatsChanged);
+        }
+    } while(totalNumFlatsChanged > 0);
+
+    // Not all grid cells were resolved - pits remain
+    // Remaining grid cells are unresolvable pits
+    markPits(elev, flowDir, islands, inc);
+
+    // Drain flats away from higher adjacent terrain
+    BlockPartition<short> higherGradient(nx, ny, 0);
+   
+    flowFromHigher(elev, flowDir, islands, higherGradient);
+
+    do {
+        higherGradient.share();
+        numFlatsChanged = propagateBorderIncrements(flowDir, higherGradient);
+
+        MPI_Allreduce(&numFlatsChanged, &totalNumFlatsChanged, 1, MPI_INT, MPI_SUM, MCW);
+
+        if (rank == 0) {
+            printf("PRL: Higher gradient processed %d flats this iteration\n", totalNumFlatsChanged);
+        }
+    } while(totalNumFlatsChanged > 0);
+
+    // High flow must be inverted before it is combined
+    //
+    // higherFlowMax has to be greater than all of the increments
+    // higherFlowMax can be maximum value of the data type (e.g. 65535) but it will cause overflow problems if more than one iteration is needed
+    short higherFlowMax = 0;
+
+    for (auto& island : islands) {
+        for (auto& flat : island) {
+            short val = higherGradient.getData(flat.x, flat.y);
+        
+            if (val > higherFlowMax)
+                higherFlowMax = val;
+        }
+    }
+
+    // FIXME: Is this needed? would it affect directions at the border?
+    short globalHigherFlowmax = 0;
+    MPI_Allreduce(&higherFlowMax, &globalHigherFlowmax, 1, MPI_SHORT, MPI_MAX, MCW);
+
+    for (auto& island : islands) {
+        for (auto flat : island) {
+            inc.addToData(flat.x, flat.y, globalHigherFlowmax - higherGradient.getData(flat.x, flat.y));
+        }
+    }
+
+    inc.share();
+
+    if (rank==0) {
+        fprintf(stderr,"\nPRL: Setting directions\n");
+        fflush(stderr);
+    }
+
+    long localFlatsRemaining = 0, globalFlatsRemaining = 0;
+
+    for (auto& island : islands) {
         for (node flat : island) {
-            if (nh.getData(flat.x, flat.y) != 0)
+            setFlow2(flat.x, flat.y, flowDir, elev, inc);
+    
+            if (flowDir.getData(flat.x, flat.y) == 0) {
+                localFlatsRemaining++;
+            }
+        }
+    }
+
+    flowDir.share();
+    MPI_Allreduce(&localFlatsRemaining, &globalFlatsRemaining, 1, MPI_LONG, MPI_SUM, MCW); 
+
+    auto hasFlowDirection = [&](const node& n) { return flowDir.getData(n.x, n.y) != 0; };
+    auto isEmpty = [&](const std::vector<node>& i) { return i.empty(); };
+    
+    // Remove flats which have flow direction set
+    for (auto& island : islands) {
+        island.erase(std::remove_if(island.begin(), island.end(), hasFlowDirection), island.end());
+    }
+
+    // Remove empty islands
+    islands.erase(std::remove_if(islands.begin(), islands.end(), isEmpty), islands.end());
+
+    return globalFlatsRemaining;
+}
+
+int propagateIncrements(linearpart<short>& flowDir, BlockPartition<short>& inc, std::vector<node>& queue) {
+    int numInc = 0;
+    int st = 1;
+    
+    while (!queue.empty()) {
+        std::vector<node> newFlats;
+
+        for(node flat : queue) {
+            // Duplicate. already set
+            if (inc.getData(flat.x, flat.y) > 0)
                 continue;
-
-            T elev = elevDEM.getData(flat.x, flat.y);
-
-            bool got_low = false;
-            bool got_high = false;
 
             for (int k = 1; k <= 8; k++) {
                 if (dontCross(k, flat.x, flat.y, flowDir) == 0) {
                     int in = flat.x + d1[k];
                     int jn = flat.y + d2[k];
 
-                    float elevDiff = elev - elevDEM.getData(in, jn);
-                    short flow = flowDir.getData(in, jn);
+                    if (!flowDir.isInPartition(in, jn)) 
+                        continue;
 
-                    if (elevDiff < 0) {// && flow > 0) {
-                        //adjacent cell has higher elevation and drains so this is a high boundary
-                        got_high = true;
-                        break; // warning: can't break if need to check if it is a low boundary too
-                    } else if (!got_low && elevDiff >= 0 && flow > 0) {
-                        //low_boundaries.push_back(flat);
-                        got_low = true;
+                    short flow = flowDir.getData(in,jn);
+
+                    if (flow == 0 && inc.getData(in, jn) == 0) {
+                        newFlats.push_back(node(in, jn));
+                        inc.setData(in, jn, -1);
                     }
                 }
             }
 
-            if (got_high) {// && !got_low) {
-                nh.setData(flat.x, flat.y, -1);
-                queue.push_back(flat);
-            }
+            numInc++;
+            inc.setData(flat.x, flat.y, st);
         }
 
-        int st = 1;
-
-        while (!queue.empty()) {
-            std::vector<node> new_flats;
-
-            for(node flat : queue) {
-                // Duplicate. already set
-                if (nh.getData(flat.x, flat.y) > 0)
-                    continue;
-
-                T elev = elevDEM.getData(flat.x, flat.y);
-
-                for (int k = 1; k <= 8; k++) {
-                    if (dontCross(k, flat.x, flat.y, flowDir) == 0) {
-                        int in = flat.x + d1[k];
-                        int jn = flat.y + d2[k];
-
-                        short flow = flowDir.getData(in,jn);
-
-                        if (flow == 0) {
-                            if (nh.getData(in, jn) == 0) {
-                                new_flats.push_back(node(in, jn));
-                                nh.setData(in, jn, -1);
-                            }
-                        }
-                    }
-                }
-
-                nh.setData(flat.x, flat.y, st);
-                total++;
-            }
-
-            if (st > stats.size())
-                stats.push_back(total);
-            else
-                stats[st - 1] += total;
-
-            total = 0;
-
-            queue.swap(new_flats);
-            st++;
-        }
-
-        // fix values to correct increment
-        for (node flat : island) {
-            auto val = nh.getData(flat.x, flat.y);
-
-            s.setData(flat.x, flat.y, st - val);
-        }
+        queue.swap(newFlats);
+        st++;
     }
 
-    //for(int c : stats) {
-    //    printf("%d -> ", c);
-    //}
-
-    //printf("0\n");
-    
-    printf("Took %d increments\n", stats.size());
+    return numInc;
 }
 
-template<typename T>
-long resolveflats(linearpart<T>& elevDEM, linearpart<short>& flowDir, std::vector<node>& flats, std::vector<std::vector<node>>& islands)
+int propagateBorderIncrements(linearpart<short>& flowDir, BlockPartition<short>& inc)
 {
-    elevDEM.share();
-    flowDir.share();
-    //Header data
-    long totalx = elevDEM.gettotalx();
-    long totaly = elevDEM.gettotaly();
-    double dx = elevDEM.getdx();
-    double dy = elevDEM.getdy();
+    int nx = flowDir.getnx();
+    int ny = flowDir.getny();
 
-    int rank;
-    MPI_Comm_rank(MCW, &rank);
+    struct pnode {
+        int x;
+        int y;
+        int inc;
 
-    // Create and initialize temporary storage for Garbrecht and Martz
-    linearpart<short> elev2(totalx, totaly, dx, dy, MPI_SHORT, 0);
-
-    // The assumption here is that resolving a flat does not increment a cell value
-    // more than fits in a short
+        bool operator<(const struct pnode& b) const {
+            return inc < b.inc;
+        }
+    };
     
-    elev2.share();
+    std::vector<pnode> queue;
 
-    if (rank==0) {
-        fprintf(stderr,"Draining flats towards lower adjacent terrain\n");
-        fflush(stderr);
-    }
-
-    flow_towards_lower(elevDEM, flowDir, flats, elev2);
-
+    // Find the starting nodes at the edge of the raster
     //
-    // Drain flats away from higher adjacent terrain
-    //
-    BlockPartition<short> s(totalx, totaly, 0);
-    
-    flow_from_higher(elevDEM, flowDir, islands, s);
+    // FIXME: oob access
+    for (auto y : {-1, ny}) {
+        for(int x = 0; x < nx; x++) {
+            int st = inc.getData(x, y);
 
-    for (auto flat : flats) {
-        elev2.addToData(flat.x, flat.y, s.getData(flat.x, flat.y));
-    }
+            if (st == 0)
+                continue;
 
-    elev2.share();
+            auto jn = y == -1 ? 0 : ny - 1;
 
-    long localStillFlat = 0;
-    long totalStillFlat = 0;
+            for (auto in : {x-1, x, x+1}) {
+                if (!flowDir.isInPartition(in, jn))
+                    continue;
 
-    if (rank==0) {
-        fprintf(stderr,"\nSetting directions\n");
-        fflush(stderr);
-    }
+                short flow = flowDir.getData(in, jn);
+                auto neighSt = inc.getData(in, jn);
 
-    std::vector<node> remaining_flats;
-    for (node flat : flats) {
-        setFlow3(flat.x, flat.y, flowDir, elevDEM, elev2, s);
-
-        if (flowDir.getData(flat.x, flat.y) == 0) {
-            localStillFlat++;
-            remaining_flats.push_back(flat);
+                if (flow == 0 && (neighSt == 0 || neighSt > st + 1 || -neighSt > st + 1)) {
+                    queue.push_back({in, jn, st + 1});
+                    inc.setData(in, jn, -(st + 1));
+                }
+            }
         }
     }
 
-    for (auto& island : islands) {
-        // Remove flats which have flow direction set
-        island.erase(std::remove_if(island.begin(), island.end(),
-                                    [&](const node& n) { return flowDir.getData(n.x, n.y) != 0; }), island.end());
-    }
+    // Sort queue by lowest increment
+    std::sort(queue.begin(), queue.end());
 
-    // Remove empty islands
-    islands.erase(std::remove_if(islands.begin(), islands.end(),
-                                 [&](const std::vector<node>& isl) { return isl.empty(); }), islands.end());
+    int numInc = 0;
 
-    MPI_Allreduce(&localStillFlat, &totalStillFlat, 1, MPI_LONG, MPI_SUM, MCW);
+    while (!queue.empty()) {
+        std::vector<pnode> newFlats;
 
-    // We will have to iterate again so overwrite original elevation with the modified ones and hope for the best
-    if (totalStillFlat > 0) {
-        for (std::size_t iflat=0; iflat < remaining_flats.size(); iflat++) {
-            //node flat = remaining_flats[iflat];
+        for(pnode flat : queue) {
+            // Skip if the increment was already set and it is lower 
+            auto st = inc.getData(flat.x, flat.y);
+            if (st > 0 && st <= flat.inc) {
+                continue;
+            }
 
-            //elevDEM.setData(flat.x, flat.y, elev2.getData(flat.x, flat.y));
+            for (int k = 1; k <= 8; k++) {
+                if (dontCross(k, flat.x, flat.y, flowDir) == 0) {
+                    int in = flat.x + d1[k];
+                    int jn = flat.y + d2[k];
 
-            // FIXME FIXME FIXME
-            // original TauDEM impl iterates with just the increment data,
-            // might have problem if the remaining flat is at edge
-            //
-            // will new flats will always be surrounded by previous flats?
+                    if (!flowDir.isInPartition(in, jn)) 
+                        continue;
+
+                    short flow = flowDir.getData(in, jn);
+                    auto neighInc = inc.getData(in, jn);
+
+                    if (flow == 0 && (neighInc == 0 || neighInc > flat.inc + 1)) {
+                        newFlats.push_back({in, jn, flat.inc + 1});
+                        inc.setData(in, jn, -1);
+                    }
+                }
+            }
+
+            inc.setData(flat.x, flat.y, flat.inc);
+            numInc++;
         }
 
-        return resolveflats(elev2, flowDir, remaining_flats, islands);
+        queue.swap(newFlats);
     }
 
-    // Update flats with remaining_flats
-    //flats.swap(remaining_flats);
-
-    return 0;
-    //return totalStillFlat;
+    return numInc;
 }

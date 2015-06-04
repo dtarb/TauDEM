@@ -110,6 +110,7 @@ class tdpartition{
 		virtual void addToData(long, long, long){}
 		virtual void addToData(long, long, float){}
 };
+
 #endif
 
 

@@ -47,6 +47,7 @@ email:  dtarb@usu.edu
 #include <cstring>
 #include <cmath>
 #include <exception>
+#include <memory>
 
 #include "const.h"
 #include "partition.h"
@@ -102,11 +103,11 @@ class linearpart : public tdpartition {
 		void* getGridPointer(){return gridData;}
 		bool isNodata(long x, long y);
 		void setToNodata(long x, long y);
-		datatype getData(long x, long y, datatype &val);
-		void setData(long x, long y, datatype val);
-		void addToData(long x, long y, datatype val);
+		datatype getData(int x, int y, datatype &val);
+		void setData(int x, int y, datatype val);
+		void addToData(int x, int y, datatype val);
 
-		datatype getData(long x, long y);
+		datatype getData(int x, int y);
 		//void areaD(queue<node> *que);
 };
 
@@ -512,14 +513,14 @@ void linearpart<datatype>::setToNodata(long inx, long iny){
 
 //Returns the element in the grid with coordinate (x,y).
 template <class datatype>
-inline datatype linearpart<datatype>::getData(long x, long y)
+inline datatype linearpart<datatype>::getData(int x, int y)
 {
     return gridData[x+y*nx];
 }
 
 //Returns the element in the grid with coordinate (x,y).
 template <class datatype>
-datatype linearpart<datatype>::getData(long x, long y, datatype &val) {
+datatype linearpart<datatype>::getData(int x, int y, datatype &val) {
 //	if(isInPartition(x,y)) val = gridData[x+y*nx];
 	if(x>=0 && x<nx && y>=0 && y<ny) val = gridData[x+y*nx];
 	else if(x>=0 && x<nx){
@@ -531,7 +532,7 @@ datatype linearpart<datatype>::getData(long x, long y, datatype &val) {
 
 //Sets the element in the grid to the specified value.
 template <class datatype>
-void linearpart<datatype>::setData(long x, long y, datatype val){
+void linearpart<datatype>::setData(int x, int y, datatype val){
 //	if(isInPartition(x,y)) gridData[x+y*nx] = val;
 	if(x>=0 && x<nx && y>=0 && y<ny) gridData[x+y*nx] = val;
 	else if(x>=0 && x<nx){
@@ -542,7 +543,7 @@ void linearpart<datatype>::setData(long x, long y, datatype val){
 
 //Increments the element in the grid by the specified value.
 template <class datatype>
-inline void linearpart<datatype>::addToData(long x, long y, datatype val) {
+inline void linearpart<datatype>::addToData(int x, int y, datatype val) {
     gridData[x+y*nx] += val;
 
 #if NDEBUG
