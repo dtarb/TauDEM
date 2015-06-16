@@ -92,9 +92,9 @@ class tdpartition{
 		virtual void* getGridPointer(){return (void*)NULL;}
 		virtual void setToNodata(long x, long y) = 0;
 
-		virtual void init(long totalx, long totaly, double dx_in, double dy_in, MPI_Datatype MPIt, short nd){}
+		//virtual void init(long totalx, long totaly, double dx_in, double dy_in, MPI_Datatype MPIt, short nd){}
 		//virtual void init(long totalx, long totaly, double dx_in, double dy_in ,MPI_Datatype MPIt, int32_t nd){}
-		//virtual void init(long totalx, long totaly, double dx_in, double dy_in, MPI_Datatype MPIt, float nd){}
+		virtual void init(long totalx, long totaly, double dx_in, double dy_in, MPI_Datatype MPIt, float nd){}
 
 
 		virtual short getData(long, long, short&){
