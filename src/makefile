@@ -81,7 +81,8 @@ CFLAGS=-O2
 CFLAGS=-g -Wall
 CFLAGS=-g
 LARGEFILEFLAG= -D_FILE_OFFSET_BITS=64
-INCDIRS=-I/usr/lib/openmpi/include -I/usr/include/gdal
+INCDIRS=-I/usr/local/include/openmpi -I/usr/local/include
+LDLIBS=-L/usr/local/lib
 LIBDIRS=-lgdal
 
 #Rules: when and how to make a file
@@ -173,7 +174,7 @@ all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ..
 
 ../tifftest : $(TIFFTEST)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(TIFFTEST) $(LDLIBS) $(LDFLAGS)
-	
+
 #Inference rule - states a general rule for compiling .o files
 %.o : %.cpp
 	$(CC) $(CFLAGS) $(INCDIRS) -c $<

@@ -38,12 +38,14 @@ email:  dtarb@usu.edu
 
 //  This software is distributed from http://hydrology.usu.edu/taudem/
 
-//#include "commonLib.h"
+#include "commonLib.h"
+#include "tiffIO.h"
+class tiffIO;
+
 #include <stdio.h>
 #ifndef PARTITION_H
 #define PARTITION_H
-#include "tiffIO.h"
-class tiffIO;
+
 class tdpartition{
 	protected:
 		long totalx, totaly;
@@ -90,8 +92,8 @@ class tdpartition{
 		virtual void* getGridPointer(){return (void*)NULL;}
 		virtual void setToNodata(long x, long y) = 0;
 
-		virtual void init(long totalx, long totaly, double dx_in, double dy_in, MPI_Datatype MPIt, short nd){}
-		virtual void init(long totalx, long totaly, double dx_in, double dy_in ,MPI_Datatype MPIt, int32_t nd){}
+		//virtual void init(long totalx, long totaly, double dx_in, double dy_in, MPI_Datatype MPIt, short nd){}
+		//virtual void init(long totalx, long totaly, double dx_in, double dy_in ,MPI_Datatype MPIt, int32_t nd){}
 		virtual void init(long totalx, long totaly, double dx_in, double dy_in, MPI_Datatype MPIt, float nd){}
 
 
@@ -107,17 +109,23 @@ class tdpartition{
 			printf("Attempt to access float grid with incorrect data type\n");
 			MPI_Abort(MCW,43);return 0;
 		}
+		virtual long getData(long, long, long&){
+			printf("Attempt to access float grid with incorrect data type\n");
+			MPI_Abort(MCW,44);return 0;
+		}
 	   
 
 		virtual void savedxdyc(tiffIO &obj ){}
 		virtual void getdxdyc(long, double&, double&){}
-	    virtual void setData(long, long, short){}
+		virtual void setData(long, long, short){}
 		virtual void setData(long, long, int32_t){}
 		virtual void setData(long, long, float){}
+		virtual void setData(long, long, long){}
 
 		virtual void addToData(long, long, short){}
 		virtual void addToData(long, long, int32_t){}
 		virtual void addToData(long, long, float){}
+		virtual void addToData(long, long, long){}
 };
 #endif
 

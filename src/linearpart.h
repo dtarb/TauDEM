@@ -40,6 +40,7 @@ email:  dtarb@usu.edu
 
 #include "mpi.h"
 #include "partition.h"
+#include "tiffIO.h"
 
 #include <queue>
 #include <stdio.h>
