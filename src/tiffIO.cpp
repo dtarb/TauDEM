@@ -149,9 +149,11 @@ tiffIO::tiffIO(char *fname, DATA_TYPE newtype) {
 
 	
 
-	dxA=abs(dxc[totalY/2]);
-	dyA=abs(dyc[totalY/2]);
-	datatype = newtype;
+	//dxA=(dxc[totalY/2]<0.0) ? -dxc[totalY/2] : dxc[totalY/2] ;   //abs(dxc[totalY/2]);  //  DGT This is ugly but we encountered a compiler that the abs function rounded the results which introduced a bug
+	//dyA=(dyc[totalY/2]<0.0) ? -dyc[totalY/2] : dyc[totalY/2] ;  //abs(dyc[totalY/2]);
+	 dxA=fabs(dxc[totalY/2]);
+        dyA= fabs(dyc[totalY/2]);
+       datatype = newtype;
 	if (datatype == SHORT_TYPE) {
 		nodata = new short;
 		*((short*) nodata) = (short) GDALGetRasterNoDataValue(bandh, NULL);
@@ -159,8 +161,8 @@ tiffIO::tiffIO(char *fname, DATA_TYPE newtype) {
 		nodata = new float;
 		*((float*) nodata) = (float) GDALGetRasterNoDataValue(bandh, NULL);
 	} else if (datatype == LONG_TYPE) {
-		nodata = new long;
-		*((long*) nodata) = (long) GDALGetRasterNoDataValue(bandh, NULL);
+		nodata = new int32_t;
+		*((int32_t*) nodata) = (int32_t) GDALGetRasterNoDataValue(bandh, NULL);
 	}
 
 }
@@ -189,8 +191,8 @@ tiffIO::tiffIO(char *fname, DATA_TYPE newtype, void* nd, const tiffIO &copy) {
 		nodata = new float;
 		*((float*) nodata) = *((float*) nd);
 	} else if (datatype == LONG_TYPE) {
-		nodata = new long;
-		*((long*) nodata) = *((long*) nd);
+		nodata = new int32_t;
+		*((int32_t*) nodata) = *((int32_t*) nd);
 	}
 
 	totalX = copy.totalX;
@@ -287,7 +289,7 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 			
 			else if (datatype == LONG_TYPE)
 			
-				GDALSetRasterNoDataValue(bandh, (double) *((long*) nodata));
+				GDALSetRasterNoDataValue(bandh, (double) *((int32_t*) nodata));
 
 			//int n2;
 				

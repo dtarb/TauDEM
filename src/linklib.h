@@ -67,9 +67,9 @@ struct point{
 };
 
 struct streamlink{
-	long Id;
-	long u1;
-	long u2;
+	int32_t Id;
+	int32_t u1;
+	int32_t u2;
 	long d;
 	long magnitude;
 	long shapeId;//from outletshapefile
@@ -100,21 +100,21 @@ void makeLinkSet(){
 }
 void setLinkInfo(long **LinkIdU1U2DMagShapeid,double **LinkElevUElevDLength,double **PointXY, float **PointElevArea, tdpartition *elev, tiffIO *elevIO);
 void getNumLinksAndPoints(long &myNumLinks,long &myNumPoints);
-void SendAndReciveLinks(int nx,int ny,tdpartition *idGrid, tdpartition *contribs);
-long getMagnitude(long Id);
-void appendPoint(long Id, point* addPoint);
-void setDownLinkId(long Id, long dId);
-streamlink* createLink(long u1, long u2, long d, point* coord); //,long numCoords);  //, float dx, float dy);
+void SendAndReciveLinks(int nx,int ny,tdpartition *idGrid, tdpartition *contribs,tdpartition* flowDir, tdpartition* src);
+long getMagnitude(int32_t Id);
+void appendPoint(int32_t Id, point* addPoint);
+void setDownLinkId(int32_t Id, long dId);
+streamlink* createLink(int32_t u1, int32_t u2, long d, point* coord); //,long numCoords);  //, float dx, float dy);
 void linkSetInsert(streamlink* linkToAdd);
 long GetOrderOf(long ID);
 long findLinkThatEndsAt(long x, long y, tdpartition*);
 bool recvLink(int src);
-bool sendLink(long Id, int dest);
-void terminateLink(long Id);
+bool sendLink(int32_t Id, int dest);
+void terminateLink(int32_t Id);
 //long findLinkThatStartsAt(long x, long y);
-streamlink* FindLink(long Id);
+streamlink* FindLink(int32_t Id);
 streamlink* getFirstLink();
-streamlink* takeOut(long Id);
+streamlink* takeOut(int32_t Id);
 llnode* LSInsert(llnode *head, llnode *addNode);
 //void makeLinkSet();
 
@@ -128,7 +128,7 @@ llnode* LSInsert(llnode *head, llnode *addNode){
 
 //assignment link* takeOut(linkId){}  link* joinLinks(LinkId1,LinkId2){}/ending point of one link is the starting point of the other link. (same x and y or MPI abort)   movelink(Id)from one prosses to annother prosses/send and recive?
 //Takes a link ID as input.  Finds the link in the linked list linkSet and removes the llnode from the linked list.  It returns a pointer to the link.  If the ID is not found it returns NULL
-streamlink* takeOut(long Id){
+streamlink* takeOut(int32_t Id){
 	streamlink* linkToBeRemoved;
 	llnode* nodeToBeRemoved;
 	if(linkSet.head == NULL){
@@ -162,7 +162,7 @@ streamlink* takeOut(long Id){
 	}
 	return NULL;
 }
-streamlink* FindLink(long Id){
+streamlink* FindLink(int32_t Id){
 	streamlink* linkToBeRemoved;
 	llnode* nodeToBeRemoved;
 	if(linkSet.head == NULL){
@@ -201,7 +201,7 @@ streamlink* FindLink(long Id){
 //		}	
 //	return ID;
 //}
-void terminateLink(long Id){
+void terminateLink(int32_t Id){
 	streamlink *linkToKill;
 	linkToKill = FindLink(Id);
 	linkToKill = linkToKill;
@@ -239,7 +239,7 @@ MPI_Send(coord,numCoords,PointType,dest,tag,MCW);
 MPI_Recv(coords,numCoords,PointType,source,tag,MCW,&stat);
 */
 
-bool sendLink(long Id, int dest){
+bool sendLink(int32_t Id, int dest){
 	int rank,size;
 	MPI_Comm_rank(MCW,&rank);
 	MPI_Comm_size(MCW,&size);
@@ -429,7 +429,7 @@ void linkSetInsert(streamlink* linkToAdd)
 	//cout << "New ID entered: " << linkToAdd->Id << endl;
 	return;
 }
-streamlink* createLink(long u1, long u2, long d, point* coord) //,long numCoords) //, double dx, double dy)
+streamlink* createLink(int32_t u1, int32_t u2, long d, point* coord) //,long numCoords) //, double dx, double dy)
 {
 	int size ;
 	 MPI_Comm_size(MCW,&size);
@@ -480,12 +480,12 @@ streamlink* createLink(long u1, long u2, long d, point* coord) //,long numCoords
 	return newLink;
 }
 
-void setDownLinkId(long Id, long dId){
+void setDownLinkId(int32_t Id, long dId){
 	streamlink* myLink = FindLink(Id);
 	myLink->d = dId;
 	return;
 }
-void appendPoint(long Id, point* addPoint){
+void appendPoint(int32_t Id, point* addPoint){
 	streamlink* myLink = FindLink(Id);
 	//cout << "ID = " << Id << endl;
 	if(myLink == NULL)
@@ -522,7 +522,7 @@ void SendAndReciveLinks(int nx,int ny,tdpartition* idGrid, tdpartition* contribs
 	int toRecv = 0;
 	
 	short tempShort;
-	long tempLong;
+	int32_t tempLong;
 
 	int rank,size,sent;
 	MPI_Comm_rank(MCW,&rank);
@@ -772,7 +772,7 @@ void SendAndReciveLinks(int nx,int ny,tdpartition* idGrid, tdpartition* contribs
 	//all done!
 	return;
 }
-long getMagnitude(long Id){
+long getMagnitude(int32_t Id){
 	streamlink* myLink = FindLink(Id);
 	if(myLink == NULL)
 		MPI_Abort(MCW,7);
@@ -820,7 +820,7 @@ void setLinkInfo(long **LinkIdU1U2DMagShapeid,double **LinkElevUElevDLength,doub
 			LinkElevUElevDLength[counter][2] = current->data->length;
 	*/		
 			long i=0;
-			double cellarea = elev->getdxA()*elev->getdyA();
+			double cellarea = (elev->getdxA())*(elev->getdyA());
 			for(i=0;i<current->data->numCoords;i++){
 				//elevIO->globalXYToGeo(current->data->coord[i].x, current->data->coord[i].y,PointXY[pointsSoFar][0],PointXY[pointsSoFar][1]);
 				elevIO->globalXYToGeo(current->data->coord.front().x, current->data->coord.front().y,PointXY[pointsSoFar][0],PointXY[pointsSoFar][1]);	

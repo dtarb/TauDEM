@@ -178,7 +178,7 @@ int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *
 	bool con=false, finished;
 	float tempFloat=0.0;
 	short tempShort=0;
-	long tempLong=0; 
+	int32_t tempLong=0; 
 
 		/*  Calculate Distances  */
 	float **dist;

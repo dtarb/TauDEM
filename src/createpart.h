@@ -56,8 +56,10 @@ tdpartition *CreateNewPartition(DATA_TYPE datatype, long totalx, long totaly, do
 		ptr = new linearpart<short>;
 		ptr->init(totalx, totaly, dxA, dyA, MPI_SHORT, *((short*)nodata));
 	}else if(datatype == LONG_TYPE){
-		ptr = new linearpart<long>;
-		ptr->init(totalx, totaly, dxA, dyA, MPI_LONG, *((long*)nodata));
+		ptr = new linearpart<int32_t>;
+		ptr->init(totalx, totaly, dxA, dyA, MPI_INT32_T, *((int32_t*)nodata));
+//		ptr = new linearpart<long>;
+//		ptr->init(totalx, totaly, dxA, dyA, MPI_LONG, *((long*)nodata));
 	}else if(datatype == FLOAT_TYPE){
 		ptr = new linearpart<float>;
 		ptr->init(totalx, totaly, dxA, dyA, MPI_FLOAT, *((float*)nodata));
@@ -74,8 +76,8 @@ tdpartition *CreateNewPartition(DATA_TYPE datatype, long totalx, long totaly, do
 		ptr = new linearpart<short>;
 		ptr->init(totalx, totaly, dxA, dyA,MPI_SHORT, (short)nodata);
 	}else if(datatype == LONG_TYPE){
-		ptr = new linearpart<long>;
-		ptr->init(totalx, totaly, dxA, dyA, MPI_LONG, (long)nodata);
+		ptr = new linearpart<int32_t>;
+		ptr->init(totalx, totaly, dxA, dyA, MPI_INT32_T, (int32_t)nodata);
 	}else if(datatype == FLOAT_TYPE){
 		ptr = new linearpart<float>;
 		ptr->init(totalx, totaly, dxA, dyA, MPI_FLOAT, (float)nodata);

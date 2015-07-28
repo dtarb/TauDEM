@@ -71,9 +71,11 @@ SLOPEAREARATIO = SlopeAreaRatio.o SlopeAreaRatiomn.o $(OBJFILES)
 SLOPEAVEDOWN = SlopeAveDown.o SlopeAveDownmn.o $(OBJFILES)
 STREAMNET = streamnetmn.o streamnet.o $(OBJFILES) $(SHAPEFILES)
 THRESHOLD = Threshold.o Thresholdmn.o $(OBJFILES)
-READTIFFILES = ReadTif.o ReadTifmn.o $(OBJFILES) 
+TWI = TWI.o TWImn.o $(OBJFILES)
+GAGEWATERSHED = gagewatershed.o gagewatershedmn.o $(OBJFILES) $(SHAPEFILES)
 
-TIFFTEST = tiffTest.o $(OBJFILES)
+
+
 
 #The following are compiler flags common to all building rules
 CC = mpic++
@@ -85,7 +87,7 @@ INCDIRS=-I/usr/lib/openmpi/include -I/usr/include/gdal
 LIBDIRS=-lgdal
 
 #Rules: when and how to make a file
-all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ../gridnet ../dinfflowdir ../d8flowdir ../d8flowpathextremeup ../d8hdisttostrm ../dinfavalanche ../dinfconclimaccum ../dinfdecayaccum ../dinfdistdown ../dinfdistup ../dinfrevaccum ../dinftranslimaccum ../dinfupdependence ../lengtharea ../peukerdouglas ../pitremove ../slopearea ../slopearearatio ../slopeavedown ../threshold clean 
+all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ../gridnet ../dinfflowdir ../d8flowdir ../d8flowpathextremeup ../d8hdisttostrm ../dinfavalanche ../dinfconclimaccum ../dinfdecayaccum ../dinfdistdown ../dinfdistup ../dinfrevaccum ../dinftranslimaccum ../dinfupdependence ../lengtharea ../peukerdouglas ../pitremove ../slopearea ../slopearearatio ../slopeavedown ../threshold ../twi ../gagewatershed clean 
 
 ../aread8 : $(D8FILES)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(D8FILES) $(LDLIBS) $(LDFLAGS)
@@ -162,22 +164,18 @@ all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ..
 ../threshold : $(THRESHOLD)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(THRESHOLD) $(LDLIBS) $(LDFLAGS) 
 
-../ReadTif : $(READTIFFILES)
-	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(READTIFFILES) $(LDLIBS) $(LDFLAGS)
+../twi : $(TWI)
+	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(TWI) $(LDLIBS) $(LDFLAGS)
 
-../compare : $(OBJFILES) compare.o
-	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(OBJFILES) compare.o $(LDLIBS) $(LDFLAGS)
+../gagewatershed : $(GAGEWATERSHED)
+	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(GAGEWATERSHED) $(LDLIBS) $(LDFLAGS)
 
-../extract : $(OBJFILES) extract.o
-	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(OBJFILES) extract.o $(LDLIBS) $(LDFLAGS)
-
-../tifftest : $(TIFFTEST)
-	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(TIFFTEST) $(LDLIBS) $(LDFLAGS)
 	
 #Inference rule - states a general rule for compiling .o files
 %.o : %.cpp
-	$(CC) $(CFLAGS) $(INCDIRS) -c $<
+	$(CC) $(CFLAGS) $(INCDIRS) -c $< -o $@
 
 clean :
 	rm *.o 
+
 

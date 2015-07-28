@@ -163,8 +163,8 @@ class tiffIO{
 			return dxc[index];
 		}
 
-		double getdxA() { return abs(dxc[totalY/2]); }
-		double getdyA() { return abs(dyc[totalY/2]); }
+		double getdxA() { return fabs(dxc[totalY/2]); }
+		double getdyA() { return fabs(dyc[totalY/2]); }
 		double getdlon() {return dlon;}
 		double getdlat() {return dlat;}
 		int getproj() {return IsGeographic;}

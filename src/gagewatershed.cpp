@@ -161,7 +161,7 @@ int gagewatershed( char *pfile, char *wfile, char *shfile, char *idfile, int wri
 		int xlocal, ylocal;
 		wshed->globalToLocal(outletsX[i], outletsY[i],xlocal,ylocal);
 		if(wshed->isInPartition(xlocal,ylocal)){   //xOutlets[i], yOutlets[i])){
-			wshed->setData(xlocal,ylocal,(long)ids[i]);  //xOutlets[i], yOutlets[i], (long)ids[i]);
+			wshed->setData(xlocal,ylocal,(int32_t)ids[i]);  //xOutlets[i], yOutlets[i], (long)ids[i]);
 							//Push outlet cells on to que
 						temp.x = xlocal;
 						temp.y = ylocal;
@@ -178,7 +178,7 @@ int gagewatershed( char *pfile, char *wfile, char *shfile, char *idfile, int wri
 	bool con=false, finished;
 	float tempFloat=0.0;
 	short tempShort=0;
-	long tempLong=0;
+	int32_t tempLong=0;
 
 	tdpartition *neighbor;
 	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, MISSINGSHORT);
@@ -199,7 +199,7 @@ int gagewatershed( char *pfile, char *wfile, char *shfile, char *idfile, int wri
 	neighbor->clearBorders();
 	wshed->share();
 
-
+	//flowData->getData(500,600,tempShort);
 	finished = false;
 	//Ring terminating while loop
 	while(!finished) {
@@ -242,8 +242,8 @@ int gagewatershed( char *pfile, char *wfile, char *shfile, char *idfile, int wri
 						}
 						if(!wshed->isNodata(in,jn))
 						{
-							long idup=wshed->getData(in,jn,tempLong);
-							long idme=wshed->getData(i,j,tempLong);
+							int32_t idup=wshed->getData(in,jn,tempLong);
+							int32_t idme=wshed->getData(i,j,tempLong);
 							//  Find the array index for idup
 							int iidex;
 							for(iidex=0; iidex<numOutlets; iidex++)
