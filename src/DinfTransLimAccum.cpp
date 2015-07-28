@@ -240,16 +240,16 @@ int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *de
 						flowData->getdxdyc(jn,tempdxc,tempdyc);
 						p = prop(angle, (k+4)%8,tempdxc,tempdyc);
 						if(p>0.){
+							float neighbor_transport=0.0;
 							if(tla->isNodata(in,jn))con=true;
-							else transin=transin+p*tla->getData(in,jn,tempFloat);
+							else transin=transin+p*tla->getData(in,jn,neighbor_transport);
 							if(usec==1)
 							{
 								if(csout->isNodata(in,jn))con=true;
 								
-								else {
-									
-								float dd=csout->getData(in,jn,tempFloat);
-								loadin=loadin+p*tempFloat*dd;}
+								else {  // Here load of contaminant coming from the neighbor is sediment transport from neighbor * concentration of neighbor
+								loadin=loadin+p*neighbor_transport*csout->getData(in,jn,tempFloat);
+								}
 							}
 						}
 					}
