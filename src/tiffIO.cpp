@@ -72,10 +72,10 @@ tiffIO::tiffIO(char *fname, DATA_TYPE newtype) {
 	hSRS = OSRNewSpatialReference(pszProjection);
     IsGeographic=OSRIsGeographic(hSRS);
 	if (IsGeographic ==0) {
-		printf("Input file has projected coordinate system");
+		if(rank == 0)printf("Input file has projected coordinate system.\n");
 	}
 	else
-		printf("Input file has geographic coordinate system");
+		if(rank == 0)printf("Input file has geographic coordinate system.\n");
     // cout<<getproj<<endl; // for test
 	char *test_unit=NULL;
 	double ss;
@@ -246,10 +246,10 @@ void tiffIO::read(long xstart, long ystart, long numRows, long numCols, void* de
 
 void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* source) {
 	MPI_Status status;
-
+	fflush(stdout);
 	if (rank == 0) {
 		if (isFileInititialized == 0) {
-			// load GTiff driver
+			// load GTiff driver and create file if file has not been initialized
 			hDriver = GDALGetDriverByName("GTiff");
 
 			if (hDriver == NULL) {
@@ -257,53 +257,37 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 				MPI_Abort(MPI_COMM_WORLD, 22);
 			}
 
-			//fh = GDALCreateCopy(hDriver, filename, copyfh, FALSE,
-			//	NULL, NULL, NULL);
-
 			GDALDataType eBDataType;
-		if (datatype == FLOAT_TYPE)
-			eBDataType = GDT_Float32;
-		else if (datatype == SHORT_TYPE)
-			eBDataType = GDT_Int16;
-		else if (datatype == LONG_TYPE)
-			eBDataType = GDT_Int32;
+			if (datatype == FLOAT_TYPE)
+				eBDataType = GDT_Float32;
+			else if (datatype == SHORT_TYPE)
+				eBDataType = GDT_Int16;
+			else if (datatype == LONG_TYPE)
+				eBDataType = GDT_Int32;
 
 			fh = GDALCreate(hDriver, filename, totalX , totalY, 1, eBDataType, NULL);
+			GDALSetProjection(fh, GDALGetProjectionRef(copyfh));
 
+			double adfGeoTransform[6];
+			GDALGetGeoTransform(copyfh, adfGeoTransform);
 
-    GDALSetProjection(fh, GDALGetProjectionRef(copyfh));
-
-    double adfGeoTransform[6];
-    GDALGetGeoTransform(copyfh, adfGeoTransform);
-
-
-    GDALSetGeoTransform(fh, adfGeoTransform);
+			GDALSetGeoTransform(fh, adfGeoTransform);
 
 			bandh = GDALGetRasterBand(fh, 1);
 			if (datatype == FLOAT_TYPE) 
-			
 	             GDALSetRasterNoDataValue(bandh, (double) *((float*) nodata));
-			else if (datatype == SHORT_TYPE)
-				
-				GDALSetRasterNoDataValue(bandh, (double) *((short*) nodata));
-			
-			else if (datatype == LONG_TYPE)
-			
+			else if (datatype == SHORT_TYPE)			
+				GDALSetRasterNoDataValue(bandh, (double) *((short*) nodata));			
+			else if (datatype == LONG_TYPE)		
 				GDALSetRasterNoDataValue(bandh, (double) *((int32_t*) nodata));
-
-			//int n2;
-				
-			//double res = GDALGetRasterNoDataValue(bandh, &n2);
 
 			isFileInititialized = 1;
 		} else {
+			//  Open file if it has already been initialized
 			fh = GDALOpen(filename, GA_Update);
 			bandh = GDALGetRasterBand(fh, 1);
-
-
-
 		}
-
+		//  Now write the data from rank 0 and close the file
 		GDALDataType eBDataType;
 		if (datatype == FLOAT_TYPE)
 			eBDataType = GDT_Float32;
@@ -316,15 +300,29 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 			source, numCols, numRows, eBDataType,
 			0, 0);
 		
+		GDALFlushCache(fh);  //  DGT effort get large files properly written
 		GDALClose(fh);
 
+		//  Send message to rank 1
 		int d = 0;
-		if (size > rank + 1)
+		if (size > rank + 1){
+			//     buffer, count, datatype, dest, tag, comm
 			MPI_Send(&d, 1, MPI_INT, 1, 1, MPI_COMM_WORLD);
+			printf("Written rank: %d\n", rank);
+			fflush(stdout);
+		}
+
 	} else {
 		int d = 0;
-		MPI_Recv(&d, 1, MPI_INT, rank - 1, 1, MPI_COMM_WORLD, &status);
+		//   buffer, count, datatype, source, tag, com, status
+		MPI_Recv(&d, 1, MPI_INT, rank - 1, 1, MPI_COMM_WORLD, &status);  //DGT check status to see that receive was correct.  Print status and rank
+		
+		int number_amount;
+		MPI_Get_count(&status, MPI_INT, &number_amount);
+		printf("Triggered in rank: %d Received %d\n", rank,number_amount);
+		fflush(stdout);
 
+		//  Once message received open file and write the data from rank > 0 then close
 		fh = GDALOpen(filename, GA_Update);
 		bandh = GDALGetRasterBand(fh, 1);
 
@@ -340,10 +338,16 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 			source, numCols, numRows, eBDataType,
 			0, 0);
 
-		GDALClose(fh);
+		GDALFlushCache(fh);  //  DGT effort get large files properly written
+		GDALClose(fh);	
 
-		if (size > rank + 1)
+		//  send message to next rank up only if not last one
+		if (size > rank + 1){
+			//     buffer, count, datatype, dest, tag, comm
 			MPI_Send(&d, 1, MPI_INT, rank + 1, 1, MPI_COMM_WORLD);
+			printf("Written rank: %d\n", rank);
+			fflush(stdout);
+		}
 	}
 }
 
