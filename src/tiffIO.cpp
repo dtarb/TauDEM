@@ -308,7 +308,7 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 		if (size > rank + 1){
 			//     buffer, count, datatype, dest, tag, comm
 			MPI_Send(&d, 1, MPI_INT, 1, 1, MPI_COMM_WORLD);
-			printf("Written rank: %d\n", rank);
+			//printf("Written rank: %d\n", rank);
 			fflush(stdout);
 		}
 
@@ -319,7 +319,7 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 		
 		int number_amount;
 		MPI_Get_count(&status, MPI_INT, &number_amount);
-		printf("Triggered in rank: %d Received %d\n", rank,number_amount);
+        //printf("Triggered in rank: %d Received %d\n", rank,number_amount);
 		fflush(stdout);
 
 		//  Once message received open file and write the data from rank > 0 then close
@@ -345,7 +345,7 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 		if (size > rank + 1){
 			//     buffer, count, datatype, dest, tag, comm
 			MPI_Send(&d, 1, MPI_INT, rank + 1, 1, MPI_COMM_WORLD);
-			printf("Written rank: %d\n", rank);
+			//printf("Written rank: %d\n", rank);
 			fflush(stdout);
 		}
 	}
