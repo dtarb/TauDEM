@@ -127,3 +127,9 @@ mpiexec -n 4 d8flowdir fs_small.tif
 mpiexec -n 1 aread8 fs_small.tif
 mpiexec -n 2 threshold -ssa fs_smallad8.tif -src fs_smallsrc.tif -thresh 500
 mpiexec -n 5 dinfdistdown -ang fs_smallang.tif -fel fs_smallfel.tif -src fs_smallsrc.tif -dd fs_smallddhavewg.tif -m ave h -wg streambuffreclass2.tif
+
+cd ..
+rem test with compressed 16 bit unsigned integer that a user had trouble with
+mpiexec -n 8 pitremove MED_01_01.tif
+rem
+mpiexec -n 8 pitremove -z LoganVRT\output.vrt -fel loganvrtfel.tif
