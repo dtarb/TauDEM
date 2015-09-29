@@ -133,3 +133,7 @@ rem test with compressed 16 bit unsigned integer that a user had trouble with
 mpiexec -n 8 pitremove MED_01_01.tif
 rem
 mpiexec -n 8 pitremove -z LoganVRT\output.vrt -fel loganvrtfel.tif
+rem test with img file format
+mpiexec -n 8 pitremove -z loganIMG\logan.img -fel loganimgfel.tif
+rem test with ESRIGRID file format
+mpiexec -n 8 pitremove -z loganESRIGRID\logan -fel loganesrigridfel.tif
