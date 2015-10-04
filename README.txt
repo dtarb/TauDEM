@@ -1,11 +1,8 @@
 TauDEM (Terrain Analysis Using Digital Elevation Models) is a suite of Digital Elevation Model (DEM) tools for the extraction and analysis of hydrologic information from topography as represented by a DEM. 
 
-The src folder contains source files
-The TauDEM5MF folder contains the visual studio solution files.
+For more information on the development of TauDEM please refer to the wiki [https://github.com/dtarb/TauDEM/wiki](https://github.com/dtarb/TauDEM/wiki).
 
-More information will be forthcoming as I get a chance.
-
-Details on the TauDEM software are at: http://hydrology.usu.edu/taudem
+For the latest release and detailed documentation please refer to the website: [http://hydrology.usu.edu/taudem](http://hydrology.usu.edu/taudem).
 
 
 
