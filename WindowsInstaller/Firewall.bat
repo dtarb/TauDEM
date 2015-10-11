@@ -16,7 +16,7 @@ netsh firewall add allowedprogram "C:\Program Files\Taudem\TauDEM5Exe\DinfUpDepe
 netsh firewall add allowedprogram "C:\Program Files\Taudem\TauDEM5Exe\DropAnalysis.exe" DropAnalysis ENABLE
 netsh firewall add allowedprogram "C:\Program Files\Taudem\TauDEM5Exe\Gridnet.exe" Gridnet ENABLE
 netsh firewall add allowedprogram "C:\Program Files\Taudem\TauDEM5Exe\Lengtharea.exe" LengthArea ENABLE
-netsh firewall add allowedprogram "C:\Program Files\Taudem\TauDEM5Exe\MoveOutletsTOStreams.exe" MoveOutletsToStreams ENABLE
+netsh firewall add allowedprogram "C:\Program Files\Taudem\TauDEM5Exe\MoveOutletsToStreams.exe" MoveOutletsToStreams ENABLE
 netsh firewall add allowedprogram "C:\Program Files\Taudem\TauDEM5Exe\PeukerDouglas.exe" PeukerDouglas ENABLE
 netsh firewall add allowedprogram "C:\Program Files\Taudem\TauDEM5Exe\PitRemove.exe" PitRemove ENABLE
 netsh firewall add allowedprogram "C:\Program Files\Taudem\TauDEM5Exe\SlopeArea.exe" SlopeArea ENABLE
@@ -24,5 +24,6 @@ netsh firewall add allowedprogram "C:\Program Files\Taudem\TauDEM5Exe\SlopeAreaR
 netsh firewall add allowedprogram "C:\Program Files\Taudem\TauDEM5Exe\SlopeAveDown.exe" SlopeAveDown ENABLE
 netsh firewall add allowedprogram "C:\Program Files\Taudem\TauDEM5Exe\Threshold.exe" Threshold ENABLE
 netsh firewall add allowedprogram "C:\Program Files\Taudem\TauDEM5Exe\Streamnet.exe" Streamnet ENABLE
-netsh firewall add allowedprogram "C:\program files\taudem\taudem5exe\gagewatershed.exe" Streamnet ENABLE
+netsh firewall add allowedprogram "C:\program files\taudem\taudem5exe\gagewatershed.exe" Gagewatershed ENABLE
+netsh firewall add allowedprogram "C:\program files\taudem\taudem5exe\twi.exe" TWI ENABLE
 netsh firewall add allowedprogram "C:\program files\microsoft hpc pack 2012\bin\smpd.exe" smpd ENABLE
