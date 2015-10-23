@@ -40,54 +40,148 @@ email:  dtarb@usu.edu
 
 // 1/25/14.  Modified to use shapelib by Chris George
 
+
+
+
 #include <mpi.h>
 #include <math.h>
 #include <iomanip>
 #include <queue>
+
 #include "commonLib.h"
-#include "linearpart.h"
+//#include "linearpart.h"
 #include "createpart.h"
 #include "tiffIO.h"
 #include "tardemlib.h"
 #include "linklib.h"
 #include "streamnet.h"
 #include <fstream>
-
-
+#include "ogr_api.h"
 #include <limits>
 using namespace std;
 
-SHPHandle shp1;
-DBFHandle dbf1;
+OGRSFDriverH    driver;
+OGRDataSourceH  hDS1;
+OGRLayerH       hLayer1;
+OGRFeatureDefnH hFDefn1;
+OGRFieldDefnH   hFieldDefn1;
+OGRFeatureH     hFeature1;
+OGRGeometryH    geometry, line;
+OGRSpatialReferenceH  hSRSraster,hSRSshapefile;
+//void createStreamNetShapefile(char *streamnetshp)
+//{
+//	shp1 = SHPCreate(streamnetshp, SHPT_ARC);
+//	char streamnetdbf[MAXLN];
+//	nameadd(streamnetdbf, streamnetshp, ".dbf");
+//	dbf1 = DBFCreate(streamnetdbf);
+//	linknoIdx = DBFAddField(dbf1,"LINKNO",FTInteger,6,0);
+//	dslinknoIdx = DBFAddField(dbf1,"DSLINKNO",FTInteger,6,0);
+//	uslinkno1Idx = DBFAddField(dbf1,"USLINKNO1",FTInteger,6,0);
+//	uslinkno2Idx = DBFAddField(dbf1,"USLINKNO2",FTInteger,6,0);
+//	dsnodeidIdx = DBFAddField(dbf1,"DSNODEID",FTInteger,12,0);
+//	orderIdx = DBFAddField(dbf1,"Order",FTInteger,6,0);
+//	lengthIdx = DBFAddField(dbf1,"Length",FTDouble,16,1);
+//	magnitudeIdx = DBFAddField(dbf1,"Magnitude",FTInteger,6,0);
+//	dscontareaIdx  = DBFAddField(dbf1,"DS_Cont_Area",FTDouble,16,1);
+//	dropIdx = DBFAddField(dbf1,"Drop",FTDouble,16,2);
+//	slopeIdx = DBFAddField(dbf1,"Slope",FTDouble,16,12);
+//	straightlengthIdx = DBFAddField(dbf1,"Straight_Length",FTDouble,16,1);
+//	uscontareaIdx = DBFAddField(dbf1,"US_Cont_Area",FTDouble,16,1);
+//	wsnoIdx = DBFAddField(dbf1,"WSNO",FTInteger,6,0);
+//	doutendIdx = DBFAddField(dbf1,"DOUT_END",FTDouble,16,1);
+//	doutstartIdx = DBFAddField(dbf1,"DOUT_START",FTDouble,16,1);
+//	doutmidIdx = DBFAddField(dbf1,"DOUT_MID",FTDouble,16,1);
+//}
 
-int linknoIdx, dslinknoIdx, uslinkno1Idx, uslinkno2Idx, dsnodeidIdx, orderIdx, lengthIdx, magnitudeIdx, dscontareaIdx, 
-	dropIdx, slopeIdx, straightlengthIdx, uscontareaIdx, wsnoIdx, doutendIdx, doutstartIdx, doutmidIdx;
 
-void createStreamNetShapefile(char *streamnetshp)
-{
-	shp1 = SHPCreate(streamnetshp, SHPT_ARC);
-	char streamnetdbf[MAXLN];
-	nameadd(streamnetdbf, streamnetshp, ".dbf");
-	dbf1 = DBFCreate(streamnetdbf);
-	linknoIdx = DBFAddField(dbf1,"LINKNO",FTInteger,6,0);
-	dslinknoIdx = DBFAddField(dbf1,"DSLINKNO",FTInteger,6,0);
-	uslinkno1Idx = DBFAddField(dbf1,"USLINKNO1",FTInteger,6,0);
-	uslinkno2Idx = DBFAddField(dbf1,"USLINKNO2",FTInteger,6,0);
-	dsnodeidIdx = DBFAddField(dbf1,"DSNODEID",FTInteger,12,0);
-	orderIdx = DBFAddField(dbf1,"Order",FTInteger,6,0);
-	lengthIdx = DBFAddField(dbf1,"Length",FTDouble,16,1);
-	magnitudeIdx = DBFAddField(dbf1,"Magnitude",FTInteger,6,0);
-	dscontareaIdx  = DBFAddField(dbf1,"DS_Cont_Area",FTDouble,16,1);
-	dropIdx = DBFAddField(dbf1,"Drop",FTDouble,16,2);
-	slopeIdx = DBFAddField(dbf1,"Slope",FTDouble,16,12);
-	straightlengthIdx = DBFAddField(dbf1,"Straight_Length",FTDouble,16,1);
-	uscontareaIdx = DBFAddField(dbf1,"US_Cont_Area",FTDouble,16,1);
-	wsnoIdx = DBFAddField(dbf1,"WSNO",FTInteger,6,0);
-	doutendIdx = DBFAddField(dbf1,"DOUT_END",FTDouble,16,1);
-	doutstartIdx = DBFAddField(dbf1,"DOUT_START",FTDouble,16,1);
-	doutmidIdx = DBFAddField(dbf1,"DOUT_MID",FTDouble,16,1);
-}
+void createStreamNetShapefile(char *streamnetshp,OGRSpatialReferenceH hSRSraster){
+   
+    /* Register all OGR drivers */
+    OGRRegisterAll();
+    const char *pszDriverName = "ESRI Shapefile";
+    driver = OGRGetDriverByName( pszDriverName );
+    if( driver == NULL )
+    {
+        printf( "%s driver not available.\n", pszDriverName );
+        exit( 1 );
+    }
 
+    /* Create new file using this driver */
+    hDS1 = OGR_Dr_CreateDataSource(driver, streamnetshp, NULL);
+    if (hDS1 == NULL)
+    {
+        printf("Unable to create %s\n", streamnetshp);
+        exit( 1 );
+    }
+
+    char layername[MAXLN];
+	// extract leyer information from shapefile
+	size_t len = strlen(streamnetshp);
+    memcpy(layername, streamnetshp, len-4);
+    layername[len - 4] = 0;
+	hLayer1= OGR_DS_CreateLayer( hDS1, layername ,hSRSraster, wkbMultiLineString, NULL ); // same spatial reference as raster 
+    if( layername  == NULL )
+    {
+        printf( "Layer creation failed.\n" );
+        exit( 1 );
+    }
+ 
+	
+	
+	/* Add a few fields to the layer defn */ //need some work for setfiled width
+    hFieldDefn1 = OGR_Fld_Create( "LINKNO", OFTInteger );
+	 OGR_Fld_SetWidth( hFieldDefn1, 16);
+	OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+    hFieldDefn1 = OGR_Fld_Create( "DSLINKNO", OFTInteger );
+	 OGR_Fld_SetWidth( hFieldDefn1, 16);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	 hFieldDefn1 = OGR_Fld_Create( "USLINKNO1", OFTInteger );
+	  OGR_Fld_SetWidth( hFieldDefn1, 16);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	 hFieldDefn1 = OGR_Fld_Create( "USLINKNO2", OFTInteger );
+	  OGR_Fld_SetWidth( hFieldDefn1, 16);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	 hFieldDefn1 = OGR_Fld_Create( "DSNODEID", OFTInteger );
+	  OGR_Fld_SetWidth( hFieldDefn1, 16);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	 hFieldDefn1 = OGR_Fld_Create( "Order", OFTInteger );
+	  OGR_Fld_SetWidth( hFieldDefn1, 16);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	 hFieldDefn1 = OGR_Fld_Create( "Length", OFTReal );
+	  OGR_Fld_SetWidth( hFieldDefn1, 32);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	 hFieldDefn1 = OGR_Fld_Create( "Magnitude", OFTInteger );
+	  OGR_Fld_SetWidth( hFieldDefn1, 16);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	 hFieldDefn1 = OGR_Fld_Create( "DSContArea", OFTReal );
+	 OGR_Fld_SetWidth( hFieldDefn1, 32);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	 hFieldDefn1 = OGR_Fld_Create( "Drop", OFTReal );
+	  OGR_Fld_SetWidth( hFieldDefn1, 32);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	 hFieldDefn1= OGR_Fld_Create( "Slope", OFTReal );
+	  OGR_Fld_SetWidth( hFieldDefn1, 32);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	 hFieldDefn1 = OGR_Fld_Create( "Strlen", OFTReal );
+	  OGR_Fld_SetWidth( hFieldDefn1, 32);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	 hFieldDefn1 = OGR_Fld_Create( "USContArea", OFTReal );
+	  OGR_Fld_SetWidth( hFieldDefn1, 32);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	 hFieldDefn1 = OGR_Fld_Create( "WSNO", OFTInteger );
+	  OGR_Fld_SetWidth( hFieldDefn1, 16);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	 hFieldDefn1 = OGR_Fld_Create( "DOUTEND", OFTReal );
+	  OGR_Fld_SetWidth( hFieldDefn1, 32);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	 hFieldDefn1 = OGR_Fld_Create( "DOUTSTART", OFTReal );
+	  OGR_Fld_SetWidth( hFieldDefn1, 32);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	 hFieldDefn1 = OGR_Fld_Create( "DOUTMID", OFTReal );
+	  OGR_Fld_SetWidth( hFieldDefn1, 32);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+ 
+	}
 // Write shape from tardemlib.cpp
 int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *pointx, double *pointy, long np,tiffIO &obj)
 {
@@ -120,6 +214,8 @@ int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *poin
 	dslast=usarea;
 	dsarea=usarea;
 	long prt = 0;
+	const char *pszDriverName = "ESRI Shapefile";
+    
 
 	for(j=0; j<np; j++)  //  loop over points
 	{
@@ -177,45 +273,55 @@ int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *poin
 		mypointy[1] = mypointy[0];
 	}
 
-	SHPObject *shape = SHPCreateSimpleObject(
-		SHPT_ARC,						// type
-		nVertices,						// number of vertices
-		mypointx,						// X values
-		mypointy,						// Y values
-		NULL);							// Z values
-	
-	// -1 position means append
-	int ishape = SHPWriteObject(shp1, -1, shape);
+	//SHPObject *shape = SHPCreateSimpleObject(
+	//	SHPT_ARC,						// type
+	//	nVertices,						// number of vertices
+	//	mypointx,						// X values
+	//	mypointy,						// Y values
+	//	NULL);							// Z values
 
-	SHPDestroyObject(shape);
+	 
+
+
+	hFDefn1 = OGR_L_GetLayerDefn( hLayer1 );
+	hFeature1 = OGR_F_Create( hFDefn1 );
+	OGR_F_SetFieldInteger( hFeature1, 0, (int)cnet[0]);
+	OGR_F_SetFieldInteger( hFeature1, 1, (int)cnet[3]);
+	OGR_F_SetFieldInteger( hFeature1, 2, (int)cnet[4]);
+	OGR_F_SetFieldInteger( hFeature1, 3, (int)cnet[5]);
+	OGR_F_SetFieldInteger( hFeature1, 4, (int)cnet[7]);
+	OGR_F_SetFieldInteger( hFeature1, 5, (int)cnet[6]);
+	OGR_F_SetFieldDouble( hFeature1, 6, length);
+	OGR_F_SetFieldInteger( hFeature1, 7, (int)cnet[8]);
+	OGR_F_SetFieldDouble( hFeature1, 8,  dsarea);
+	OGR_F_SetFieldDouble( hFeature1, 9, drop);
+	OGR_F_SetFieldDouble( hFeature1, 10, slope);
+	OGR_F_SetFieldDouble( hFeature1, 11, glength);
+	OGR_F_SetFieldDouble( hFeature1, 12, usarea);
+	OGR_F_SetFieldInteger( hFeature1, 13, (int)cnet[0]);
+	OGR_F_SetFieldDouble( hFeature1, 14,dsdist);
+	OGR_F_SetFieldDouble( hFeature1, 15,  usdist);
+	OGR_F_SetFieldDouble( hFeature1, 16, middist);
+
+    //creating geometry using OGR
+
+	geometry = OGR_G_CreateGeometry( wkbMultiLineString );
+    
+	for(j=0; j<(np-1); j++) {
+
+    line = OGR_G_CreateGeometry( wkbLineString );
+    OGR_G_AddPoint(line, mypointx[j], mypointy[j], 0);
+	OGR_G_AddPoint(line, mypointx[j+1], mypointy[j+1], 0);
+	OGR_G_AddGeometryDirectly(geometry, line);
+    }
+    OGR_F_SetGeometryDirectly(hFeature1, geometry);
+    OGR_L_CreateFeature( hLayer1, hFeature1 ); //adding feature 
+	//OGR_DS_Destroy( hDS1 ); //close data source for writing streamnet file
 	delete[] mypointx;
-	delete[] mypointy;
+    delete[] mypointy;
 
-	int res;
-	res = DBFWriteIntegerAttribute(dbf1, ishape, linknoIdx, (int)cnet[0]);
-	res *= DBFWriteIntegerAttribute(dbf1, ishape, dslinknoIdx, (int)cnet[3]);
-	res *= DBFWriteIntegerAttribute(dbf1, ishape, uslinkno1Idx, (int)cnet[4]);
-	res *= DBFWriteIntegerAttribute(dbf1, ishape, uslinkno2Idx, (int)cnet[5]);
-	res *= DBFWriteIntegerAttribute(dbf1, ishape, dsnodeidIdx, (int)cnet[7]);
-	res *= DBFWriteIntegerAttribute(dbf1, ishape, orderIdx, (int)cnet[6]);
-	res *= DBFWriteDoubleAttribute(dbf1, ishape, lengthIdx, length);
-	res *= DBFWriteIntegerAttribute(dbf1, ishape, magnitudeIdx, (int)cnet[8]);
-	res *= DBFWriteDoubleAttribute(dbf1, ishape, dscontareaIdx, dsarea);
-	res *= DBFWriteDoubleAttribute(dbf1, ishape, dropIdx, drop);
-	res *= DBFWriteDoubleAttribute(dbf1, ishape, slopeIdx, slope);
-	res *= DBFWriteDoubleAttribute(dbf1, ishape, straightlengthIdx, glength);
-	res *= DBFWriteDoubleAttribute(dbf1, ishape, uscontareaIdx, usarea);
-	res *= DBFWriteIntegerAttribute(dbf1, ishape, wsnoIdx, (int)cnet[0]);
-	res *= DBFWriteDoubleAttribute(dbf1, ishape, doutendIdx, dsdist);
-	res *= DBFWriteDoubleAttribute(dbf1, ishape, doutstartIdx, usdist);
-	res *= DBFWriteDoubleAttribute(dbf1, ishape, doutmidIdx, middist);
-
-	if (res == 0) { // at least one of the write attribute functions returned 0, ie failed
-		fprintf(stderr, "Problem writing to stream network dbf file");
-		fflush(stderr);
-		return 1;
-	}
-	return 0;
+	
+return 0;
 }
 
 struct Slink{
@@ -251,7 +357,8 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 		long TotalY = srcIO.getTotalY();
 		double dxA = srcIO.getdxA();
 		double dyA = srcIO.getdyA();
-	
+
+	    hSRSraster=srcIO.getspatialref();
         //double diag=sqrt((dx*dx)+(dy*dy));
 		
 	
@@ -330,7 +437,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 		// Read outlets 
 		if( useOutlets == 1) {
 			if(rank==0){
-				if(readoutlets(outletshapefile, &numOutlets, x, y,ids) !=0){
+				if(readoutlets(outletshapefile,hSRSraster, &numOutlets, x, y,ids) !=0){
 					printf("Exiting \n");
 					MPI_Abort(MCW,5);
 				}else {
@@ -1001,8 +1108,15 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 			FILE *fout;
 			fout = fopen(coordfile,"w");
 
-			//  Open shapefile
-			createStreamNetShapefile(streamnetshp);
+			//  Open shapefile 
+			//need spatial refeence information which is stored in the tiffIO object
+			createStreamNetShapefile(streamnetshp,hSRSraster); // need raster spatail information for creating spatial reference in the shapefile
+		  
+
+
+			
+
+        
 
 			long ndots=100/size+4;  // number of dots to print per process
 			long nextdot=0;
@@ -1033,6 +1147,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 				for(int iref=0; iref<9; iref++)
 					cnet[iref]=LinkIdU1U2DMagShapeidCoords[ilink][iref];
 				reachshape(cnet,lengthd,elev,area,pointx,pointy,i2-i1+1,srcIO);
+			
 				delete lengthd; // DGT to free memory
 				delete elev;
 				delete area;
@@ -1085,6 +1200,9 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 						}
 						//  Write shape
 						reachshape(treeBuf,lengthd,elev,area,pointx,pointy,procNumPoints,srcIO);
+					
+				 
+     
 						delete lengthd; // DGT to free memory
 						delete elev;
 						delete area;
@@ -1104,8 +1222,9 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 			} 
 			fclose(fTreeOut);
 			fclose(fout);
-			SHPClose(shp1);
-			DBFClose(dbf1);
+			//SHPClose(shp1);
+			//DBFClose(dbf1);
+		 OGR_DS_Destroy( hDS1 );
 			/*
 			shp1.close(streamnetshp);
 			*/
@@ -1139,7 +1258,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 			}
 		}  // just be sure we're all here
 		MPI_Barrier(MCW);  //DGT  This seems necessary for cluster version to work, though not sure why.
-
+		
 		// Timer - link write time
 		double linkwt = MPI_Wtime();
 		if(rank==0)  // Indicating progress

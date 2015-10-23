@@ -42,107 +42,129 @@ email:  dtarb@usu.edu
 
 #include <stdio.h>
 #include <string.h>
-#include "shapelib/shapefil.h"
 #include "commonLib.h"
+#include "ogr_api.h"
 
-//  Function to read outlets from a shapefile
-int readoutlets(char *outletsfile, int *noutlets, double*& x, double*& y)
-{
-	SHPHandle shp;
-	shp = SHPOpen(outletsfile, "rb");
-	if (shp != NULL) {
-		int nEntities = 0;
-		int nShapeType = 0;
-		SHPGetInfo(shp, &nEntities, &nShapeType, NULL, NULL );
-		if (nShapeType != SHPT_POINT) {
-			fprintf(stderr, "Outlets shapefile %s is not a point shapefile\n", outletsfile);
-			fflush(stderr);
-			return 1;
-		}
-		long p_size;
-		long countPts = 0;
-		for( int i=0; i<nEntities; i++) {
-			SHPObject * shape = SHPReadObject(shp, i);
-			countPts += shape->nVertices;
-			SHPDestroyObject(shape);
-		}
-		x = new double[countPts];
-		y = new double[countPts];
-		int nxy=0;
-		for( int i=0; i<nEntities; i++) {
-			SHPObject * shape = SHPReadObject(shp, i);
-			p_size = shape->nVertices;
-			for( int j=0; j<p_size; j++) {
-				x[nxy] = shape->padfX[j];
-				y[nxy] = shape->padfY[j];
-				nxy++;
-			}
-			SHPDestroyObject(shape);
-		}
-		*noutlets=nxy;
-		SHPClose(shp);
-		return 0;
+
+int readoutlets(char *outletsfile, OGRSpatialReferenceH hSRSRaster,int *noutlets, double*& x, double*& y)
+
+{   
+		//OGRSFDriverH    driver;
+	OGRDataSourceH  hDS1;
+	OGRLayerH       hLayer1;
+	OGRFeatureDefnH hFDefn1;
+	OGRFieldDefnH   hFieldDefn1;
+	OGRFeatureH     hFeature1;
+	OGRGeometryH    geometry, line;
+	OGRSpatialReferenceH hRSOutlet;
+	OGRRegisterAll();
+	hDS1 = OGROpen(outletsfile, FALSE, NULL );
+	if( hDS1 == NULL )
+	{
+		printf( "Eorro Opening in Shapefile .\n" );
+		exit( 1 );
 	}
-	else { 
-		fprintf(stderr, "Error opening outlets shapefile %s.\n", outletsfile);
-		fflush(stderr);
-		return 1;
-	}	
-}
+	// extracting layer information from the shapefile
 
-//  Function to read outlets from a shapefile - overloaded to return an array of integer ID's
-int readoutlets(char *outletsfile, int *noutlets, double*& x, double*& y, int*& id)
-{
-	SHPHandle shp = SHPOpen(outletsfile, "rb");
-	char dbffile[MAXLN];
-	nameadd(dbffile, outletsfile, ".dbf");
-	DBFHandle dbf = DBFOpen(dbffile, "rb");
-	if ((shp != NULL) && (dbf != NULL)) {
-		int nEntities = 0;
-		int nShapeType = 0;
-		SHPGetInfo(shp, &nEntities, &nShapeType, NULL, NULL );
-		if (nShapeType != SHPT_POINT)
-		{
-			fprintf(stderr, "Outlets shapefile %s is not a point shapefile\n", outletsfile);
-			fflush(stderr);
-			return 1;
-		}
-	long p_size;
-	long countPts = 0;
+	char layername[MAXLN]; // layer name is file name without extension
+	size_t len = strlen(outletsfile);
+	memcpy(layername, outletsfile, len-4);
+	layername[len - 4] = 0; // get file name without extension 
+	hLayer1 = OGR_DS_GetLayerByName( hDS1,layername );
+	OGR_L_ResetReading(hLayer1);
+	hRSOutlet = OGR_L_GetSpatialRef(hLayer1);
+	int comSRS=OSRIsSame(hRSOutlet,hSRSRaster);
 
-	int nfld = DBFGetFieldCount(dbf);
-	int idfld = DBFGetFieldIndex(dbf, "id");
-	for( int i=0; i<nEntities; i++) {
-		SHPObject * shape = SHPReadObject(shp, i);
-		countPts += shape->nVertices;
-		SHPDestroyObject(shape);
-	}
+    if(comSRS==0) {
+	printf( "Warning : Spatial References of Outlet shapefile and Raster data of are not matched .\n" );
+	
+    }
+
+	long countPts=0;
+	countPts=OGR_L_GetFeatureCount(hLayer1,1); // count number of feature
 	x = new double[countPts];
 	y = new double[countPts];
-	if (idfld >= 0)
-		id = new int[countPts];
-    int nxy=0;
-	for( int i=0; i<nEntities; i++) {
-		SHPObject * shape = SHPReadObject(shp, i);
-		p_size = shape->nVertices;
-		for( int j=0; j<p_size; j++) {
-			x[nxy] = shape->padfX[j];
-			y[nxy] = shape->padfY[j];
-			if (idfld >= 0)
-			{
-				id[nxy] = DBFReadIntegerAttribute(dbf, i, idfld);
-			}
-			nxy++;
+	int iField;
+	hFDefn1 = OGR_L_GetLayerDefn(hLayer1);
+	int nxy=0;
+	for( int j=0; j<countPts; j++) {
+
+         hFeature1=OGR_L_GetFeature(hLayer1,j);
+		 geometry = OGR_F_GetGeometryRef(hFeature1);
+		 x[nxy] = OGR_G_GetX(geometry, 0);
+		 y[nxy] =  OGR_G_GetY(geometry, 0);
+		 nxy++;
 		}
-		SHPDestroyObject(shape);
-	}
-	*noutlets=nxy;
-	SHPClose(shp);
+    *noutlets=nxy;
+	OGR_F_Destroy( hFeature1);
+	OGR_DS_Destroy( hDS1);
 	return 0;
-	}
-	else { 
-		fprintf(stderr, "Error opening outlets shapefile: %s\n", outletsfile);
-		fflush(stderr);
-		return 1;
-	}	
 }
+
+int readoutlets(char *outletsfile,OGRSpatialReferenceH hSRSRaster, int *noutlets, double*& x, double*& y, int*& id)
+
+{
+ 
+	//OGRSFDriverH    driver;
+	OGRDataSourceH  hDS1;
+	OGRLayerH       hLayer1;
+	OGRFeatureDefnH hFDefn1;
+	OGRFieldDefnH   hFieldDefn1;
+	OGRFeatureH     hFeature1;
+	OGRGeometryH    geometry, line;
+	// OGRSpatialReferenceH  hSRSOutlet;
+	OGRRegisterAll();
+	OGRSpatialReferenceH hRSOutlet;
+	hDS1 = OGROpen(outletsfile, FALSE, NULL );
+	if( hDS1 == NULL )
+	{
+	printf( "Eorro Opening in Shapefile .\n" );
+	exit( 1 );
+	}
+	char layername[MAXLN];
+
+	size_t len = strlen(outletsfile);
+	memcpy(layername, outletsfile, len-4);
+	layername[len - 4] = 0;
+	hLayer1 = OGR_DS_GetLayerByName( hDS1,layername );
+
+	OGR_L_ResetReading(hLayer1);
+	hRSOutlet = OGR_L_GetSpatialRef(hLayer1);
+	int comSRS=OSRIsSame(hRSOutlet,hSRSRaster);
+    if(comSRS==0) {
+	    printf( "Warning : Spatial References of Outlet shapefile and Raster data of are not matched .\n" );
+	  
+	}
+
+	long countPts=0;
+	countPts=OGR_L_GetFeatureCount(hLayer1,1);
+	x = new double[countPts];
+	y = new double[countPts];
+	int iField;
+	int nxy=0;
+
+	hFDefn1 = OGR_L_GetLayerDefn(hLayer1);
+	hFeature1 = OGR_L_GetNextFeature(hLayer1);
+	int idfld =OGR_F_GetFieldIndex(hFeature1,"id");
+	if (idfld >= 0)id = new int[countPts];
+	for( int j=0; j<countPts; j++) {
+
+		 hFeature1=OGR_L_GetFeature(hLayer1,j);
+		 geometry = OGR_F_GetGeometryRef(hFeature1);
+         x[nxy] = OGR_G_GetX(geometry, 0);
+		 y[nxy] =  OGR_G_GetY(geometry, 0);
+		 if (idfld >= 0)
+		   {
+			OGRFieldDefnH hFieldDefn = OGR_FD_GetFieldDefn( hFDefn1,idfld);
+			if( OGR_Fld_GetType(hFieldDefn) == OFTInteger ) {
+					id[nxy] =OGR_F_GetFieldAsInteger( hFeature1, idfld );}
+		    }
+			nxy++;
+			
+		                         }
+	*noutlets=nxy;
+	OGR_F_Destroy( hFeature1 );
+	OGR_DS_Destroy( hDS1);
+	return 0;
+}
+

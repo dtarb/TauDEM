@@ -67,12 +67,18 @@ MPI_Init(NULL,NULL);
 
 	double *x, *y;
 	int numOutlets=0;
-
+	tiffIO p(pfile,SHORT_TYPE);
+	long totalX = p.getTotalX();
+	long totalY = p.getTotalY();
+    double dxA = p.getdxA();
+	double dyA = p.getdyA();
+	OGRSpatialReferenceH hSRSRaster;
+    hSRSRaster=p.getspatialref();
 //  Begin timer
     double begint = MPI_Wtime();
 	if( useOutlets == 1) {
 		if(rank==0){
-			if(readoutlets(outletsfile, &numOutlets, x, y) !=0){
+			if(readoutlets(outletsfile, hSRSRaster,&numOutlets, x, y) !=0){
 				printf("Exiting \n");
 				MPI_Abort(MCW,5);
 			}else {
@@ -94,11 +100,7 @@ MPI_Init(NULL,NULL);
  // printf("%d %d\n",rank,numOutlets);
   //for(int i=0; i<numOutlets; i++)printf("%g, %g\n",x[i],y[i]);
 	//Read Flow Direction header using tiffIO
-	tiffIO p(pfile,SHORT_TYPE);
-	long totalX = p.getTotalX();
-	long totalY = p.getTotalY();
-	double dxA = p.getdxA();
-	double dyA = p.getdyA();
+
 	if(rank==0)
 		{
 			float timeestimate=(1.2e-6*totalX*totalY/pow((double) size,0.65))/60+1;  // Time estimate in minutes

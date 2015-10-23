@@ -49,9 +49,9 @@ email:  dtarb@usu.edu
 //==================================
 /*  Nameadd(..)  Utility for adding suffixes to file names prior to
    "." extension   */
-int nameadd(char *full,char *arg,char *suff)
+int nameadd(char *full,char *arg,const char *suff)
 {
-        char *ext, *extsuff;
+        const char *ext, *extsuff;
         long nmain;
     ext=strrchr(arg,'.');
 	extsuff=strrchr(suff,'.');
