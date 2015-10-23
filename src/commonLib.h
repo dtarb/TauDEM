@@ -43,7 +43,7 @@ email:  dtarb@usu.edu
 #include <float.h>
 #include "mpi.h"
 #include <stdint.h>
-
+#include "ogr_api.h"
 
 #define MCW MPI_COMM_WORLD
 #define MAX_STRING_LENGTH 255
@@ -87,16 +87,22 @@ const int d1[9] = { 0,1, 1, 0,-1,-1,-1,0,1};
 const int d2[9] = { 0,0,-1,-1,-1, 0, 1,1,1};
 
 
+
 //  TODO adjust this for different dx and dy
 //const double aref[10] = { -atan2((double)1,(double)1), 0., -aref[0],(double)(0.5*PI),PI-aref[2],(double)PI,
                        // PI+aref[2],(double)(1.5*PI),2.*PI-aref[2],(double)(2.*PI) };   // DGT is concerned that this assumes square grids.  For different dx and dx needs adjustment
 
-int nameadd( char*,char*,char*);
+int nameadd( char*,char*,const char*);
 double prop( float a, int k, double dx1 , double dy1);
-int readoutlets(char *outletsfile, int *noutlets, double*& x, double*& y);
-int readoutlets(char *outletsfile, int *noutlets, double*& x, double*& y, int*& id);
+
+int readoutlets(char *outletsfile, OGRSpatialReferenceH hSRSRaster, int *noutlets, double*& x, double*& y);
+int readoutlets(char *outletsfile, OGRSpatialReferenceH  hSRSraster,int *noutlets, double*& x, double*& y, int*& id);
+
 #include <queue>
 #include "linearpart.h"
+
+
+
 
 bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData);
 
