@@ -273,7 +273,13 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 			 }
 		    else {
 			         for (size_t i = 0; i < extension_num; i++) {
-                          if (strcmp(ext,extension_list[i])==0) index=i; //get the index where extension of the outputfile matches with the extensionlist 
+						 for(int i = 0; ext[i]; i++){
+							 ext[i] = tolower(ext[i]);
+							}
+                          if (strcmp(ext,extension_list[i])==0) {
+							  index=i; //get the index where extension of the outputfile matches with the extensionlist 
+							  break;
+						  }
 					      }
 
 					 if(index>=0){ hDriver = GDALGetDriverByName(driver_code[index]);} // get driver code based on index
