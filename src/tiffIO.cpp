@@ -64,7 +64,7 @@ tiffIO::tiffIO(char *fname, DATA_TYPE newtype) {
 		printf("Error opening file %s.\n", fname);
 		MPI_Abort(MCW, 21);
 	}
-
+	hDriver = GDALGetDatasetDriver( fh );
 
     OGRSpatialReferenceH  hSRS;
 	char  *pszProjection;
@@ -199,7 +199,7 @@ tiffIO::tiffIO(char *fname, DATA_TYPE newtype, void* nd, const tiffIO &copy) {
 	totalY = copy.totalY;
 	dxA=copy.dxA;
 	dyA=copy.dyA;
-	
+	hDriver=copy.hDriver;
 	xllcenter = copy.xllcenter;
 	yllcenter = copy.yllcenter;
 	xleftedge = copy.xleftedge;
@@ -247,13 +247,54 @@ void tiffIO::read(long xstart, long ystart, long numRows, long numCols, void* de
 void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* source) {
 	MPI_Status status;
 	fflush(stdout);
+	char **papszMetadata;
+	
+	const char *extension_list[4] = {".tif",".img",".asc",".sdat"};  // extension list --can add more 
+	const char *driver_code[4] = {"GTiff","HFA","AAIGrid","SAGA"};   //  code list -- can add more
+	size_t extension_num=4;
+	int index=-1;
 	if (rank == 0) {
 		if (isFileInititialized == 0) {
-			// load GTiff driver and create file if file has not been initialized
-			hDriver = GDALGetDriverByName("GTiff");
 
-			if (hDriver == NULL) {
-				printf("tiff driver is not available\n");
+			 char *ext; 
+		     ext = strrchr(filename, '.'); // get extension  of the file 
+			 if (!ext){
+
+				 	hDriver = GDALGetDatasetDriver(copyfh ); //get input driver information
+					papszMetadata = GDALGetMetadata(hDriver, NULL ); // get driver metadata 
+
+			       // check wether this driver has the create (writing capability)
+                   if( CSLFetchBoolean( papszMetadata, GDAL_DCAP_CREATE, TRUE ) ) {
+                   // printf("tiff driver is not available for writing\n");
+				     hDriver = GDALGetDriverByName("GTiff");
+					 // Do we need to  change output file name with .tif extension ( for file without extension e.g., ESRI GRID)
+					 strcat(filename,".tif");
+				   }
+			 }
+		    else {
+			         for (size_t i = 0; i < extension_num; i++) {
+                          if (strcmp(ext,extension_list[i])==0) index=i; //get the index where extension of the outputfile matches with the extensionlist 
+					      }
+
+					 if(index>=0){ hDriver = GDALGetDriverByName(driver_code[index]);} // get driver code based on index
+					 
+					 else {
+						 hDriver = GDALGetDriverByName("GTiff"); // if driver not in the list
+						 // Do we need to  change output file name with .tif extension ( for file with extension e.g., .bag  )
+						char filename_withoutext[MAXLN]; // layer name is file name without extension
+						size_t len = strlen(filename);
+						size_t len1 = strlen(ext+1);
+						memcpy(filename_withoutext, filename, len-len1);
+						filename_withoutext[len - len1] = 0; 
+						strcpy(filename,filename_withoutext);
+						strcat(filename,"tif");
+					 }
+					 
+			    }
+		        	
+		
+		    if (hDriver == NULL) {
+		        printf("driver is not available\n");
 				MPI_Abort(MPI_COMM_WORLD, 22);
 			}
 
