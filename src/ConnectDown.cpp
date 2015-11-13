@@ -75,6 +75,7 @@ OGRFieldDefnH   hFieldDefnsh,hFieldDefnshmoved;
 OGRFeatureH     hFeaturesh,hFeatureshmoved;
 OGRGeometryH    hGeometrysh, hGeometryshmoved;
 
+	
 int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, char *movedoutletshapefile, int movedist)
 {
 
@@ -673,29 +674,24 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
         exit( 1 );
 	 }
 
-    char layername[MAXLN];
-	// extract leyer information from shapefile
-	size_t len = strlen(outletshapefile);
-    memcpy(layername, outletshapefile, len-4);
-    layername[len - 4] = 0;
+     char *layername; 
+     layername=getLayername(outletshapefile); // get layer name
     //hLayer1 = OGR_DS_GetLayerByName( hDS1,layername );
     //OGR_L_ResetReading(hLayer1);
 	
-	
-	hLayersh= OGR_DS_CreateLayer( hDSsh, layername ,hSRSRaster, wkbPoint, NULL );
-    if( layername  == NULL )
-    {
+     hLayersh= OGR_DS_CreateLayer( hDSsh, layername ,hSRSRaster, wkbPoint, NULL );
+     if( layername  == NULL )
+     {
         printf( "Layer creation failed.\n" );
         exit( 1 );
-    }
+     }
  
 	
 	
     /* Add a few fields to the layer defn */
     hFieldDefnsh = OGR_Fld_Create( "id", OFTInteger );
     OGR_L_CreateField(hLayersh,  hFieldDefnsh, 0);
-
-	hFieldDefnsh= OGR_Fld_Create( "id_down", OFTInteger );
+   hFieldDefnsh= OGR_Fld_Create( "id_down", OFTInteger );
     OGR_L_CreateField(hLayersh,  hFieldDefnsh, 0);
 	hFieldDefnsh = OGR_Fld_Create( "ad8", OFTReal );
     OGR_L_CreateField(hLayersh,  hFieldDefnsh, 0);
@@ -735,11 +731,9 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
         exit( 1 );
 	 }
 
-    char layernamemoved[MAXLN];
+     char *layernamemoved;
 	// extract leyer information from shapefile
-	size_t lenmv = strlen( movedoutletshapefile);
-    memcpy(layernamemoved, movedoutletshapefile, lenmv-4);
-    layernamemoved[lenmv - 4] = 0;
+    layernamemoved=getLayername(movedoutletshapefile);
     //hLayer1 = OGR_DS_GetLayerByName( hDS1,layername );
     //OGR_L_ResetReading(hLayer1);
 	
@@ -756,8 +750,7 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
     /* Add a few fields to the layer defn */
     hFieldDefnshmoved = OGR_Fld_Create( "id", OFTInteger );
     OGR_L_CreateField(hLayershmoved,  hFieldDefnshmoved, 0);
-
-	hFieldDefnshmoved= OGR_Fld_Create( "id_down", OFTInteger );
+    hFieldDefnshmoved= OGR_Fld_Create( "id_down", OFTInteger );
     OGR_L_CreateField(hLayershmoved,  hFieldDefnshmoved, 0);
 	hFieldDefnshmoved = OGR_Fld_Create( "ad8", OFTReal );
     OGR_L_CreateField(hLayershmoved,  hFieldDefnshmoved, 0);
@@ -768,8 +761,7 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 			double y = ynode[i];  // DGT +pdy/2.0;
 		
 			
-		OGRFeatureH     hFeatureshmoved;
-		OGRGeometryH    hGeometryshmoved;
+		
 
         hFeatureshmoved = OGR_F_Create( OGR_L_GetLayerDefn( hLayershmoved ) );
         OGR_F_SetFieldInteger( hFeatureshmoved, OGR_F_GetFieldIndex(hFeatureshmoved, "id"), wid[i] );

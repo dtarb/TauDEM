@@ -373,10 +373,6 @@ void tiffIO::geotoLength(double dlon,double dlat, double lat, double *xyc){
 
 
 
-
-
-
-
 bool tiffIO::compareTiff(const tiffIO &comp) {
 	double tol = 0.0001;
 	if (totalX != comp.totalX) {
