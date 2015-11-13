@@ -99,6 +99,7 @@ void createStreamNetShapefile(char *streamnetshp,OGRSpatialReferenceH hSRSraster
     /* Register all OGR drivers */
     OGRRegisterAll();
     const char *pszDriverName = "ESRI Shapefile";
+	//get driver by name
     driver = OGRGetDriverByName( pszDriverName );
     if( driver == NULL )
     {
@@ -106,7 +107,7 @@ void createStreamNetShapefile(char *streamnetshp,OGRSpatialReferenceH hSRSraster
         exit( 1 );
     }
 
-    /* Create new file using this driver */
+    // Create new file using this driver 
     hDS1 = OGR_Dr_CreateDataSource(driver, streamnetshp, NULL);
     if (hDS1 == NULL)
     {
@@ -114,12 +115,9 @@ void createStreamNetShapefile(char *streamnetshp,OGRSpatialReferenceH hSRSraster
         exit( 1 );
     }
 
-    char layername[MAXLN];
-	// extract leyer information from shapefile
-	size_t len = strlen(streamnetshp);
-    memcpy(layername, streamnetshp, len-4);
-    layername[len - 4] = 0;
-	hLayer1= OGR_DS_CreateLayer( hDS1, layername ,hSRSraster, wkbMultiLineString, NULL ); // same spatial reference as raster 
+    char *layername; // layer name is file name without extension
+    layername=getLayername(streamnetshp); // get layer name
+    hLayer1= OGR_DS_CreateLayer( hDS1, layername ,hSRSraster, wkbMultiLineString, NULL ); // provide same spatial reference as raster in streamnetshp file
     if( layername  == NULL )
     {
         printf( "Layer creation failed.\n" );
@@ -129,59 +127,86 @@ void createStreamNetShapefile(char *streamnetshp,OGRSpatialReferenceH hSRSraster
 	
 	
 	/* Add a few fields to the layer defn */ //need some work for setfiled width
-    hFieldDefn1 = OGR_Fld_Create( "LINKNO", OFTInteger );
-	 OGR_Fld_SetWidth( hFieldDefn1, 16);
-	OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	// add fields, field width and precision
+    hFieldDefn1 = OGR_Fld_Create( "LINKNO", OFTInteger ); // create new field definition
+	OGR_Fld_SetWidth( hFieldDefn1, 6); // set field width
+	OGR_L_CreateField(hLayer1,  hFieldDefn1, 0); // create field 
+
     hFieldDefn1 = OGR_Fld_Create( "DSLINKNO", OFTInteger );
-	 OGR_Fld_SetWidth( hFieldDefn1, 16);
+	OGR_Fld_SetWidth( hFieldDefn1, 6);
     OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
-	 hFieldDefn1 = OGR_Fld_Create( "USLINKNO1", OFTInteger );
-	  OGR_Fld_SetWidth( hFieldDefn1, 16);
+	 
+	hFieldDefn1 = OGR_Fld_Create( "USLINKNO1", OFTInteger );
+	OGR_Fld_SetWidth( hFieldDefn1, 6);
     OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
-	 hFieldDefn1 = OGR_Fld_Create( "USLINKNO2", OFTInteger );
-	  OGR_Fld_SetWidth( hFieldDefn1, 16);
+	
+	hFieldDefn1 = OGR_Fld_Create( "USLINKNO2", OFTInteger );
+	OGR_Fld_SetWidth( hFieldDefn1, 6);
     OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
-	 hFieldDefn1 = OGR_Fld_Create( "DSNODEID", OFTInteger );
-	  OGR_Fld_SetWidth( hFieldDefn1, 16);
+	
+	hFieldDefn1 = OGR_Fld_Create( "DSNODEID", OFTInteger );
+	OGR_Fld_SetWidth( hFieldDefn1, 12);
     OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
-	 hFieldDefn1 = OGR_Fld_Create( "Order", OFTInteger );
-	  OGR_Fld_SetWidth( hFieldDefn1, 16);
+	
+	hFieldDefn1 = OGR_Fld_Create( "Order", OFTInteger );
+	OGR_Fld_SetWidth( hFieldDefn1, 6);
     OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
-	 hFieldDefn1 = OGR_Fld_Create( "Length", OFTReal );
-	  OGR_Fld_SetWidth( hFieldDefn1, 32);
+	
+	hFieldDefn1 = OGR_Fld_Create( "Length", OFTReal );
+	OGR_Fld_SetWidth( hFieldDefn1, 16);
+	OGR_Fld_SetPrecision(hFieldDefn1, 1); // set precision
     OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
-	 hFieldDefn1 = OGR_Fld_Create( "Magnitude", OFTInteger );
-	  OGR_Fld_SetWidth( hFieldDefn1, 16);
+	
+	hFieldDefn1 = OGR_Fld_Create( "Magnitude", OFTInteger );
+	OGR_Fld_SetWidth( hFieldDefn1, 6);
     OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
-	 hFieldDefn1 = OGR_Fld_Create( "DSContArea", OFTReal );
-	 OGR_Fld_SetWidth( hFieldDefn1, 32);
+	 
+	hFieldDefn1 = OGR_Fld_Create( "DSContArea", OFTReal );
+	OGR_Fld_SetWidth( hFieldDefn1, 16);
+	OGR_Fld_SetPrecision(hFieldDefn1, 1);
     OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
-	 hFieldDefn1 = OGR_Fld_Create( "Drop", OFTReal );
-	  OGR_Fld_SetWidth( hFieldDefn1, 32);
+	
+	hFieldDefn1 = OGR_Fld_Create( "Drop", OFTReal );
+	OGR_Fld_SetWidth( hFieldDefn1, 16);
+	OGR_Fld_SetPrecision(hFieldDefn1, 2);
     OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
-	 hFieldDefn1= OGR_Fld_Create( "Slope", OFTReal );
-	  OGR_Fld_SetWidth( hFieldDefn1, 32);
+	 
+	hFieldDefn1= OGR_Fld_Create( "Slope", OFTReal );
+	OGR_Fld_SetWidth( hFieldDefn1,16);
+    OGR_Fld_SetPrecision(hFieldDefn1, 12);
     OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
-	 hFieldDefn1 = OGR_Fld_Create( "Strlen", OFTReal );
-	  OGR_Fld_SetWidth( hFieldDefn1, 32);
+	
+	hFieldDefn1 = OGR_Fld_Create( "Strlen", OFTReal );
+	OGR_Fld_SetWidth( hFieldDefn1,16);
+	OGR_Fld_SetPrecision(hFieldDefn1, 1);
     OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
-	 hFieldDefn1 = OGR_Fld_Create( "USContArea", OFTReal );
-	  OGR_Fld_SetWidth( hFieldDefn1, 32);
+	
+	hFieldDefn1 = OGR_Fld_Create( "USContArea", OFTReal );
+	OGR_Fld_SetWidth( hFieldDefn1, 16);
+	OGR_Fld_SetPrecision(hFieldDefn1, 1);
+    OGR_L_CreateField(hLayer1,hFieldDefn1, 0);
+	 
+	hFieldDefn1 = OGR_Fld_Create( "WSNO", OFTInteger );
+	OGR_Fld_SetWidth( hFieldDefn1, 6);
+	OGR_Fld_SetPrecision(hFieldDefn1,0);
     OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
-	 hFieldDefn1 = OGR_Fld_Create( "WSNO", OFTInteger );
-	  OGR_Fld_SetWidth( hFieldDefn1, 16);
+	 
+	hFieldDefn1 = OGR_Fld_Create( "DOUTEND", OFTReal );
+	OGR_Fld_SetWidth( hFieldDefn1, 16);
+	OGR_Fld_SetPrecision(hFieldDefn1, 1);
     OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
-	 hFieldDefn1 = OGR_Fld_Create( "DOUTEND", OFTReal );
-	  OGR_Fld_SetWidth( hFieldDefn1, 32);
+	 
+	hFieldDefn1 = OGR_Fld_Create( "DOUTSTART", OFTReal );
+	OGR_Fld_SetWidth( hFieldDefn1, 16);
+    OGR_Fld_SetPrecision(hFieldDefn1, 1);
     OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
-	 hFieldDefn1 = OGR_Fld_Create( "DOUTSTART", OFTReal );
-	  OGR_Fld_SetWidth( hFieldDefn1, 32);
-    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
-	 hFieldDefn1 = OGR_Fld_Create( "DOUTMID", OFTReal );
-	  OGR_Fld_SetWidth( hFieldDefn1, 32);
-    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
- 
+	 
+	hFieldDefn1 = OGR_Fld_Create( "DOUTMID", OFTReal );
+	OGR_Fld_SetWidth( hFieldDefn1, 16);
+    OGR_Fld_SetPrecision(hFieldDefn1, 1);
+	OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
 	}
+
 // Write shape from tardemlib.cpp
 int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *pointx, double *pointy, long np,tiffIO &obj)
 {
@@ -231,15 +256,13 @@ int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *poin
 			double dlon1,dlat1;double dxdyc1[2];
 			dlon1=x-xlast;dlat1=y-ylast;
 			obj.geotoLength(dlon1,dlat1,y,dxdyc1);
-			
 			dl=sqrt(dxdyc1[0]*dxdyc1[0]+dxdyc1[1]*dxdyc1[1]);
 		}
 		  else if(obj.getproj()==0){
-		dl=sqrt((x-xlast)*(x-xlast)+(y-ylast)*(y-ylast));
+		  dl=sqrt((x-xlast)*(x-xlast)+(y-ylast)*(y-ylast));
 		}
 
-
-		if(dl > 0.)
+       if(dl > 0.)
 		{
 			length=length+dl;
 			xlast=x;  ylast=y;
@@ -258,12 +281,11 @@ int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *poin
            	double dlon2,dlat2;double dxdyc2[2];
 			dlon2=x-x1;dlat2=y-y1;
 			obj.geotoLength(dlon2,dlat2,y,dxdyc2);
-			
 			glength=sqrt(dxdyc2[0]*dxdyc2[0]+dxdyc2[1]*dxdyc2[1]);
 
 		}
 		  else if(obj.getproj()==0){
-		glength=sqrt((x-x1)*(x-x1)+(y-y1)*(y-y1));
+		  glength=sqrt((x-x1)*(x-x1)+(y-y1)*(y-y1));
 		}
 
 
@@ -285,7 +307,7 @@ int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *poin
 
 	hFDefn1 = OGR_L_GetLayerDefn( hLayer1 );
 	hFeature1 = OGR_F_Create( hFDefn1 );
-	OGR_F_SetFieldInteger( hFeature1, 0, (int)cnet[0]);
+	OGR_F_SetFieldInteger( hFeature1, 0, (int)cnet[0]); // set field value 
 	OGR_F_SetFieldInteger( hFeature1, 1, (int)cnet[3]);
 	OGR_F_SetFieldInteger( hFeature1, 2, (int)cnet[4]);
 	OGR_F_SetFieldInteger( hFeature1, 3, (int)cnet[5]);
@@ -299,24 +321,23 @@ int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *poin
 	OGR_F_SetFieldDouble( hFeature1, 11, glength);
 	OGR_F_SetFieldDouble( hFeature1, 12, usarea);
 	OGR_F_SetFieldInteger( hFeature1, 13, (int)cnet[0]);
-	OGR_F_SetFieldDouble( hFeature1, 14,dsdist);
-	OGR_F_SetFieldDouble( hFeature1, 15,  usdist);
+	OGR_F_SetFieldDouble( hFeature1, 14, dsdist);
+	OGR_F_SetFieldDouble( hFeature1, 15, usdist);
 	OGR_F_SetFieldDouble( hFeature1, 16, middist);
 
     //creating geometry using OGR
 
 	geometry = OGR_G_CreateGeometry( wkbMultiLineString );
-    
-	for(j=0; j<(np-1); j++) {
 
+    for(j=0; j<(np-1); j++) {
     line = OGR_G_CreateGeometry( wkbLineString );
     OGR_G_AddPoint(line, mypointx[j], mypointy[j], 0);
 	OGR_G_AddPoint(line, mypointx[j+1], mypointy[j+1], 0);
 	OGR_G_AddGeometryDirectly(geometry, line);
     }
-    OGR_F_SetGeometryDirectly(hFeature1, geometry);
+    OGR_F_SetGeometryDirectly(hFeature1, geometry); // set geometry to feature
     OGR_L_CreateFeature( hLayer1, hFeature1 ); //adding feature 
-	//OGR_DS_Destroy( hDS1 ); //close data source for writing streamnet file
+	
 	delete[] mypointx;
     delete[] mypointy;
 
@@ -1111,13 +1132,6 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 			//  Open shapefile 
 			//need spatial refeence information which is stored in the tiffIO object
 			createStreamNetShapefile(streamnetshp,hSRSraster); // need raster spatail information for creating spatial reference in the shapefile
-		  
-
-
-			
-
-        
-
 			long ndots=100/size+4;  // number of dots to print per process
 			long nextdot=0;
 			long dotinc=myNumLinks/ndots;
@@ -1200,9 +1214,6 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 						}
 						//  Write shape
 						reachshape(treeBuf,lengthd,elev,area,pointx,pointy,procNumPoints,srcIO);
-					
-				 
-     
 						delete lengthd; // DGT to free memory
 						delete elev;
 						delete area;
@@ -1224,7 +1235,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 			fclose(fout);
 			//SHPClose(shp1);
 			//DBFClose(dbf1);
-		 OGR_DS_Destroy( hDS1 );
+		    OGR_DS_Destroy( hDS1 ); // destroy data source
 			/*
 			shp1.close(streamnetshp);
 			*/

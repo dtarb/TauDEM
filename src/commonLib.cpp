@@ -383,3 +383,16 @@ bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData){
 	}
 	return false;
 }
+
+//get extension from OGR vector file
+  char *getLayername(char *inputogrfile)
+{
+    char *ext; 
+	ext = strrchr(inputogrfile, '.'); // getting extension
+	char layername[MAXLN]; // intialize layer name 
+    size_t len = strlen(inputogrfile);
+	size_t len1 = strlen(ext);
+	memcpy(layername, inputogrfile, len-len1);
+	layername[len - len1] = 0; 
+    return layername;
+}

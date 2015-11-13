@@ -94,7 +94,7 @@ const int d2[9] = { 0,0,-1,-1,-1, 0, 1,1,1};
 
 int nameadd( char*,char*,const char*);
 double prop( float a, int k, double dx1 , double dy1);
-
+char *getLayername(char *inputogrfile);
 int readoutlets(char *outletsfile, OGRSpatialReferenceH hSRSRaster, int *noutlets, double*& x, double*& y);
 int readoutlets(char *outletsfile, OGRSpatialReferenceH  hSRSraster,int *noutlets, double*& x, double*& y, int*& id);
 

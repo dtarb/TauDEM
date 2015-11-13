@@ -50,54 +50,59 @@ int readoutlets(char *outletsfile, OGRSpatialReferenceH hSRSRaster,int *noutlets
 
 {   
 		//OGRSFDriverH    driver;
-	OGRDataSourceH  hDS1;
+	// initializing datasoruce,layer,feature, geomtery, spatial reference
+    OGRDataSourceH  hDS1;
 	OGRLayerH       hLayer1;
 	OGRFeatureDefnH hFDefn1;
 	OGRFieldDefnH   hFieldDefn1;
 	OGRFeatureH     hFeature1;
 	OGRGeometryH    geometry, line;
 	OGRSpatialReferenceH hRSOutlet;
-	OGRRegisterAll();
-	hDS1 = OGROpen(outletsfile, FALSE, NULL );
+	// regiser all ogr driver related to OGR
+	OGRRegisterAll(); 
+	// open shapefile
+	hDS1 = OGROpen(outletsfile, FALSE, NULL ); 
 	if( hDS1 == NULL )
 	{
 		printf( "Eorro Opening in Shapefile .\n" );
 		exit( 1 );
 	}
-	// extracting layer information from the shapefile
 
-	char layername[MAXLN]; // layer name is file name without extension
-	size_t len = strlen(outletsfile);
-	memcpy(layername, outletsfile, len-4);
-	layername[len - 4] = 0; // get file name without extension 
-	hLayer1 = OGR_DS_GetLayerByName( hDS1,layername );
-	OGR_L_ResetReading(hLayer1);
-	hRSOutlet = OGR_L_GetSpatialRef(hLayer1);
+	// extracting layer name from the shapefile (e.g. from outlet.shp to outlet)
+    char *layername; 
+    layername=getLayername(outletsfile); // get layer name 
+    hLayer1 = OGR_DS_GetLayerByName( hDS1,layername );
+	// get spatial reference of ogr
+	hRSOutlet = OGR_L_GetSpatialRef(hLayer1); 
+	// compare with raster layer spatial  reference
 	int comSRS=OSRIsSame(hRSOutlet,hSRSRaster);
-
+	//provide warning if shapefile  spatial refernce does not match with raster layer
     if(comSRS==0) {
 	printf( "Warning : Spatial References of Outlet shapefile and Raster data of are not matched .\n" );
-	
-    }
+	}
 
 	long countPts=0;
-	countPts=OGR_L_GetFeatureCount(hLayer1,1); // count number of feature
+	// count number of feature
+	countPts=OGR_L_GetFeatureCount(hLayer1,1); 
+	// get schema i.e geometry, properties (e.g. ID)
+	hFDefn1 = OGR_L_GetLayerDefn(hLayer1); 
 	x = new double[countPts];
 	y = new double[countPts];
 	int iField;
-	hFDefn1 = OGR_L_GetLayerDefn(hLayer1);
 	int nxy=0;
+	// loop through each feature and  get the latitude and longitude for each feature
 	for( int j=0; j<countPts; j++) {
 
-         hFeature1=OGR_L_GetFeature(hLayer1,j);
-		 geometry = OGR_F_GetGeometryRef(hFeature1);
-		 x[nxy] = OGR_G_GetX(geometry, 0);
-		 y[nxy] =  OGR_G_GetY(geometry, 0);
+         hFeature1=OGR_L_GetFeature(hLayer1,j); //get feature
+		 geometry = OGR_F_GetGeometryRef(hFeature1); // get geometry type
+		 x[nxy] = OGR_G_GetX(geometry, 0); 
+		 y[nxy] =  OGR_G_GetY(geometry, 0); 
+		 OGR_F_Destroy( hFeature1); // destroy feature
 		 nxy++;
 		}
-    *noutlets=nxy;
-	OGR_F_Destroy( hFeature1);
-	OGR_DS_Destroy( hDS1);
+    *noutlets=nxy; // total number of outlets point
+	
+	OGR_DS_Destroy( hDS1); // destroy data source
 	return 0;
 }
 
@@ -106,65 +111,69 @@ int readoutlets(char *outletsfile,OGRSpatialReferenceH hSRSRaster, int *noutlets
 {
  
 	//OGRSFDriverH    driver;
+	// initializing 
 	OGRDataSourceH  hDS1;
 	OGRLayerH       hLayer1;
 	OGRFeatureDefnH hFDefn1;
 	OGRFieldDefnH   hFieldDefn1;
 	OGRFeatureH     hFeature1;
 	OGRGeometryH    geometry, line;
-	// OGRSpatialReferenceH  hSRSOutlet;
-	OGRRegisterAll();
 	OGRSpatialReferenceH hRSOutlet;
+	OGRFieldDefnH hFieldDefn;
+	OGRRegisterAll();
+	// open shapefile
+
 	hDS1 = OGROpen(outletsfile, FALSE, NULL );
 	if( hDS1 == NULL )
 	{
 	printf( "Eorro Opening in Shapefile .\n" );
 	exit( 1 );
 	}
-	char layername[MAXLN];
-
-	size_t len = strlen(outletsfile);
-	memcpy(layername, outletsfile, len-4);
-	layername[len - 4] = 0;
+	// get layer name from shapefile
+	char *layername; 
+    layername=getLayername(outletsfile); // layer name is file name without extension
 	hLayer1 = OGR_DS_GetLayerByName( hDS1,layername );
-
-	OGR_L_ResetReading(hLayer1);
+    //OGR_L_ResetReading(hLayer1);
 	hRSOutlet = OGR_L_GetSpatialRef(hLayer1);
 	int comSRS=OSRIsSame(hRSOutlet,hSRSRaster);
     if(comSRS==0) {
 	    printf( "Warning : Spatial References of Outlet shapefile and Raster data of are not matched .\n" );
-	  
-	}
+	 }
 
 	long countPts=0;
-	countPts=OGR_L_GetFeatureCount(hLayer1,1);
+	countPts=OGR_L_GetFeatureCount(hLayer1,1); // get feature count
+	hFDefn1 = OGR_L_GetLayerDefn(hLayer1); // get schema i.e geometry, properties (e.g. ID)
 	x = new double[countPts];
 	y = new double[countPts];
 	int iField;
 	int nxy=0;
 
-	hFDefn1 = OGR_L_GetLayerDefn(hLayer1);
-	hFeature1 = OGR_L_GetNextFeature(hLayer1);
-	int idfld =OGR_F_GetFieldIndex(hFeature1,"id");
+	
+	//hFeature1 = OGR_L_GetNextFeature(hLayer1);
+	hFeature1=OGR_L_GetFeature(hLayer1,0); // read first feature to get all field info
+	int idfld =OGR_F_GetFieldIndex(hFeature1,"id"); // get index for the 'id' field
 	if (idfld >= 0)id = new int[countPts];
+	// loop through each feature and get lat,lon and id information
 	for( int j=0; j<countPts; j++) {
 
-		 hFeature1=OGR_L_GetFeature(hLayer1,j);
-		 geometry = OGR_F_GetGeometryRef(hFeature1);
+		 hFeature1=OGR_L_GetFeature(hLayer1,j); // get feature info
+		 geometry = OGR_F_GetGeometryRef(hFeature1); // get geometry
          x[nxy] = OGR_G_GetX(geometry, 0);
 		 y[nxy] =  OGR_G_GetY(geometry, 0);
+
 		 if (idfld >= 0)
 		   {
-			OGRFieldDefnH hFieldDefn = OGR_FD_GetFieldDefn( hFDefn1,idfld);
+			 
+			hFieldDefn = OGR_FD_GetFieldDefn( hFDefn1,idfld); // get field definiton based on index
 			if( OGR_Fld_GetType(hFieldDefn) == OFTInteger ) {
-					id[nxy] =OGR_F_GetFieldAsInteger( hFeature1, idfld );}
+					id[nxy] =OGR_F_GetFieldAsInteger( hFeature1, idfld );} // get id value 
 		    }
-			nxy++;
-			
-		                         }
+			nxy++; // count number of outlets point
+		   OGR_F_Destroy( hFeature1 ); // destroy feature
+		    }
 	*noutlets=nxy;
-	OGR_F_Destroy( hFeature1 );
-	OGR_DS_Destroy( hDS1);
+	
+	OGR_DS_Destroy( hDS1); // destroy data source
 	return 0;
 }
 
