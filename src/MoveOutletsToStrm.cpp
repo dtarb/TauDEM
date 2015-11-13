@@ -176,7 +176,7 @@ int outletstosrc(char *pfile, char *srcfile, char *outletshapefile, char *movedo
 				char *layernamesh; 
                 layernamesh=getLayername(outletshapefile); // get layer name which is file name without extension
                 hLayersh = OGR_DS_GetLayerByName( hDSsh,layernamesh );
-				hFeaturesh=OGR_L_GetFeature(hLayersh,0);// read first feature of the shapefile
+				hFeaturesh=OGR_L_GetFeature(hLayersh,0);// read  feature of the shapefile
 
 			   //creating new moved outlet shapefile
 
@@ -216,6 +216,7 @@ int outletstosrc(char *pfile, char *srcfile, char *outletshapefile, char *movedo
 		                 }
 			// add new field to moved outlet shapefile
 	           hFieldDefnshmoved = OGR_Fld_Create( "Dist_moved", OFTInteger );
+			   OGR_Fld_SetWidth(  hFieldDefnshmoved, 6); // set field width
 			   OGR_L_CreateField(hLayershmoved,  hFieldDefnshmoved, 0);
                nxy=OGR_L_GetFeatureCount(hLayersh,1);// 
 	
@@ -245,8 +246,8 @@ int outletstosrc(char *pfile, char *srcfile, char *outletshapefile, char *movedo
 			  
 		for ( i=0;i<nxy;i++)
 		      {          
-			
-			    hFeaturesh = OGR_L_GetNextFeature(hLayersh);
+			    hFeaturesh=OGR_L_GetFeature(hLayersh,i);
+			   // hFeaturesh = OGR_L_GetNextFeature(hLayersh);
                 hGeometrysh = OGR_F_GetGeometryRef(hFeaturesh);
                 xnode[i]  = OGR_G_GetX(hGeometrysh, 0); // get x coordinate for the outlet shapefile
 				ynode[i] =  OGR_G_GetY(hGeometrysh, 0); // get y coordiante for the outelet shapefile
@@ -533,7 +534,7 @@ int outletstosrc(char *pfile, char *srcfile, char *outletshapefile, char *movedo
                 hFeaturesh=OGR_L_GetFeature(hLayersh,i); // get feature infor for outlet shapefile
 				double x = xnode[i];  // DGT says does not need +pdx/2.0;
 				double y = ynode[i];  // DGT +pdy/2.0;
-			    hFeatureshmoved = OGR_F_Create( OGR_L_GetLayerDefn( hLayershmoved ) );
+			    hFeatureshmoved = OGR_F_Create( OGR_L_GetLayerDefn( hLayershmoved ) ); // create new feature with null fields and no geometry
 			  //  
 				//hFDefnsh = OGR_L_GetLayerDefn(hLayersh);
 			    int iField;
