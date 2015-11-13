@@ -176,7 +176,7 @@ void createStreamNetShapefile(char *streamnetshp,OGRSpatialReferenceH hSRSraster
     OGR_Fld_SetPrecision(hFieldDefn1, 12);
     OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
 	
-	hFieldDefn1 = OGR_Fld_Create( "Strlen", OFTReal );
+	hFieldDefn1 = OGR_Fld_Create( "StraightL", OFTReal );
 	OGR_Fld_SetWidth( hFieldDefn1,16);
 	OGR_Fld_SetPrecision(hFieldDefn1, 1);
     OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
