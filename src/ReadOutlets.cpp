@@ -74,17 +74,30 @@ int readoutlets(char *outletsfile, OGRSpatialReferenceH hSRSRaster,int *noutlets
     hLayer1 = OGR_DS_GetLayerByName( hDS1,layername );
 	// get spatial reference of ogr
 	hRSOutlet = OGR_L_GetSpatialRef(hLayer1); 
-	// compare with raster layer spatial  reference
-	int comSRS=OSRIsSame(hRSOutlet,hSRSRaster);
-	//provide warning if shapefile  spatial refernce does not match with raster layer
-    if(comSRS==0) {
-	printf( "Warning : Spatial References of Outlet shapefile and Raster data of are not matched .\n" );
-	char * ttt = NULL;
-	OSRExportToWkt(hSRSRaster,&ttt);
-	printf("%s",ttt);
-	char * tt2t = NULL;
-	OSRExportToWkt(hRSOutlet,&tt2t);
-	printf("%s",tt2t);
+	
+	const char* pszAuthorityNameRaster;
+	const char* pszAuthorityNameOutlet;
+	int pj_raster=OSRIsProjected(hSRSRaster); // find if projected or not
+	int pj_outlet=OSRIsProjected(hRSOutlet);
+	OSRAutoIdentifyEPSG(hSRSRaster); //identify EPSG code
+	OSRAutoIdentifyEPSG(hRSOutlet);
+	const char *sprs;
+	if(pj_raster==0) {sprs="GEOGCS";} else { sprs="PROJCS"; }
+	if (pj_raster==pj_outlet){
+		 pszAuthorityNameRaster=OSRGetAuthorityCode(hSRSRaster,sprs);// get EPSG code
+	     pszAuthorityNameOutlet=OSRGetAuthorityCode(hRSOutlet,sprs);
+
+	     if(atoi(pszAuthorityNameRaster)==atoi( pszAuthorityNameOutlet)){
+			 printf("EPSG code of Outlet shapefile and Raster data are matched .\n" ); }
+	   
+    else {
+	      printf( "Warning : EPSG code of Outlet shapefile and Raster data are different .\n" );
+	 
+	}}
+    
+    else {
+	      printf( "Error : Spatial References of Outlet shapefile and Raster data are different .\n" );
+	      exit(1);   
 	}
 
 	long countPts=0;
@@ -141,10 +154,30 @@ int readoutlets(char *outletsfile,OGRSpatialReferenceH hSRSRaster, int *noutlets
 	hLayer1 = OGR_DS_GetLayerByName( hDS1,layername );
     //OGR_L_ResetReading(hLayer1);
 	hRSOutlet = OGR_L_GetSpatialRef(hLayer1);
-	int comSRS=OSRIsSame(hRSOutlet,hSRSRaster);
-    if(comSRS==0) {
-	    printf( "Warning : Spatial References of Outlet shapefile and Raster data of are not matched .\n" );
-	 }
+    const char* pszAuthorityNameRaster;
+	const char* pszAuthorityNameOutlet;
+	int pj_raster=OSRIsProjected(hSRSRaster); // find if projected or not
+	int pj_outlet=OSRIsProjected(hRSOutlet);
+	OSRAutoIdentifyEPSG(hSRSRaster); //identify EPSG code
+	OSRAutoIdentifyEPSG(hRSOutlet);
+	const char *sprs;
+	if(pj_raster==0) {sprs="GEOGCS";} else { sprs="PROJCS"; }
+	if (pj_raster==pj_outlet){
+		 pszAuthorityNameRaster=OSRGetAuthorityCode(hSRSRaster,sprs);// get EPSG code
+	     pszAuthorityNameOutlet=OSRGetAuthorityCode(hRSOutlet,sprs);
+
+	     if(atoi(pszAuthorityNameRaster)==atoi( pszAuthorityNameOutlet)){
+			 printf("EPSG code of Outlet shapefile and Raster data are matched .\n" ); }
+	   
+    else {
+	      printf( "Warning : EPSG code of Outlet shapefile and Raster data are different .\n" );
+	      
+	}}
+    
+    else {
+	      printf( "Error: Spatial References of Outlet shapefile and Raster data of are different .\n" );
+	      exit(1); // this means that outlets and raster in different system ( one is in geographic another is in projected ) 
+	}
 
 	long countPts=0;
 	countPts=OGR_L_GetFeatureCount(hLayer1,1); // get feature count
