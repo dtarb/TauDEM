@@ -79,6 +79,12 @@ int readoutlets(char *outletsfile, OGRSpatialReferenceH hSRSRaster,int *noutlets
 	//provide warning if shapefile  spatial refernce does not match with raster layer
     if(comSRS==0) {
 	printf( "Warning : Spatial References of Outlet shapefile and Raster data of are not matched .\n" );
+	char * ttt = NULL;
+	OSRExportToWkt(hSRSRaster,&ttt);
+	printf("%s",ttt);
+	char * tt2t = NULL;
+	OSRExportToWkt(hRSOutlet,&tt2t);
+	printf("%s",tt2t);
 	}
 
 	long countPts=0;
