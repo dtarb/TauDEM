@@ -1,4 +1,4 @@
-# Script Name: MoveOuletsToStreams
+# Script Name: ConnectDown
 #
 # Created By:  David Tarboton
 # Date:        9/29/11

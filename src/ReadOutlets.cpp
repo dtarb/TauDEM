@@ -75,8 +75,8 @@ int readoutlets(char *outletsfile, OGRSpatialReferenceH hSRSRaster,int *noutlets
 	// get spatial reference of ogr
 	hRSOutlet = OGR_L_GetSpatialRef(hLayer1); 
 	
-	const char* pszAuthorityNameRaster;
-	const char* pszAuthorityNameOutlet;
+	const char* epsgAuthorityIdRaster;
+	const char* epsgAuthorityIdOutlet;
 	int pj_raster=OSRIsProjected(hSRSRaster); // find if projected or not
 	int pj_outlet=OSRIsProjected(hRSOutlet);
 	OSRAutoIdentifyEPSG(hSRSRaster); //identify EPSG code
@@ -84,6 +84,7 @@ int readoutlets(char *outletsfile, OGRSpatialReferenceH hSRSRaster,int *noutlets
 	const char *sprs;
 	if(pj_raster==0) {sprs="GEOGCS";} else { sprs="PROJCS"; }
 	if (pj_raster==pj_outlet){
+<<<<<<< HEAD
 		 pszAuthorityNameRaster=OSRGetAuthorityCode(hSRSRaster,sprs);// get EPSG code
 	     pszAuthorityNameOutlet=OSRGetAuthorityCode(hRSOutlet,sprs);
          if(atoi(pszAuthorityNameRaster)==atoi( pszAuthorityNameOutlet)){
@@ -93,10 +94,22 @@ int readoutlets(char *outletsfile, OGRSpatialReferenceH hSRSRaster,int *noutlets
 	      printf( "Warning : EPSG code of Outlet shapefile and Raster data are different .\n" );
 	 
 	}}
+=======
+		 epsgAuthorityIdRaster=OSRGetAuthorityCode(hSRSRaster,sprs);// get EPSG code.  TODO.  Make sure these functions do not fail if there is no EPSG code
+	     epsgAuthorityIdOutlet=OSRGetAuthorityCode(hRSOutlet,sprs);
+
+	     if(atoi(epsgAuthorityIdRaster)!=atoi( epsgAuthorityIdOutlet)){
+	        printf( "Warning: EPSG code of Outlet shapefile and Raster data are different.\n" );
+			// TODO - Print the WKT and EPSG code of each.  If no spatial reference information, print unknown
+			// TODO - Test how this works if spatial reference information is incomplete, and create at least one of the unit test functions with a shapefile without a .prj file, and one of the unit test functions a raster without a projection (eg an ASCII file)
+		 }
+	}
+>>>>>>> 6387bc5975afc9953720bc15b3411f46e77ebe87
     
     else {
-	      printf( "Error : Spatial References of Outlet shapefile and Raster data are different .\n" );
-	      exit(1);   
+	      printf( "Warning: Spatial References of Outlet shapefile and Raster data are different.\n" );
+		  // TODO - Print the WKT of each.  The general idea is that if these match, do not print anything.  
+		  //  If these do not match give the user a warning.  Only give an error if the program can not proceed, such as would be the case if rows and columns did not match.
 	}
 
 	long countPts=0;
@@ -153,8 +166,9 @@ int readoutlets(char *outletsfile,OGRSpatialReferenceH hSRSRaster, int *noutlets
 	hLayer1 = OGR_DS_GetLayerByName( hDS1,layername );
     //OGR_L_ResetReading(hLayer1);
 	hRSOutlet = OGR_L_GetSpatialRef(hLayer1);
-    const char* pszAuthorityNameRaster;
-	const char* pszAuthorityNameOutlet;
+
+	const char* epsgAuthorityIdRaster;
+	const char* epsgAuthorityIdOutlet;
 	int pj_raster=OSRIsProjected(hSRSRaster); // find if projected or not
 	int pj_outlet=OSRIsProjected(hRSOutlet);
 	OSRAutoIdentifyEPSG(hSRSRaster); //identify EPSG code
@@ -162,20 +176,20 @@ int readoutlets(char *outletsfile,OGRSpatialReferenceH hSRSRaster, int *noutlets
 	const char *sprs;
 	if(pj_raster==0) {sprs="GEOGCS";} else { sprs="PROJCS"; }
 	if (pj_raster==pj_outlet){
-		 pszAuthorityNameRaster=OSRGetAuthorityCode(hSRSRaster,sprs);// get EPSG code
-	     pszAuthorityNameOutlet=OSRGetAuthorityCode(hRSOutlet,sprs);
+		 epsgAuthorityIdRaster=OSRGetAuthorityCode(hSRSRaster,sprs);// get EPSG code.  TODO.  Make sure these functions do not fail if there is no EPSG code
+	     epsgAuthorityIdOutlet=OSRGetAuthorityCode(hRSOutlet,sprs);
 
-	     if(atoi(pszAuthorityNameRaster)==atoi( pszAuthorityNameOutlet)){
-			 printf("EPSG code of Outlet shapefile and Raster data are matched .\n" ); }
-	   
-    else {
-	      printf( "Warning : EPSG code of Outlet shapefile and Raster data are different .\n" );
-	      
-	}}
+	     if(atoi(epsgAuthorityIdRaster)!=atoi( epsgAuthorityIdOutlet)){
+	        printf( "Warning: EPSG code of Outlet shapefile and Raster data are different.\n" );
+			// TODO - Print the WKT and EPSG code of each.  If no spatial reference information, print unknown
+			// TODO - Test how this works if spatial reference information is incomplete, and create at least one of the unit test functions with a shapefile without a .prj file, and one of the unit test functions a raster without a projection (eg an ASCII file)
+		 }
+	}
     
     else {
-	      printf( "Error: Spatial References of Outlet shapefile and Raster data of are different .\n" );
-	      exit(1); // this means that outlets and raster in different system ( one is in geographic another is in projected ) 
+	      printf( "Warning: Spatial References of Outlet shapefile and Raster data are different.\n" );
+		  // TODO - Print the WKT of each.  The general idea is that if these match, do not print anything.  
+		  //  If these do not match give the user a warning.  Only give an error if the program can not proceed, such as would be the case if rows and columns did not match.
 	}
 
 	long countPts=0;
