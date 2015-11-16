@@ -86,8 +86,7 @@ int readoutlets(char *outletsfile, OGRSpatialReferenceH hSRSRaster,int *noutlets
 	if (pj_raster==pj_outlet){
 		 pszAuthorityNameRaster=OSRGetAuthorityCode(hSRSRaster,sprs);// get EPSG code
 	     pszAuthorityNameOutlet=OSRGetAuthorityCode(hRSOutlet,sprs);
-
-	     if(atoi(pszAuthorityNameRaster)==atoi( pszAuthorityNameOutlet)){
+         if(atoi(pszAuthorityNameRaster)==atoi( pszAuthorityNameOutlet)){
 			 printf("EPSG code of Outlet shapefile and Raster data are matched .\n" ); }
 	   
     else {
