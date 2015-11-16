@@ -74,7 +74,6 @@ int readoutlets(char *outletsfile, OGRSpatialReferenceH hSRSRaster,int *noutlets
     hLayer1 = OGR_DS_GetLayerByName( hDS1,layername );
 	// get spatial reference of ogr
 	hRSOutlet = OGR_L_GetSpatialRef(hLayer1); 
-	
 	const char* epsgAuthorityIdRaster;
 	const char* epsgAuthorityIdOutlet;
 	int pj_raster=OSRIsProjected(hSRSRaster); // find if projected or not
@@ -84,17 +83,6 @@ int readoutlets(char *outletsfile, OGRSpatialReferenceH hSRSRaster,int *noutlets
 	const char *sprs;
 	if(pj_raster==0) {sprs="GEOGCS";} else { sprs="PROJCS"; }
 	if (pj_raster==pj_outlet){
-<<<<<<< HEAD
-		 pszAuthorityNameRaster=OSRGetAuthorityCode(hSRSRaster,sprs);// get EPSG code
-	     pszAuthorityNameOutlet=OSRGetAuthorityCode(hRSOutlet,sprs);
-         if(atoi(pszAuthorityNameRaster)==atoi( pszAuthorityNameOutlet)){
-			 printf("EPSG code of Outlet shapefile and Raster data are matched .\n" ); }
-	   
-    else {
-	      printf( "Warning : EPSG code of Outlet shapefile and Raster data are different .\n" );
-	 
-	}}
-=======
 		 epsgAuthorityIdRaster=OSRGetAuthorityCode(hSRSRaster,sprs);// get EPSG code.  TODO.  Make sure these functions do not fail if there is no EPSG code
 	     epsgAuthorityIdOutlet=OSRGetAuthorityCode(hRSOutlet,sprs);
 
@@ -104,7 +92,6 @@ int readoutlets(char *outletsfile, OGRSpatialReferenceH hSRSRaster,int *noutlets
 			// TODO - Test how this works if spatial reference information is incomplete, and create at least one of the unit test functions with a shapefile without a .prj file, and one of the unit test functions a raster without a projection (eg an ASCII file)
 		 }
 	}
->>>>>>> 6387bc5975afc9953720bc15b3411f46e77ebe87
     
     else {
 	      printf( "Warning: Spatial References of Outlet shapefile and Raster data are different.\n" );
@@ -200,7 +187,6 @@ int readoutlets(char *outletsfile,OGRSpatialReferenceH hSRSRaster, int *noutlets
 	int iField;
 	int nxy=0;
 
-	
 	//hFeature1 = OGR_L_GetNextFeature(hLayer1);
 	hFeature1=OGR_L_GetFeature(hLayer1,0); // read first feature to get all field info
 	int idfld =OGR_F_GetFieldIndex(hFeature1,"id"); // get index for the 'id' field
@@ -224,8 +210,7 @@ int readoutlets(char *outletsfile,OGRSpatialReferenceH hSRSRaster, int *noutlets
 		   OGR_F_Destroy( hFeature1 ); // destroy feature
 		    }
 	*noutlets=nxy;
-	
-	OGR_DS_Destroy( hDS1); // destroy data source
+	 OGR_DS_Destroy( hDS1); // destroy data source
 	return 0;
 }
 

@@ -1,7 +1,7 @@
 # Script Name: ConnectDown
 #
-# Created By:  David Tarboton
-# Date:        9/29/11
+# Created By:  Nazmus Sazib
+# Date:        11/16/2015
 
 # Import ArcPy site-package and os modules
 import arcpy
@@ -57,4 +57,4 @@ arcpy.AddMessage('\nProcess started:\n')
 for line in process.stdout.readlines():
     arcpy.AddMessage(line)
 
-#arcpy.DefineProjection_management(om, coord_sys)as projection now define using OGR
+
