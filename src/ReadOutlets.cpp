@@ -144,7 +144,7 @@ int readoutlets(char *outletsfile,OGRSpatialReferenceH hSRSRaster, int *noutlets
 	hDS1 = OGROpen(outletsfile, FALSE, NULL );
 	if( hDS1 == NULL )
 	{
-	printf( "Eorro Opening in Shapefile .\n" );
+	printf( "Error Opening in Shapefile .\n" );
 	exit( 1 );
 	}
 	// get layer name from shapefile

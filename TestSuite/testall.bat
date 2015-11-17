@@ -120,6 +120,10 @@ mpiexec -n 4 areadinf -ang demDoubleang.tif -sca demDoublesca.tif -wg demDoublew
 rem gagewatershed test
 mpiexec -n 7 gagewatershed -p loganp.tif -o Outletsmoved.shp -gw logangw.tif -id gwid.txt
 
+rem Connect down
+mpiexec -n 8 ConnectDown -p loganp.tif -ad8 loganad8.tif -w logangw.tif -o loganOutlets.shp -od loganOutlets_Moved.shp -d 1
+
+
 cd fts
 rem tests on ft steward data with stream buffer
 mpiexec -n 3 pitremove fs_small.tif
