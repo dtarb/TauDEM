@@ -111,7 +111,10 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 
 
 	//Create partition and read data
-	tdpartition *wData;
+		tdpartition *wData;
+	long nodatav;
+	nodatav = (long) wIO.getNodata();
+	//tdpartition *wData;
 	wData = CreateNewPartition(wIO.getDatatype(), wTotalX, wTotalY, wdx, wdy, wIO.getNodata());
 	int nx = wData->getnx();
 	int ny = wData->getny();
@@ -212,8 +215,8 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 				{
 					int32_t ii;
 					wData->getData(i,j,ii);
-					if(ii == 469)
-						ii=ii;
+					//if(ii == 469)
+						//ii=ii;
 					float tempFloat;
 					ad8->getData(i,j,tempFloat);
 					if(wfound[ii]==0) //  First encounter
@@ -325,7 +328,7 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 		//				shp -> createCell(v,0);
 		//				v.setValue(ad8max[ii]);
 		//				shp -> createCell(v,1);
-						printf("X: %g, Y: %g, ad8max: %f\n",wi[ii],wj[ii],ad8max[ii]);
+						//printf("X: %g, Y: %g, ad8max: %f\n",wi[ii],wj[ii],ad8max[ii]);
 						//  Now that data is written collapse the arrays
 						wi[nxy]=wi[ii];
 						wj[nxy]=wj[ii];
@@ -691,7 +694,7 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
     /* Add a few fields to the layer defn */
     hFieldDefnsh = OGR_Fld_Create( "id", OFTInteger );
     OGR_L_CreateField(hLayersh,  hFieldDefnsh, 0);
-   hFieldDefnsh= OGR_Fld_Create( "id_down", OFTInteger );
+    hFieldDefnsh= OGR_Fld_Create( "id_down", OFTInteger );
     OGR_L_CreateField(hLayersh,  hFieldDefnsh, 0);
 	hFieldDefnsh = OGR_Fld_Create( "ad8", OFTReal );
     OGR_L_CreateField(hLayersh,  hFieldDefnsh, 0);
@@ -704,9 +707,8 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 		double y = origynode[i];  // DGT +pdy/2.0;
         hFeaturesh = OGR_F_Create( OGR_L_GetLayerDefn( hLayersh ) );
         OGR_F_SetFieldInteger( hFeaturesh, OGR_F_GetFieldIndex(hFeaturesh, "id"), wid[i] );
-		OGR_F_SetFieldInteger( hFeaturesh, OGR_F_GetFieldIndex(hFeaturesh, "id_down"), widdown[i] );
-		OGR_F_SetFieldDouble( hFeaturesh, OGR_F_GetFieldIndex(hFeaturesh, "ad8"), (double)ad8max[i] );
-
+	    OGR_F_SetFieldInteger( hFeaturesh, OGR_F_GetFieldIndex(hFeaturesh, "id_down"), widdown[i]);
+	    OGR_F_SetFieldDouble( hFeaturesh, OGR_F_GetFieldIndex(hFeaturesh, "ad8"), (double)ad8max[i] );
         hGeometrysh = OGR_G_CreateGeometry(wkbPoint);
         OGR_G_SetPoint_2D(hGeometrysh, 0, x, y);
         OGR_F_SetGeometry( hFeaturesh, hGeometrysh ); 
