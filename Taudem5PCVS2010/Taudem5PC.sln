@@ -57,6 +57,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConnectDown", "ConnectDown\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TWI", "TWI\TWI.vcxproj", "{EDC02324-802C-46BD-BBC2-F36F93467854}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SinmapSI", "SinmapSI\SinmapSI.vcxproj", "{4C94C630-FAFC-4EC9-8639-336E6FD7A85C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -289,6 +291,14 @@ Global
 		{EDC02324-802C-46BD-BBC2-F36F93467854}.Release|Win32.Build.0 = Release|Win32
 		{EDC02324-802C-46BD-BBC2-F36F93467854}.Release|x64.ActiveCfg = Release|x64
 		{EDC02324-802C-46BD-BBC2-F36F93467854}.Release|x64.Build.0 = Release|x64
+		{4C94C630-FAFC-4EC9-8639-336E6FD7A85C}.Debug|Win32.ActiveCfg = Release|x64
+		{4C94C630-FAFC-4EC9-8639-336E6FD7A85C}.Debug|Win32.Build.0 = Release|x64
+		{4C94C630-FAFC-4EC9-8639-336E6FD7A85C}.Debug|x64.ActiveCfg = Debug|x64
+		{4C94C630-FAFC-4EC9-8639-336E6FD7A85C}.Debug|x64.Build.0 = Debug|x64
+		{4C94C630-FAFC-4EC9-8639-336E6FD7A85C}.Release|Win32.ActiveCfg = Release|Win32
+		{4C94C630-FAFC-4EC9-8639-336E6FD7A85C}.Release|Win32.Build.0 = Release|Win32
+		{4C94C630-FAFC-4EC9-8639-336E6FD7A85C}.Release|x64.ActiveCfg = Release|x64
+		{4C94C630-FAFC-4EC9-8639-336E6FD7A85C}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
