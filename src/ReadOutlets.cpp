@@ -51,6 +51,7 @@ int readoutlets(char *outletsfile, OGRSpatialReferenceH hSRSRaster,int *noutlets
 {   
 		//OGRSFDriverH    driver;
 	// initializing datasoruce,layer,feature, geomtery, spatial reference
+
     OGRDataSourceH  hDS1;
 	OGRLayerH       hLayer1;
 	OGRFeatureDefnH hFDefn1;
@@ -61,6 +62,7 @@ int readoutlets(char *outletsfile, OGRSpatialReferenceH hSRSRaster,int *noutlets
 	// regiser all ogr driver related to OGR
 	OGRRegisterAll(); 
 	// open shapefile
+
 	hDS1 = OGROpen(outletsfile, FALSE, NULL ); 
 	if( hDS1 == NULL )
 	{
@@ -69,9 +71,10 @@ int readoutlets(char *outletsfile, OGRSpatialReferenceH hSRSRaster,int *noutlets
 	}
 
 	// extracting layer name from the shapefile (e.g. from outlet.shp to outlet)
-    char *layername; 
+    char * layername; 
+	layername[MAXLN];
     layername=getLayername(outletsfile); // get layer name 
-    hLayer1 = OGR_DS_GetLayerByName( hDS1,layername );
+	hLayer1 = OGR_DS_GetLayerByName( hDS1,layername);
 	// get spatial reference of ogr
 	hRSOutlet = OGR_L_GetSpatialRef(hLayer1); 
 	const char* epsgAuthorityIdRaster;
@@ -150,7 +153,7 @@ int readoutlets(char *outletsfile,OGRSpatialReferenceH hSRSRaster, int *noutlets
 	// get layer name from shapefile
 	char *layername; 
     layername=getLayername(outletsfile); // layer name is file name without extension
-	hLayer1 = OGR_DS_GetLayerByName( hDS1,layername );
+    hLayer1 = OGR_DS_GetLayerByName( hDS1,layername );
     //OGR_L_ResetReading(hLayer1);
 	hRSOutlet = OGR_L_GetSpatialRef(hLayer1);
 
