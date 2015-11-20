@@ -713,6 +713,12 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
         OGR_G_SetPoint_2D(hGeometrysh, 0, x, y);
         OGR_F_SetGeometry( hFeaturesh, hGeometrysh ); 
 		OGR_G_DestroyGeometry(hGeometrysh);
+		   if( OGR_L_CreateFeature( hLayersh, hFeaturesh ) != OGRERR_NONE )
+            {
+              printf( " warning: Failed to create feature in shapefile.\n" );
+              //exit( 1 );
+            }
+   
         OGR_F_Destroy( hFeaturesh );
 
 
@@ -769,6 +775,11 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
         OGR_G_SetPoint_2D(hGeometryshmoved, 0, x, y);
         OGR_F_SetGeometry( hFeatureshmoved, hGeometryshmoved ); 
 		OGR_G_DestroyGeometry(hGeometryshmoved);
+	    if( OGR_L_CreateFeature( hLayershmoved, hFeatureshmoved ) != OGRERR_NONE )
+            {
+              printf( " warning: Failed to create feature in shapefile.\n" );
+              //exit( 1 );
+            }
         OGR_F_Destroy( hFeatureshmoved );
 
 
