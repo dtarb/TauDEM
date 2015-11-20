@@ -103,16 +103,16 @@ void createStreamNetShapefile(char *streamnetshp,OGRSpatialReferenceH hSRSraster
     driver = OGRGetDriverByName( pszDriverName );
     if( driver == NULL )
     {
-        printf( "%s driver not available.\n", pszDriverName );
-        exit( 1 );
+        printf( "%s warning: driver not available.\n", pszDriverName );
+        //exit( 1 );
     }
 
     // Create new file using this driver 
     hDS1 = OGR_Dr_CreateDataSource(driver, streamnetshp, NULL);
     if (hDS1 == NULL)
     {
-        printf("Unable to create %s\n", streamnetshp);
-        exit( 1 );
+        printf("warning: Unable to create %s\n", streamnetshp);
+        //exit( 1 );
     }
 
     char *layername; // layer name is file name without extension
@@ -120,8 +120,8 @@ void createStreamNetShapefile(char *streamnetshp,OGRSpatialReferenceH hSRSraster
     hLayer1= OGR_DS_CreateLayer( hDS1, layername ,hSRSraster, wkbMultiLineString, NULL ); // provide same spatial reference as raster in streamnetshp file
     if( layername  == NULL )
     {
-        printf( "Layer creation failed.\n" );
-        exit( 1 );
+        printf( "warning: Layer creation failed.\n" );
+        //exit( 1 );
     }
  
 	

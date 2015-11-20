@@ -170,7 +170,7 @@ int outletstosrc(char *pfile, char *srcfile, char *outletshapefile, char *movedo
                if( hDSsh == NULL )
                      {
                        printf( "Open failed.\n" );
-                       exit( 1 );
+                      // exit( 1 );
                      }
 		
 				char *layernamesh; 
@@ -183,16 +183,16 @@ int outletstosrc(char *pfile, char *srcfile, char *outletshapefile, char *movedo
 				driver = OGRGetDriverByName( pszDriverName );
 			    if( driver == NULL )
 			     {
-				  printf( "%s driver not available.\n", pszDriverName );
-				  exit( 1 );
+				  printf( "%s warning:driver not available.\n", pszDriverName );
+				  //exit( 1 );
 			     }
 				//create data sources for the moved outlet shapefile
                 hDSshmoved = OGR_Dr_CreateDataSource( driver, movedoutletshapefile, NULL );
 			    if(  hDSshmoved == NULL )
 			     {
-				   printf( "Creation of output file failed.\n" );
-				    exit( 1 );
-			       }
+				   printf( "warning: Creation of output file failed.\n" );
+				 //   exit( 1 );
+			     }
 				
 				char * layernameshmoved; 
                 layernameshmoved=getLayername(movedoutletshapefile); // get layer name which is file name without extension
@@ -200,8 +200,8 @@ int outletstosrc(char *pfile, char *srcfile, char *outletshapefile, char *movedo
 				hLayershmoved = OGR_DS_CreateLayer( hDSshmoved, layernameshmoved, hSRSRaster, wkbPoint, NULL ); // create layer for moved outlet, where raster layer spatial reference is used fro shapefile
 			    if( hLayershmoved  == NULL )
 			     {
-				    printf( "Layer creation failed.\n" );
-				    exit( 1 );
+				    printf( "warning: Layer creation failed.\n" );
+				    //exit( 1 );
 			     }
 	
 	           // OGR_L_ResetReading(hLayersh);
@@ -577,8 +577,8 @@ int outletstosrc(char *pfile, char *srcfile, char *outletshapefile, char *movedo
 			 OGR_G_DestroyGeometry(hGeometryshmoved);
             if( OGR_L_CreateFeature( hLayershmoved, hFeatureshmoved ) != OGRERR_NONE )
             {
-              printf( "Failed to create feature in shapefile.\n" );
-              exit( 1 );
+              printf( " warning: Failed to create feature in shapefile.\n" );
+              //exit( 1 );
             }
    
 			OGR_F_Destroy( hFeatureshmoved ); // destroy feature

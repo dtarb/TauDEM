@@ -665,16 +665,16 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
       driver = OGRGetDriverByName( pszDriverName );
       if( driver == NULL )
       {
-         printf( "%s driver not available.\n", pszDriverName );
-         exit( 1 );
+         printf( "%s warning: driver not available.\n", pszDriverName );
+         //exit( 1 );
       }
 
     /* Create new file using this driver */
      hDSsh = OGR_Dr_CreateDataSource(driver, outletshapefile, NULL);
      if (hDSsh == NULL)
       {
-        printf("Unable to create %s\n", outletshapefile);
-        exit( 1 );
+        printf("warning: Unable to create %s\n", outletshapefile);
+       // exit( 1 );
 	 }
 
      char *layername; 
@@ -685,8 +685,8 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
      hLayersh= OGR_DS_CreateLayer( hDSsh, layername ,hSRSRaster, wkbPoint, NULL );
      if( layername  == NULL )
      {
-        printf( "Layer creation failed.\n" );
-        exit( 1 );
+        printf( "Warning: Layer creation failed.\n" );
+        //exit( 1 );
      }
  
 	
@@ -713,13 +713,7 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
         OGR_G_SetPoint_2D(hGeometrysh, 0, x, y);
         OGR_F_SetGeometry( hFeaturesh, hGeometrysh ); 
 		OGR_G_DestroyGeometry(hGeometrysh);
-        if( OGR_L_CreateFeature( hLayersh, hFeaturesh) != OGRERR_NONE )
-            {
-              printf( "Failed to create feature in shapefile.\n" );
-              exit( 1 );
-            }
-   
-			OGR_F_Destroy( hFeaturesh );
+        OGR_F_Destroy( hFeaturesh );
 
 
 			// CWG should check res is not 0
@@ -729,8 +723,8 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
      hDSshmoved = OGR_Dr_CreateDataSource(driver, movedoutletshapefile, NULL);
      if (hDSshmoved == NULL)
       {
-        printf("Unable to create %s\n", movedoutletshapefile);
-        exit( 1 );
+        printf("warning: Unable to create %s\n", movedoutletshapefile);
+       // exit( 1 );
 	 }
 
      char *layernamemoved;
@@ -743,8 +737,8 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 	hLayershmoved= OGR_DS_CreateLayer( hDSshmoved, layernamemoved,hSRSRaster, wkbPoint, NULL );
     if(  layernamemoved == NULL )
     {
-        printf( "Layer creation failed.\n" );
-        exit( 1 );
+        printf( "warning: Layer creation failed.\n" );
+        //exit( 1 );
     }
  
 	
@@ -775,13 +769,7 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
         OGR_G_SetPoint_2D(hGeometryshmoved, 0, x, y);
         OGR_F_SetGeometry( hFeatureshmoved, hGeometryshmoved ); 
 		OGR_G_DestroyGeometry(hGeometryshmoved);
-        if( OGR_L_CreateFeature( hLayershmoved, hFeatureshmoved) != OGRERR_NONE )
-            {
-              printf( "Failed to create feature in shapefile.\n" );
-              exit( 1 );
-            }
-   
-	   OGR_F_Destroy( hFeatureshmoved );
+        OGR_F_Destroy( hFeatureshmoved );
 
 
 			// CWG should check res is not 0
