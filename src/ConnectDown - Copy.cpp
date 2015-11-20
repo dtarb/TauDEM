@@ -1,24 +1,14 @@
-/*  MoveOutletsToStrm function to move outlets to a stream.
+/*   Connect Down function
      
-  David Tarboton, Teklu Tesfa, Dan Watson
+  David Tarboton
   Utah State University  
-  May 23, 2010 
+  July 11, 2012 
   
 
-  This function moves outlet point that are off a stream raster grid down D8 flow directions 
-  until a stream raster grid is encountered.  Input is a flow direction grid, stream raster grid 
-  and outlets shapefile.  Output is a new outlets shapefile where each point has been moved to 
-  coincide with the stream raster grid if possible.  A field 'dist_moved' is added to the new 
-  outlets shapefile to indicate the changes made to each point.  Points that are already on the 
-  stream raster (src) grid are not moved and their 'dist_moved' field is assigned a value 0.  
-  Points that are initially not on the stream raster grid are moved by sliding them along D8 
-  flow directions until one of the following occurs:
-  a.	A stream raster grid cell is encountered before traversing the max_dist number of grid cells.  
-   The point is moved and 'dist_moved' field is assigned a value indicating how many grid cells the 
-   point was moved.
-  b.	More thanthe max_number of grid cells are traversed, or the traversal ends up going out of 
-  the domain (encountering a no data D8 flow direction value).  The point is not moved and the 
-  'dist_moved' field is assigned a value of -1.
+  This function reads an input grid representing watersheds, reads an ad8 contributing area file, 
+  identifies the location of the largest ad8 value as the outlet of the watershed and writes a shapefile at these locations.
+  It then reads the flow direction grid and moves the points down direction a designated number of grid cells and writes a shapefile
+
 
 */
 
@@ -111,11 +101,10 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 
 
 	//Create partition and read data
-		tdpartition *wData;
-	long nodatav;
-	nodatav = (long) wIO.getNodata();
-	//tdpartition *wData;
-	wData = CreateNewPartition(wIO.getDatatype(), wTotalX, wTotalY, wdx, wdy, wIO.getNodata());
+	tdpartition *wData;
+	int32_t nodatav;
+	nodatav = (int32_t)wIO.getNodata();
+	wData = CreateNewPartition(wIO.getDatatype(), wTotalX, wTotalY, wdx, wdy,nodatav);
 	int nx = wData->getnx();
 	int ny = wData->getny();
 	int wxstart, wystart;  // DGT Why are these declared as int if they are to be used as long
@@ -215,8 +204,8 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 				{
 					int32_t ii;
 					wData->getData(i,j,ii);
-					//if(ii == 469)
-						//ii=ii;
+					if(ii == 469)
+						ii=ii;
 					float tempFloat;
 					ad8->getData(i,j,tempFloat);
 					if(wfound[ii]==0) //  First encounter
@@ -302,34 +291,12 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 			}
 		}
 
-		////  write a shape file
-		//shapefile sh;
-		//int nfields;
-		//shape *shp;
-		//api_point point;
-		//sh.create(outletshapefile,API_SHP_POINT);
-		//nfields=2;
-		//field f("id",FTInteger,6,0);
-		//sh.insertField(f,0);
-		//field f2("ad8",FTDouble,12,0);
-		//sh.insertField(f2,1);
+
 
 		for(int ii=0; ii<maxall; ii++)
 			{
 					if(wfound[ii]>0)
 					{
-		//				point.setX(wi[ii]);  // DGT says does not need +pdx/2.0);
-		//				point.setY(wj[ii]);  // DGT +pdy/2.0);
-		//				shp = new shp_point();
-		//				shp->insertPoint(point,0);
-		//				sh.insertShape(shp,0);
-		//				cell v;
-		//				v.setValue(ii);
-		//				shp -> createCell(v,0);
-		//				v.setValue(ad8max[ii]);
-		//				shp -> createCell(v,1);
-						//printf("X: %g, Y: %g, ad8max: %f\n",wi[ii],wj[ii],ad8max[ii]);
-						//  Now that data is written collapse the arrays
 						wi[nxy]=wi[ii];
 						wj[nxy]=wj[ii];
 						wid[nxy]=ii;
@@ -337,7 +304,6 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 						nxy=nxy+1;
 					}
 		}
-		//sh.close(outletshapefile);
 	}
 	//  mpi_bcast the coordinates to all processes
 	MPI_Bcast(&nxy, 1, MPI_INT, 0, MCW);
@@ -694,7 +660,7 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
     /* Add a few fields to the layer defn */
     hFieldDefnsh = OGR_Fld_Create( "id", OFTInteger );
     OGR_L_CreateField(hLayersh,  hFieldDefnsh, 0);
-    hFieldDefnsh= OGR_Fld_Create( "id_down", OFTInteger );
+   hFieldDefnsh= OGR_Fld_Create( "id_down", OFTInteger );
     OGR_L_CreateField(hLayersh,  hFieldDefnsh, 0);
 	hFieldDefnsh = OGR_Fld_Create( "ad8", OFTReal );
     OGR_L_CreateField(hLayersh,  hFieldDefnsh, 0);
@@ -706,9 +672,13 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 		double x = origxnode[i];  // DGT says does not need +pdx/2.0;
 		double y = origynode[i];  // DGT +pdy/2.0;
         hFeaturesh = OGR_F_Create( OGR_L_GetLayerDefn( hLayersh ) );
-        OGR_F_SetFieldInteger( hFeaturesh, OGR_F_GetFieldIndex(hFeaturesh, "id"), wid[i] );
-	    OGR_F_SetFieldInteger( hFeaturesh, OGR_F_GetFieldIndex(hFeaturesh, "id_down"), widdown[i]);
-	    OGR_F_SetFieldDouble( hFeaturesh, OGR_F_GetFieldIndex(hFeaturesh, "ad8"), (double)ad8max[i] );
+		// There is a possibility that these id's could be no data values.  In this case just do not write them
+		if(wid[i] !=  nodatav){
+			OGR_F_SetFieldInteger( hFeaturesh, OGR_F_GetFieldIndex(hFeaturesh, "id"), wid[i] );}
+		if(widdown[i] != nodatav){
+			OGR_F_SetFieldInteger( hFeaturesh, OGR_F_GetFieldIndex(hFeaturesh, "id_down"), widdown[i] );}
+		OGR_F_SetFieldDouble( hFeaturesh, OGR_F_GetFieldIndex(hFeaturesh, "ad8"), (double)ad8max[i] );
+
         hGeometrysh = OGR_G_CreateGeometry(wkbPoint);
         OGR_G_SetPoint_2D(hGeometrysh, 0, x, y);
         OGR_F_SetGeometry( hFeaturesh, hGeometrysh ); 
@@ -766,8 +736,10 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 		
 
         hFeatureshmoved = OGR_F_Create( OGR_L_GetLayerDefn( hLayershmoved ) );
-        OGR_F_SetFieldInteger( hFeatureshmoved, OGR_F_GetFieldIndex(hFeatureshmoved, "id"), wid[i] );
-		OGR_F_SetFieldInteger( hFeatureshmoved, OGR_F_GetFieldIndex(hFeatureshmoved, "id_down"), widdown[i] );
+        if(wid[i] !=  nodatav){
+			OGR_F_SetFieldInteger( hFeatureshmoved, OGR_F_GetFieldIndex(hFeatureshmoved, "id"), wid[i] );}
+		if(widdown[i] !=  nodatav){
+			OGR_F_SetFieldInteger( hFeatureshmoved, OGR_F_GetFieldIndex(hFeatureshmoved, "id_down"), widdown[i] );}
 		OGR_F_SetFieldDouble( hFeatureshmoved, OGR_F_GetFieldIndex(hFeatureshmoved, "ad8"), (double)ad8max[i] );
 
        

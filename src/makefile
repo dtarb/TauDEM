@@ -40,8 +40,7 @@
 
 #SHAPEFILES includes all files in the shapefile library
 #These should be compiled using the makefile in the shape directory
-SHAPEFILES = shapelib/dbfopen.o shapelib/safileio.o shapelib/shpopen.o \
-	     shapelib/shptree.o ReadOutlets.o
+SHAPEFILES = ReadOutlets.o
 
 #OBJFILES includes classes, structures, and constants common to all files
 OBJFILES = commonLib.o tiffIO.o
@@ -73,7 +72,7 @@ STREAMNET = streamnetmn.o streamnet.o $(OBJFILES) $(SHAPEFILES)
 THRESHOLD = Threshold.o Thresholdmn.o $(OBJFILES)
 TWI = TWI.o TWImn.o $(OBJFILES)
 GAGEWATERSHED = gagewatershed.o gagewatershedmn.o $(OBJFILES) $(SHAPEFILES)
-
+CONNECTDOWN = ConnectDown.o ConnectDownmn.o $(OBJFILES) $(SHAPEFILES)
 
 
 
@@ -83,11 +82,13 @@ CFLAGS=-O2
 CFLAGS=-g -Wall
 CFLAGS=-g
 LARGEFILEFLAG= -D_FILE_OFFSET_BITS=64
-INCDIRS=-I/usr/lib/openmpi/include -I/usr/include/gdal
-LIBDIRS=-lgdal
+#INCDIRS=-I/usr/lib/openmpi/include -I/usr/include/gdal
+#LIBDIRS=-lgdal
+LDLIBS=-L/usr/local/lib -lgdal
+
 
 #Rules: when and how to make a file
-all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ../gridnet ../dinfflowdir ../d8flowdir ../d8flowpathextremeup ../d8hdisttostrm ../dinfavalanche ../dinfconclimaccum ../dinfdecayaccum ../dinfdistdown ../dinfdistup ../dinfrevaccum ../dinftranslimaccum ../dinfupdependence ../lengtharea ../peukerdouglas ../pitremove ../slopearea ../slopearearatio ../slopeavedown ../threshold ../twi ../gagewatershed clean 
+all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ../gridnet ../dinfflowdir ../d8flowdir ../d8flowpathextremeup ../d8hdisttostrm ../dinfavalanche ../dinfconclimaccum ../dinfdecayaccum ../dinfdistdown ../dinfdistup ../dinfrevaccum ../dinftranslimaccum ../dinfupdependence ../lengtharea ../peukerdouglas ../pitremove ../slopearea ../slopearearatio ../slopeavedown ../threshold ../twi ../gagewatershed ../connectdown clean 
 
 ../aread8 : $(D8FILES)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(D8FILES) $(LDLIBS) $(LDFLAGS)
@@ -170,6 +171,8 @@ all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ..
 ../gagewatershed : $(GAGEWATERSHED)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(GAGEWATERSHED) $(LDLIBS) $(LDFLAGS)
 
+../connectdown : $(CONNECTDOWN)
+	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(CONNECTDOWN) $(LDLIBS) $(LDFLAGS)
 	
 #Inference rule - states a general rule for compiling .o files
 %.o : %.cpp

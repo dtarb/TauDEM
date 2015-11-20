@@ -63,10 +63,17 @@ email:  dtarb@usu.edu
 #include "linearpart.h"
 #include "createpart.h"
 #include "tiffIO.h"
-#include "shapelib/shapefil.h"
+#include "ogr_api.h"
+//#include "shapelib/shapefil.h"
 #include "MoveOutletsToStrm.h"
 using namespace std;
-
+OGRSFDriverH    driver;
+OGRDataSourceH  hDSsh, hDSshmoved;
+OGRLayerH       hLayersh, hLayershmoved;
+OGRFeatureDefnH hFDefnsh,hFDefnshmoved;
+OGRFieldDefnH   hFieldDefnsh,hFieldDefnshmoved,hFieldDefn;
+OGRFeatureH     hFeaturesh,hFeatureshmoved;
+OGRGeometryH    hGeometrysh, hGeometryshmoved;
 
 
 int outletstosrc(char *pfile, char *srcfile, char *outletshapefile, char *movedoutletshapefile, int maxdist)
@@ -92,6 +99,8 @@ int outletstosrc(char *pfile, char *srcfile, char *outletshapefile, char *movedo
 		long srcTotalY = src.getTotalY();
 		double srcdx = src.getdxA();
 		double srcdy = src.getdyA();
+		OGRSpatialReferenceH hSRSRaster;
+        hSRSRaster=src.getspatialref();
 		if(rank==0)
 		{
 			float timeestimate=(2e-7*srcTotalX*srcTotalY/pow((double) size,0.65))/60+1;  // Time estimate in minutes
@@ -132,14 +141,15 @@ int outletstosrc(char *pfile, char *srcfile, char *outletshapefile, char *movedo
 			printf("src and p files not the same size. Exiting \n");
 			MPI_Abort(MCW,4);
 		}
-
-
+		 //
+		  
+	
 		//load the shapefile that contains the unmoved src points
 		//copy the shapefile to a new shapefile called shpmoved on p0
 
 		//  Code added to read shape file
-		SHPHandle sh, shmoved;
-		DBFHandle dbf, dbfmoved;
+		//SHPHandle sh, shmoved;
+		//DBFHandle dbf, dbfmoved;
 		double *xnode, *ynode;
 		double *origxnode, *origynode;
 		int nxy;
@@ -148,69 +158,71 @@ int outletstosrc(char *pfile, char *srcfile, char *outletshapefile, char *movedo
 		int nfields;
 		int i,j;
 		int * indexMap;
-		DBFFieldType * types;
+		//DBFFieldType * types;
 		int dmIndex;
-
+		OGRRegisterAll();
+		const char *pszDriverName = "ESRI Shapefile";
+     
+	
 		if(rank==0){
-			sh = SHPOpen(outletshapefile, "rb");
-			char outletsdbf[MAXLN];
-			nameadd(outletsdbf, outletshapefile, ".dbf");
-			dbf = DBFOpen(outletsdbf, "rb");
-			if ((sh != NULL) && (dbf != NULL)) {
-				// Strategy is to create a new shapefile with identical properties and fields
-				shmoved = SHPCreate(movedoutletshapefile, SHPT_POINT);
-				char movedoutletsdbf[MAXLN];
-				nameadd(movedoutletsdbf, movedoutletshapefile, ".dbf");
-				dbfmoved = DBFCreate(movedoutletsdbf);
-				nfields=DBFGetFieldCount(dbf);
-				indexMap = new int[nfields];
-				types = new DBFFieldType[nfields];
-				char *fieldname = new char[12];
-				for(i=0; i<nfields; i++) {
-					int * pWidth = NULL;
-					int width = 0;
-					int * pPrecision = NULL;
-					int precision = 0;
-					DBFFieldType type = DBFGetFieldInfo(dbf, i, fieldname, pWidth, pPrecision);
-					types[i] = type;
-					if (pWidth == NULL) {
-						if (type == FTInteger) width = 6;
-						else width = 12;
-					} else {
-						width = *pWidth;
-					}
-					if (pPrecision == NULL) {
-						if (type = FTDouble) precision = 1;
-						else precision = 0;
-					} else {
-						precision = *pPrecision;
-					}
-					if (type != FTInvalid) {
-						int j = DBFAddField(dbfmoved, fieldname, type, width, precision);
-						indexMap[i] = j;
-					} else {
-						indexMap[i] = -1;
-					}
-				}
-				delete [] fieldname;
-				//  Insert additional field to record distance moved
-				dmIndex = DBFAddField(dbfmoved, "Dist_moved", FTInteger, 6, 0);
+		       //read exsitng outlet shapefile 
+		       hDSsh = OGROpen( outletshapefile, FALSE, NULL );
+               if( hDSsh == NULL )
+                     {
+                       printf( "Open failed.\n" );
+                       exit( 1 );
+                     }
+		
+				char *layernamesh; 
+                layernamesh=getLayername(outletshapefile); // get layer name which is file name without extension
+                hLayersh = OGR_DS_GetLayerByName( hDSsh,layernamesh );
+				hFeaturesh=OGR_L_GetFeature(hLayersh,0);// read  feature of the shapefile
 
-				nxy = DBFGetRecordCount(dbf);
-				//int p_size;
-				//  Code below commented out on assumption of one point per shape
-				//int countPts = 0;
-				//
-				//for( int i=0; i<size; i++) {
-				//	shp = sh.getShape(i);
-				//	countPts += shp->size();
-				//}	
-			} else {
-				printf("\nError opening shapefile.\n\n");	
-				nxy=0;
-				//		MPI_Abort(MCW,5);
-			}
-		}
+			   //creating new moved outlet shapefile
+
+				driver = OGRGetDriverByName( pszDriverName );
+			    if( driver == NULL )
+			     {
+				  printf( "%s driver not available.\n", pszDriverName );
+				  exit( 1 );
+			     }
+				//create data sources for the moved outlet shapefile
+                hDSshmoved = OGR_Dr_CreateDataSource( driver, movedoutletshapefile, NULL );
+			    if(  hDSshmoved == NULL )
+			     {
+				   printf( "Creation of output file failed.\n" );
+				    exit( 1 );
+			       }
+				
+				char * layernameshmoved; 
+                layernameshmoved=getLayername(movedoutletshapefile); // get layer name which is file name without extension
+
+				hLayershmoved = OGR_DS_CreateLayer( hDSshmoved, layernameshmoved, hSRSRaster, wkbPoint, NULL ); // create layer for moved outlet, where raster layer spatial reference is used fro shapefile
+			    if( hLayershmoved  == NULL )
+			     {
+				    printf( "Layer creation failed.\n" );
+				    exit( 1 );
+			     }
+	
+	           // OGR_L_ResetReading(hLayersh);
+				hFDefnsh = OGR_L_GetLayerDefn(hLayersh); //get schema for the outlet shapefile
+                hFDefnshmoved = OGR_L_GetLayerDefn(hLayershmoved); 
+			    int iField;
+				// read field from outlet shapefile and create that field to moved outlet shapefile
+
+		        for( iField = 0; iField < OGR_FD_GetFieldCount(hFDefnsh); iField++ ){
+                          hFieldDefnsh = OGR_FD_GetFieldDefn(hFDefnsh,iField);
+			              OGR_L_CreateField(hLayershmoved, hFieldDefnsh,0);
+		                 }
+			// add new field to moved outlet shapefile
+	           hFieldDefnshmoved = OGR_Fld_Create( "Dist_moved", OFTInteger );
+			   OGR_Fld_SetWidth(  hFieldDefnshmoved, 6); // set field width
+			   OGR_L_CreateField(hLayershmoved,  hFieldDefnshmoved, 0);
+               nxy=OGR_L_GetFeatureCount(hLayersh,1);// 
+	
+
+
+            }
 
 		MPI_Bcast(&nxy, 1, MPI_INT, 0, MCW);
 		if(nxy==0)
@@ -220,7 +232,7 @@ int outletstosrc(char *pfile, char *srcfile, char *outletshapefile, char *movedo
 
 			MPI_Finalize();
 		}
-
+		
 		xnode = new double[nxy];
 		ynode = new double[nxy];
 		origxnode = new double[nxy];
@@ -231,18 +243,24 @@ int outletstosrc(char *pfile, char *srcfile, char *outletshapefile, char *movedo
 		int itresh=1;  // Thresholding to 1 done in source
 
 		if(rank==0){
-			for(i=0; i<nxy; i++) {
-				SHPObject *shp = SHPReadObject(sh, i);
-				xnode[i] = shp->padfX[0];
-				ynode[i] = shp->padfY[0];
-				origxnode[i]=xnode[i];
+			  
+		for ( i=0;i<nxy;i++)
+		      {          
+			    hFeaturesh=OGR_L_GetFeature(hLayersh,i);
+			   // hFeaturesh = OGR_L_GetNextFeature(hLayersh);
+                hGeometrysh = OGR_F_GetGeometryRef(hFeaturesh);
+                xnode[i]  = OGR_G_GetX(hGeometrysh, 0); // get x coordinate for the outlet shapefile
+				ynode[i] =  OGR_G_GetY(hGeometrysh, 0); // get y coordiante for the outelet shapefile
+			    origxnode[i]=xnode[i];
 				origynode[i]=ynode[i];
 				//  Initializing
 				//			ismoved[i] = 0;
 				dist_moved[i] = 0;
-				part_has[i]=-1;  // initialize part_has to -1 for all points.  This will be set to rank later
-				SHPDestroyObject(shp);
-			}
+				part_has[i]=-1; // initialize part_has to -1 for all points.  This will be set to rank later
+				//SHPDestroyObject(shp);
+			}	
+		OGR_F_Destroy( hFeaturesh );
+		// destrpy shapefile feature after reading	
 		}
 
 		MPI_Bcast(xnode, nxy, MPI_DOUBLE, 0, MCW);
@@ -507,56 +525,78 @@ int outletstosrc(char *pfile, char *srcfile, char *outletshapefile, char *movedo
 		//	delete [] tempismoved;
 		delete [] tempdist_moved;
 
-		//if(!rank)printf("inserting shapes...",dist, totaldone,totalnodes);
-		//if(rank==0)printf("--\n");
-		if(rank==0){
-			for(i=0;i<nxy;++i){
+		 
+         if(rank==0){
+			
+              for(i=0;i<nxy;++i){
+
+	
+                hFeaturesh=OGR_L_GetFeature(hLayersh,i); // get feature infor for outlet shapefile
 				double x = xnode[i];  // DGT says does not need +pdx/2.0;
 				double y = ynode[i];  // DGT +pdy/2.0;
-				SHPObject *shpmoved = SHPCreateSimpleObject(SHPT_POINT, 1, &x, &y, NULL);
-				//if(rank==0)printf("x: %g \ty: %g\n",xnode[i],ynode[i]);
-				//if(rank==0)printf("x: %g \ty: %g\tdist: %d\n",shpmoved->padfX[0],shpmoved->padfY[0],dist_moved[i]);
-				int shapeIndx = SHPWriteObject(shmoved, -1, shpmoved);
-				SHPDestroyObject(shpmoved);
-				int res;
-				for(j=0;j<nfields;++j){
-					DBFFieldType type = types[j];
-					int fieldIndx = indexMap[j];
-					if ((type != FTInvalid) && (fieldIndx >= 0)) {
-						if (type = FTInteger) {
-							int val = DBFReadIntegerAttribute(dbf, i, j);
-							res = DBFWriteIntegerAttribute(dbfmoved, shapeIndx, fieldIndx, val);
-						} 
-						else if (type == FTDouble) {
-							double val = DBFReadDoubleAttribute(dbf, i, j);
-							res = DBFWriteDoubleAttribute(dbfmoved, shapeIndx, fieldIndx, val);
-						}
-						else if (type == FTString) {
-							const char * val = DBFReadStringAttribute(dbf, i, j);
-							res = DBFWriteStringAttribute(dbfmoved, shapeIndx, fieldIndx, val);
-						}
-						else { // FTLogical:
-							const char * val = DBFReadLogicalAttribute(dbf, i, j);
-							res = DBFWriteLogicalAttribute(dbfmoved, shapeIndx, fieldIndx, val[0]);
-						}
-					}
-					// CWG should check res is not zero
-				}
-				//  Add distance moved value
-				res = DBFWriteIntegerAttribute(dbfmoved, i, dmIndex, (int)dist_moved[i]);
-				// CWG should check res is not zero
+			    hFeatureshmoved = OGR_F_Create( OGR_L_GetLayerDefn( hLayershmoved ) ); // create new feature with null fields and no geometry
+			  //  
+				//hFDefnsh = OGR_L_GetLayerDefn(hLayersh);
+			    int iField;
+				int nField=OGR_FD_GetFieldCount(hFDefnshmoved); // get field count
+
+				// get field value from outlet shapefile and put into in moved outletshapefile
+
+			    for( iField = 0; iField < OGR_FD_GetFieldCount(hFDefnsh) ; iField++ )
+
+                   {
+                     hFieldDefn = OGR_FD_GetFieldDefn( hFDefnsh, iField ); //get field from outletshapefile
+
+					 // for interger type field 
+                   if( OGR_Fld_GetType(hFieldDefn) == OFTInteger ) {
+					  //printf( "%d,", OGR_F_GetFieldAsInteger( hFeaturesh, iField ));
+				       int val1= OGR_F_GetFieldAsInteger( hFeaturesh, iField ) ;
+				       OGR_F_SetFieldInteger( hFeatureshmoved,  iField , val1);} // set field value in moveoutletshapefile
+                    // for double type field
+		           else if( OGR_Fld_GetType(hFieldDefn) == OFTReal ) {
+			            double val2= OGR_F_GetFieldAsDouble( hFeaturesh, iField ) ;
+				        OGR_F_SetFieldDouble( hFeatureshmoved,  iField , val2);}
+				    // for string type field
+
+			      else if( OGR_Fld_GetType(hFieldDefn) == OFTString ) {
+			            const char *val3= OGR_F_GetFieldAsString( hFeaturesh, iField ) ;
+				        OGR_F_SetFieldString( hFeatureshmoved,  iField , val3);}
+				
+                   else {
+			            const char *val4= OGR_F_GetFieldAsString( hFeaturesh, iField ) ;
+				        OGR_F_SetFieldString( hFeatureshmoved,  iField , val4);}
+
+                   }
+
+             // set value of dist_moved field  to moved outlet shapefile
+
+		     OGR_F_SetFieldInteger( hFeatureshmoved, (nField-1), (int)dist_moved[i]);
+             hGeometryshmoved = OGR_G_CreateGeometry(wkbPoint);// create geometry
+			 OGR_G_SetPoint_2D(hGeometryshmoved, 0, x, y);
+			 OGR_F_SetGeometry( hFeatureshmoved, hGeometryshmoved ); 
+			 OGR_G_DestroyGeometry(hGeometryshmoved);
+            if( OGR_L_CreateFeature( hLayershmoved, hFeatureshmoved ) != OGRERR_NONE )
+            {
+              printf( "Failed to create feature in shapefile.\n" );
+              exit( 1 );
+            }
+   
+			OGR_F_Destroy( hFeatureshmoved ); // destroy feature
 			}
 			//if(!rank)printf("closing file...",dist, totaldone,totalnodes);
-			delete [] indexMap;
-			delete [] types;
-			SHPClose(sh);
-			DBFClose(dbf);
-			SHPClose(shmoved);
-			DBFClose(dbfmoved);
+			//delete [] indexMap;
+			//delete [] types;
+			//SHPClose(sh);
+			//DBFClose(dbf);
+			//SHPClose(shmoved);
+			//DBFClose(dbfmoved);
+			
+		//OGR_DS_Destroy( hDSsh );
+		OGR_DS_Destroy( hDSshmoved ); // destrou datasource
 		}
 		//if(!rank)printf("done\n.",dist, totaldone,totalnodes);
 
-
+		//OGR_F_Destroy( hFeature1);
 		delete [] xnode;
 		delete [] ynode;
 		//	delete [] ismoved;
@@ -570,6 +610,8 @@ int outletstosrc(char *pfile, char *srcfile, char *outletshapefile, char *movedo
 		MPI_Allreduce (&total, &temp, 1, MPI_DOUBLE, MPI_SUM, MCW);
 		total = temp/size;
 
+		
+		
 
 		if( rank == 0) 
 			printf("Total time: %f\n",total);

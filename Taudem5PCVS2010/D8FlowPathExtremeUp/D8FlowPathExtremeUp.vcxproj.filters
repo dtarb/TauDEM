@@ -12,18 +12,6 @@
     <ClCompile Include="..\..\src\ReadOutlets.cpp">
       <Filter>Common</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\shapelib\dbfopen.c">
-      <Filter>Shapelib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\shapelib\safileio.c">
-      <Filter>Shapelib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\shapelib\shpopen.c">
-      <Filter>Shapelib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\shapelib\shptree.c">
-      <Filter>Shapelib</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\TauDEM.rc" />
@@ -32,13 +20,5 @@
     <Filter Include="Common">
       <UniqueIdentifier>{d976b05e-cd07-4d6d-9333-bf5eacd435d6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Shapelib">
-      <UniqueIdentifier>{beeff948-a263-45e7-bbf1-732ecfc9ceaa}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\src\shapelib\shapefil.h">
-      <Filter>Shapelib</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

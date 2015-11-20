@@ -1,7 +1,7 @@
-# Script Name: MoveOuletsToStreams
+# Script Name: ConnectDown
 #
-# Created By:  David Tarboton
-# Date:        9/29/11
+# Created By:  Nazmus Sazib
+# Date:        11/16/2015
 
 # Import ArcPy site-package and os modules
 import arcpy
@@ -18,16 +18,16 @@ arcpy.AddMessage("Spatial Reference: "+str(coord_sys.name))
 
 inlyr1 = arcpy.GetParameterAsText(1)
 desc = arcpy.Describe(inlyr1)
-src=str(desc.catalogPath)
-arcpy.AddMessage("\nInput Stream Raster Grid: "+src)
+ad8=str(desc.catalogPath)
+arcpy.AddMessage("\nInput D8Contributing Area Grid: "+ad8)
 
 inlyr2 = arcpy.GetParameterAsText(2)
 desc = arcpy.Describe(inlyr2)
-shfl=str(desc.catalogPath)
-arcpy.AddMessage("\nInput Outlets Shapefile: "+shfl)
+ws=str(desc.catalogPath)
+arcpy.AddMessage("\nInput Watershed Grid: "+ws)
 
-maxdistance=arcpy.GetParameterAsText(3)
-arcpy.AddMessage("\nMinimum Threshold Value: "+maxdistance)
+mvdistance=arcpy.GetParameterAsText(3)
+arcpy.AddMessage("\nNumber of Grid cell: "+mvdistance)
 
 # Input Number of Processes
 inputProc=arcpy.GetParameterAsText(4)
@@ -37,8 +37,14 @@ arcpy.AddMessage("\nInput Number of Processes: "+inputProc)
 om = arcpy.GetParameterAsText(5)
 arcpy.AddMessage("\nOutput Outlet Shapefile: "+om)
 
+# Output
+omd = arcpy.GetParameterAsText(6)
+arcpy.AddMessage("\nOutput MovedOutlet Shapefile: "+omd)
+
+
+
 # Construct command
-cmd = 'mpiexec -n ' + inputProc + ' MoveOutletsToStreams -p ' + '"' + p + '"' + ' -src ' + '"' + src + '"' + ' -o ' + '"' + shfl + '"' + ' -om ' + '"' + om + '"' + ' -md ' + maxdistance
+cmd = 'mpiexec -n ' + inputProc + ' ConnectDown -p ' + '"' + p + '"' + ' -ad8 ' + '"' + ad8+ '"' +  ' -w ' + '"' + ws+ '"'+ ' -o ' + '"' + om + '"' + ' -od ' + '"' + omd + '"' + ' -d ' + mvdistance
 
 arcpy.AddMessage("\nCommand Line: "+cmd)
 
@@ -51,4 +57,4 @@ arcpy.AddMessage('\nProcess started:\n')
 for line in process.stdout.readlines():
     arcpy.AddMessage(line)
 
-#arcpy.DefineProjection_management(om, coord_sys)
+

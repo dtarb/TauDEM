@@ -190,7 +190,8 @@ int dropan(char *areafile, char *dirfile, char *elevfile, char *ssafile, char *d
 	long ssaTotalY = ssa.getTotalY();
 	double ssadxA = ssa.getdxA();
 	double ssadyA = ssa.getdyA();
-
+	OGRSpatialReferenceH hSRSRaster;
+	hSRSRaster=ssa.getspatialref();
 	
 	if(rank==0)
 		{
@@ -263,9 +264,9 @@ int dropan(char *areafile, char *dirfile, char *elevfile, char *ssafile, char *d
 	int nxy;
 	double *xnode, *ynode;
 	int i,j;
-
+	
 	if(rank==0){
-		if(readoutlets(outletfile, &nxy, xnode, ynode)==0){
+		if(readoutlets(outletfile,hSRSRaster, &nxy, xnode, ynode)==0){
 			MPI_Bcast(&nxy, 1, MPI_INT, 0, MCW);
 			MPI_Bcast(xnode, nxy, MPI_DOUBLE, 0, MCW);
 			MPI_Bcast(ynode, nxy, MPI_DOUBLE, 0, MCW);
