@@ -1,10 +1,10 @@
 # Script Name: D8ContributingArea
-# 
+#
 # Created By:  David Tarboton
 # Date:        9/28/11
 
 # Import ArcPy site-package and os modules
-import arcpy 
+import arcpy
 import os
 import subprocess
 
@@ -62,12 +62,11 @@ if edgecontamination == 'false':
 ##    cmd = 'mpiexec -n ' + inputProc + ' AreaD8 -p ' + '"' + p + '"' + ' -ad8 ' + '"' + ad8 + '"' + ' -nc '
 ##else:
 ##    cmd = 'mpiexec -n ' + inputProc + ' AreaD8 -p ' + '"' + p + '"' + ' -ad8 ' + '"' + ad8 + '"'
-    
+
 arcpy.AddMessage("\nCommand Line: "+cmd)
 
 # Submit command to operating system
 os.system(cmd)
-
 # Capture the contents of shell command and print it to the arcgis dialog box
 process=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 arcpy.AddMessage('\nProcess started:\n')

@@ -49,9 +49,9 @@ email:  dtarb@usu.edu
 //==================================
 /*  Nameadd(..)  Utility for adding suffixes to file names prior to
    "." extension   */
-int nameadd(char *full,char *arg,char *suff)
+int nameadd(char *full,char *arg,const char *suff)
 {
-        char *ext, *extsuff;
+        const char *ext, *extsuff;
         long nmain;
     ext=strrchr(arg,'.');
 	extsuff=strrchr(suff,'.');
@@ -383,3 +383,42 @@ bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData){
 	}
 	return false;
 }
+
+//get extension from OGR vector file
+  char *getLayername(char *inputogrfile)
+{  
+	char pfile[MAXLN];
+   strncpy(pfile, inputogrfile, 3);
+   char *filename;
+    pfile[3] = '\0'; // get only three character from begining *e.g. "E:\Test" it will give "E:\"
+     if ((pfile[2] == '\\') || (pfile[2] == '/')) {
+    if (pfile[2] == '\\')
+	    filename = strrchr(inputogrfile, '\\');// for windows
+	else  
+		filename = strrchr(inputogrfile, '/'); // for linux
+    if (filename == NULL)
+        filename = inputogrfile;
+    else
+        filename++;
+	 }
+	else 
+	{
+	filename = inputogrfile;}
+
+	
+    char *ext; 
+    ext = strrchr(filename, '.'); // getting extension
+    char layername[MAXLN];
+
+    size_t len = strlen(filename);
+	size_t len1 = strlen(ext);
+
+	memcpy(layername, filename, len-len1);
+	layername[len - len1] = 0; 
+	
+
+
+    printf("%s ", layername);
+    return layername;
+}
+

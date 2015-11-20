@@ -101,7 +101,8 @@ class tiffIO{
                 GDALDatasetH copyfh;
                 int isFileInititialized;
                 GDALDriverH hDriver;
-                GDALRasterBandH bandh;          // gdal band
+                GDALRasterBandH bandh;    
+				// gdal band
 		int rank, size;			//MPI rank & size, rank=number for this process, size=number of processes
 		uint32_t totalX;		//DGT	// unsigned long BT - ??width of entire grid in number of cells (all partitions)
 		uint32_t totalY;		//DGT	// unsigned long BT - ??length of entire grid in number of cells (all partitions)
@@ -120,6 +121,7 @@ class tiffIO{
 		double *dxc,*dyc;
 	    double dxA,dyA,dlat,dlon,xleftedge_g,ytopedge_g,xllcenter_g,yllcenter_g;
 	    int IsGeographic;
+		OGRSpatialReferenceH  hSRS;
 		
 //  Mappings
 
@@ -168,12 +170,12 @@ class tiffIO{
 		double getdlon() {return dlon;}
 		double getdlat() {return dlat;}
 		int getproj() {return IsGeographic;}
-		
+	
 		
         double getXllcenter(){return xllcenter;}
 		double getYllcenter(){return yllcenter;}
 	
-
+		OGRSpatialReferenceH getspatialref(){return hSRS;} // return projection information for raster file
 		double getXLeftEdge(){return xleftedge;}
 		double getYTopEdge(){return ytopedge;}
 	    DATA_TYPE getDatatype(){return datatype;}

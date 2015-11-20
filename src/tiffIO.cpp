@@ -41,6 +41,9 @@ email:  dtarb@usu.edu
 #include <mpi.h>
 #include <stdio.h>
 #include <memory>
+#include "gdal.h"
+#include "ogrsf_frmts.h"
+#include "ogr_api.h"
 // #include "tiffIO.h"  Part of commonLib.h
 #include <ogr_spatialref.h>
 #include<math.h>;
@@ -66,7 +69,7 @@ tiffIO::tiffIO(char *fname, DATA_TYPE newtype) {
 	}
 
 
-    OGRSpatialReferenceH  hSRS;
+    //OGRSpatialReferenceH  hSRS;
 	char  *pszProjection;
 	pszProjection = (char *) GDALGetProjectionRef( fh );
 	hSRS = OSRNewSpatialReference(pszProjection);
@@ -258,12 +261,12 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 			}
 
 			GDALDataType eBDataType;
-			if (datatype == FLOAT_TYPE)
-				eBDataType = GDT_Float32;
-			else if (datatype == SHORT_TYPE)
-				eBDataType = GDT_Int16;
-			else if (datatype == LONG_TYPE)
-				eBDataType = GDT_Int32;
+		if (datatype == FLOAT_TYPE)
+			eBDataType = GDT_Float32;
+		else if (datatype == SHORT_TYPE)
+			eBDataType = GDT_Int16;
+		else if (datatype == LONG_TYPE)
+			eBDataType = GDT_Int32;
 
 			fh = GDALCreate(hDriver, filename, totalX , totalY, 1, eBDataType, NULL);
 			GDALSetProjection(fh, GDALGetProjectionRef(copyfh));
@@ -367,10 +370,6 @@ void tiffIO::geotoLength(double dlon,double dlat, double lat, double *xyc){
   xyc[0]=elipa*cos(beta)*abs(dlon);
   xyc[1]=double(sqrt(double(ds2)));    
 }
-
-
-
-
 
 
 

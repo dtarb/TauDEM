@@ -68,8 +68,15 @@ int gagewatershed( char *pfile, char *wfile, char *shfile, char *idfile, int wri
 	int idnodata;
 
 	double begint = MPI_Wtime();
+	tiffIO p(pfile,SHORT_TYPE);
+	long totalX = p.getTotalX();
+	long totalY = p.getTotalY();
+    double dxA = p.getdxA();
+	double dyA = p.getdyA();
+	OGRSpatialReferenceH hSRSRaster;
+    hSRSRaster=p.getspatialref();
 	if(rank==0){//4
-		if(readoutlets(shfile, &numOutlets, x, y,ids)==0){
+		if(readoutlets(shfile,hSRSRaster, &numOutlets, x, y,ids)==0){
 			MPI_Bcast(&numOutlets, 1, MPI_INT, 0, MCW);
 			MPI_Bcast(x, numOutlets, MPI_DOUBLE, 0, MCW);
 			MPI_Bcast(y, numOutlets, MPI_DOUBLE, 0, MCW);
@@ -113,11 +120,7 @@ int gagewatershed( char *pfile, char *wfile, char *shfile, char *idfile, int wri
 //		printf("rank: %d, X: %lf, Y: %lf\n",rank,x[i],y[i]);
 
 	//Create tiff object, read and store header info
-	tiffIO p(pfile,SHORT_TYPE);
-	long totalX = p.getTotalX();
-	long totalY = p.getTotalY();
-	double dxA = p.getdxA();
-	double dyA = p.getdyA();
+
 	if(rank==0)
 		{
 			float timeestimate=(1.2e-6*totalX*totalY/pow((double) size,0.65))/60+1;  // Time estimate in minutes

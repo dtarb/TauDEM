@@ -59,7 +59,7 @@ email:  dtarb@usu.edu
 #include <stdio.h>
 #include <stdlib.h>
 #include "commonLib.h"
-#include "shapelib/shapefil.h"
+//#include "shapelib/shapefil.h"
 #include "MoveOutletsToStrm.h"
 
 int main(int argc,char **argv)
