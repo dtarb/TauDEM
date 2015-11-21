@@ -671,12 +671,7 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 
     /* Create new file using this driver */
      hDSsh = OGR_Dr_CreateDataSource(driver, outletshapefile, NULL);
-     if (hDSsh == NULL)
-      {
-        printf("warning: Unable to create %s\n", outletshapefile);
-       // exit( 1 );
-	 }
-
+	 if( hDSsh  != NULL ) {
      char *layername; 
      layername=getLayername(outletshapefile); // get layer name
     //hLayer1 = OGR_DS_GetLayerByName( hDS1,layername );
@@ -697,7 +692,7 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
     hFieldDefnsh= OGR_Fld_Create( "id_down", OFTInteger );
     OGR_L_CreateField(hLayersh,  hFieldDefnsh, 0);
 	hFieldDefnsh = OGR_Fld_Create( "ad8", OFTReal );
-    OGR_L_CreateField(hLayersh,  hFieldDefnsh, 0);
+	OGR_L_CreateField(hLayersh,  hFieldDefnsh, 0); 
 
    for(int i=0; i<nxy; i++)
 		{
@@ -705,6 +700,7 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 			
 		double x = origxnode[i];  // DGT says does not need +pdx/2.0;
 		double y = origynode[i];  // DGT +pdy/2.0;
+		
         hFeaturesh = OGR_F_Create( OGR_L_GetLayerDefn( hLayersh ) );
         OGR_F_SetFieldInteger( hFeaturesh, OGR_F_GetFieldIndex(hFeaturesh, "id"), wid[i] );
 	    OGR_F_SetFieldInteger( hFeaturesh, OGR_F_GetFieldIndex(hFeaturesh, "id_down"), widdown[i]);
@@ -723,16 +719,13 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 
 
 			// CWG should check res is not 0
-		}
 		
+		}
+	 }
       OGR_DS_Destroy( hDSsh );
      hDSshmoved = OGR_Dr_CreateDataSource(driver, movedoutletshapefile, NULL);
-     if (hDSshmoved == NULL)
-      {
-        printf("warning: Unable to create %s\n", movedoutletshapefile);
-       // exit( 1 );
-	 }
-
+     if (hDSshmoved != NULL){
+ 
      char *layernamemoved;
 	// extract leyer information from shapefile
     layernamemoved=getLayername(movedoutletshapefile);
@@ -756,6 +749,7 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
     OGR_L_CreateField(hLayershmoved,  hFieldDefnshmoved, 0);
 	hFieldDefnshmoved = OGR_Fld_Create( "ad8", OFTReal );
     OGR_L_CreateField(hLayershmoved,  hFieldDefnshmoved, 0);
+	 
     for(i=0;i<nxy;++i){
 		
 			//hFeatureshmoved=OGR_L_GetFeature(hLayershmoved,i);
@@ -764,7 +758,7 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 		
 			
 		
-
+    
         hFeatureshmoved = OGR_F_Create( OGR_L_GetLayerDefn( hLayershmoved ) );
         OGR_F_SetFieldInteger( hFeatureshmoved, OGR_F_GetFieldIndex(hFeatureshmoved, "id"), wid[i] );
 		OGR_F_SetFieldInteger( hFeatureshmoved, OGR_F_GetFieldIndex(hFeatureshmoved, "id_down"), widdown[i] );
@@ -785,6 +779,7 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 
 			// CWG should check res is not 0
 		}
+	 }
 	 OGR_DS_Destroy( hDSshmoved );
 	}
 	//if(!rank)printf("done\n.",dist, totaldone,totalnodes);
