@@ -41,16 +41,16 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={pf}\TauDEM
 DefaultGroupName={#MyAppName}
-OutputBaseFilename=setup
+OutputBaseFilename=TauDEM53_setup
 Compression=lzma
-SolidCompression=yes
+SolidCompression=yes        
 ; "ArchitecturesInstallIn64BitMode=x64" requests that the install be
 ; done in "64-bit mode" on x64, meaning it should use the native
 ; 64-bit Program Files directory and the 64-bit view of the registry.
 ; On all other architectures it will install in "32-bit mode".
 ArchitecturesInstallIn64BitMode=x64
 WizardSmallImageFile=taudem.bmp
-; Don't show the welcome wizard page
+; Don't show the welcome wizard page  and ready to install page
 DisableWelcomePage=yes
 DisableReadyPage=yes
 
