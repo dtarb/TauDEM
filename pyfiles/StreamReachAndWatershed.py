@@ -81,6 +81,6 @@ for line in process.stdout.readlines():
 # Calculate statistics on the output so that it displays properly
 arcpy.AddMessage('Executing: Calculate Statistics\n')
 arcpy.CalculateStatistics_management(ord)
-arcpy.DefineProjection_management(net, coord_sys)
+#arcpy.DefineProjection_management(net, coord_sys)
 
 arcpy.CalculateStatistics_management(w)

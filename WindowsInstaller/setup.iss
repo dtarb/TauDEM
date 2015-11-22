@@ -23,7 +23,7 @@
 ; TauDEMArcGIS/
 
 #define MyAppName "TauDEM"
-#define MyAppVersion "5.3"
+#define MyAppVersion "5.4"
 #define MyAppPublisher "Utah State University"
 #define MyAppURL "http://hydrology.usu.edu/taudem/taudem5/index.html"
 

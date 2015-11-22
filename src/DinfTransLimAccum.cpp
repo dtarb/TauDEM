@@ -75,10 +75,16 @@ int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *de
 	//  Read shapfile 
 	double *x, *y;
 	int numOutlets=0;
-
+	tiffIO ang(angfile, FLOAT_TYPE);
+	long totalX = ang.getTotalX();
+	long totalY = ang.getTotalY();
+	double dxA = ang.getdxA();
+	double dyA = ang.getdyA();
+	OGRSpatialReferenceH hSRSRaster;
+	hSRSRaster=ang.getspatialref();
 	if( useOutlets == 1) {
 		if(rank==0){
-			if(readoutlets(shfile, &numOutlets, x, y) !=0){
+			if(readoutlets(shfile,hSRSRaster, &numOutlets, x, y) !=0){
 				printf("Exiting \n");
 				MPI_Abort(MCW,5);
 			}else {
@@ -105,11 +111,11 @@ int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *de
 	double begint = MPI_Wtime();
 
 	//Create tiff object, read and store header info
-	tiffIO ang(angfile, FLOAT_TYPE);
+	/*tiffIO ang(angfile, FLOAT_TYPE);
 	long totalX = ang.getTotalX();
 	long totalY = ang.getTotalY();
 	double dxA = ang.getdxA();
-	double dyA = ang.getdyA();
+	double dyA = ang.getdyA();*/
 
 	if(rank==0)
 		{

@@ -1,10 +1,10 @@
 # Script Name: MoveOuletsToStreams
-# 
+#
 # Created By:  David Tarboton
 # Date:        9/29/11
 
 # Import ArcPy site-package and os modules
-import arcpy 
+import arcpy
 import os
 import subprocess
 
@@ -51,4 +51,4 @@ arcpy.AddMessage('\nProcess started:\n')
 for line in process.stdout.readlines():
     arcpy.AddMessage(line)
 
-arcpy.DefineProjection_management(om, coord_sys)
+#arcpy.DefineProjection_management(om, coord_sys)

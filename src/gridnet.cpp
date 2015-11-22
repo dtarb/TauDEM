@@ -67,9 +67,17 @@ int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *
 	bool usingShapeFile=false;
 
 	double begint = MPI_Wtime();
+	tiffIO p(pfile,SHORT_TYPE);
+	long totalX = p.getTotalX();
+	long totalY = p.getTotalY();
+	double dxA = p.getdxA();
+	double dyA = p.getdyA();
+	OGRSpatialReferenceH hSRSRaster;
+    hSRSRaster=p.getspatialref();
+
 	if( useOutlets == 1) {//3
 		if(rank==0){//4
-			if(readoutlets(shfile, &numOutlets, x, y)==0){
+			if(readoutlets(shfile, hSRSRaster,&numOutlets, x, y)==0){
 //				for(int i=0; i< numOutlets; i++)
 //					printf("rank: %d, X: %lf, Y: %lf\n",rank,x[i],y[i]);
 				usingShapeFile=true;
@@ -105,11 +113,11 @@ int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *
 //		printf("rank: %d, X: %lf, Y: %lf\n",rank,x[i],y[i]);
 
 	//Create tiff object, read and store header info
-	tiffIO p(pfile,SHORT_TYPE);
-	long totalX = p.getTotalX();
-	long totalY = p.getTotalY();
-	double dxA = p.getdxA();
-	double dyA = p.getdyA();
+	//tiffIO p(pfile,SHORT_TYPE);
+	//long totalX = p.getTotalX();
+	//long totalY = p.getTotalY();
+	//double dxA = p.getdxA();
+	//double dyA = p.getdyA();
 	if(rank==0)
 		{
 			float timeestimate=(1.2e-6*totalX*totalY/pow((double) size,0.65))/60+1;  // Time estimate in minutes

@@ -184,17 +184,10 @@
     <ClCompile Include="..\..\src\dinfdecayaccum.cpp" />
     <ClCompile Include="..\..\src\DinfDecayAccummn.cpp" />
     <ClCompile Include="..\..\src\ReadOutlets.cpp" />
-    <ClCompile Include="..\..\src\shapelib\dbfopen.c" />
-    <ClCompile Include="..\..\src\shapelib\safileio.c" />
-    <ClCompile Include="..\..\src\shapelib\shpopen.c" />
-    <ClCompile Include="..\..\src\shapelib\shptree.c" />
     <ClCompile Include="..\..\src\tiffIO.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\TauDEM.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\src\shapelib\shapefil.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -27,4 +27,5 @@ netsh firewall add allowedprogram "C:\Program Files\Taudem\TauDEM5Exe\Streamnet.
 netsh firewall add allowedprogram "C:\Program Files\Taudem\TauDEM5Exe\SinmapSI.exe" SinmapSI ENABLE
 netsh firewall add allowedprogram "C:\program files\taudem\taudem5exe\gagewatershed.exe" Gagewatershed ENABLE
 netsh firewall add allowedprogram "C:\program files\taudem\taudem5exe\twi.exe" TWI ENABLE
+netsh firewall add allowedprogram "C:\program files\taudem\taudem5exe\connectdown.exe" connectdown ENABLE
 netsh firewall add allowedprogram "C:\program files\microsoft hpc pack 2012\bin\smpd.exe" smpd ENABLE

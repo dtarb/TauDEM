@@ -50,7 +50,7 @@ email:  dtarb@usu.edu
 #include "createpart.h"
 #include "partition.h"
 #include "tiffIO.h"
-#include "shapelib/shapefil.h"
+//#include "shapelib/shapefil.h"
 //#ifndef LINKLIB_H
 //#define LINKLIB_H
 using namespace std;
