@@ -63,9 +63,16 @@ int aread8( char* pfile, char* afile, char *shfile, char *wfile, int useOutlets,
 	bool usingShapeFile=false;
     double begint = MPI_Wtime();
 	
+	tiffIO p(pfile,SHORT_TYPE);
+	long totalX = p.getTotalX();
+	long totalY = p.getTotalY();
+    double dxA = p.getdxA();
+	double dyA = p.getdyA();
+	OGRSpatialReferenceH hSRSRaster;
+    hSRSRaster=p.getspatialref();
 	if( useOutlets == 1) {
 		if(rank==0){
-			if(readoutlets(shfile, &numOutlets, x, y)==0){
+			if(readoutlets(shfile,hSRSRaster, &numOutlets, x, y)==0){
 				usingShapeFile=true;
 				MPI_Bcast(&numOutlets, 1, MPI_INT, 0, MCW);
 				MPI_Bcast(x, numOutlets, MPI_DOUBLE, 0, MCW);
@@ -87,11 +94,7 @@ int aread8( char* pfile, char* afile, char *shfile, char *wfile, int useOutlets,
 	}
 
 	//Create tiff object, read and store header info
-	tiffIO p(pfile,SHORT_TYPE);
-	long totalX = p.getTotalX();
-	long totalY = p.getTotalY();
-    double dxA = p.getdxA();
-	double dyA = p.getdyA();
+
 
 
 	if(rank==0)

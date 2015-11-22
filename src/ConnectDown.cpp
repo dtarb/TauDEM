@@ -63,12 +63,19 @@ email:  dtarb@usu.edu
 #include "linearpart.h"
 #include "createpart.h"
 #include "tiffIO.h"
-#include "shapelib/shapefil.h"
+//#include "shapelib/shapefil.h"
 #include "ConnectDown.h"
 using namespace std;
 
+OGRSFDriverH    driver;
+OGRDataSourceH  hDSsh, hDSshmoved;
+OGRLayerH       hLayersh, hLayershmoved;
+OGRFeatureDefnH hFDefnsh,hFDefnshmoved;
+OGRFieldDefnH   hFieldDefnsh,hFieldDefnshmoved;
+OGRFeatureH     hFeaturesh,hFeatureshmoved;
+OGRGeometryH    hGeometrysh, hGeometryshmoved;
 
-
+	
 int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, char *movedoutletshapefile, int movedist)
 {
 
@@ -92,6 +99,8 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 	long wTotalY = wIO.getTotalY();
 	double wdx = wIO.getdxA();
 	double wdy = wIO.getdyA();
+	OGRSpatialReferenceH hSRSRaster;
+    hSRSRaster=wIO.getspatialref();
 	if(rank==0)
 		{
 			float timeestimate=(2e-7*wTotalX*wTotalY/pow((double) size,0.65))/60+1;  // Time estimate in minutes
@@ -102,7 +111,10 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 
 
 	//Create partition and read data
-	tdpartition *wData;
+		tdpartition *wData;
+	long nodatav;
+	nodatav = (long) wIO.getNodata();
+	//tdpartition *wData;
 	wData = CreateNewPartition(wIO.getDatatype(), wTotalX, wTotalY, wdx, wdy, wIO.getNodata());
 	int nx = wData->getnx();
 	int ny = wData->getny();
@@ -203,8 +215,8 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 				{
 					int32_t ii;
 					wData->getData(i,j,ii);
-					if(ii == 469)
-						ii=ii;
+					//if(ii == 469)
+						//ii=ii;
 					float tempFloat;
 					ad8->getData(i,j,tempFloat);
 					if(wfound[ii]==0) //  First encounter
@@ -316,7 +328,7 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 		//				shp -> createCell(v,0);
 		//				v.setValue(ad8max[ii]);
 		//				shp -> createCell(v,1);
-						printf("X: %g, Y: %g, ad8max: %f\n",wi[ii],wj[ii],ad8max[ii]);
+						//printf("X: %g, Y: %g, ad8max: %f\n",wi[ii],wj[ii],ad8max[ii]);
 						//  Now that data is written collapse the arrays
 						wi[nxy]=wi[ii];
 						wj[nxy]=wj[ii];
@@ -631,63 +643,149 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 //	delete [] tempismoved;
 	delete [] tempdist_moved;
 	delete [] twiddown;
-
+	OGRRegisterAll();
 	//if(!rank)printf("inserting shapes...",dist, totaldone,totalnodes);
 	//if(rank==0)printf("--\n");
 	if(rank==0){
 		//  write a shape file
-		SHPHandle sh;
-		DBFHandle dbf;
-		sh = SHPCreate(outletshapefile, SHPT_POINT);
-		char outletsdbf[MAXLN];
-		nameadd(outletsdbf, outletshapefile, ".dbf");
-		dbf = DBFCreate(outletsdbf);
+		//SHPHandle sh;
+		//DBFHandle dbf;
+		//sh = SHPCreate(outletshapefile, SHPT_POINT);
+		//char outletsdbf[MAXLN];
+		//nameadd(outletsdbf, outletshapefile, ".dbf");
+		//dbf = DBFCreate(outletsdbf);
 		int nfields;
 		nfields=2; // CWG looks like this should be 3, but not used anyway
-		int idIndx = DBFAddField(dbf, "id", FTInteger, 6, 0);
-		int iddownIndx = DBFAddField(dbf, "id_down", FTInteger, 6, 0);
-		int ad8Indx = DBFAddField(dbf, "ad8", FTDouble, 12, 0);
+		//int idIndx = DBFAddField(dbf, "id", FTInteger, 6, 0);
+		//int iddownIndx = DBFAddField(dbf, "id_down", FTInteger, 6, 0);
+		//int ad8Indx = DBFAddField(dbf, "ad8", FTDouble, 12, 0);
+		
 
-		for(int i=0; i<nxy; i++)
+      const char *pszDriverName = "ESRI Shapefile";
+      driver = OGRGetDriverByName( pszDriverName );
+      if( driver == NULL )
+      {
+         printf( "%s warning: driver not available.\n", pszDriverName );
+         //exit( 1 );
+      }
+
+    /* Create new file using this driver */
+     hDSsh = OGR_Dr_CreateDataSource(driver, outletshapefile, NULL);
+     if (hDSsh == NULL)
+      {
+        printf("warning: Unable to create %s\n", outletshapefile);
+       // exit( 1 );
+	 }
+
+     char *layername; 
+     layername=getLayername(outletshapefile); // get layer name
+    //hLayer1 = OGR_DS_GetLayerByName( hDS1,layername );
+    //OGR_L_ResetReading(hLayer1);
+	
+     hLayersh= OGR_DS_CreateLayer( hDSsh, layername ,hSRSRaster, wkbPoint, NULL );
+     if( layername  == NULL )
+     {
+        printf( "Warning: Layer creation failed.\n" );
+        //exit( 1 );
+     }
+ 
+	
+	
+    /* Add a few fields to the layer defn */
+    hFieldDefnsh = OGR_Fld_Create( "id", OFTInteger );
+    OGR_L_CreateField(hLayersh,  hFieldDefnsh, 0);
+    hFieldDefnsh= OGR_Fld_Create( "id_down", OFTInteger );
+    OGR_L_CreateField(hLayersh,  hFieldDefnsh, 0);
+	hFieldDefnsh = OGR_Fld_Create( "ad8", OFTReal );
+    OGR_L_CreateField(hLayersh,  hFieldDefnsh, 0);
+
+   for(int i=0; i<nxy; i++)
 		{
-			double x = origxnode[i];  // DGT says does not need +pdx/2.0;
-			double y = origynode[i];  // DGT +pdy/2.0;
-			SHPObject *shp = SHPCreateSimpleObject(SHPT_POINT, 1, &x, &y, NULL);
-			int indx = SHPWriteObject(sh, -1, shp);
-			int res = DBFWriteIntegerAttribute(dbf, indx, idIndx, wid[i]);
-			res *= DBFWriteIntegerAttribute(dbf, indx, iddownIndx, widdown[i]);
-			res *= DBFWriteDoubleAttribute(dbf, indx, ad8Indx, (double)ad8max[i]);
+
+			
+		double x = origxnode[i];  // DGT says does not need +pdx/2.0;
+		double y = origynode[i];  // DGT +pdy/2.0;
+        hFeaturesh = OGR_F_Create( OGR_L_GetLayerDefn( hLayersh ) );
+        OGR_F_SetFieldInteger( hFeaturesh, OGR_F_GetFieldIndex(hFeaturesh, "id"), wid[i] );
+	    OGR_F_SetFieldInteger( hFeaturesh, OGR_F_GetFieldIndex(hFeaturesh, "id_down"), widdown[i]);
+	    OGR_F_SetFieldDouble( hFeaturesh, OGR_F_GetFieldIndex(hFeaturesh, "ad8"), (double)ad8max[i] );
+        hGeometrysh = OGR_G_CreateGeometry(wkbPoint);
+        OGR_G_SetPoint_2D(hGeometrysh, 0, x, y);
+        OGR_F_SetGeometry( hFeaturesh, hGeometrysh ); 
+		OGR_G_DestroyGeometry(hGeometrysh);
+		   if( OGR_L_CreateFeature( hLayersh, hFeaturesh ) != OGRERR_NONE )
+            {
+              printf( " warning: Failed to create feature in shapefile.\n" );
+              //exit( 1 );
+            }
+   
+        OGR_F_Destroy( hFeaturesh );
+
+
 			// CWG should check res is not 0
 		}
-		SHPClose(sh);
-		DBFClose(dbf);
+		
+      OGR_DS_Destroy( hDSsh );
+     hDSshmoved = OGR_Dr_CreateDataSource(driver, movedoutletshapefile, NULL);
+     if (hDSshmoved == NULL)
+      {
+        printf("warning: Unable to create %s\n", movedoutletshapefile);
+       // exit( 1 );
+	 }
 
-		SHPHandle shmoved;
-		DBFHandle dbfmoved;
-		shmoved = SHPCreate(movedoutletshapefile, SHPT_POINT);
-		char movedoutletsdbf[MAXLN];
-		nameadd(movedoutletsdbf, movedoutletshapefile, ".dbf");
-		dbfmoved = DBFCreate(movedoutletsdbf);
-
-		idIndx = DBFAddField(dbfmoved, "id", FTInteger, 6, 0);
-		iddownIndx = DBFAddField(dbfmoved, "id_down", FTInteger, 6, 0);
-		ad8Indx = DBFAddField(dbfmoved, "ad8", FTDouble, 12, 0);
-
-		for(i=0;i<nxy;++i){
+     char *layernamemoved;
+	// extract leyer information from shapefile
+    layernamemoved=getLayername(movedoutletshapefile);
+    //hLayer1 = OGR_DS_GetLayerByName( hDS1,layername );
+    //OGR_L_ResetReading(hLayer1);
+	
+	
+	hLayershmoved= OGR_DS_CreateLayer( hDSshmoved, layernamemoved,hSRSRaster, wkbPoint, NULL );
+    if(  layernamemoved == NULL )
+    {
+        printf( "warning: Layer creation failed.\n" );
+        //exit( 1 );
+    }
+ 
+	
+	
+    /* Add a few fields to the layer defn */
+    hFieldDefnshmoved = OGR_Fld_Create( "id", OFTInteger );
+    OGR_L_CreateField(hLayershmoved,  hFieldDefnshmoved, 0);
+    hFieldDefnshmoved= OGR_Fld_Create( "id_down", OFTInteger );
+    OGR_L_CreateField(hLayershmoved,  hFieldDefnshmoved, 0);
+	hFieldDefnshmoved = OGR_Fld_Create( "ad8", OFTReal );
+    OGR_L_CreateField(hLayershmoved,  hFieldDefnshmoved, 0);
+    for(i=0;i<nxy;++i){
+		
+			//hFeatureshmoved=OGR_L_GetFeature(hLayershmoved,i);
 			double x = xnode[i];  // DGT says does not need +pdx/2.0;
 			double y = ynode[i];  // DGT +pdy/2.0;
-			SHPObject *shpnew = SHPCreateSimpleObject(SHPT_POINT, 1, &x, &y, NULL);
-			//if(rank==0)printf("x: %g \ty: %g\n",xnode[i],ynode[i]);
-			//if(rank==0)printf("x: %g \ty: %g\tdist: %d\n",shpnew->padfX[0],shpnew->padfY[0],dist_moved[i]);
-			int indx = SHPWriteObject(shmoved, -1, shpnew);
-			int res = DBFWriteIntegerAttribute(dbfmoved, indx, idIndx, wid[i]);
-			res *= DBFWriteIntegerAttribute(dbfmoved, indx, iddownIndx, widdown[i]);
-			res *= DBFWriteDoubleAttribute(dbfmoved, indx, ad8Indx, (double)ad8max[i]);
+		
+			
+		
+
+        hFeatureshmoved = OGR_F_Create( OGR_L_GetLayerDefn( hLayershmoved ) );
+        OGR_F_SetFieldInteger( hFeatureshmoved, OGR_F_GetFieldIndex(hFeatureshmoved, "id"), wid[i] );
+		OGR_F_SetFieldInteger( hFeatureshmoved, OGR_F_GetFieldIndex(hFeatureshmoved, "id_down"), widdown[i] );
+		OGR_F_SetFieldDouble( hFeatureshmoved, OGR_F_GetFieldIndex(hFeatureshmoved, "ad8"), (double)ad8max[i] );
+
+       
+        hGeometryshmoved = OGR_G_CreateGeometry(wkbPoint);
+        OGR_G_SetPoint_2D(hGeometryshmoved, 0, x, y);
+        OGR_F_SetGeometry( hFeatureshmoved, hGeometryshmoved ); 
+		OGR_G_DestroyGeometry(hGeometryshmoved);
+	    if( OGR_L_CreateFeature( hLayershmoved, hFeatureshmoved ) != OGRERR_NONE )
+            {
+              printf( " warning: Failed to create feature in shapefile.\n" );
+              //exit( 1 );
+            }
+        OGR_F_Destroy( hFeatureshmoved );
+
+
 			// CWG should check res is not 0
 		}
-		//if(!rank)printf("closing file...",dist, totaldone,totalnodes);
-		SHPClose(shmoved);
-		DBFClose(dbfmoved);
+	 OGR_DS_Destroy( hDSshmoved );
 	}
 	//if(!rank)printf("done\n.",dist, totaldone,totalnodes);
 	

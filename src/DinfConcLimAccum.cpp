@@ -80,9 +80,16 @@ int dsllArea(char* angfile,char* ctptfile,char* dmfile,char* shfile,char* qfile,
 
 	//  Keep track of time
 	double begint = MPI_Wtime();
+	tiffIO ang(angfile, FLOAT_TYPE);
+	long totalX = ang.getTotalX();
+	long totalY = ang.getTotalY();
+	double dxA = ang.getdxA();
+	double dyA = ang.getdyA();
+	OGRSpatialReferenceH hSRSRaster;
+	hSRSRaster=ang.getspatialref();
 	if( useOutlets == 1) {
 		if(rank==0){
-			if(readoutlets(shfile, &numOutlets, x, y) !=0){
+			if(readoutlets(shfile,hSRSRaster, &numOutlets, x, y) !=0){
 				printf("Exiting \n");
 				MPI_Abort(MCW,5);
 			}else {
@@ -104,11 +111,11 @@ int dsllArea(char* angfile,char* ctptfile,char* dmfile,char* shfile,char* qfile,
 
 
 	//Create tiff object, read and store header info
-	tiffIO ang(angfile, FLOAT_TYPE);
-	long totalX = ang.getTotalX();
-	long totalY = ang.getTotalY();
-	double dxA = ang.getdxA();
-	double dyA = ang.getdyA();
+	//tiffIO ang(angfile, FLOAT_TYPE);
+	//long totalX = ang.getTotalX();
+	//long totalY = ang.getTotalY();
+	//double dxA = ang.getdxA();
+	//double dyA = ang.getdyA();
 
 
 	if(rank==0)
