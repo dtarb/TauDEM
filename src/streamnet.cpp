@@ -109,11 +109,8 @@ void createStreamNetShapefile(char *streamnetshp,OGRSpatialReferenceH hSRSraster
 
     // Create new file using this driver 
     hDS1 = OGR_Dr_CreateDataSource(driver, streamnetshp, NULL);
-    if (hDS1 == NULL)
-    {
-        printf("warning: Unable to create %s\n", streamnetshp);
-        //exit( 1 );
-    }
+    if (hDS1 != NULL) {
+ 
 
     char *layername; // layer name is file name without extension
     layername=getLayername(streamnetshp); // get layer name
@@ -206,7 +203,7 @@ void createStreamNetShapefile(char *streamnetshp,OGRSpatialReferenceH hSRSraster
     OGR_Fld_SetPrecision(hFieldDefn1, 1);
 	OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
 	}
-
+	}
 // Write shape from tardemlib.cpp
 int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *pointx, double *pointy, long np,tiffIO &obj)
 {
