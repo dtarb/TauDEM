@@ -67,7 +67,7 @@ tiffIO::tiffIO(char *fname, DATA_TYPE newtype) {
 		printf("Error opening file %s.\n", fname);
 		MPI_Abort(MCW, 21);
 	}
-
+	hDriver = GDALGetDatasetDriver( fh );
 
     //OGRSpatialReferenceH  hSRS;
 	char  *pszProjection;
@@ -202,7 +202,6 @@ tiffIO::tiffIO(char *fname, DATA_TYPE newtype, void* nd, const tiffIO &copy) {
 	totalY = copy.totalY;
 	dxA=copy.dxA;
 	dyA=copy.dyA;
-	
 	xllcenter = copy.xllcenter;
 	yllcenter = copy.yllcenter;
 	xleftedge = copy.xleftedge;
@@ -250,13 +249,52 @@ void tiffIO::read(long xstart, long ystart, long numRows, long numCols, void* de
 void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* source) {
 	MPI_Status status;
 	fflush(stdout);
-	if (rank == 0) {
-		if (isFileInititialized == 0) {
-			// load GTiff driver and create file if file has not been initialized
-			hDriver = GDALGetDriverByName("GTiff");
+	char **papszMetadata;
+	
+	const char *extension_list[5] = {".tif",".img",".sdat",".bil",".bin"};  // extension list --can add more 
+	const char *driver_code[5] = {"GTiff","HFA","SAGA","EHdr","ENVI"};   //  code list -- can add more
+	size_t extension_num=5;
+	char *ext; 
+	int index = -1; 
 
-			if (hDriver == NULL) {
-				printf("tiff driver is not available\n");
+	// get extension  of the file 
+	ext = strrchr(filename, '.'); 
+	if(!ext){
+		strcat(filename,".tif");
+		index=0;
+	}
+	else
+	{
+
+		//  convert to lower case for matching
+		for(int i = 0; ext[i]; i++){
+			ext[i] = tolower(ext[i]);
+		}
+		// if extension matches then set driver
+		for (size_t i = 0; i < extension_num; i++) {
+			if (strcmp(ext,extension_list[i])==0) {
+				index=i; //get the index where extension of the outputfile matches with the extensionlist 
+				break;
+			}
+		}
+		if(index < 0)  // Extension not matched so set it to tif
+		{
+			char filename_withoutext[MAXLN]; // layer name is file name without extension
+			size_t len = strlen(filename);
+			size_t len1 = strlen(ext+1);
+			memcpy(filename_withoutext, filename, len-len1);
+			filename_withoutext[len - len1] = 0; 
+			strcpy(filename,filename_withoutext);
+			strcat(filename,"tif");
+			index=0;
+		}
+	}
+	if (rank == 0) {
+		//if (isFileInititialized == 0) {
+			hDriver = GDALGetDriverByName(driver_code[index]);
+		
+		    if (hDriver == NULL) {
+		        printf("driver is not available\n");
 				MPI_Abort(MPI_COMM_WORLD, 22);
 			}
 
@@ -284,20 +322,20 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 			else if (datatype == LONG_TYPE)		
 				GDALSetRasterNoDataValue(bandh, (double) *((int32_t*) nodata));
 
-			isFileInititialized = 1;
-		} else {
+			//isFileInititialized = 1;
+		//} else {
 			//  Open file if it has already been initialized
-			fh = GDALOpen(filename, GA_Update);
-			bandh = GDALGetRasterBand(fh, 1);
-		}
+			//fh = GDALOpen(filename, GA_Update);
+			//bandh = GDALGetRasterBand(fh, 1);
+		//}
 		//  Now write the data from rank 0 and close the file
-		GDALDataType eBDataType;
-		if (datatype == FLOAT_TYPE)
-			eBDataType = GDT_Float32;
-		else if (datatype == SHORT_TYPE)
-			eBDataType = GDT_Int16;
-		else if (datatype == LONG_TYPE)
-			eBDataType = GDT_Int32;
+		//GDALDataType eBDataType;
+		//if (datatype == FLOAT_TYPE)
+			//eBDataType = GDT_Float32;
+		//else if (datatype == SHORT_TYPE)
+			//eBDataType = GDT_Int16;
+		//else if (datatype == LONG_TYPE)
+			//eBDataType = GDT_Int32;
 
 		GDALRasterIO(bandh, GF_Write, xstart, ystart, numCols, numRows,
 			source, numCols, numRows, eBDataType,
