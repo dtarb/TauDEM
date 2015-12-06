@@ -23,7 +23,7 @@
 ; TauDEMArcGIS/
 
 #define MyAppName "TauDEM"
-#define MyAppVersion "5.4"
+#define MyAppVersion "5.3.2"
 #define MyAppPublisher "Utah State University"
 #define MyAppURL "http://hydrology.usu.edu/taudem/taudem5/index.html"
 
@@ -41,7 +41,7 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={pf}\TauDEM
 DefaultGroupName={#MyAppName}
-OutputBaseFilename=TauDEM53_setup
+OutputBaseFilename=TauDEM531_setup
 Compression=lzma
 SolidCompression=yes        
 ; "ArchitecturesInstallIn64BitMode=x64" requests that the install be
