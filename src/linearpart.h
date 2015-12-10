@@ -41,6 +41,8 @@ email:  dtarb@usu.edu
 #define LINEARPART_H
 
 #include <mpi.h>
+
+#include <cassert>
 #include <cstdio>
 #include <cstdlib>
 #include <stdint.h>
@@ -76,12 +78,11 @@ class linearpart : public tdpartition {
             init(totalx, totaly, dx, dy, MPItype, noData);
         }
 
-
 		~linearpart();
 
 		void init(long totalx, long totaly, double dx_in, double dy_in, MPI_Datatype MPIt, datatype nd);
-		bool isInPartition(int x, int y);
-		bool hasAccess(int x, int y);
+		bool isInPartition(int x, int y) const;
+		bool hasAccess(int x, int y) const;
 
 		void share();
 		void passBorders();
@@ -101,14 +102,14 @@ class linearpart : public tdpartition {
 		//int gettotalx(){return totalx;}
 		//int gettotaly(){return totaly;}
 		void* getGridPointer(){return gridData;}
-		bool isNodata(long x, long y);
-		void setToNodata(long x, long y);
-		datatype getData(int x, int y, datatype &val);
+		bool isNodata(int x, int y) const;
+		void setToNodata(int x, int y);
+
+		datatype getData(int x, int y, datatype &val) const;
 		void setData(int x, int y, datatype val);
 		void addToData(int x, int y, datatype val);
 
-		datatype getData(int x, int y);
-		//void areaD(queue<node> *que);
+		datatype getData(int x, int y) const;
 };
 
 //Destructor. Just frees up memory.
@@ -170,25 +171,20 @@ void linearpart<datatype>::init(long totalx, long totaly, double dx_in, double d
 
 //Returns true if (x,y) is in partition
 template <class datatype>
-bool linearpart<datatype>::isInPartition(int x, int y) {
-	if(x>=0 && x<nx && y>=0 && y<ny) return true;
-	else return false;
+inline bool linearpart<datatype>::isInPartition(int x, int y) const {
+    return x>=0 && x<nx && y>=0 && y<ny;
 }
 
 //Returns true if (x,y) is in or on borders of partition
 template <class datatype>
-bool linearpart<datatype>::hasAccess(int x, int y) {
-	//isInPartition takes care of the case where (x,y) is inside the grid
-	if(x>=0 && x<nx && y>=0 && y<ny) return true;   // DGT reducing function nesting for efficiency
-//	if(isInPartition(x,y)) return true;	
+inline bool linearpart<datatype>::hasAccess(int x, int y) const {
+    // Partition has access to top and bottom rows on other processors
+    // so valid x [0, nx) and y [-1, ny] (unless at top/bottom partition)
+    
+    bool badTopAccess = rank == 0 && y == -1;
+    bool badBottomAccess = rank == size - 1 && y == ny;
 
-	//Now we only need to worry about borders.
-	//x must be bounded by 0 and nx, y may be -1 to ny
-	else if(x>=0 && x<nx) {
-		if(rank !=0 && y==-1) return true;
-		if(rank !=size-1 && y==ny) return true;
-	}
-	return false;
+    return x >= 0 && x < nx && y >= -1 && y <= ny && !badTopAccess && !badBottomAccess;
 }
 
 //Shares border information between adjacent processes.  Border information is stored
@@ -480,75 +476,46 @@ void linearpart<datatype>::transferPack( int *countA, int *bufferAbove, int *cou
 	delete bbuf;
 }
 
-//Returns true if grid element (x,y) is equal to noData.
+// Returns true if grid element (x,y) is equal to noData.
 template <class datatype>
-bool linearpart<datatype>::isNodata(long inx, long iny){
-	int64_t x, y;//int64 because it oculd be -1.
-	x = inx;
-	y = iny;
-
-	if(x>=0 && x<nx && y>=0 && y<ny) {
-	    return std::abs((float)(gridData[x+y*nx]-noData))<MINEPS;  
-    } else if(x>=0 && x<nx) {
-		if(y==-1) return (std::abs((float)(topBorder[x]-noData))<MINEPS);
-		else if(y==ny) return (std::abs((float)(bottomBorder[x]-noData))<MINEPS);
-	}
-
-	return true;
+inline bool linearpart<datatype>::isNodata(int x, int y) const {
+    return getData(x, y) == noData;
 }
 
 //Sets the element in the grid to noData.
 template <class datatype>
-void linearpart<datatype>::setToNodata(long inx, long iny){
-	int64_t x, y;
-	x = inx;
-	y = iny;
-	if(x>=0 && x<nx && y>=0 && y<ny) gridData[x+y*nx] = noData;
-//	if(isInPartition(x,y)) gridData[x+y*nx] = noData;
-	else if(x>=0 && x<nx){
-		if(y==-1) topBorder[x] = noData;
-		else if(y==ny) bottomBorder[x] = noData;
-	}
+inline void linearpart<datatype>::setToNodata(int x, int y) {
+    setData(x, y, noData);
 }
 
 //Returns the element in the grid with coordinate (x,y).
 template <class datatype>
-inline datatype linearpart<datatype>::getData(int x, int y)
+inline datatype linearpart<datatype>::getData(int x, int y) const
 {
+    assert(x >= 0 && x < nx && y >= -1 && y <= ny);
     return gridData[x+y*nx];
 }
 
-//Returns the element in the grid with coordinate (x,y).
+// FIXME: get rid of this ugly function
 template <class datatype>
-datatype linearpart<datatype>::getData(int x, int y, datatype &val) {
-//	if(isInPartition(x,y)) val = gridData[x+y*nx];
-	if(x>=0 && x<nx && y>=0 && y<ny) val = gridData[x+y*nx];
-	else if(x>=0 && x<nx){
-		if(y==-1) val = topBorder[x];
-		else if(y==ny) val = bottomBorder[x];
-	}
+datatype linearpart<datatype>::getData(int x, int y, datatype &val) const {
+    val = getData(x, y);
 	return val;
 }
 
 //Sets the element in the grid to the specified value.
 template <class datatype>
-void linearpart<datatype>::setData(int x, int y, datatype val){
-//	if(isInPartition(x,y)) gridData[x+y*nx] = val;
-	if(x>=0 && x<nx && y>=0 && y<ny) gridData[x+y*nx] = val;
-	else if(x>=0 && x<nx){
-		if(y==-1) topBorder[x] = val;
-		else if(y==ny) bottomBorder[x] = val;
-	}
+inline void linearpart<datatype>::setData(int x, int y, datatype val){
+    assert(isInPartition(x, y));
+
+    gridData[x + y*nx] = val;
 }
 
 //Increments the element in the grid by the specified value.
 template <class datatype>
 inline void linearpart<datatype>::addToData(int x, int y, datatype val) {
-    gridData[x+y*nx] += val;
+    assert(isInPartition(x, y));
 
-#if NDEBUG
-    if (!isInPartition(x, y))
-        printf("Invalid addToData(%l, %l, %d) call\n", x, y, val);
-#endif
+    gridData[x + y*nx] += val;
 }
 #endif

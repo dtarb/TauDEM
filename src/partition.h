@@ -45,17 +45,17 @@ email:  dtarb@usu.edu
 
 class tdpartition{
 	protected:
-		long totalx, totaly;
-		long nx, ny;
+		int totalx, totaly;
+		int nx, ny;
 		double dx, dy;
 
 	public:
 		tdpartition(){}
 		virtual ~tdpartition(){}
 
-		virtual bool isInPartition(int, int) = 0;
- 		virtual bool hasAccess(int, int) = 0;
-		virtual bool isNodata(long x, long y) = 0;
+		virtual bool isInPartition(int, int) const = 0;
+ 		virtual bool hasAccess(int, int) const = 0;
+		virtual bool isNodata(int x, int y) const = 0;
 
 		virtual void share() = 0;
 		virtual void passBorders() = 0;
@@ -80,35 +80,35 @@ class tdpartition{
 		//from tdpartition can be template classes.  These classes MUST declare as
 		//their template type one of the types declared for these functions.
 		virtual void* getGridPointer(){return (void*)NULL;}
-		virtual void setToNodata(long x, long y) = 0;
+		virtual void setToNodata(int x, int y) = 0;
 
 		virtual void init(long totalx, long totaly, double dx_in, double dy_in, MPI_Datatype MPIt, short nd){}
 		virtual void init(long totalx, long totaly, double dx_in, double dy_in, MPI_Datatype MPIt, long nd){}
 		virtual void init(long totalx, long totaly, double dx_in, double dy_in, MPI_Datatype MPIt, float nd){}
 
-		virtual short getData(long, long, short&){
+		virtual short getData(long, long, short&) const {
 			printf("Attempt to access short grid with incorrect data type\n");
 			MPI_Abort(MPI_COMM_WORLD,41);
 			return 0;
 		}
-		virtual long getData(long, long, long&){
+		virtual long getData(long, long, long&) const {
 			printf("Attempt to access long grid with incorrect data type\n");
 			MPI_Abort(MPI_COMM_WORLD,42);
 			return 0;
 		}
-		virtual float getData(long, long, float&){
+		virtual float getData(long, long, float&) const {
 			printf("Attempt to access float grid with incorrect data type\n");
 			MPI_Abort(MPI_COMM_WORLD,43);
 			return 0;
 		}
 
-		virtual void setData(long, long, short){}
-		virtual void setData(long, long, long){}
-		virtual void setData(long, long, float){}
+		virtual void setData(int, int, short){}
+		virtual void setData(int, int, long){}
+		virtual void setData(int, int, float){}
 
-		virtual void addToData(long, long, short){}
-		virtual void addToData(long, long, long){}
-		virtual void addToData(long, long, float){}
+		virtual void addToData(int, int, short){}
+		virtual void addToData(int, int, long){}
+		virtual void addToData(int, int, float){}
 };
 
 #endif
