@@ -51,15 +51,15 @@ email:  dtarb@usu.edu
 #include "tiffIO.h"
 #include "Node.h"
 
-template<typename T> long resolveFlats(T& elev, BlockPartition<short>& inc, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands);
-template<typename T> long resolveFlats_parallel(T& elevDEM, BlockPartition<short>& inc, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands);
+template<typename T> long resolveFlats(T& elev, SparsePartition<short>& inc, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands);
+template<typename T> long resolveFlats_parallel(T& elevDEM, SparsePartition<short>& inc, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands);
 
-template<typename T> void flowTowardsLower(T& elev, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, BlockPartition<short>& inc);
-template<typename T> void flowFromHigher(T& elevDEM, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, BlockPartition<short>& inc);
-template<typename T> int markPits(T& elevDEM, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, BlockPartition<short>& inc);
+template<typename T> void flowTowardsLower(T& elev, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, SparsePartition<short>& inc);
+template<typename T> void flowFromHigher(T& elevDEM, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, SparsePartition<short>& inc);
+template<typename T> int markPits(T& elevDEM, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, SparsePartition<short>& inc);
 
-int propagateIncrements(linearpart<short>& flowDir, BlockPartition<short>& inc, std::vector<node>& queue);
-int propagateBorderIncrements(linearpart<short>& flowDir, BlockPartition<short>& inc);
+int propagateIncrements(linearpart<short>& flowDir, SparsePartition<short>& inc, std::vector<node>& queue);
+int propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<short>& inc);
 
 double fact[9];
 
@@ -112,7 +112,7 @@ int dontCross(int k, int i, int j, linearpart<short>& flowDir)
 }
 
 //Set positive flowdirections of elevDEM
-void setFlow(int i, int j, linearpart<short>& flowDir, linearpart<float>& elevDEM, BlockPartition<long>& area, int useflowfile)
+void setFlow(int i, int j, linearpart<short>& flowDir, linearpart<float>& elevDEM, SparsePartition<long>& area, int useflowfile)
 {
     int in,jn;
     int amax=0;
@@ -246,7 +246,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
 
     linearpart<short> flowDir(totalX, totalY, dx, dy, MPI_SHORT, flowDirNodata);
     //linearpart<long> area(totalX, totalY, dx, dy, MPI_LONG, -1);
-    BlockPartition<long> area(totalX, totalY, -1);
+    SparsePartition<long> area(totalX, totalY, -1);
 
     //If using a flowfile, read it in
     if (useflowfile == 1) {
@@ -331,7 +331,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
         std::set<int> bordering_island_labels;
 
         {
-            BlockPartition<int> island_marker(nx, ny, 0);
+            SparsePartition<int> island_marker(nx, ny, 0);
 
             for(node flat : flats)
             {
@@ -396,7 +396,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
         }
 
         if (!islands.empty()) {
-            BlockPartition<short> inc(nx, ny, 0);
+            SparsePartition<short> inc(nx, ny, 0);
             size_t lastNumFlat = resolveFlats(elevDEM, inc, flowDir, islands);
 
             if (rank==0) {
@@ -407,7 +407,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
             // Repeatedly call resolve flats until there is no change
             while (lastNumFlat > 0)
             {
-                BlockPartition<short> newInc(nx, ny, 0);
+                SparsePartition<short> newInc(nx, ny, 0);
 
                 lastNumFlat = resolveFlats(inc, newInc, flowDir, islands); 
                 inc = std::move(newInc);
@@ -427,7 +427,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
         }
 
         if (sharedFlats > 0) {
-            BlockPartition<short> inc(nx, ny, 0);
+            SparsePartition<short> inc(nx, ny, 0);
             size_t lastNumFlat = resolveFlats_parallel(elevDEM, inc, flowDir, borderingIslands);
 
             if (rank==0) {
@@ -437,7 +437,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
 
             // Repeatedly call resolve flats until there is no change across all processors
             while (lastNumFlat > 0) {
-                BlockPartition<short> newInc(nx, ny, 0);
+                SparsePartition<short> newInc(nx, ny, 0);
 
                 lastNumFlat = resolveFlats_parallel(inc, newInc, flowDir, borderingIslands); 
                 inc = std::move(newInc);
@@ -492,7 +492,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
 
 // Sets only flowDir only where there is a positive slope
 // Returns number of cells which are flat
-long setPosDir(linearpart<float>& elevDEM, linearpart<short>& flowDir, BlockPartition<long>& area, int useflowfile)
+long setPosDir(linearpart<float>& elevDEM, linearpart<short>& flowDir, SparsePartition<long>& area, int useflowfile)
 {
     double dx = elevDEM.getdx();
     double dy = elevDEM.getdy();
@@ -545,7 +545,7 @@ long setPosDir(linearpart<float>& elevDEM, linearpart<short>& flowDir, BlockPart
 
 // Function to set flow direction based on incremented artificial elevations
 template<typename T>
-void setFlow2(int i, int j, linearpart<short>& flowDir, T& elev, BlockPartition<short>& inc)
+void setFlow2(int i, int j, linearpart<short>& flowDir, T& elev, SparsePartition<short>& inc)
 {
     /*  This function sets directions based upon secondary elevations for
       assignment of flow directions across flats according to Garbrecht and Martz
@@ -592,7 +592,7 @@ void setFlow2(int i, int j, linearpart<short>& flowDir, T& elev, BlockPartition<
 //************************************************************************
 
 template<typename T>
-void flowTowardsLower(T& elev, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, BlockPartition<short>& inc)
+void flowTowardsLower(T& elev, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, SparsePartition<short>& inc)
 {
     long nx = flowDir.getnx();
     long ny = flowDir.getny();
@@ -641,7 +641,7 @@ void flowTowardsLower(T& elev, linearpart<short>& flowDir, std::vector<std::vect
 }
 
 template<typename T>
-void flowFromHigher(T& elev, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, BlockPartition<short>& inc)
+void flowFromHigher(T& elev, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, SparsePartition<short>& inc)
 {
     long nx = flowDir.getnx();
     long ny = flowDir.getny();
@@ -683,7 +683,7 @@ void flowFromHigher(T& elev, linearpart<short>& flowDir, std::vector<std::vector
 }
 
 template<typename T>
-int markPits(T& elevDEM, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, BlockPartition<short>& inc)
+int markPits(T& elevDEM, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, SparsePartition<short>& inc)
 {
     int nx = flowDir.getnx();
     int ny = flowDir.getny();
@@ -735,7 +735,7 @@ int markPits(T& elevDEM, linearpart<short>& flowDir, std::vector<std::vector<nod
 
 
 template<typename T>
-long resolveFlats(T& elevDEM, BlockPartition<short>& inc, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands)
+long resolveFlats(T& elevDEM, SparsePartition<short>& inc, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands)
 {
     long nx = flowDir.getnx();
     long ny = flowDir.getny();
@@ -751,7 +751,7 @@ long resolveFlats(T& elevDEM, BlockPartition<short>& inc, linearpart<short>& flo
     flowTowardsLower(elevDEM, flowDir, islands, inc);
 
     // Drain flats away from higher adjacent terrain
-    BlockPartition<short> s(nx, ny, 0);
+    SparsePartition<short> s(nx, ny, 0);
     
     flowFromHigher(elevDEM, flowDir, islands, s);
 
@@ -807,7 +807,7 @@ long resolveFlats(T& elevDEM, BlockPartition<short>& inc, linearpart<short>& flo
 }
 
 template<typename T>
-long resolveFlats_parallel(T& elev, BlockPartition<short>& inc, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands)
+long resolveFlats_parallel(T& elev, SparsePartition<short>& inc, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands)
 {
     long nx = flowDir.getnx();
     long ny = flowDir.getny();
@@ -835,7 +835,7 @@ long resolveFlats_parallel(T& elev, BlockPartition<short>& inc, linearpart<short
     markPits(elev, flowDir, islands, inc);
 
     // Drain flats away from higher adjacent terrain
-    BlockPartition<short> higherGradient(nx, ny, 0);
+    SparsePartition<short> higherGradient(nx, ny, 0);
    
     flowFromHigher(elev, flowDir, islands, higherGradient);
 
@@ -911,7 +911,7 @@ long resolveFlats_parallel(T& elev, BlockPartition<short>& inc, linearpart<short
     return globalFlatsRemaining;
 }
 
-int propagateIncrements(linearpart<short>& flowDir, BlockPartition<short>& inc, std::vector<node>& queue) {
+int propagateIncrements(linearpart<short>& flowDir, SparsePartition<short>& inc, std::vector<node>& queue) {
     int numInc = 0;
     int st = 1;
     
@@ -951,7 +951,7 @@ int propagateIncrements(linearpart<short>& flowDir, BlockPartition<short>& inc, 
     return numInc;
 }
 
-int propagateBorderIncrements(linearpart<short>& flowDir, BlockPartition<short>& inc)
+int propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<short>& inc)
 {
     int nx = flowDir.getnx();
     int ny = flowDir.getny();

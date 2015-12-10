@@ -1,5 +1,10 @@
-#ifndef BLOCKPARTITION_H
-#define BLOCKPARTITION_H
+#ifndef SPARSEPARTITION_H
+#define SPARSEPARTITION_H
+
+// Sparse partition that internally stores the raster as tiles. 
+// 
+// It greatly reduces the memory footprint for temporary
+// rasters that are used sparsely during computation.
 
 #include <cstring>
 #include <mpi.h>
@@ -10,9 +15,9 @@ const int BLOCK_SIZE = 1 << BLOCK_SIZE_BITS;
 const int BLOCK_MASK = ~(BLOCK_SIZE - 1);
 
 template<typename T>
-class BlockPartition {
+class SparsePartition {
     public:
-        BlockPartition(T no_data)
+        SparsePartition(T no_data)
         {
             width = 0;
             width_blocks = 0;
@@ -22,7 +27,7 @@ class BlockPartition {
             no_data_value = no_data;
         }
 
-        BlockPartition(int width, int height, T no_data)
+        SparsePartition(int width, int height, T no_data)
             : width(width), height(height), no_data_value(no_data)
         {
             width_blocks = ((width + BLOCK_SIZE - 1) & BLOCK_MASK) >> BLOCK_SIZE_BITS;
@@ -36,11 +41,11 @@ class BlockPartition {
             }
         }
 
-        BlockPartition(const BlockPartition& bp) = delete;
-        BlockPartition(BlockPartition&& bp) = default;
+        SparsePartition(const SparsePartition& bp) = delete;
+        SparsePartition(SparsePartition&& bp) = default;
 
-        BlockPartition& operator=(const BlockPartition&) = delete;
-        BlockPartition& operator=(BlockPartition&& bp) {
+        SparsePartition& operator=(const SparsePartition&) = delete;
+        SparsePartition& operator=(SparsePartition&& bp) {
             width = bp.width;
             height = bp.height;
             width_blocks = bp.width_blocks;
@@ -51,7 +56,7 @@ class BlockPartition {
             bp.blocks = nullptr;
         };
 
-        ~BlockPartition() {
+        ~SparsePartition() {
             free_blocks();
         }
 
@@ -62,8 +67,6 @@ class BlockPartition {
 
             int x = gx & ~BLOCK_MASK;
             int y = gy & ~BLOCK_MASK;
-
-            //printf("getting %d %d -> %d %d -> %d %d\n", gx, gy, bx, by, x, y);
 
             return block_data[x + y*BLOCK_SIZE];
         }
@@ -140,7 +143,7 @@ class BlockPartition {
                 T* block = get_stride(x, y, false);
 
                 if (block == nullptr) {
-                    // Check if all values are no data to save memor
+                    // Check if all values are no data to save memory
                     for(int i = 0; i < BLOCK_SIZE; i++) {
                         if (buf[x + i] != no_data_value)
                         {
@@ -211,4 +214,4 @@ class BlockPartition {
         T** blocks;
 };
 
-#endif //BLOCKPARTITION_H
+#endif //SPARSEPARTITION_H
