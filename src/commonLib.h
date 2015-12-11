@@ -39,18 +39,24 @@ email:  dtarb@usu.edu
 //  This software is distributed from http://hydrology.usu.edu/taudem/
 #ifndef COMMON_H
 #define COMMON_H
-#include <queue>
 
+#include <queue>
 #include <mpi.h>
+
+#include <gdal.h>
 
 #include "const.h"
 #include "linearpart.h"
 
-int nameadd(char* full, char* arg, const char* suff);
-double prop( float a, int k);
-int readoutlets(char *outletsfile, int *noutlets, double*& x, double*& y);
-int readoutlets(char *outletsfile, int *noutlets, double*& x, double*& y, int*& id);
+//  TODO adjust this for different dx and dy
+//const double aref[10] = { -atan2((double)1,(double)1), 0., -aref[0],(double)(0.5*PI),PI-aref[2],(double)PI,
+                       // PI+aref[2],(double)(1.5*PI),2.*PI-aref[2],(double)(2.*PI) };   // DGT is concerned that this assumes square grids.  For different dx and dx needs adjustment
 
+int nameadd(char* full, char* arg, const char* suff);
+double prop(float a, int k, double dx1 , double dy1);
+char *getLayername(char *inputogrfile);
+int readoutlets(char *outletsfile, OGRSpatialReferenceH hSRSRaster, int *noutlets, double*& x, double*& y);
+int readoutlets(char *outletsfile, OGRSpatialReferenceH  hSRSraster,int *noutlets, double*& x, double*& y, int*& id);
 
 bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData);
 

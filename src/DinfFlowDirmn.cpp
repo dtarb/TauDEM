@@ -54,7 +54,7 @@ email:  dtarb@usu.edu
 int main(int argc,char **argv)
 {
    char demfile[MAXLN],angfile[MAXLN],slopefile[MAXLN],flowfile[MAXLN];
-   int err,useflowfile=0,i,prow=0,pcol=0;
+   int err,useflowfile=0,i;
    
    if(argc < 2)
     {
@@ -93,24 +93,6 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-                else if(strcmp(argv[i],"-mf")==0)
-                {
-                        i++;
-                        if(argc > i)
-                        {
-                                prow = atoi(argv[i]);
-                                i++;
-                                if(argc > i)
-                                {
-                                        pcol = atoi(argv[i]);
-                                        i++;
-                                }
-                                else goto errexit;
-                        }
-                        else goto errexit;
-                        if(prow <=0 || pcol <=0)
-                                goto errexit;
-                }
 		else if(strcmp(argv[i],"-ang")==0)
 		{
 			i++;
@@ -143,7 +125,7 @@ int main(int argc,char **argv)
 		nameadd(angfile,argv[1],"ang");
 		nameadd(slopefile,argv[1],"slp");
 	}
-    if((err=setdir(demfile,angfile,slopefile,flowfile,useflowfile,prow,pcol)) != 0)
+    if((err=setdir(demfile,angfile,slopefile,flowfile,useflowfile)) != 0)
         printf("Setdir error %d\n",err); 
     return 0;
 	

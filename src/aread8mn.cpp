@@ -44,13 +44,12 @@ email:  dtarb@usu.edu
 #include <stdio.h>
 #include <stdlib.h>
 #include "commonLib.h"
-#include "shape/shapefile.h"
 #include "aread8.h"
 
 int main(int argc,char **argv)
 {
    char pfile[MAXLN],afile[MAXLN],wfile[MAXLN],shfile[MAXLN];
-   int err,useOutlets=0,usew=0,contcheck=1,i,prow=0,pcol=0;
+   int err,useOutlets=0,usew=0,contcheck=1,i;
       
    if(argc < 2)
     {  
@@ -80,25 +79,6 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-		else if(strcmp(argv[i],"-mf")==0)
-                {
-                        i++;
-                        if(argc > i)
-                        {
-                                prow = atoi(argv[i]);
-                                i++;
-				if(argc > i)
-                        	{
-                                	pcol = atoi(argv[i]);
-                               		i++;
-                        	}
-                        	else goto errexit;
-                        }
-                        else goto errexit;
-			if(prow <=0 || pcol <=0)
-				goto errexit;
-                }
-
 		else if(strcmp(argv[i],"-ad8")==0)
 		{
 			i++;
@@ -109,7 +89,8 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-	  	else if(strcmp(argv[i],"-o")==0)
+
+	   else if(strcmp(argv[i],"-o")==0)
 		{
 			i++;
 			if(argc > i)
@@ -120,7 +101,7 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-		else if(strcmp(argv[i],"-wg")==0)
+	   else if(strcmp(argv[i],"-wg")==0)
 		{
 			i++;
 			if(argc > i)
@@ -131,12 +112,12 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-	   	else if(strcmp(argv[i],"-nc")==0)
+	   else if(strcmp(argv[i],"-nc")==0)
 		{
 			i++;
 			contcheck=0;
 		}		
-	   	else 
+	   else 
 		{
 			goto errexit;
 		}
@@ -147,7 +128,7 @@ int main(int argc,char **argv)
 		nameadd(pfile,argv[1],"p");
 	}
 
-    if( (err=aread8(pfile,afile,shfile,wfile,useOutlets,usew,contcheck,prow,pcol)) != 0)
+    if( (err=aread8(pfile,afile,shfile,wfile,useOutlets,usew,contcheck)) != 0)
         printf("area error %d\n",err);
 
 	return 0;

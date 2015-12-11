@@ -44,14 +44,13 @@ email:  dtarb@usu.edu
 #include <stdio.h>
 #include <stdlib.h>
 #include "commonLib.h"
-#include "shape/shapefile.h"
 #include "tardemlib.h"
 #include "DinfDistDown.h"
 
 int main(int argc,char **argv)
 {
 char angfile[MAXLN],felfile[MAXLN],slpfile[MAXLN],wfile[MAXLN],dtsfile[MAXLN],srcfile[MAXLN];
-   int err,i,statmethod=0,typemethod=0,usew=0, concheck=1, prow = 0, pcol=0;
+   int err,i,statmethod=0,typemethod=0,usew=0, concheck=1;
       
    if(argc < 2)
     {  
@@ -80,24 +79,6 @@ char angfile[MAXLN],felfile[MAXLN],slpfile[MAXLN],wfile[MAXLN],dtsfile[MAXLN],sr
 			}
 			else goto errexit;
 		}
-                else if(strcmp(argv[i],"-mf")==0)
-                {
-                        i++;
-                        if(argc > i)
-                        {
-                                prow = atoi(argv[i]);
-                                i++;
-                                if(argc > i)
-                                {
-                                        pcol = atoi(argv[i]);
-                                        i++;
-                                }
-                                else goto errexit;
-                        }
-                        else goto errexit;
-                        if(prow <=0 || pcol <=0)
-                                goto errexit;
-                }
 		else if(strcmp(argv[i],"-fel")==0)
 		{
 			i++;
@@ -236,7 +217,7 @@ char angfile[MAXLN],felfile[MAXLN],slpfile[MAXLN],wfile[MAXLN],dtsfile[MAXLN],sr
 	}   
    
 if((err=dinfdistdown(angfile,felfile,slpfile,wfile,srcfile,dtsfile,statmethod,
-   typemethod,usew, concheck,prow,pcol)) != 0)
+   typemethod,usew, concheck)) != 0)
         printf("area error %d\n",err);   
 
 //	int er;

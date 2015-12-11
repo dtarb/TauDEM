@@ -46,9 +46,8 @@ email:  dtarb@usu.edu
 #include "linearpart.h"
 #include "createpart.h"
 #include "tiffIO.h"
-#include "shape/shapefile.h"
-using namespace std;
 
+using namespace std;
 
 // The old program was written in column major order.
 // d1 and d2 were used to translate flow data (1-8 taken from the indeces)
@@ -59,7 +58,7 @@ using namespace std;
 // moved to commonlib.h
 
 int dmarea(char* angfile,char* adecfile,char* dmfile,char* shfile,char* wfile,
-		   int useOutlets,int usew,int contcheck, int prow, int pcol)
+		   int useOutlets,int usew,int contcheck)
 {
 
 	MPI_Init(NULL,NULL);{
@@ -72,13 +71,21 @@ int dmarea(char* angfile,char* adecfile,char* dmfile,char* shfile,char* wfile,
 
 	double *x, *y;
 	int numOutlets=0;
-
+	
 //  Begin timer
     double begint = MPI_Wtime();
+	tiffIO ang(angfile, FLOAT_TYPE);
+	long totalX = ang.getTotalX();
+	long totalY = ang.getTotalY();
+	double dxA = ang.getdxA();
+	double dyA = ang.getdyA();
+	OGRSpatialReferenceH hSRSRaster;
+	hSRSRaster=ang.getspatialref();
+
     int *id;
 	if( useOutlets == 1) {
 		if(rank==0){
-			if(readoutlets(shfile, &numOutlets, x, y, id) !=0){
+			if(readoutlets(shfile,hSRSRaster, &numOutlets, x, y, id) !=0){
 				printf("Exiting \n");
 				MPI_Abort(MCW,5);
 			}else {
@@ -102,11 +109,12 @@ int dmarea(char* angfile,char* adecfile,char* dmfile,char* shfile,char* wfile,
 	double p;
 
 	//Create tiff object, read and store header info
-	tiffIO ang(angfile, FLOAT_TYPE);
-	long totalX = ang.getTotalX();
-	long totalY = ang.getTotalY();
-	double dx = ang.getdx();
-	double dy = ang.getdy();
+	//tiffIO ang(angfile, FLOAT_TYPE);
+	//long totalX = ang.getTotalX();
+	//long totalY = ang.getTotalY();
+	//double dxA = ang.getdxA();
+	//double dyA = ang.getdyA();
+
 	if(rank==0)
 		{
 			float timeestimate=(1.2e-6*totalX*totalY/pow((double) size,0.65))/60+1;  // Time estimate in minutes
@@ -117,11 +125,12 @@ int dmarea(char* angfile,char* adecfile,char* dmfile,char* shfile,char* wfile,
 
 	//Create partition and read data
 	tdpartition *flowData;
-	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dx, dy, ang.getNodata());
+	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dxA, dyA, ang.getNodata());
 	int nx = flowData->getnx();
 	int ny = flowData->getny();
 	int xstart, ystart;
 	flowData->localToGlobal(0, 0, xstart, ystart);
+	flowData->savedxdyc(ang);
 	ang.read(xstart, ystart, ny, nx, flowData->getGridPointer());
 	
 	//Decay multiplier grid, get information from file
@@ -132,7 +141,7 @@ int dmarea(char* angfile,char* adecfile,char* dmfile,char* shfile,char* wfile,
 		MPI_Abort(MCW,5);
 		return 1;  
 	}
-	dmData = CreateNewPartition(dmm.getDatatype(), totalX, totalY, dx, dy, dmm.getNodata());
+	dmData = CreateNewPartition(dmm.getDatatype(), totalX, totalY, dxA, dyA, dmm.getNodata());
 	dmm.read(xstart, ystart, dmData->getny(), dmData->getnx(), dmData->getGridPointer());
 
 	//if using weightData, get information from file
@@ -144,7 +153,7 @@ int dmarea(char* angfile,char* adecfile,char* dmfile,char* shfile,char* wfile,
 			MPI_Abort(MCW,5);
 			return 1;  //And maybe an unhappy error message
 		}
-		weightData = CreateNewPartition(w.getDatatype(), totalX, totalY, dx, dy, w.getNodata());
+		weightData = CreateNewPartition(w.getDatatype(), totalX, totalY, dxA, dyA, w.getNodata());
 		w.read(xstart, ystart, weightData->getny(), weightData->getnx(), weightData->getGridPointer());
 	}
 
@@ -162,7 +171,7 @@ int dmarea(char* angfile,char* adecfile,char* dmfile,char* shfile,char* wfile,
 
 	//Create empty partition to store new information
 	tdpartition *daccum;
-	daccum = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, MISSINGFLOAT);
+	daccum = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
 
 	// con is used to check for contamination at the edges
 	long i,j;
@@ -170,10 +179,10 @@ int dmarea(char* angfile,char* adecfile,char* dmfile,char* shfile,char* wfile,
 	long in,jn;
 	bool con=false, finished;
 	float tempFloat=0;
-	short tempShort=0;
+	short tempShort=0;double tempdxc,tempdyc;
 
 	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dx, dy, MISSINGSHORT);
+	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, MISSINGSHORT);
 	
 	//Share information and set borders to zero
 	flowData->share();
@@ -200,7 +209,9 @@ int dmarea(char* angfile,char* adecfile,char* dmfile,char* shfile,char* wfile,
 			if(flowData->isInPartition(i,j)){
 				//  Initialize the result
 				if( usew==1) daccum->setData(i,j,(weightData->getData(i,j,tempFloat)));
-				else daccum->setData(i,j,(float)dx);
+				else 
+					{flowData->getdxdyc(j,tempdxc,tempdyc);
+					daccum->setData(i,j,(float)tempdxc);}
 				con=false;  //  So far not edge contaminated
 		//test if neighbor drains towards cell excluding boundaries 
 				for(k=1; k<=8; k++) {
@@ -211,7 +222,8 @@ int dmarea(char* angfile,char* adecfile,char* dmfile,char* shfile,char* wfile,
 						con=true;
 					else{
 						flowData->getData(in,jn, angle);
-						p = prop(angle, (k+4)%8);
+						flowData->getdxdyc(jn,tempdxc,tempdyc);
+						p = prop(angle, (k+4)%8,tempdxc,tempdyc);
 						if(p>0.)
 						{
 							if(daccum->isNodata(in,jn)||dmData->isNodata(in,jn))con=true;
@@ -230,8 +242,9 @@ int dmarea(char* angfile,char* adecfile,char* dmfile,char* shfile,char* wfile,
 			//  END FLOW ALGEBRA EXPRESSION EVALUATION
 			//  Decrement neighbor dependence of downslope cell
 			flowData->getData(i, j, angle);
+			flowData->getdxdyc(j,tempdxc,tempdyc);
 			for(k=1; k<=8; k++) {			
-				p = prop(angle, k);
+				p = prop(angle, k,tempdxc,tempdyc);
 				if(p>0.0) {
 					in = i+d1[k];  jn = j+d2[k];
 					//Decrement the number of contributing neighbors in neighbor
@@ -278,9 +291,8 @@ int dmarea(char* angfile,char* adecfile,char* dmfile,char* shfile,char* wfile,
 
 	//Create and write TIFF file
 	float scaNodata = MISSINGFLOAT;
-	char prefix[5] = "dsca";
 	tiffIO dsca(adecfile, FLOAT_TYPE, &scaNodata, ang);
-	dsca.write(xstart, ystart, ny, nx, daccum->getGridPointer(),prefix,prow,pcol);
+	dsca.write(xstart, ystart, ny, nx, daccum->getGridPointer());
 
 	double writet = MPI_Wtime();
         double dataRead, compute, write, total,tempd;

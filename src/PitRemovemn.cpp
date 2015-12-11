@@ -48,9 +48,8 @@ email:  dtarb@usu.edu
 int main(int argc,char **argv)
 {
    char demfile[MAXLN],newfile[MAXLN],flowfile[MAXLN];
-   int err,order,subbno,i,prow = 0, pcol = 0;
+   int err,order,subbno,i;
    short useflowfile=0;
-   float epsilon=0.0;  // minimum value to raise cells to drain
    bool verbose=false;  //  Initialize verbose flag
    bool is_4p = false; // four-point flow method versus eight-point, arb 5/31/11
    char maskfile[MAXLN]; // mask out actual depressions, arb 5/31/11
@@ -94,24 +93,6 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-                else if(strcmp(argv[i],"-mf")==0)
-                {
-                        i++;
-                        if(argc > i)
-                        {
-                                prow = atoi(argv[i]);
-                                i++;
-                                if(argc > i)
-                                {
-                                        pcol = atoi(argv[i]);
-                                        i++;
-                                }
-                                else goto errexit;
-                        }
-                        else goto errexit;
-                        if(prow <=0 || pcol <=0)
-                                goto errexit;
-                }
 		else if(strcmp(argv[i],"-sfdr")==0)
 		{
 			i++;
@@ -132,16 +113,6 @@ int main(int argc,char **argv)
 		{
 			i++;
 			is_4p=true;
-		}
-		else if(strcmp(argv[i],"-eps")==0)   // dgt added, 7/8/13.  Epsilon value by which pits must be filled to drain
-		{
-			i++;
-			if(argc > i)
-			{
-				sscanf(argv[i],"%f",&epsilon);
-				i++;
-			}
-			else goto errexit;
 		}
 		else if(strcmp(argv[i],"-depmask")==0) // arb added, 5/31/11. This is to input the optional depression mask file
 		{
@@ -174,8 +145,7 @@ int main(int argc,char **argv)
 	}
 	useflowfile=0;  //  useflowfile not implemented
 
-	if((err=flood(demfile,newfile,flowfile,useflowfile,verbose,is_4p,use_mask,maskfile,
-		prow,pcol,epsilon)) != 0)
+	if((err=flood(demfile,newfile,flowfile,useflowfile,verbose,is_4p,use_mask,maskfile)) != 0)
         printf("PitRemove error %d\n",err);
 
 	return 0;

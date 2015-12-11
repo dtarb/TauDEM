@@ -46,7 +46,7 @@ email:  dtarb@usu.edu
 #include "tiffIO.h"
 using namespace std;
 
-int threshold(char *ssafile,char *srcfile,char *maskfile, float thresh, int usemask, int prow, int pcol)
+int threshold(char *ssafile,char *srcfile,char *maskfile, float thresh, int usemask)
 {
 	MPI_Init(NULL,NULL);{
 
@@ -62,8 +62,8 @@ int threshold(char *ssafile,char *srcfile,char *maskfile, float thresh, int usem
 	tiffIO ssa(ssafile, FLOAT_TYPE);
 	long totalX = ssa.getTotalX();
 	long totalY = ssa.getTotalY();
-	double dx = ssa.getdx();
-	double dy = ssa.getdy();
+	double dxA = ssa.getdxA();
+	double dyA = ssa.getdyA();
 	if(rank==0)
 		{
 			float timeestimate=(1e-7*totalX*totalY/pow((double) size,1))/60+1;  // Time estimate in minutes
@@ -74,7 +74,7 @@ int threshold(char *ssafile,char *srcfile,char *maskfile, float thresh, int usem
 
 	//Create partition and read data
 	tdpartition *ssaData;
-	ssaData = CreateNewPartition(ssa.getDatatype(), totalX, totalY, dx, dy, ssa.getNodata());
+	ssaData = CreateNewPartition(ssa.getDatatype(), totalX, totalY, dxA, dyA, ssa.getNodata());
 	int nx = ssaData->getnx();
 	int ny = ssaData->getny();
 	int xstart, ystart;
@@ -86,7 +86,7 @@ int threshold(char *ssafile,char *srcfile,char *maskfile, float thresh, int usem
 	if( usemask == 1){
 		tiffIO mask(maskfile, FLOAT_TYPE);
 		if(!ssa.compareTiff(mask)) return 1;  //And maybe an unhappy error message
-		maskData = CreateNewPartition(mask.getDatatype(), totalX, totalY, dx, dy, mask.getNodata());
+		maskData = CreateNewPartition(mask.getDatatype(), totalX, totalY, dxA, dyA, mask.getNodata());
 		mask.read(xstart, ystart, maskData->getny(), maskData->getnx(), maskData->getGridPointer());
 	}
 	
@@ -95,7 +95,7 @@ int threshold(char *ssafile,char *srcfile,char *maskfile, float thresh, int usem
 
 	//Create empty partition to store new information
 	tdpartition *src;
-	src = CreateNewPartition(SHORT_TYPE, totalX, totalY, dx, dy, -32768);
+	src = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -32768);
 
 	long i,j;
 	float tempssa=0;
@@ -151,9 +151,8 @@ int threshold(char *ssafile,char *srcfile,char *maskfile, float thresh, int usem
 
 	//Create and write TIFF file
 	short aNodata = -32768;
-	char prefix[5] = "src";
 	tiffIO srcc(srcfile, SHORT_TYPE, &aNodata, ssa);
-	srcc.write(xstart, ystart, ny, nx, src->getGridPointer(),prefix,prow,pcol);
+	srcc.write(xstart, ystart, ny, nx, src->getGridPointer());
 
 	//Brackets force MPI-dependent objects to go out of scope before Finalize is called
 	}MPI_Finalize();

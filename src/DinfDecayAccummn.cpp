@@ -46,13 +46,12 @@ email:  dtarb@usu.edu
 #include <stdio.h>
 #include <stdlib.h>
 #include "commonLib.h"
-#include "shape/shapefile.h"
 #include "tardemlib.h"
 
 int main(int argc,char **argv)
 {
    char angfile[MAXLN],adecfile[MAXLN],dmfile[MAXLN],wfile[MAXLN],shfile[MAXLN];
-   int err,useOutlets=0,usew=0,contcheck=1,i,prow = 0,pcol = 0;
+   int err,useOutlets=0,usew=0,contcheck=1,i;
    
    if(argc < 2)
     {  
@@ -82,24 +81,6 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-                else if(strcmp(argv[i],"-mf")==0)
-                {
-                        i++;
-                        if(argc > i)
-                        {
-                                prow = atoi(argv[i]);
-                                i++;
-                                if(argc > i)
-                                {
-                                        pcol = atoi(argv[i]);
-                                        i++;
-                                }
-                                else goto errexit;
-                        }
-                        else goto errexit;
-                        if(prow <=0 || pcol <=0)
-                                goto errexit;
-                }
 		else if(strcmp(argv[i],"-dm")==0)
 		{
 			i++;
@@ -158,7 +139,7 @@ int main(int argc,char **argv)
 		nameadd(adecfile,argv[1],"dsca");
 	}  
 	
-	if(err=dmarea(angfile,adecfile,dmfile,shfile,wfile,useOutlets,usew, contcheck, prow, pcol) != 0)
+	if(err=dmarea(angfile,adecfile,dmfile,shfile,wfile,useOutlets,usew, contcheck) != 0)
         printf("area error %d\n",err);
 
 	return 0;

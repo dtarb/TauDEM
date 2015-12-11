@@ -46,12 +46,12 @@ email:  dtarb@usu.edu
 #include <stdlib.h>
 #include "commonLib.h"
 
-int distgrid(char *pfile, char *srcfile, char *distfile, int thresh, int prow, int pcol);
+int distgrid(char *pfile, char *srcfile, char *distfile, int thresh);
 
 int main(int argc,char **argv)
 {
    char pfile[MAXLN],srcfile[MAXLN],distfile[MAXLN];
-   int err,nmain, thresh=1,i,prow=0,pcol=0;
+   int err,nmain, thresh=1,i;
    
    if(argc < 2)
     {  
@@ -82,24 +82,6 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-                else if(strcmp(argv[i],"-mf")==0)
-                {
-                        i++;
-                        if(argc > i)
-                        {
-                                prow = atoi(argv[i]);
-                                i++;
-                                if(argc > i)
-                                {
-                                        pcol = atoi(argv[i]);
-                                        i++;
-                                }
-                                else goto errexit;
-                        }
-                        else goto errexit;
-                        if(prow <=0 || pcol <=0)
-                                goto errexit;
-                }
 		else if(strcmp(argv[i],"-src")==0)
 		{
 			i++;
@@ -143,7 +125,7 @@ int main(int argc,char **argv)
 		nameadd(distfile,argv[1],"dist");
 	}
 
-    if(err=distgrid(pfile,srcfile,distfile,thresh, prow, pcol) != 0)
+    if(err=distgrid(pfile,srcfile,distfile,thresh) != 0)
         printf("D8 distance error %d\n",err);
 
 

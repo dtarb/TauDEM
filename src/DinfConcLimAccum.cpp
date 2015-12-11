@@ -46,9 +46,8 @@ email:  dtarb@usu.edu
 #include "linearpart.h"
 #include "createpart.h"
 #include "tiffIO.h"
-#include "shape/shapefile.h"
-using namespace std;
 
+using namespace std;
 
 // The old program was written in column major order.
 // d1 and d2 were used to translate flow data (1-8 taken from the indeces)
@@ -59,7 +58,7 @@ using namespace std;
 // moved to commonlib.h
 
 int dsllArea(char* angfile,char* ctptfile,char* dmfile,char* shfile,char* qfile, char* dgfile, 
-		   int useOutlets, int contcheck, float cSol, int prow, int pcol)
+		   int useOutlets, int contcheck, float cSol)
 {
 
 	MPI_Init(NULL,NULL);{
@@ -80,9 +79,16 @@ int dsllArea(char* angfile,char* ctptfile,char* dmfile,char* shfile,char* qfile,
 
 	//  Keep track of time
 	double begint = MPI_Wtime();
+	tiffIO ang(angfile, FLOAT_TYPE);
+	long totalX = ang.getTotalX();
+	long totalY = ang.getTotalY();
+	double dxA = ang.getdxA();
+	double dyA = ang.getdyA();
+	OGRSpatialReferenceH hSRSRaster;
+	hSRSRaster=ang.getspatialref();
 	if( useOutlets == 1) {
 		if(rank==0){
-			if(readoutlets(shfile, &numOutlets, x, y) !=0){
+			if(readoutlets(shfile,hSRSRaster, &numOutlets, x, y) !=0){
 				printf("Exiting \n");
 				MPI_Abort(MCW,5);
 			}else {
@@ -104,11 +110,13 @@ int dsllArea(char* angfile,char* ctptfile,char* dmfile,char* shfile,char* qfile,
 
 
 	//Create tiff object, read and store header info
-	tiffIO ang(angfile, FLOAT_TYPE);
-	long totalX = ang.getTotalX();
-	long totalY = ang.getTotalY();
-	double dx = ang.getdx();
-	double dy = ang.getdy();
+	//tiffIO ang(angfile, FLOAT_TYPE);
+	//long totalX = ang.getTotalX();
+	//long totalY = ang.getTotalY();
+	//double dxA = ang.getdxA();
+	//double dyA = ang.getdyA();
+
+
 	if(rank==0)
 		{
 			float timeestimate=(1.2e-6*totalX*totalY/pow((double) size,0.65))/60+1;  // Time estimate in minutes
@@ -119,11 +127,12 @@ int dsllArea(char* angfile,char* ctptfile,char* dmfile,char* shfile,char* qfile,
 
 	//Create partition and read data
 	tdpartition *flowData;
-	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dx, dy, ang.getNodata());
+	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dxA, dyA, ang.getNodata());
 	int nx = flowData->getnx();
 	int ny = flowData->getny();
 	int xstart, ystart;
 	flowData->localToGlobal(0, 0, xstart, ystart);
+	flowData->savedxdyc(ang);
 	ang.read(xstart, ystart, ny, nx, flowData->getGridPointer());
 	
 	//Decay multiplier grid, get information from file
@@ -134,7 +143,7 @@ int dsllArea(char* angfile,char* ctptfile,char* dmfile,char* shfile,char* qfile,
 		MPI_Abort(MCW,5);
 		return 1;  
 	}
-	dmData = CreateNewPartition(dm.getDatatype(), totalX, totalY, dx, dy, dm.getNodata());
+	dmData = CreateNewPartition(dm.getDatatype(), totalX, totalY, dxA, dyA, dm.getNodata());
 	dm.read(xstart, ystart, dmData->getny(), dmData->getnx(), dmData->getGridPointer());
 
 	//if using indicator grid, get information from file
@@ -145,7 +154,7 @@ int dsllArea(char* angfile,char* ctptfile,char* dmfile,char* shfile,char* qfile,
 		MPI_Abort(MCW,5);
 		return 1;  
 	}
-	dgData = CreateNewPartition(dg.getDatatype(), totalX, totalY, dx, dy, dg.getNodata());
+	dgData = CreateNewPartition(dg.getDatatype(), totalX, totalY, dxA, dyA, dg.getNodata());
 	dg.read(xstart, ystart, dgData->getny(), dgData->getnx(), dgData->getGridPointer());
 
 	tdpartition *qData;	
@@ -155,7 +164,7 @@ int dsllArea(char* angfile,char* ctptfile,char* dmfile,char* shfile,char* qfile,
 		MPI_Abort(MCW,5);
 		return 1;  
 	}
-	qData = CreateNewPartition(q.getDatatype(), totalX, totalY, dx, dy, q.getNodata());
+	qData = CreateNewPartition(q.getDatatype(), totalX, totalY, dxA, dyA, q.getNodata());
 	q.read(xstart, ystart, qData->getny(), qData->getnx(), qData->getGridPointer());
 	
 	//Begin timer
@@ -172,7 +181,7 @@ int dsllArea(char* angfile,char* ctptfile,char* dmfile,char* shfile,char* qfile,
 
 	//Create empty partition to store new information
 	tdpartition *ctpt;
-	ctpt = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, MISSINGFLOAT);
+	ctpt = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
 //	tdpartition *sca;
 //	sca = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, MISSINGFLOAT);
 	/*tdpartition *qq;
@@ -184,10 +193,10 @@ int dsllArea(char* angfile,char* ctptfile,char* dmfile,char* shfile,char* qfile,
 	long in,jn;
 	bool con=false, finished;
 	float tempFloat=0;
-	short tempShort=0;
+	short tempShort=0;double tempdxc,tempdyc;
 
 	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dx, dy, MISSINGSHORT);
+	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, MISSINGSHORT);
 	
 	//Share information and set borders to zero
 	flowData->share();
@@ -230,7 +239,8 @@ int dsllArea(char* angfile,char* ctptfile,char* dmfile,char* shfile,char* qfile,
 							con=true;
 						else{
 							flowData->getData(in,jn, angle);
-							p = prop(angle, (k+4)%8);
+							flowData->getdxdyc(jn, tempdxc,tempdyc);
+							p = prop(angle, (k+4)%8,tempdxc,tempdyc);
 							if(p>0.)
 							{
 								if(ctpt->isNodata(in,jn)||dmData->isNodata(in,jn)||qData->isNodata(in,jn))con=true;
@@ -253,8 +263,9 @@ int dsllArea(char* angfile,char* ctptfile,char* dmfile,char* shfile,char* qfile,
 			//  END FLOW ALGEBRA EXPRESSION EVALUATION
 						//  Decrement neighbor dependence of downslope cell
 			flowData->getData(i, j, angle);
+			flowData->getdxdyc(j,tempdxc,tempdyc);
 			for(k=1; k<=8; k++) {			
-				p = prop(angle, k);
+				p = prop(angle, k,tempdxc,tempdyc);
 				if(p>0.0) {
 					in = i+d1[k];  jn = j+d2[k];
 					//Decrement the number of contributing neighbors in neighbor
@@ -299,9 +310,8 @@ int dsllArea(char* angfile,char* ctptfile,char* dmfile,char* shfile,char* qfile,
 
 	//Create and write TIFF file
 	float scaNodata = MISSINGFLOAT;
-	char prefix[6] = "ctpt";
 	tiffIO cctpt(ctptfile, FLOAT_TYPE, &scaNodata, ang);
-	cctpt.write(xstart, ystart, ny, nx, ctpt->getGridPointer(),prefix,prow,pcol);
+	cctpt.write(xstart, ystart, ny, nx, ctpt->getGridPointer());
 
 	double writet = MPI_Wtime();
         double dataRead, compute, write, total,tempd;

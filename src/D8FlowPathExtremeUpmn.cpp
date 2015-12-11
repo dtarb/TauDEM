@@ -51,14 +51,13 @@ email:  dtarb@usu.edu
 #include <stdio.h>
 #include <stdlib.h>
 #include "commonLib.h"
-#include "shape/shapefile.h"
 
-int d8flowpathextremeup(char *pfile, char*safile, char *ssafile, int usemax, char *outletfile, int useoutlets, int contcheck, int prow, int pcol);
+int d8flowpathextremeup(char *pfile, char*safile, char *ssafile, int usemax, char *outletfile, int useoutlets, int contcheck);
 
 int main(int argc,char **argv)  
 {
    char pfile[MAXLN],safile[MAXLN], ssafile[MAXLN], outletfile[MAXLN];
-   int err, useoutlets,contcheck,usemax, prow=0,pcol = 0;
+   int err, useoutlets,contcheck,usemax;
       
    if(argc < 2) goto errexit;
    usemax=1;  // Set defaults
@@ -97,24 +96,6 @@ int main(int argc,char **argv)
 				}
 				else goto errexit;
 			}
-                	else if(strcmp(argv[i],"-mf")==0)
-                	{
-                        	i++;
-                      	  	if(argc > i)
-                        	{
-                                	prow = atoi(argv[i]);
-                                	i++;
-                                	if(argc > i)
-                                	{
-                                        	pcol = atoi(argv[i]);
-                                        	i++;
-                                	}
-                                	else goto errexit;
-                        	}
-                        	else goto errexit;
-                        	if(prow <=0 || pcol <=0)
-                                	goto errexit;
-                	}
 			else if(strcmp(argv[i],"-ssa")==0)
 			{
 				i++;
@@ -149,7 +130,7 @@ int main(int argc,char **argv)
 		   else goto errexit;
 		}
    }
-    if((err=d8flowpathextremeup(pfile, safile, ssafile, usemax, outletfile, useoutlets, contcheck,prow,pcol)) != 0)
+    if((err=d8flowpathextremeup(pfile, safile, ssafile, usemax, outletfile, useoutlets, contcheck)) != 0)
         printf("Flow Path Extreme Up Error %d\n",err);
 
 	return 0;

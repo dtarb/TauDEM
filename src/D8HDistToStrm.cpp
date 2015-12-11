@@ -51,10 +51,10 @@ email:  dtarb@usu.edu
 #include "linearpart.h"
 #include "createpart.h"
 #include "tiffIO.h"
-#include "shape/shapefile.h"
+
 using namespace std;
 
-int distgrid(char *pfile, char *srcfile, char *distfile, int thresh, int prow, int pcol)
+int distgrid(char *pfile, char *srcfile, char *distfile, int thresh)
 {
 MPI_Init(NULL,NULL);
 {  //  All code within braces so that objects go out of context and destruct before MPI is closed
@@ -63,9 +63,9 @@ MPI_Init(NULL,NULL);
 	MPI_Comm_size(MCW,&size);
 	if(rank==0)printf("D8HDistToStrm version %s\n",TDVERSION);
 	int i,j,in,jn;
-	float tempFloat;
+	float tempFloat; double tempdxc,tempdyc;
 	short tempShort,k;
-	long tempLong;
+	int32_t tempLong;
 	bool finished;
 
  //  Begin timer
@@ -75,8 +75,10 @@ MPI_Init(NULL,NULL);
 	tiffIO pf(pfile,SHORT_TYPE);
 	long totalX = pf.getTotalX();
 	long totalY = pf.getTotalY();
-	double dx = pf.getdx();
-	double dy = pf.getdy();
+	double dxA = pf.getdxA();
+	double dyA = pf.getdyA();
+
+
 	if(rank==0)
 		{
 			float timeestimate=(1.2e-6*totalX*totalY/pow((double) size,0.65))/60+1;  // Time estimate in minutes
@@ -87,11 +89,12 @@ MPI_Init(NULL,NULL);
 
 	//Read flow direction data into partition
 	tdpartition *p;
-	p = CreateNewPartition(pf.getDatatype(), totalX, totalY, dx, dy, pf.getNodata());
+	p = CreateNewPartition(pf.getDatatype(), totalX, totalY, dxA, dyA, pf.getNodata());
 	int nx = p->getnx();
 	int ny = p->getny();
 	int xstart, ystart;
 	p->localToGlobal(0, 0, xstart, ystart);
+	p->savedxdyc(pf);
 	pf.read(xstart, ystart, ny, nx, p->getGridPointer());
 
  	//Read src file
@@ -102,7 +105,7 @@ MPI_Init(NULL,NULL);
 		MPI_Abort(MCW,5);
 		return 1;  //And maybe an unhappy error message
 	}
-	src = CreateNewPartition(srcf.getDatatype(), totalX, totalY, dx, dy, srcf.getNodata());
+	src = CreateNewPartition(srcf.getDatatype(), totalX, totalY, dxA, dyA, srcf.getNodata());
 	srcf.read(xstart, ystart, ny, nx, src->getGridPointer());
 
 	//Record time reading files
@@ -110,17 +113,24 @@ MPI_Init(NULL,NULL);
    
  	//Create empty partition to store distance information
 	tdpartition *fdarr;
-	fdarr = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, MISSINGFLOAT);
+	fdarr = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
 
 	/*  Calculate Distances  */
-	float dist[9];
-	for(i=1; i<=8; i++){
-		dist[i]=sqrt(d1[i]*d1[i]*dx*dx+d2[i]*d2[i]*dy*dy);
+	//float dist[9];
+	float** dist = new float*[ny];
+    for(int j = 0; j< ny; j++)
+    dist[j] = new float[9];
+
+    for (int m=0;m<ny;m++){
+	p->getdxdyc(m,tempdxc,tempdyc);
+	for(int kk=1; kk<=8; kk++){
+		 dist[m][kk]=sqrt(d1[kk]*d1[kk]*tempdxc*tempdxc+d2[kk]*d2[kk]*tempdyc*tempdyc);
+		 }
 	}
 
 	//  Set neighbor partition to 1 because all grid cells drain to one other grid cell in D8
 	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dx, dy, MISSINGSHORT);
+	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, MISSINGSHORT);
     
 	node temp;
 	queue<node> que;
@@ -165,7 +175,7 @@ MPI_Init(NULL,NULL);
 				jn = j+d2[k];
 				if(fdarr->isNodata(in,jn))fdarr->setToNodata(i,j);
 				else
-					fdarr->setData(i,j,(float)(dist[k]+fdarr->getData(in,jn,tempFloat)));
+					fdarr->setData(i,j,(float)(dist[j][k]+fdarr->getData(in,jn,tempFloat)));
 			}
 			//  Now find upslope cells and reduce dependencies
 			for(k=1; k<=8; k++) {
@@ -218,9 +228,8 @@ MPI_Init(NULL,NULL);
 
 	//Create and write TIFF file
 	float aNodata = MISSINGFLOAT;
-	char prefix[6] = "dist";
 	tiffIO a(distfile, FLOAT_TYPE, &aNodata, pf);
-	a.write(xstart, ystart, ny, nx, fdarr->getGridPointer(),prefix,prow,pcol);
+	a.write(xstart, ystart, ny, nx, fdarr->getGridPointer());
 	double writet = MPI_Wtime();
         double dataRead, compute, write, total,tempd;
         dataRead = readt-begint;

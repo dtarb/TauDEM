@@ -48,7 +48,7 @@ email:  dtarb@usu.edu
 int main(int argc,char **argv)
 {
    char slopefile[MAXLN],areafile[MAXLN],atanbfile[MAXLN];
-   int err,i,prow=0, pcol=0;
+   int err,i;
    
    if(argc < 2)
     {  
@@ -77,24 +77,6 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-                else if(strcmp(argv[i],"-mf")==0)
-                {
-                        i++;
-                        if(argc > i)
-                        {
-                                prow = atoi(argv[i]);
-                                i++;
-                                if(argc > i)
-                                {
-                                        pcol = atoi(argv[i]);
-                                        i++;
-                                }
-                                else goto errexit;
-                        }
-                        else goto errexit;
-                        if(prow <=0 || pcol <=0)
-                                goto errexit;
-                }
 		else if(strcmp(argv[i],"-slp")==0)
 		{
 			i++;
@@ -125,7 +107,7 @@ int main(int argc,char **argv)
 		nameadd(slopefile,argv[1],"slp");
 		nameadd(atanbfile,argv[1],"sar");
 	}  
-	if((err=atanbgrid(slopefile,areafile,atanbfile,prow,pcol)) != 0)
+	if((err=atanbgrid(slopefile,areafile,atanbfile)) != 0)
         printf("Slope area ratio error %d\n",err);
 
 	return 0;

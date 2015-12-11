@@ -46,14 +46,13 @@ email:  dtarb@usu.edu
 #include "linearpart.h"
 #include "createpart.h"
 #include "tiffIO.h"
-#include "shape/shapefile.h"
 using namespace std;
 
 
 
 
 int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *maskfile,
-		char *shfile, int useMask, int useOutlets, int thresh,int prow, int pcol) 
+		char *shfile, int useMask, int useOutlets, int thresh) 
 {//1
 
 	MPI_Init(NULL,NULL);{
@@ -68,9 +67,17 @@ int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *
 	bool usingShapeFile=false;
 
 	double begint = MPI_Wtime();
+	tiffIO p(pfile,SHORT_TYPE);
+	long totalX = p.getTotalX();
+	long totalY = p.getTotalY();
+	double dxA = p.getdxA();
+	double dyA = p.getdyA();
+	OGRSpatialReferenceH hSRSRaster;
+    hSRSRaster=p.getspatialref();
+
 	if( useOutlets == 1) {//3
 		if(rank==0){//4
-			if(readoutlets(shfile, &numOutlets, x, y)==0){
+			if(readoutlets(shfile, hSRSRaster,&numOutlets, x, y)==0){
 //				for(int i=0; i< numOutlets; i++)
 //					printf("rank: %d, X: %lf, Y: %lf\n",rank,x[i],y[i]);
 				usingShapeFile=true;
@@ -106,11 +113,11 @@ int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *
 //		printf("rank: %d, X: %lf, Y: %lf\n",rank,x[i],y[i]);
 
 	//Create tiff object, read and store header info
-	tiffIO p(pfile,SHORT_TYPE);
-	long totalX = p.getTotalX();
-	long totalY = p.getTotalY();
-	double dx = p.getdx();
-	double dy = p.getdy();
+	//tiffIO p(pfile,SHORT_TYPE);
+	//long totalX = p.getTotalX();
+	//long totalY = p.getTotalY();
+	//double dxA = p.getdxA();
+	//double dyA = p.getdyA();
 	if(rank==0)
 		{
 			float timeestimate=(1.2e-6*totalX*totalY/pow((double) size,0.65))/60+1;  // Time estimate in minutes
@@ -123,11 +130,12 @@ int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *
 
 	//Create partition and read data
 	tdpartition *flowData;
-	flowData = CreateNewPartition(p.getDatatype(), totalX, totalY, dx, dy, p.getNodata());
+	flowData = CreateNewPartition(p.getDatatype(), totalX, totalY, dxA, dyA, p.getNodata());
 	int nx = flowData->getnx();
 	int ny = flowData->getny();
 	int xstart, ystart;
 	flowData->localToGlobal(0, 0, xstart, ystart);
+	flowData->savedxdyc(p);
 	p.read(xstart, ystart, ny, nx, flowData->getGridPointer());
 	//printf("Pfile read");  fflush(stdout);
 
@@ -140,12 +148,12 @@ int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *
 			MPI_Abort(MCW,5);
 			return 1;  
 		}
-		maskData = CreateNewPartition(mask.getDatatype(), totalX, totalY, dx, dy, mask.getNodata());
+		maskData = CreateNewPartition(mask.getDatatype(), totalX, totalY, dxA, dyA, mask.getNodata());
 		mask.read(xstart, ystart, maskData->getny(), maskData->getnx(), maskData->getGridPointer());
 	}
 	else
 	{
-		maskData = CreateNewPartition(LONG_TYPE, totalX, totalY, dx, dy, 1);
+		maskData = CreateNewPartition(LONG_TYPE, totalX, totalY, dxA, dyA, 1);
 		thresh=0;  //  Here we have a partition filled with ones and a 0 threshold so mask condition is always satisfied
 	}
 	//Begin timer
@@ -166,9 +174,9 @@ int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *
 	tdpartition *plen;
 	tdpartition *tlen;
 	tdpartition *gord;
-	plen = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, -1.0f);
-	tlen = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, -1.0f);
-	gord = CreateNewPartition(SHORT_TYPE, totalX, totalY, dx, dy, -1);
+	plen = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, -1.0f);
+	tlen = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, -1.0f);
+	gord = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -1);
 
 	// con is used to check for contamination at the edges
 	long i,j;
@@ -178,17 +186,28 @@ int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *
 	bool con=false, finished;
 	float tempFloat=0.0;
 	short tempShort=0;
-	long tempLong=0;
+	int32_t tempLong=0; 
 
 		/*  Calculate Distances  */
-	float dist[9];
-	for(i=1; i<=8; i++){
-		dist[i]=sqrt(d1[i]*d1[i]*dy*dy+d2[i]*d2[i]*dx*dx);
+	float **dist;
+	//for(i=1; i<=8; i++){
+		//dist[i]=sqrt(d1[i]*d1[i]*dy*dy+d2[i]*d2[i]*dx*dx);
+	//}
+	double tempdxc,tempdyc;
+	dist = new float*[ny];
+    for(int m = 0; m <ny; m++)
+    dist[m] = new float[9];
+	for (int m=0; m<ny;m++){
+		flowData->getdxdyc(m,tempdxc,tempdyc);
+		for(int kk=1; kk<=8; kk++)
+      {
+	    dist[m][kk]=sqrt(tempdxc*tempdxc*d1[kk]*d1[kk]+tempdyc*tempdyc*d2[kk]*d2[kk]);
 	}
-	
+
+	}
 
 	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dx, dy, -32768);
+	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -32768);
 	
 	//Share information and set borders to zero
 	flowData->share();
@@ -200,6 +219,7 @@ int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *
 
 	node temp;
 	queue<node> que;
+	
 
 	if(!usingShapeFile) {
 		//Treat gord like area in aread8.  Initialize to 1
@@ -213,6 +233,9 @@ int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *
 		//Count the contributing neighbors and put on queue
 		for(j=0; j<ny; j++) {
 			for(i=0; i<nx; i++) {
+
+		
+
 				//Initialize neighbor count to no data, but then 0 if flow direction is defined
 				neighbor->setToNodata(i,j);
 				if(!flowData->isNodata(i,j)) {
@@ -346,7 +369,7 @@ int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *
 		}
 
 	}
-
+	
 	finished = false;
 	//Ring terminating while loop
 	while(!finished) {
@@ -355,7 +378,8 @@ int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *
 			temp = que.front();
 			que.pop();
 			i = temp.x;
-			j = temp.y;	
+			j = temp.y;			
+	
 			if(flowData->isInPartition(i,j)){   // DGT thinks this is redundant - nothing should be on queue that is not in partition - but does no harm
 				//  Here is where the flow algebra is evaluated
 				short a1,a2;
@@ -386,8 +410,8 @@ int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *
 								else if ( gord->getData(in,jn,tempShort) > a2 )
 									a2=gord->getData(in,jn,tempShort);
 								//  Length calculations
-								ld= plen->getData(in,jn,tempFloat) + dist[sdir];
-								tlen->addToData(i,j,(float)(tlen->getData(in,jn,tempFloat)+dist[sdir]));
+								ld= plen->getData(in,jn,tempFloat) + dist[j][sdir];
+								tlen->addToData(i,j,(float)(tlen->getData(in,jn,tempFloat)+dist[j][sdir]));
 								if( ld > plen->getData(i,j,tempFloat))
 									plen->setData(i,j,ld);
 							}
@@ -449,15 +473,12 @@ int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *
 	//Create and write TIFF file
 	short sNodata = -1;
 	float fNodata = -1.0f;
-	char prefix[5] = "gord";
 	tiffIO gordIO(gordfile, SHORT_TYPE, &sNodata, p);
-	gordIO.write(xstart, ystart, ny, nx, gord->getGridPointer(),prefix,prow,pcol);
-	strncpy(prefix,"plen",5);
+	gordIO.write(xstart, ystart, ny, nx, gord->getGridPointer());
 	tiffIO plenIO(plenfile, FLOAT_TYPE, &fNodata, p);
-	plenIO.write(xstart, ystart, ny, nx, plen->getGridPointer(),prefix,prow,pcol);
-	strncpy(prefix,"tlen",5);
+	plenIO.write(xstart, ystart, ny, nx, plen->getGridPointer());
 	tiffIO tlenIO(tlenfile, FLOAT_TYPE, &fNodata, p);
-	tlenIO.write(xstart, ystart, ny, nx, tlen->getGridPointer(),prefix,prow,pcol);
+	tlenIO.write(xstart, ystart, ny, nx, tlen->getGridPointer());
 
 	double writet = MPI_Wtime();
 	double dataRead, compute, write, total,tempd;

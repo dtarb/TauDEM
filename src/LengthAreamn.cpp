@@ -51,7 +51,7 @@ int main(int argc,char **argv)
 {
    char plenfile[MAXLN],ad8file[MAXLN], ssfile[MAXLN];
    float p[2];
-   int err,prow =0, pcol=0;
+   int err;
       
    if(argc < 2) goto errexit;
    // Set defaults
@@ -80,24 +80,6 @@ int main(int argc,char **argv)
 				}
 				else goto errexit;
 			}
-                else if(strcmp(argv[i],"-mf")==0)
-                {
-                        i++;
-                        if(argc > i)
-                        {
-                                prow = atoi(argv[i]);
-                                i++;
-                                if(argc > i)
-                                {
-                                        pcol = atoi(argv[i]);
-                                        i++;
-                                }
-                                else goto errexit;
-                        }
-                        else goto errexit;
-                        if(prow <=0 || pcol <=0)
-                                goto errexit;
-                }
 			else if(strcmp(argv[i],"-ad8")==0)
 			{
 				i++;
@@ -133,7 +115,7 @@ int main(int argc,char **argv)
 		    else goto errexit;
 		}
    }
-    if((err=lengtharea(plenfile,ad8file, ssfile,p, prow, pcol)) != 0)
+    if((err=lengtharea(plenfile,ad8file, ssfile,p)) != 0)
         printf("Length Area Error %d\n",err);
 
 	return 0;
