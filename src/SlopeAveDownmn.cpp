@@ -49,7 +49,7 @@ email:  dtarb@usu.edu
 int main(int argc,char **argv)
 {
    char pfile[MAXLN],felfile[MAXLN],slpdfile[MAXLN];
-   int err,i,prow=0,pcol=0;
+   int err,i;
    double dn=50.0;
    
    if(argc < 2)
@@ -79,24 +79,6 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-                else if(strcmp(argv[i],"-mf")==0)
-                {
-                        i++;
-                        if(argc > i)
-                        {
-                                prow = atoi(argv[i]);
-                                i++;
-                                if(argc > i)
-                                {
-                                        pcol = atoi(argv[i]);
-                                        i++;
-                                }
-                                else goto errexit;
-                        }
-                        else goto errexit;
-                        if(prow <=0 || pcol <=0)
-                                goto errexit;
-                }
 		else if(strcmp(argv[i],"-p")==0)
 		{
 			i++;
@@ -139,7 +121,7 @@ int main(int argc,char **argv)
 		nameadd(slpdfile,argv[1],"slpd");
 	}   
 
-   if((err=sloped(pfile,felfile,slpdfile,dn,prow,pcol)) != 0)
+   if((err=sloped(pfile,felfile,slpdfile,dn)) != 0)
          printf("sloped error %d\n",err);
 
 

@@ -50,11 +50,12 @@ using namespace std;
 
 
 
-float dist[9];
+//float dist[9];
+float **dist;
 
 // Slope D
 ///////////////////////////////////////////////////////////////////////
-int sloped(char *pfile,char* felfile,char* slpdfile, double dn, int prow, int pcol)
+int sloped(char *pfile,char* felfile,char* slpdfile, double dn)
 {
 	MPI_Init(NULL,NULL);{
 
@@ -69,11 +70,13 @@ int sloped(char *pfile,char* felfile,char* slpdfile, double dn, int prow, int pc
 	tiffIO dem(felfile,FLOAT_TYPE);
 	long totalX = dem.getTotalX();
 	long totalY = dem.getTotalY();
-	double dx = dem.getdx();
-	double dy = dem.getdy();
+	double dxA = dem.getdxA();
+	double dyA = dem.getdyA();
+
+
 	if(rank==0)
 		{
-			float timeestimate=(1e-6*totalX*totalY*(dn/dx)/pow((double) size,1))/60+1;  // Time estimate in minutes
+			float timeestimate=(1e-6*totalX*totalY*(dn/dxA)/pow((double) size,1))/60+1;  // Time estimate in minutes
 			fprintf(stderr,"This run may take on the order of %.0f minutes to complete.\n",timeestimate);
 			fprintf(stderr,"This estimate is very approximate. \nRun time is highly uncertain as it depends on the complexity of the input data \nand speed and memory of the computer. This estimate is based on our testing on \na dual quad core Dell Xeon E5405 2.0GHz PC with 16GB RAM.\n");
 			fflush(stderr);
@@ -82,11 +85,12 @@ int sloped(char *pfile,char* felfile,char* slpdfile, double dn, int prow, int pc
 
 	//Create partition and read data
 	tdpartition* z;
-	z = CreateNewPartition(dem.getDatatype(), totalX, totalY, dx, dy, dem.getNodata());
+	z = CreateNewPartition(dem.getDatatype(), totalX, totalY, dxA, dyA, dem.getNodata());
 	int nx = z->getnx();
 	int ny = z->getny();
 	int xstart, ystart;
 	z->localToGlobal(0, 0, xstart, ystart);
+	z->savedxdyc(dem);
 	dem.read(xstart, ystart, ny, nx, z->getGridPointer());	
 
 	//Read flow directions 
@@ -98,28 +102,40 @@ int sloped(char *pfile,char* felfile,char* slpdfile, double dn, int prow, int pc
 	}
 	//Create partition and read data
 	tdpartition *p;
-	p = CreateNewPartition(pIO.getDatatype(), totalX, totalY, dx, dy, pIO.getNodata());
+	p = CreateNewPartition(pIO.getDatatype(), totalX, totalY, dxA, dyA, pIO.getNodata());
 	pIO.read(xstart, ystart, ny, nx, p->getGridPointer());
 
 // begin timer
 	double readt = MPI_Wtime();
 
 	//  Calculate distances in each direction
-	int kk;
-	for(kk=1; kk<=8; kk++)
-	{
-		dist[kk]=sqrt(dx*dx*d2[kk]*d2[kk]+dy*dy*d1[kk]*d1[kk]);
+	//int kk;
+	//for(kk=1; kk<=8; kk++)
+	//{
+		//dist[kk]=sqrt(dx*dx*d2[kk]*d2[kk]+dy*dy*d1[kk]*d1[kk]);
+	//}
+	double tempdxc,tempdyc;
+	dist = new float*[ny]; 
+    for(int m = 0; m < ny; m++)
+    dist[m] = new float[9];
+    for (int m=0;m<ny;m++){
+		z->getdxdyc(m,tempdxc,tempdyc);
+	for(int kk=1; kk<=8; kk++){
+		dist[m][kk]=sqrt(d1[kk]*d1[kk]*tempdxc*tempdxc+d2[kk]*d2[kk]*tempdyc*tempdyc);
 	}
+	}
+
+
 	
 	//Create partitions to work with
 	tdpartition *ed;  //  Elevation from downslope
-	ed = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, MISSINGFLOAT);
+	ed = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
 
 	tdpartition *dd;  //  Distances from downslope
-	dd = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, MISSINGFLOAT);
+	dd = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
 
 	tdpartition *sd;  //  Slope down
-	sd = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, MISSINGFLOAT);
+	sd = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
 
 //  Working variables
 	float tempFloat,ddi,zi,slp;
@@ -151,7 +167,7 @@ int sloped(char *pfile,char* felfile,char* slpdfile, double dn, int prow, int pc
 	//  Loop
 	bool finished=false;
 
-	int niter=dn/min(dx,dy)+1;
+	int niter=dn/min(dxA,dyA)+1;
 	int iter;
 	//  Now need to repeat as many times as necessary
 	//  until down elevations have been pulled up far enough to evaluate distance down.  Calculate
@@ -161,7 +177,7 @@ int sloped(char *pfile,char* felfile,char* slpdfile, double dn, int prow, int pc
 	{	
 		//  Set up neighbor partition inside this loop to reinforce its destruction and refreshing for each iteration
 		tdpartition *neighbor;
-		neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dx, dy, MISSINGSHORT);
+		neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, MISSINGSHORT);
 		neighbor->clearBorders();
 
 		//  Set up dependence que
@@ -190,7 +206,7 @@ int sloped(char *pfile,char* felfile,char* slpdfile, double dn, int prow, int pc
 					jn=j+d2[k];
 					if(ed->hasAccess(in,jn) && !ed->isNodata(in,jn))
 					{
-						ddi=dist[k]+dd->getData(in,jn,tempFloat);
+						ddi=dist[j][k]+dd->getData(in,jn,tempFloat);
 						zi=ed->getData(in,jn,tempFloat);
 						if(sd->isNodata(i,j))
 						{
@@ -251,9 +267,8 @@ int sloped(char *pfile,char* felfile,char* slpdfile, double dn, int prow, int pc
 
 	//Create and write TIFF file
 	float slpnd = MISSINGFLOAT;
-	char prefix[5] = "slpd";
 	tiffIO slpIO(slpdfile, FLOAT_TYPE, &slpnd, pIO);
-	slpIO.write(xstart, ystart, ny, nx, sd->getGridPointer(),prefix,prow,pcol);
+	slpIO.write(xstart, ystart, ny, nx, sd->getGridPointer());
 
 	double writet = MPI_Wtime();
         double dataRead, compute, write, total,temp;

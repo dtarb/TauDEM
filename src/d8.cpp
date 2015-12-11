@@ -61,7 +61,7 @@ template<typename T> int markPits(T& elevDEM, linearpart<short>& flowDir, std::v
 int propagateIncrements(linearpart<short>& flowDir, SparsePartition<short>& inc, std::vector<node>& queue);
 int propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<short>& inc);
 
-double fact[9];
+double **fact;
 
 //Checks if cells cross
 int dontCross(int k, int i, int j, linearpart<short>& flowDir)
@@ -124,7 +124,7 @@ void setFlow(int i, int j, linearpart<short>& flowDir, linearpart<float>& elevDE
         in=i+d1[k];
         jn=j+d2[k];
 
-        float slope = fact[k] * (elev - elevDEM.getData(in,jn));
+        float slope = fact[j][k] * (elev - elevDEM.getData(in,jn));
 
         if (useflowfile == 1) {
             int aneigh = area.getData(in,jn);
@@ -155,7 +155,7 @@ void setFlow(int i, int j, linearpart<short>& flowDir, linearpart<float>& elevDE
         in=i+d1[k];
         jn=j+d2[k];
 
-        float slope = fact[k] * (elev - elevDEM.getData(in,jn));
+        float slope = fact[j][k] * (elev - elevDEM.getData(in,jn));
 
         if (slope > smax && dontCross(k,i,j,flowDir)==0) {
             smax = slope;
@@ -189,14 +189,14 @@ void calcSlope(linearpart<short>& flowDir, linearpart<float>& elevDEM, linearpar
                 int jn = j + d2[flowDirection];
 
                 float elevDiff = elevDEM.getData(i,j) - elevDEM.getData(in,jn);
-                slope.setData(i,j, elevDiff*fact[flowDirection]);
+                slope.setData(i,j, elevDiff*fact[j][flowDirection]);
             }
         }
     }
 }
 
 //Open files, Initialize grid memory, makes function calls to set flowDir, slope, and resolvflats, writes files
-int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, int useflowfile, int prow, int pcol)
+int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, int useflowfile)
 {
     MPI_Init(NULL,NULL);
 
@@ -216,8 +216,8 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
 
     long totalX = dem.getTotalX();
     long totalY = dem.getTotalY();
-    double dx = dem.getdx();
-    double dy = dem.getdy();
+    double dx = dem.getdxA();
+    double dy = dem.getdyA();
 
     linearpart<float> elevDEM(totalX, totalY, dx, dy, MPI_FLOAT, *(float*) dem.getNodata());
 
@@ -225,6 +225,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
     int nx = elevDEM.getnx();
     int ny = elevDEM.getny();
     elevDEM.localToGlobal(0, 0, xstart, ystart);
+    elevDEM.savedxdyc(dem);
 
     double headert = MPI_Wtime();
 
@@ -253,7 +254,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
         tiffIO flow(flowfile, SHORT_TYPE);
 
         linearpart<short> imposedflow(flow.getTotalX(), flow.getTotalY(),
-                flow.getdx(), flow.getdy(), MPI_SHORT, *(short*) flow.getNodata());
+                flow.getdxA(), flow.getdyA(), MPI_SHORT, *(short*) flow.getNodata());
 
         if (!dem.compareTiff(flow)) {
             printf("Error using imposed flow file.\n");
@@ -290,10 +291,9 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
 
         //Stop timer
         computeSlopet = MPI_Wtime();
-        char prefix[6]="sd8";
 
         tiffIO slopeIO(slopefile, FLOAT_TYPE, &slopeNodata, dem);
-        slopeIO.write(xstart, ystart, ny, nx, slope.getGridPointer(), prefix, prow, pcol);
+        slopeIO.write(xstart, ystart, ny, nx, slope.getGridPointer());
     }  // This bracket intended to destruct slope partition and release memory
 
     double writeSlopet = MPI_Wtime();
@@ -452,9 +452,8 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
 
     //Timing info
     double computeFlatt = MPI_Wtime();
-    char prefix[6] = "p";
     tiffIO pointIO(pointfile, SHORT_TYPE, &flowDirNodata, dem);
-    pointIO.write(xstart, ystart, ny, nx, flowDir.getGridPointer(),prefix,prow,pcol);
+    pointIO.write(xstart, ystart, ny, nx, flowDir.getGridPointer());
     double writet = MPI_Wtime();
 
     double headerRead, dataRead, computeSlope, writeSlope, computeFlat,writeFlat, total,temp;
@@ -494,15 +493,24 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
 // Returns number of cells which are flat
 long setPosDir(linearpart<float>& elevDEM, linearpart<short>& flowDir, SparsePartition<long>& area, int useflowfile)
 {
-    double dx = elevDEM.getdx();
-    double dy = elevDEM.getdy();
+    double dxA = elevDEM.getdxA();
+    double dyA = elevDEM.getdyA();
     long nx = elevDEM.getnx();
     long ny = elevDEM.getny();
     long numFlat = 0;
 
-    //Set direction factors
-    for (int k=1; k<= 8; k++) {
-        fact[k] = (double) (1./sqrt(d1[k]*dx*d1[k]*dx + d2[k]*d2[k]*dy*dy));
+    double tempdxc, tempdyc;
+
+    fact = new double*[ny]; // initialize 2d array by Nazmus 2/16
+
+    for(int m = 0; m<ny; m++)
+        fact[m] = new double[9];
+
+    for (int m = 0; m<ny; m++) {
+        for (int k = 1; k <= 8; k++) {
+            elevDEM.getdxdyc(m, tempdxc, tempdyc);
+            fact[m][k] = (double) (1./sqrt(d1[k]*d1[k]*tempdxc*tempdxc + d2[k]*d2[k]*tempdyc*tempdyc));
+        }
     }
 
     for (int j = 0; j < ny; j++) {
@@ -571,7 +579,7 @@ void setFlow2(int i, int j, linearpart<short>& flowDir, T& elev, SparsePartition
 
         if (inc.getData(in, jn) > 0) {
             // Neighbor is in flat
-            float slope = fact[k]*(inc.getData(i, j) - inc.getData(in, jn));
+            float slope = fact[j][k]*(inc.getData(i, j) - inc.getData(in, jn));
             if (slope > slopeMax) {
                 flowDir.setData(i, j, k);
                 slopeMax = slope;

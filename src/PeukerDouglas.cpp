@@ -47,12 +47,11 @@ email:  dtarb@usu.edu
 #include "linearpart.h"
 #include "createpart.h"
 #include "tiffIO.h"
-#include "shape/shapefile.h"
 #include "ctime"
 
 using namespace std;
 
-int peukerdouglas(char *felfile, char *ssfile,float *p, int prow, int pcol)
+int peukerdouglas(char *felfile, char *ssfile,float *p)
 {
 	MPI_Init(NULL,NULL);
 	{
@@ -71,8 +70,8 @@ int peukerdouglas(char *felfile, char *ssfile,float *p, int prow, int pcol)
 	tiffIO felev(felfile, FLOAT_TYPE);			//input	 elevation	
 	long totalX = felev.getTotalX();			//Globabl x and y
 	long totalY = felev.getTotalY();
-	double dx = felev.getdx();				//cell x and y
-	double dy = felev.getdy();
+	double dxA = felev.getdxA();				//cell x and y
+	double dyA = felev.getdyA();
 	if(rank==0)
 		{
 			float timeestimate=(1e-7*totalX*totalY/pow((double) size,1))/60+1;  // Time estimate in minutes
@@ -84,7 +83,7 @@ int peukerdouglas(char *felfile, char *ssfile,float *p, int prow, int pcol)
 
 								//Create partition and read data
 	tdpartition *elev;
-	elev = CreateNewPartition(felev.getDatatype(), totalX, totalY, dx, dy, felev.getNodata());
+	elev = CreateNewPartition(felev.getDatatype(), totalX, totalY, dxA, dyA, felev.getNodata());
 	int elevnx = elev->getnx();
 	int elevny = elev->getny();
 	int globalxstart, globalystart; 			
@@ -97,12 +96,12 @@ int peukerdouglas(char *felfile, char *ssfile,float *p, int prow, int pcol)
 								
 //Create empty partition to store new information
 	tdpartition *selev;
-	selev = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, felev.getNodata());//selev is to smooth the elevation
+	selev = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, felev.getNodata());//selev is to smooth the elevation
 
 //Create empty partition to store new information
 	tdpartition *ss;
 	short ssnodata =-2;
-	ss = CreateNewPartition(SHORT_TYPE, totalX, totalY, dx, dy, ssnodata);//-2 nodata value
+	ss = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, ssnodata);//-2 nodata value
 	
 // SHARE elev to populate the borders
 	elev->share();
@@ -215,10 +214,9 @@ int peukerdouglas(char *felfile, char *ssfile,float *p, int prow, int pcol)
 	}															
 	//Stop timer
 	double computet = MPI_Wtime();
-	char prefix[5] = "ss";
 	tiffIO outelev(ssfile,SHORT_TYPE,&ssnodata, felev);
 	
-	outelev.write((long)globalxstart, (long)globalystart, (long)elevny, (long)elevnx, ss->getGridPointer(),prefix,prow,pcol);
+	outelev.write((long)globalxstart, (long)globalystart, (long)elevny, (long)elevnx, ss->getGridPointer());
 	double writet = MPI_Wtime();
 	double dataRead, compute, write, total,temp;
         dataRead = readt-begint;

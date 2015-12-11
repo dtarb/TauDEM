@@ -43,7 +43,6 @@ email:  dtarb@usu.edu
 #include <stdio.h>
 #include <stdlib.h>
 #include "commonLib.h"
-#include "shape/shapefile.h"
 #include "tardemlib.h"
 
 //-ang demang.tif -fel demfel.tif -ass demass.tif -rz demrz.tif -dfs demdfs.tif [-thresh 0.2] [-alpha 20] [-direct]
@@ -51,7 +50,7 @@ email:  dtarb@usu.edu
 int main(int argc,char **argv)
 {
    char angfile[MAXLN],felfile[MAXLN],assfile[MAXLN],rzfile[MAXLN],dmfile[MAXLN];
-   int err,i,prow=0,pcol=0;
+   int err,i;
    int path=1;
    float thresh=0.2, alpha=18.0;
 
@@ -83,24 +82,6 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-                else if(strcmp(argv[i],"-mf")==0)
-                {
-                        i++;
-                        if(argc > i)
-                        {
-                                prow = atoi(argv[i]);
-                                i++;
-                                if(argc > i)
-                                {
-                                        pcol = atoi(argv[i]);
-                                        i++;
-                                }
-                                else goto errexit;
-                        }
-                        else goto errexit;
-                        if(prow <=0 || pcol <=0)
-                                goto errexit;
-                }
 		else if(strcmp(argv[i],"-ang")==0)
 		{
 			i++;
@@ -180,7 +161,7 @@ int main(int argc,char **argv)
 		nameadd(dmfile,argv[1],"dfs");
 	}   
 
-   if(err=avalancherunoutgrd(angfile,felfile,assfile,rzfile,dmfile,thresh,alpha,path,prow,pcol) != 0)
+   if(err=avalancherunoutgrd(angfile,felfile,assfile,rzfile,dmfile,thresh,alpha,path) != 0)
          printf("area error %d\n",err);
 
 

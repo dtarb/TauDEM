@@ -45,9 +45,8 @@ email:  dtarb@usu.edu
 #include "linearpart.h"
 #include "createpart.h"
 #include "tiffIO.h"
-#include "shape/shapefile.h"
-using namespace std;
 
+using namespace std;
 
 // The old program was written in column major order.
 // d1 and d2 were used to translate flow data (1-8 taken from the indeces)
@@ -57,9 +56,10 @@ using namespace std;
 //const short d2[9] = { 0,1, 1, 0,-1,-1,-1,0,1};
 // moved to commonlib.h
 
-float dist[9];
+//float dist[9];
+float **dist;
 int avalancherunoutgrd(char *angfile, char *felfile, char *assfile, char *rzfile, char *dmfile, float thresh, 
-					   float alpha, int path, int prow, int pcol)
+					   float alpha, int path)
 {
 
 	MPI_Init(NULL,NULL);{
@@ -71,8 +71,8 @@ int avalancherunoutgrd(char *angfile, char *felfile, char *assfile, char *rzfile
 	if(rank==0)printf("DinfAvalanche version %s\n",TDVERSION);
 
 	float area,angle,asss,dmm,rzz,zmm;
-	long imm,jmm;
-	double p;
+	int32_t imm,jmm;
+	double p,tempdxc,tempdyc;
 
 	//  Keep track of time
 	double begint = MPI_Wtime();
@@ -81,9 +81,9 @@ int avalancherunoutgrd(char *angfile, char *felfile, char *assfile, char *rzfile
 	tiffIO ang(angfile, FLOAT_TYPE);
 	long totalX = ang.getTotalX();
 	long totalY = ang.getTotalY();
-	double dx = ang.getdx();
-	double dy = ang.getdy();
-	double xllcentr = ang.getXllcenter();
+	double dxA = ang.getdxA();
+	double dyA = ang.getdyA();
+    double xllcentr = ang.getXllcenter();
 	double yllcentr = ang.getYllcenter();
 	if(rank==0)
 		{
@@ -95,11 +95,12 @@ int avalancherunoutgrd(char *angfile, char *felfile, char *assfile, char *rzfile
 
 	//Create partition and read data
 	tdpartition *flowData;
-	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dx, dy, ang.getNodata());
+	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dxA, dyA, ang.getNodata());
 	int nx = flowData->getnx();
 	int ny = flowData->getny();
 	int xstart, ystart;
 	flowData->localToGlobal(0, 0, xstart, ystart);
+	flowData->savedxdyc(ang);
 	ang.read(xstart, ystart, ny, nx, flowData->getGridPointer());
 
 	//using elevation, get information from file
@@ -110,7 +111,7 @@ int avalancherunoutgrd(char *angfile, char *felfile, char *assfile, char *rzfile
 		MPI_Abort(MCW,5);
 		return 1; 
 	}
-	felData = CreateNewPartition(fel.getDatatype(), totalX, totalY, dx, dy, fel.getNodata());
+	felData = CreateNewPartition(fel.getDatatype(), totalX, totalY, dxA, dyA, fel.getNodata());
 	fel.read(xstart, ystart, felData->getny(), felData->getnx(), felData->getGridPointer());
 
 	tdpartition *assData;
@@ -120,16 +121,20 @@ int avalancherunoutgrd(char *angfile, char *felfile, char *assfile, char *rzfile
 		MPI_Abort(MCW,5);
 		return 1; 
 	}
-	assData = CreateNewPartition(ass.getDatatype(), totalX, totalY, dx, dy, ass.getNodata());
+	assData = CreateNewPartition(ass.getDatatype(), totalX, totalY, dxA, dyA, ass.getNodata());
 	ass.read(xstart, ystart, assData->getny(), assData->getnx(), assData->getGridPointer());
 
 	//  Calculate distances in each direction
 	int kk;
-	for(kk=1; kk<=8; kk++)
-	{
-		dist[kk]=sqrt(dx*dx*d2[kk]*d2[kk]+dy*dy*d1[kk]*d1[kk]);
+	 dist = new float*[ny];
+    for(int m= 0; m < ny;m++)
+    dist[m] = new float[9];
+	for ( int m=0;m<ny;m++){
+		 flowData->getdxdyc(m,tempdxc,tempdyc);
+	     for(kk=1; kk<=8; kk++){
+		dist[m][kk]=sqrt(tempdxc*tempdxc*d1[kk]*d1[kk]+tempdyc*tempdyc*d2[kk]*d2[kk]);
+	                           }
 	}
-		
 	//Begin timer
 	double readt = MPI_Wtime();
 
@@ -137,38 +142,40 @@ int avalancherunoutgrd(char *angfile, char *felfile, char *assfile, char *rzfile
 	
 	//Create empty partition to store new information
 	tdpartition *rz;
-	rz = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, MISSINGFLOAT);
+	rz = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
 	tdpartition *dm;
-	dm = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, MISSINGFLOAT);
+	dm = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
 
 	tdpartition *im;
-	im = CreateNewPartition(LONG_TYPE, totalX, totalY, dx, dy, MISSINGLONG);
+	im = CreateNewPartition(LONG_TYPE, totalX, totalY, dxA, dyA, MISSINGLONG);
 	tdpartition *jm;
-	jm = CreateNewPartition(LONG_TYPE, totalX, totalY, dx, dy, MISSINGLONG);
+	jm = CreateNewPartition(LONG_TYPE, totalX, totalY, dxA, dyA, MISSINGLONG);
 
 	tdpartition *zm;
-	zm = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, MISSINGFLOAT);
+	zm = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
 
 	double bndbox[4];
 	float *xcoord;
 	float *ycoord;	
 	xcoord = new float[totalX];
 	ycoord = new float[totalY];
+	
+	bndbox[0] = xllcentr - (ang.getdlon()/2);
+	bndbox[1] = yllcentr - (ang.getdlat()/2);
+    bndbox[2] = bndbox[0] + (ang.getdlon()*totalX);
+	bndbox[3] = bndbox[1] + (ang.getdlat()*totalY);
+	
 
-	bndbox[0] = xllcentr - (dx/2);
-	bndbox[1] = yllcentr - (dy/2);
-	bndbox[2] = bndbox[0] + (dx*totalX);
-	bndbox[3] = bndbox[1] + (dy*totalY);
 
 	/*dem->head.bndbox[0]=xllcenter-(*dx/2);
 	dem->head.bndbox[1]=yllcenter-(*dy/2);
 	dem->head.bndbox[2]=dem->head.bndbox[0] + *dx * (*nx);
 	dem->head.bndbox[3]=dem->head.bndbox[1] + *dy * (*ny);*/
 	int ii,jj;
-	for(int ii=0; ii<totalY; ii++)
-		ycoord[ii]=bndbox[3] - (ii*dy);
+	for(int ii=0; ii<totalY; ii++){
+		ycoord[ii]=bndbox[3] - (ii*ang.getdlat());}
 	for(int jj=0; jj<totalX; jj++)
-		xcoord[jj]=bndbox[0] + (jj*dx);
+	    {xcoord[jj]=bndbox[0] + (jj*ang.getdlon());}
 
 	// con is used to check for contamination at the edges
 	long i,j;
@@ -179,7 +186,7 @@ int avalancherunoutgrd(char *angfile, char *felfile, char *assfile, char *rzfile
 	short tempShort=0;
 
 	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dx, dy, -32768);
+	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -32768);
 	
 	//Share information and set borders to zero
 	flowData->share();
@@ -214,8 +221,8 @@ int avalancherunoutgrd(char *angfile, char *felfile, char *assfile, char *rzfile
 					rz->setData(i,j,alpha);
 					int ig,jg;
 					flowData->localToGlobal((int)i,(int)j,ig,jg);
-					im->setData(i,j,(long)ig);  //  record global row and column so that lookup across partitions works
-					jm->setData(i,j,(long)jg);
+					im->setData(i,j,(int32_t)ig);  //  record global row and column so that lookup across partitions works
+					jm->setData(i,j,(int32_t)jg);
 					zm->setData(i,j,felData->getData(i,j,tempFloat));  //  Record max elevation in partition as global lookup later does not work across partitions
 					dm->setData(i,j,(float)0.0);
 				}
@@ -226,7 +233,8 @@ int avalancherunoutgrd(char *angfile, char *felfile, char *assfile, char *rzfile
 					jn = j+d2[k];
 					if(flowData->hasAccess(in,jn) && !flowData->isNodata(in,jn)){
 						flowData->getData(in,jn, angle);
-						p = prop(angle, (k+4)%8);
+						flowData->getdxdyc(jn,tempdxc,tempdyc);
+						p = prop(angle, (k+4)%8,tempdxc,tempdyc);
 						if(p>0.0 && p >= thresh) {
 							rz->getData(in,jn,rzz);
 							im->getData(in,jn,imm);
@@ -236,7 +244,7 @@ int avalancherunoutgrd(char *angfile, char *felfile, char *assfile, char *rzfile
 								float d;
 								if(path==1){
 									dm->getData(in,jn,dmm);
-									d=dmm + dist[k];
+									d=dmm + dist[j][k];
 								}
 								else
 								{		
@@ -244,7 +252,20 @@ int avalancherunoutgrd(char *angfile, char *felfile, char *assfile, char *rzfile
 									flowData->localToGlobal((int)i,(int)j,ig,jg);
 									float dxx=xcoord[ig]-xcoord[imm];//was jmm; imm and jmm are swiched because in the serial code they are used as j,i
 									float dyy=ycoord[jg]-ycoord[jmm];//was imm
+
+									if(ang.getproj()==1){
+										double dxdyc[2];
+		                                ang.geotoLength(dxx,dyy,ycoord[jg],dxdyc);
+										d=sqrt(dxdyc[0]*dxdyc[0]+dxdyc[1]*dxdyc[1]);
+
+
+									}
+									else if(ang.getproj()==0) {
 									d=sqrt(dxx*dxx+dyy*dyy);
+
+									}
+
+
 								}
 								float felin,felij;
 								//felData->getData(imm,jmm,felin);
@@ -273,8 +294,9 @@ int avalancherunoutgrd(char *angfile, char *felfile, char *assfile, char *rzfile
 			//  END FLOW ALGEBRA EXPRESSION EVALUATION
 			//  Decrement neighbor dependence of downslope cell
 			flowData->getData(i, j, angle);
+			flowData->getdxdyc(j,tempdxc,tempdyc);
 			for(k=1; k<=8; k++) {			
-				p = prop(angle, k);
+				p = prop(angle, k,tempdxc,tempdyc);
 				if(p>0.0) {
 					in = i+d1[k];  jn = j+d2[k];
 					//Decrement the number of contributing neighbors in neighbor
@@ -325,12 +347,11 @@ int avalancherunoutgrd(char *angfile, char *felfile, char *assfile, char *rzfile
 
 	//Create and write TIFF file
 	float scaNodata = MISSINGFLOAT;
-	char prefix[5] = "rz";
 	tiffIO rrz(rzfile, FLOAT_TYPE, &scaNodata, ang);
-	rrz.write(xstart, ystart, ny, nx, rz->getGridPointer(),prefix,prow,pcol);
-	strncpy(prefix, "dfs" , 5);
+	rrz.write(xstart, ystart, ny, nx, rz->getGridPointer());
+
 	tiffIO ddm(dmfile, FLOAT_TYPE, &scaNodata, ang);
-	ddm.write(xstart, ystart, ny, nx, dm->getGridPointer(),prefix,prow,pcol);
+	ddm.write(xstart, ystart, ny, nx, dm->getGridPointer());
 
 	double writet = MPI_Wtime();
         double dataRead, compute, write, total,tempd;

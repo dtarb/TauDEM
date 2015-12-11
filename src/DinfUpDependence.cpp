@@ -46,11 +46,10 @@ email:  dtarb@usu.edu
 #include "linearpart.h"
 #include "createpart.h"
 #include "tiffIO.h"
-#include "shape/shapefile.h"
 using namespace std;
 
 
-int depgrd(char* angfile, char* dgfile, char* depfile, int prow, int pcol)
+int depgrd(char* angfile, char* dgfile, char* depfile)
 {
 
 	MPI_Init(NULL,NULL);{
@@ -62,8 +61,8 @@ int depgrd(char* angfile, char* dgfile, char* depfile, int prow, int pcol)
 	if(rank==0)printf("DinfUpDependence version %s\n",TDVERSION);
 
 	float angle,depp;
-	long dgg;
-	double p;
+	int32_t dgg;
+	double p,tempdxc,tempdyc;
 
 	//  Keep track of time
 	double begint = MPI_Wtime();
@@ -72,8 +71,9 @@ int depgrd(char* angfile, char* dgfile, char* depfile, int prow, int pcol)
 	tiffIO ang(angfile, FLOAT_TYPE);
 	long totalX = ang.getTotalX();
 	long totalY = ang.getTotalY();
-	double dx = ang.getdx();
-	double dy = ang.getdy();
+	double dxA = ang.getdxA();
+	double dyA = ang.getdyA();
+
 	if(rank==0)
 		{
 			float timeestimate=(1.2e-6*totalX*totalY/pow((double) size,0.65))/60+1;  // Time estimate in minutes
@@ -84,18 +84,19 @@ int depgrd(char* angfile, char* dgfile, char* depfile, int prow, int pcol)
 
 	//Create partition and read data
 	tdpartition *flowData;
-	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dx, dy, ang.getNodata());
+	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dxA, dyA, ang.getNodata());
 	int nx = flowData->getnx();
 	int ny = flowData->getny();
 	int xstart, ystart;
 	flowData->localToGlobal(0, 0, xstart, ystart);
+	flowData->savedxdyc(ang);
 	ang.read(xstart, ystart, ny, nx, flowData->getGridPointer());
 
 	// Read DG 
 	tdpartition *dgData;	
 	tiffIO dg(dgfile, LONG_TYPE);
 	if(!ang.compareTiff(dg)) return 1;  //And maybe an unhappy error message
-	dgData = CreateNewPartition(dg.getDatatype(), totalX, totalY, dx, dy, dg.getNodata());
+	dgData = CreateNewPartition(dg.getDatatype(), totalX, totalY, dxA, dyA, dg.getNodata());
 	dg.read(xstart, ystart, dgData->getny(), dgData->getnx(), dgData->getGridPointer());
 	
 	//Begin timer
@@ -104,11 +105,11 @@ int depgrd(char* angfile, char* dgfile, char* depfile, int prow, int pcol)
 	//Create  partition to store dependence result
 	tdpartition *dep;
 	float depNodata = -1.0f;
-	dep = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, depNodata);
+	dep = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, depNodata);
 
 	//  Create neighbor partition
 	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dx, dy, -32768);
+	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -32768);
 	
 	//Share information and set borders to zero
 	flowData->share();
@@ -138,7 +139,8 @@ int depgrd(char* angfile, char* dgfile, char* depfile, int prow, int pcol)
 				for(k=1; k<=8; k++){
 					xn = x+d1[k];  yn = y+d2[k];
 					flowData->getData(x,y, angle);
-					p = prop(angle, k);
+					flowData->getdxdyc(y,tempdxc,tempdyc);
+					p = prop(angle, k,tempdxc,tempdyc);
 					if(p>0.0 && flowData->hasAccess(xn,yn) && !flowData->isNodata(xn,yn))
 						neighbor->addToData(x,y,(short)1);
 				}
@@ -190,6 +192,7 @@ int depgrd(char* angfile, char* dgfile, char* depfile, int prow, int pcol)
 			//  BEGIN GENERIC DOWN FLOW ALGEBRA EVALUATION BLOCK
 			//fdepg.d[j][i] = fdepg.d[j][i] + p * fdepg.d[jn][in] ;
 			angle=flowData->getData(x, y, angle);
+			flowData->getdxdyc(y,tempdxc,tempdyc);
 			if(dgData->getData(x,y,dgg)>=1)
 			{
 				dep->setData(x,y,(float)1.0);
@@ -198,7 +201,7 @@ int depgrd(char* angfile, char* dgfile, char* depfile, int prow, int pcol)
 			{
 				dep->setData(x,y,(float)0.0);
 				for(k=1; k<=8; k++) {
-					p=prop(angle,k);  // 
+					p=prop(angle,k,tempdxc,tempdyc);  // 
 					if(p>0.0)
 					{
 						xn = x+d1[k];  yn = y+d2[k];
@@ -215,7 +218,8 @@ int depgrd(char* angfile, char* dgfile, char* depfile, int prow, int pcol)
 				xn = x+d1[k];  yn = y+d2[k];
 				if(flowData->hasAccess(xn,yn) && !flowData->isNodata(xn,yn)){
 					flowData->getData(xn, yn, angle);
-					p = prop(angle, (k+4)%8);
+					flowData->getdxdyc(yn,tempdxc,tempdyc);
+					p = prop(angle, (k+4)%8,tempdxc,tempdyc);
 					if(p>0.0) {
 						//Decrement the number of contributing neighbors in neighbor
 						neighbor->addToData(xn,yn,(short)-1);	
@@ -236,9 +240,8 @@ int depgrd(char* angfile, char* dgfile, char* depfile, int prow, int pcol)
 	double computet = MPI_Wtime();
 
 	//Create and write TIFF file
-	char prefix[5] = "dep";
 	tiffIO ddep(depfile, FLOAT_TYPE, &depNodata, ang);
-	ddep.write(xstart, ystart, ny, nx, dep->getGridPointer(),prefix,prow,pcol);
+	ddep.write(xstart, ystart, ny, nx, dep->getGridPointer());
 
 	double writet = MPI_Wtime();
         double dataRead, compute, write, total,tempd;

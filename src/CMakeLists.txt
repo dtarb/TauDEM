@@ -1,26 +1,21 @@
 find_package(MPI REQUIRED)
+find_package(GDAL REQUIRED)
 
 set(CMAKE_CXX_COMPILE_FLAGS ${CMAKE_CXX_COMPILE_FLAGS} ${MPI_CXX_COMPILE_FLAGS})
 set(CMAKE_CXX_LINK_FLAGS ${CMAKE_CXX_LINK_FLAGS} ${MPI_CXX_LINK_FLAGS})
 
 add_definitions(-std=c++11)
 
-include_directories(${MPI_CXX_INCLUDE_PATH})
-link_libraries(${MPI_CXX_LIBRARIES})
+include_directories(${MPI_CXX_INCLUDE_PATH} ${GDAL_INCLUDE_DIR})
+link_libraries(${MPI_CXX_LIBRARIES} ${GDAL_LIBRARY})
 
 set(BUILD_SHARED_LIBS OFF)
 
-# All files in the shapefile library
-file(GLOB SHAPE_SRC shape/*.cpp)
-
 # Classes, structures, and constants common to all files
-set(COMMON_SRC commonLib.cpp tiffIO.cpp tifFile.cpp)
+set(COMMON_SRC commonLib.cpp tiffIO.cpp ReadOutlets.cpp)
 
 if(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION} GREATER 2.8.7)
     # Don't recompile common files by using CMake's 2.8.8 OBJECT "libraries"
-    add_library(shape_lib OBJECT ${SHAPE_SRC})
-    set(SHAPE_SRC $<TARGET_OBJECTS:shape_lib>)
-
     add_library(common_lib OBJECT ${COMMON_SRC})
     set(COMMON_SRC $<TARGET_OBJECTS:common_lib>)
 endif()

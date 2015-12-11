@@ -44,7 +44,7 @@ email:  dtarb@usu.edu
 #include <stdlib.h>
 #include "commonLib.h"
 #include "tardemlib.h"
-
+int twigrid(char *slopefile,char *areafile,char *twifile);
 int main(int argc,char **argv)
 {
    char slopefile[MAXLN],areafile[MAXLN],twifile[MAXLN];
@@ -76,25 +76,7 @@ int main(int argc,char **argv)
 				i++;
 			}
 			else goto errexit;
-		}
-                else if(strcmp(argv[i],"-mf")==0)
-                {
-                        i++;
-                        if(argc > i)
-                        {
-                                prow = atoi(argv[i]);
-                                i++;
-                                if(argc > i)
-                                {
-                                        pcol = atoi(argv[i]);
-                                        i++;
-                                }
-                                else goto errexit;
-                        }
-                        else goto errexit;
-                        if(prow <=0 || pcol <=0)
-                                goto errexit;
-                }
+		}             
 		else if(strcmp(argv[i],"-slp")==0)
 		{
 			i++;
@@ -125,7 +107,7 @@ int main(int argc,char **argv)
 		nameadd(slopefile,argv[1],"slp");
 		nameadd(twifile,argv[1],"twi");
 	}  
-	if((err=twigrid(slopefile,areafile,twifile,prow,pcol)) != 0)
+	if((err=twigrid(slopefile,areafile,twifile)) != 0)
         printf("TWI error %d\n",err);
 
 	return 0;

@@ -81,7 +81,10 @@ int nameadd(char *full, char *arg, const char *suff)
 }
 
 //TODO - does this function go here, or in areadinf?
-double prop( float a, int k) {
+double prop( float a, int k, double dx1 , double dy1) {
+
+	double aref[10] = { -atan2(dy1,dx1), 0., -aref[0],(double)(0.5*PI),PI-aref[2],(double)PI,
+                       PI+aref[2],(double)(1.5*PI),2.*PI-aref[2],(double)(2.*PI) };
 	double p=0.;
 	if(k<=0)k=k+8;  // DGT to guard against remainder calculations that give k=0
 	if(k == 1 && a > PI)a=(float)(a-2.0*PI);
@@ -101,12 +104,16 @@ void initNeighborDinfup(tdpartition* neighbor,tdpartition* flowData,queue<node> 
 	//  and place locations with no neighbors that drain to them on the que
 	int i,j,k,in,jn;
 	short tempShort;
-	float tempFloat,angle,p;
+	float angle,p;double tempdxc, tempdyc;
+	
+	
 	node temp;
 	if(useOutlets != 1) {
 		//Count the contributing neighbors and put on queue
 		for(j=0; j<ny; j++) {
 			for(i=0; i<nx; i++) {
+
+			
 				//Initialize neighbor count to no data, but then 0 if flow direction is defined
 				neighbor->setToNodata(i,j);
 				if(!flowData->isNodata(i,j)) {
@@ -118,8 +125,10 @@ void initNeighborDinfup(tdpartition* neighbor,tdpartition* flowData,queue<node> 
 						jn = j+d2[k];
 						if(flowData->hasAccess(in,jn) && !flowData->isNodata(in,jn)){
 							flowData->getData(in, jn, angle);
-							p = prop(angle, (k+4)%8);  //  if neighbor drains to me
-							if(p>0.)
+							 flowData->getdxdyc(jn, tempdxc,tempdyc);
+		                
+							p = prop(angle,(k+4)%8,tempdxc,tempdyc);  //  if neighbor drains to me
+							if(p>0.0)
 								neighbor->addToData(i,j,(short)1);
 						}
 					}
@@ -178,7 +187,8 @@ void initNeighborDinfup(tdpartition* neighbor,tdpartition* flowData,queue<node> 
 						jn = j+d2[k];
 						if(flowData->hasAccess(in,jn) && !flowData->isNodata(in,jn)){ 
 							flowData->getData(in, jn, angle);
-							p = prop(angle, (k+4)%8);
+							flowData->getdxdyc(jn,tempdxc,tempdyc);
+		                    p = prop(angle, (k+4)%8, tempdxc,tempdyc);
 							if(p>0.) {
 								if( jn == -1 ) {
 									bufferAbove[countA] = in;
@@ -228,6 +238,7 @@ void initNeighborDinfup(tdpartition* neighbor,tdpartition* flowData,queue<node> 
 			}
 			finished = neighbor->ringTerm( finished );
 		}
+
 		delete bufferAbove;
 		delete bufferBelow;
 	}
@@ -381,3 +392,42 @@ bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData){
 	}
 	return false;
 }
+
+//get extension from OGR vector file
+  char *getLayername(char *inputogrfile)
+{  
+	char pfile[MAXLN];
+   strncpy(pfile, inputogrfile, 3);
+   char *filename;
+    pfile[3] = '\0'; // get only three character from begining *e.g. "E:\Test" it will give "E:\"
+     if ((pfile[2] == '\\') || (pfile[2] == '/')) {
+    if (pfile[2] == '\\')
+	    filename = strrchr(inputogrfile, '\\');// for windows
+	else  
+		filename = strrchr(inputogrfile, '/'); // for linux
+    if (filename == NULL)
+        filename = inputogrfile;
+    else
+        filename++;
+	 }
+	else 
+	{
+	filename = inputogrfile;}
+
+	
+    char *ext; 
+    ext = strrchr(filename, '.'); // getting extension
+    char layername[MAXLN];
+
+    size_t len = strlen(filename);
+	size_t len1 = strlen(ext);
+
+	memcpy(layername, filename, len-len1);
+	layername[len - len1] = 0; 
+	
+
+
+    printf("%s ", layername);
+    return layername;
+}
+

@@ -45,11 +45,10 @@ email:  dtarb@usu.edu
 #include "linearpart.h"
 #include "createpart.h"
 #include "tiffIO.h"
-#include "shape/shapefile.h"
 using namespace std;
 
 
-int dsaccum(char *angfile,char *wgfile, char *raccfile, char *dmaxfile, int prow, int pcol)
+int dsaccum(char *angfile,char *wgfile, char *raccfile, char *dmaxfile)
 {
 
 	MPI_Init(NULL,NULL);{
@@ -61,7 +60,7 @@ int dsaccum(char *angfile,char *wgfile, char *raccfile, char *dmaxfile, int prow
 	if(rank==0)printf("DinfRevAccum version %s\n",TDVERSION);
 
 	float dmaxx,angle,raccc,apooll;
-	double p;
+	double p,tempdxc,tempdyc;
 
 	//  Keep track of time
 	double begint = MPI_Wtime();
@@ -70,8 +69,9 @@ int dsaccum(char *angfile,char *wgfile, char *raccfile, char *dmaxfile, int prow
 	tiffIO ang(angfile, FLOAT_TYPE);
 	long totalX = ang.getTotalX();
 	long totalY = ang.getTotalY();
-	double dx = ang.getdx();
-	double dy = ang.getdy();
+	double dxA = ang.getdxA();
+	double dyA = ang.getdyA();
+
 	if(rank==0)
 		{
 			float timeestimate=(1.2e-6*totalX*totalY/pow((double) size,0.65))/60+1;  // Time estimate in minutes
@@ -82,11 +82,12 @@ int dsaccum(char *angfile,char *wgfile, char *raccfile, char *dmaxfile, int prow
 
 	//Create partition and read data
 	tdpartition *flowData;
-	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dx, dy, ang.getNodata());
+	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dxA, dyA, ang.getNodata());
 	int nx = flowData->getnx();
 	int ny = flowData->getny();
 	int xstart, ystart;
 	flowData->localToGlobal(0, 0, xstart, ystart);
+	flowData->savedxdyc(ang);
 	ang.read(xstart, ystart, ny, nx, flowData->getGridPointer());
 
 	//if using weightData, get information from file
@@ -97,7 +98,7 @@ int dsaccum(char *angfile,char *wgfile, char *raccfile, char *dmaxfile, int prow
 		MPI_Abort(MCW,5);
 		return 1;  
 	}
-	wgData = CreateNewPartition(wg.getDatatype(), totalX, totalY, dx, dy, wg.getNodata());
+	wgData = CreateNewPartition(wg.getDatatype(), totalX, totalY, dxA, dyA, wg.getNodata());
 	wg.read(xstart, ystart, wgData->getny(), wgData->getnx(), wgData->getGridPointer());
 	
 	//Begin timer
@@ -105,9 +106,9 @@ int dsaccum(char *angfile,char *wgfile, char *raccfile, char *dmaxfile, int prow
 
 	//Create empty partition to store new information
 	tdpartition *racc;
-	racc = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, MISSINGFLOAT);
+	racc = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
 	tdpartition *dmax;
-	dmax = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, MISSINGFLOAT);
+	dmax = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
 
 	// con is used to check for contamination at the edges
 	long i,j;
@@ -118,7 +119,7 @@ int dsaccum(char *angfile,char *wgfile, char *raccfile, char *dmaxfile, int prow
 	short tempShort=0;
 
 	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dx, dy, MISSINGSHORT);
+	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, MISSINGSHORT);
 	
 	//Share information and set borders to zero
 	flowData->share();
@@ -142,7 +143,8 @@ int dsaccum(char *angfile,char *wgfile, char *raccfile, char *dmaxfile, int prow
 					in = i+d1[k];
 					jn = j+d2[k];
 					flowData->getData(i, j, angle);
-					p = prop(angle, k);
+					flowData->getdxdyc(j,tempdxc,tempdyc);
+					p = prop(angle, k,tempdxc,tempdyc);
 					if(p>0. && flowData->hasAccess(in,jn) && !flowData->isNodata(in,jn))
 						neighbor->addToData(i,j,(short)1);
 				}
@@ -188,7 +190,8 @@ int dsaccum(char *angfile,char *wgfile, char *raccfile, char *dmaxfile, int prow
 					in = i+d1[k];
 					jn = j+d2[k];
 					flowData->getData(i, j, angle);
-					p = prop(angle, k);
+					flowData->getdxdyc(j,tempdxc,tempdyc);
+					p = prop(angle, k,tempdxc,tempdyc);
 					if(p>0. && flowData->hasAccess(in,jn) && !racc->isNodata(in, jn))
 					{
 						float valn;
@@ -206,7 +209,8 @@ int dsaccum(char *angfile,char *wgfile, char *raccfile, char *dmaxfile, int prow
 				jn = j+d2[k];
 				if(flowData->hasAccess(in,jn) && !flowData->isNodata(in,jn)){
 					flowData->getData(in,jn, angle);
-					p = prop(angle, (k+4)%8);
+					flowData->getdxdyc(jn,tempdxc,tempdyc);
+					p = prop(angle, (k+4)%8,tempdxc,tempdyc);
 					if(p>0.)
 					{
 						neighbor->addToData(in,jn,(short)-1);
@@ -251,13 +255,11 @@ int dsaccum(char *angfile,char *wgfile, char *raccfile, char *dmaxfile, int prow
 
 	//Create and write TIFF file
 	float raccNodata = MISSINGFLOAT;
-	char prefix[6] = "racc";
 	tiffIO rrac(raccfile, FLOAT_TYPE, &raccNodata, ang);
-	rrac.write(xstart, ystart, ny, nx, racc->getGridPointer(),prefix,prow,pcol);
-	strncpy(prefix, "dmax", 6);
+	rrac.write(xstart, ystart, ny, nx, racc->getGridPointer());
 
 	tiffIO ddmax(dmaxfile, FLOAT_TYPE, &raccNodata, ang);
-	ddmax.write(xstart, ystart, ny, nx, dmax->getGridPointer(),prefix,prow,pcol);
+	ddmax.write(xstart, ystart, ny, nx, dmax->getGridPointer());
 
 	double writet = MPI_Wtime();
 

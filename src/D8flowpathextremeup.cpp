@@ -52,10 +52,10 @@ email:  dtarb@usu.edu
 #include "linearpart.h"
 #include "createpart.h"
 #include "tiffIO.h"
-#include "shape/shapefile.h"
+
 using namespace std;
 
-int d8flowpathextremeup(char *pfile, char*safile, char *ssafile, int usemax, char *outletsfile, int useOutlets, int contcheck, int prow, int pcol)
+int d8flowpathextremeup(char *pfile, char*safile, char *ssafile, int usemax, char *outletsfile, int useOutlets, int contcheck)
 {
 MPI_Init(NULL,NULL);
 {  //  All code within braces so that objects go out of context and destruct before MPI is closed
@@ -67,12 +67,18 @@ MPI_Init(NULL,NULL);
 
 	double *x, *y;
 	int numOutlets=0;
-
+	tiffIO p(pfile,SHORT_TYPE);
+	long totalX = p.getTotalX();
+	long totalY = p.getTotalY();
+    double dxA = p.getdxA();
+	double dyA = p.getdyA();
+	OGRSpatialReferenceH hSRSRaster;
+    hSRSRaster=p.getspatialref();
 //  Begin timer
     double begint = MPI_Wtime();
 	if( useOutlets == 1) {
 		if(rank==0){
-			if(readoutlets(outletsfile, &numOutlets, x, y) !=0){
+			if(readoutlets(outletsfile, hSRSRaster,&numOutlets, x, y) !=0){
 				printf("Exiting \n");
 				MPI_Abort(MCW,5);
 			}else {
@@ -94,11 +100,7 @@ MPI_Init(NULL,NULL);
  // printf("%d %d\n",rank,numOutlets);
   //for(int i=0; i<numOutlets; i++)printf("%g, %g\n",x[i],y[i]);
 	//Read Flow Direction header using tiffIO
-	tiffIO p(pfile,SHORT_TYPE);
-	long totalX = p.getTotalX();
-	long totalY = p.getTotalY();
-	double dx = p.getdx();
-	double dy = p.getdy();
+
 	if(rank==0)
 		{
 			float timeestimate=(1.2e-6*totalX*totalY/pow((double) size,0.65))/60+1;  // Time estimate in minutes
@@ -109,7 +111,7 @@ MPI_Init(NULL,NULL);
 
 	//Read flow direction data into partition
 	tdpartition *flowData;
-	flowData = CreateNewPartition(p.getDatatype(), totalX, totalY, dx, dy, p.getNodata());
+	flowData = CreateNewPartition(p.getDatatype(), totalX, totalY, dxA, dyA, p.getNodata());
 	int nx = flowData->getnx();
 	int ny = flowData->getny();
 	int xstart, ystart;
@@ -124,7 +126,7 @@ MPI_Init(NULL,NULL);
 		MPI_Abort(MCW,5);
 		return 1;  
 	}
-	saData = CreateNewPartition(sa.getDatatype(), totalX, totalY, dx, dy, sa.getNodata());
+	saData = CreateNewPartition(sa.getDatatype(), totalX, totalY, dxA, dyA, sa.getNodata());
 	sa.read(xstart, ystart, ny, nx, saData->getGridPointer());
 
 	//Record time reading files
@@ -141,7 +143,7 @@ MPI_Init(NULL,NULL);
 
 	//Create empty partition to store new information
 	tdpartition *ssa;
-	ssa = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, MISSINGFLOAT);
+	ssa = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
 
 	// con is used to check for contamination at the edges
 	long i,j;
@@ -153,7 +155,7 @@ MPI_Init(NULL,NULL);
 	short tempShort=0;
 
 	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dx, dy, -32768);
+	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -32768);
 	
 	//Share information and set borders to zero
 	flowData->share();
@@ -253,9 +255,8 @@ MPI_Init(NULL,NULL);
 
 	//Create and write TIFF file
 	float aNodata = MISSINGFLOAT;
-	char prefix[5] = "ssa";
 	tiffIO a(ssafile, FLOAT_TYPE, &aNodata, p);
-	a.write(xstart, ystart, ny, nx, ssa->getGridPointer(),prefix,prow,pcol);
+	a.write(xstart, ystart, ny, nx, ssa->getGridPointer());
 	double writet = MPI_Wtime();
  	double dataRead, compute, write, total,tempd;
         dataRead = readt-begint;

@@ -48,7 +48,7 @@ email:  dtarb@usu.edu
 using namespace std;
 
 int flood( char* demfile, char* felfile, char *sfdrfile, int usesfdr, bool verbose, 
-          bool is_4Point,bool use_mask,char *maskfile, int prow, int pcol, float epsilon) // Three added by arb, 5/31/11
+           bool is_4Point,bool use_mask,char *maskfile)  // these three added by arb, 5/31/11
 {
 
 	MPI_Init(NULL,NULL);{
@@ -83,23 +83,18 @@ int flood( char* demfile, char* felfile, char *sfdrfile, int usesfdr, bool verbo
       return 1;
     }
   }
-  
-	double headertA = MPI_Wtime();
-  
 	long totalX = dem.getTotalX();
 	long totalY = dem.getTotalY();
-	double dx = dem.getdx();
-	double dy = dem.getdy();
+	double dxA = dem.getdxA();
+	double dyA = dem.getdyA();
 
 	//Create partition and read data
 	tdpartition* elevDEM=NULL;
   tdpartition* maskPartition=NULL;
-	elevDEM = CreateNewPartition(dem.getDatatype(), totalX, totalY, dx, dy, dem.getNodata());
+	elevDEM = CreateNewPartition(dem.getDatatype(), totalX, totalY, dxA, dyA, dem.getNodata());
   if (use_mask)
-    maskPartition=CreateNewPartition(depmask->getDatatype(), totalX, totalY, dx, dy, depmask->getNodata());
+    maskPartition=CreateNewPartition(depmask->getDatatype(), totalX, totalY, dxA, dyA, depmask->getNodata());
 
-	double headertB = MPI_Wtime();
-	
 	int nx = elevDEM->getnx();
 	int ny = elevDEM->getny();
 	int xstart, ystart;
@@ -139,7 +134,7 @@ int flood( char* demfile, char* felfile, char *sfdrfile, int usesfdr, bool verbo
 	//Create empty partition to store new information
 	tdpartition *planchon;
 	float felNodata = -3.0e38;
-	planchon = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, felNodata);
+	planchon = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, felNodata);
 
 	long i,j;
 	short k;
@@ -307,7 +302,6 @@ int flood( char* demfile, char* felfile, char *sfdrfile, int usesfdr, bool verbo
 						//Get neighbor data and store as planchon for self
 						planchon->getData(in,jn, neighborFloat);
 			}
-			if(neighborFloat < FLT_MAX)neighborFloat += epsilon;
 //				if( neighborFloat < FLT_MAX ) {  //DGT This check is redundant - because scans start from the side
 				//Set the grid to either elevDEM, all "water" can be taken off"
 			if(elevDEM->getData(i,j, tempFloat) >= neighborFloat ){
@@ -375,7 +369,6 @@ int flood( char* demfile, char* felfile, char *sfdrfile, int usesfdr, bool verbo
 						//Get neighbor data and store as planchon for self
 						planchon->getData(in,jn, neighborFloat);
 			}
-			if(neighborFloat < FLT_MAX)neighborFloat += epsilon;
 	//				if( neighborFloat < FLT_MAX ) {  //DGT This check is redundant - because scans start from the side
 				//Set the grid to either elevDEM, all "water" can be taken off"
 			if(elevDEM->getData(i,j, tempFloat) >= neighborFloat ){
@@ -432,7 +425,6 @@ int flood( char* demfile, char* felfile, char *sfdrfile, int usesfdr, bool verbo
 						//Get neighbor data and store as planchon for self
 						planchon->getData(in,jn, neighborFloat);
 			}
-			if(neighborFloat < FLT_MAX)neighborFloat += epsilon;
 	//				if( neighborFloat < FLT_MAX ) {  //DGT This check is redundant - because scans start from the side
 				//Set the grid to either elevDEM, all "water" can be taken off"
 			if(elevDEM->getData(i,j, tempFloat) >= neighborFloat ){
@@ -499,25 +491,18 @@ int flood( char* demfile, char* felfile, char *sfdrfile, int usesfdr, bool verbo
 	}
 
 	//Create and write TIFF file
-	char prefix[5] = "fel";
 	tiffIO fel(felfile, FLOAT_TYPE, &felNodata, dem);
-	fel.write(xstart, ystart, ny, nx, planchon->getGridPointer(),prefix,prow,pcol);
+	fel.write(xstart, ystart, ny, nx, planchon->getGridPointer());
 
 	if(verbose)printf("Partition: %d, written\n",rank);
-	double headerRead, headerReadA, headerReadB, dataRead, compute, write, total,temp;
+	double headerRead, dataRead, compute, write, total,temp;
 	double writet = MPI_Wtime();
 	headerRead = headert-begint;
-	headerReadA = headertA - begint;
-	headerReadB = headertB - headertA;
 	dataRead = readt-headert;
 	compute = computet-readt;
 	write = writet-computet;
 	total = writet - begint;
 
-	MPI_Allreduce (&headerReadA, &temp, 1, MPI_DOUBLE, MPI_SUM, MCW);
-	headerReadA = temp/size;
-	MPI_Allreduce (&headerReadB, &temp, 1, MPI_DOUBLE, MPI_SUM, MCW);
-	headerReadB = temp/size;
 	MPI_Allreduce (&headerRead, &temp, 1, MPI_DOUBLE, MPI_SUM, MCW);
 	headerRead = temp/size;
 	MPI_Allreduce (&dataRead, &temp, 1, MPI_DOUBLE, MPI_SUM, MCW);
@@ -530,13 +515,12 @@ int flood( char* demfile, char* felfile, char *sfdrfile, int usesfdr, bool verbo
 	total = temp/size;
 
 	if( rank == 0)
-		printf("Processes: %d\nHeader read time: %f\nHeader read time A: %f\nHeader read time B: %f\nData read time: %f\nCompute time: %f\nWrite time: %f\nTotal time: %f\n",
-		  size, headerRead, headerReadA, headerReadB, dataRead, compute, write,total);
+		printf("Processes: %d\nHeader read time: %f\nData read time: %f\nCompute time: %f\nWrite time: %f\nTotal time: %f\n",
+		  size,headerRead , dataRead, compute, write,total);
+
 
 	//Brackets force MPI-dependent objects to go out of scope before Finalize is called
-	}
-	
-	MPI_Finalize();
+	}MPI_Finalize();
 
 	return 0;
 }

@@ -38,118 +38,304 @@ email:  dtarb@usu.edu
 
 //  This software is distributed from http://hydrology.usu.edu/taudem/
 
+// 1/25/14.  Modified to use shapelib by Chris George
+
 #include <mpi.h>
 #include <math.h>
 #include <iomanip>
 #include <queue>
+
 #include "commonLib.h"
-#include "linearpart.h"
+//#include "linearpart.h"
 #include "createpart.h"
 #include "tiffIO.h"
-#include "shape/shapefile.h"
 #include "tardemlib.h"
 #include "linklib.h"
 #include "streamnet.h"
 #include <fstream>
-
+#include "ogr_api.h"
 #include <limits>
 using namespace std;
 
-shapefile shp1;  //DGT would really like this not to be a global but I do not know how
+OGRSFDriverH    driver;
+OGRDataSourceH  hDS1;
+OGRLayerH       hLayer1;
+OGRFeatureDefnH hFDefn1;
+OGRFieldDefnH   hFieldDefn1;
+OGRFeatureH     hFeature1;
+OGRGeometryH    geometry, line;
+OGRSpatialReferenceH  hSRSraster,hSRSshapefile;
+//void createStreamNetShapefile(char *streamnetshp)
+//{
+//	shp1 = SHPCreate(streamnetshp, SHPT_ARC);
+//	char streamnetdbf[MAXLN];
+//	nameadd(streamnetdbf, streamnetshp, ".dbf");
+//	dbf1 = DBFCreate(streamnetdbf);
+//	linknoIdx = DBFAddField(dbf1,"LINKNO",FTInteger,6,0);
+//	dslinknoIdx = DBFAddField(dbf1,"DSLINKNO",FTInteger,6,0);
+//	uslinkno1Idx = DBFAddField(dbf1,"USLINKNO1",FTInteger,6,0);
+//	uslinkno2Idx = DBFAddField(dbf1,"USLINKNO2",FTInteger,6,0);
+//	dsnodeidIdx = DBFAddField(dbf1,"DSNODEID",FTInteger,12,0);
+//	orderIdx = DBFAddField(dbf1,"Order",FTInteger,6,0);
+//	lengthIdx = DBFAddField(dbf1,"Length",FTDouble,16,1);
+//	magnitudeIdx = DBFAddField(dbf1,"Magnitude",FTInteger,6,0);
+//	dscontareaIdx  = DBFAddField(dbf1,"DS_Cont_Area",FTDouble,16,1);
+//	dropIdx = DBFAddField(dbf1,"Drop",FTDouble,16,2);
+//	slopeIdx = DBFAddField(dbf1,"Slope",FTDouble,16,12);
+//	straightlengthIdx = DBFAddField(dbf1,"Straight_Length",FTDouble,16,1);
+//	uscontareaIdx = DBFAddField(dbf1,"US_Cont_Area",FTDouble,16,1);
+//	wsnoIdx = DBFAddField(dbf1,"WSNO",FTInteger,6,0);
+//	doutendIdx = DBFAddField(dbf1,"DOUT_END",FTDouble,16,1);
+//	doutstartIdx = DBFAddField(dbf1,"DOUT_START",FTDouble,16,1);
+//	doutmidIdx = DBFAddField(dbf1,"DOUT_MID",FTDouble,16,1);
+//}
 
-void createStreamNetShapefile(char *streamnetshp)
-{
-	shp1.create(streamnetshp,API_SHP_POLYLINE);
-	{field f("DOUT_MID",FTDouble,16,1);  shp1.insertField(f,0);}
-	{field f("DOUT_START",FTDouble,16,1);  shp1.insertField(f,0);}
-	{field f("DOUT_END",FTDouble,16,1);  shp1.insertField(f,0);}
-	{field f("WSNO",FTInteger,12,0);  shp1.insertField(f,0);} //rcs 5/22/2013 changed field width to 12 to accomodate more than one million IDs
-	{field f("US_Cont_Area",FTDouble,16,1);  shp1.insertField(f,0);}  //dgt 3/6/2006 changed 4th argument to 1 to force to store as double
-	{field f("Straight_Length",FTDouble,16,1);  shp1.insertField(f,0);}  //dgt 3/6/2006 changed 4th argument to 1 to force to store as double
-	{field f("Slope",FTDouble,16,12);  shp1.insertField(f,0);}
-	{field f("Drop",FTDouble,16,2);  shp1.insertField(f,0);}
-	{field f("DS_Cont_Area",FTDouble,16,1);  shp1.insertField(f,0);}  //dgt 3/6/2006 changed 4th argument to 1 to force to store as double
-	{field f("Magnitude",FTInteger,6,0);  shp1.insertField(f,0);}
-	{field f("Length",FTDouble,16,1);  shp1.insertField(f,0);}
-	{field f("Order",FTInteger,6,0);  shp1.insertField(f,0);}
-	{field f("DSNODEID",FTInteger,12,0);  shp1.insertField(f,0);}
-	{field f("USLINKNO2",FTInteger,12,0);  shp1.insertField(f,0);} //rcs 5/22/2013 changed field width to 12 to accomodate more than one million IDs
-	{field f("USLINKNO1",FTInteger,12,0);  shp1.insertField(f,0);} //rcs 5/22/2013 changed field width to 12 to accomodate more than one million IDs
-	{field f("DSLINKNO",FTInteger,12,0);  shp1.insertField(f,0);} //rcs 5/22/2013 changed field width to 12 to accomodate more than one million IDs
-	{field f("LINKNO",FTInteger,12,0);  shp1.insertField(f,0);} //rcs 5/22/2013 changed field width to 12 to accomodate more than one million IDs
-}
 
+void createStreamNetShapefile(char *streamnetshp,OGRSpatialReferenceH hSRSraster){
+   
+    /* Register all OGR drivers */
+    OGRRegisterAll();
+    const char *pszDriverName = "ESRI Shapefile";
+	//get driver by name
+    driver = OGRGetDriverByName( pszDriverName );
+    if( driver == NULL )
+    {
+        printf( "%s warning: driver not available.\n", pszDriverName );
+        //exit( 1 );
+    }
+
+    // Create new file using this driver 
+    hDS1 = OGR_Dr_CreateDataSource(driver, streamnetshp, NULL);
+    if (hDS1 != NULL) {
+ 
+
+    char *layername; // layer name is file name without extension
+    layername=getLayername(streamnetshp); // get layer name
+    hLayer1= OGR_DS_CreateLayer( hDS1, layername ,hSRSraster, wkbMultiLineString, NULL ); // provide same spatial reference as raster in streamnetshp file
+    if( layername  == NULL )
+    {
+        printf( "warning: Layer creation failed.\n" );
+        //exit( 1 );
+    }
+ 
+	
+	
+	/* Add a few fields to the layer defn */ //need some work for setfiled width
+	// add fields, field width and precision
+    hFieldDefn1 = OGR_Fld_Create( "LINKNO", OFTInteger ); // create new field definition
+	OGR_Fld_SetWidth( hFieldDefn1, 6); // set field width
+	OGR_L_CreateField(hLayer1,  hFieldDefn1, 0); // create field 
+
+    hFieldDefn1 = OGR_Fld_Create( "DSLINKNO", OFTInteger );
+	OGR_Fld_SetWidth( hFieldDefn1, 6);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	 
+	hFieldDefn1 = OGR_Fld_Create( "USLINKNO1", OFTInteger );
+	OGR_Fld_SetWidth( hFieldDefn1, 6);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	
+	hFieldDefn1 = OGR_Fld_Create( "USLINKNO2", OFTInteger );
+	OGR_Fld_SetWidth( hFieldDefn1, 6);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	
+	hFieldDefn1 = OGR_Fld_Create( "DSNODEID", OFTInteger );
+	OGR_Fld_SetWidth( hFieldDefn1, 12);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	
+	hFieldDefn1 = OGR_Fld_Create( "Order", OFTInteger );
+	OGR_Fld_SetWidth( hFieldDefn1, 6);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	
+	hFieldDefn1 = OGR_Fld_Create( "Length", OFTReal );
+	OGR_Fld_SetWidth( hFieldDefn1, 16);
+	OGR_Fld_SetPrecision(hFieldDefn1, 1); // set precision
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	
+	hFieldDefn1 = OGR_Fld_Create( "Magnitude", OFTInteger );
+	OGR_Fld_SetWidth( hFieldDefn1, 6);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	 
+	hFieldDefn1 = OGR_Fld_Create( "DSContArea", OFTReal );
+	OGR_Fld_SetWidth( hFieldDefn1, 16);
+	OGR_Fld_SetPrecision(hFieldDefn1, 1);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	
+	hFieldDefn1 = OGR_Fld_Create( "Drop", OFTReal );
+	OGR_Fld_SetWidth( hFieldDefn1, 16);
+	OGR_Fld_SetPrecision(hFieldDefn1, 2);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	 
+	hFieldDefn1= OGR_Fld_Create( "Slope", OFTReal );
+	OGR_Fld_SetWidth( hFieldDefn1,16);
+    OGR_Fld_SetPrecision(hFieldDefn1, 12);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	
+	hFieldDefn1 = OGR_Fld_Create( "StraightL", OFTReal );
+	OGR_Fld_SetWidth( hFieldDefn1,16);
+	OGR_Fld_SetPrecision(hFieldDefn1, 1);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	
+	hFieldDefn1 = OGR_Fld_Create( "USContArea", OFTReal );
+	OGR_Fld_SetWidth( hFieldDefn1, 16);
+	OGR_Fld_SetPrecision(hFieldDefn1, 1);
+    OGR_L_CreateField(hLayer1,hFieldDefn1, 0);
+	 
+	hFieldDefn1 = OGR_Fld_Create( "WSNO", OFTInteger );
+	OGR_Fld_SetWidth( hFieldDefn1, 6);
+	OGR_Fld_SetPrecision(hFieldDefn1,0);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	 
+	hFieldDefn1 = OGR_Fld_Create( "DOUTEND", OFTReal );
+	OGR_Fld_SetWidth( hFieldDefn1, 16);
+	OGR_Fld_SetPrecision(hFieldDefn1, 1);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	 
+	hFieldDefn1 = OGR_Fld_Create( "DOUTSTART", OFTReal );
+	OGR_Fld_SetWidth( hFieldDefn1, 16);
+    OGR_Fld_SetPrecision(hFieldDefn1, 1);
+    OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	 
+	hFieldDefn1 = OGR_Fld_Create( "DOUTMID", OFTReal );
+	OGR_Fld_SetWidth( hFieldDefn1, 16);
+    OGR_Fld_SetPrecision(hFieldDefn1, 1);
+	OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
+	}
+	}
 // Write shape from tardemlib.cpp
-int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *pointx, double *pointy, long np)
+int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *pointx, double *pointy, long np,tiffIO &obj)
 {
     // Function to write stream network shapefile
 
-    shape * sh = new shp_polyline();
-    double x,y,length,glength,x1,y1,xlast,ylast,usarea,dsarea,dslast,dl,drop,slope;
+	int nVertices;
+	if (np < 2) {//singleton - will be duplicated
+		nVertices = 2;
+	}
+	else {
+		nVertices = np;
+	}
+	 
+	double *mypointx = new double[nVertices];
+	double *mypointy = new double[nVertices];
+	
+	double x,y,length,glength,x1,y1,xlast,ylast,usarea,dsarea,dslast,dl,drop,slope;
+	int istart,iend,j;
+
+	istart=cnet[1];  //  start coord for first link
+	iend=cnet[2];//  end coord for first link
+
+
+	x1=pointx[0];
+	y1=pointy[0];
+	length=0.;
+	xlast=x1;
+	ylast=y1;
+	usarea=area[0];
+	dslast=usarea;
+	dsarea=usarea;
+	long prt = 0;
+	const char *pszDriverName = "ESRI Shapefile";
     
-    x1=pointx[0];
-    y1=pointy[0];
-    length=0.;
-    xlast=x1;
-    ylast=y1;
-    usarea=area[0];
-    dslast=usarea;
-    dsarea=usarea;
 
-    for(int j=0; j<np; j++)  //  loop over points
-    {
-        x=pointx[j];
-        y=pointy[j];
-        dl=sqrt((x-xlast)*(x-xlast)+(y-ylast)*(y-ylast));
-        if(dl > 0.)
-        {
-            length=length+dl;
-            xlast=x;  ylast=y;
-            dsarea=dslast;   // keeps track of last ds area
-            dslast=area[j];
-        }
+	for(j=0; j<np; j++)  //  loop over points
+	{
+		x=pointx[j];
+		y=pointy[j];
+		// we have to reverse order of pointx and pointy arrays to finish up with 
+		// the point with point index 0 in the shape being the outlet point
+		// (which is for backwards compatibility with previous versions of TauDEM)
+		int i = np - (j + 1);
+		mypointx[i] = x;
+		mypointy[i] = y;
+		if(obj.getproj()==1){
+			double dlon1,dlat1;double dxdyc1[2];
+			dlon1=x-xlast;dlat1=y-ylast;
+			obj.geotoLength(dlon1,dlat1,y,dxdyc1);
+			dl=sqrt(dxdyc1[0]*dxdyc1[0]+dxdyc1[1]*dxdyc1[1]);
+		}
+		  else if(obj.getproj()==0){
+		  dl=sqrt((x-xlast)*(x-xlast)+(y-ylast)*(y-ylast));
+		}
 
-        api_point p(x,y);
-        sh ->insertPoint(p,0);
+       if(dl > 0.)
+		{
+			length=length+dl;
+			xlast=x;  ylast=y;
+			dsarea=dslast;   // keeps track of last ds area
+			dslast=area[j];
+		}
+	}
+	drop=elev[0]-elev[np-1];
+	slope=0.;
+	float dsdist=lengthd[np-1];
+	float usdist=lengthd[0];
+	float middist=(dsdist+usdist)*0.5;
+	if(length > 0.)slope=drop/length;
 
+	if(obj.getproj()==1){
+           	double dlon2,dlat2;double dxdyc2[2];
+			dlon2=x-x1;dlat2=y-y1;
+			obj.geotoLength(dlon2,dlat2,y,dxdyc2);
+			glength=sqrt(dxdyc2[0]*dxdyc2[0]+dxdyc2[1]*dxdyc2[1]);
+
+		}
+		  else if(obj.getproj()==0){
+		  glength=sqrt((x-x1)*(x-x1)+(y-y1)*(y-y1));
+		}
+
+
+	// ensure at least two points (assuming have at least 1) by repeating singleton
+	if (np < 2) {
+		mypointx[1] = mypointx[0];
+		mypointy[1] = mypointy[0];
+	}
+
+	//SHPObject *shape = SHPCreateSimpleObject(
+	//	SHPT_ARC,						// type
+	//	nVertices,						// number of vertices
+	//	mypointx,						// X values
+	//	mypointy,						// Y values
+	//	NULL);							// Z values
+
+	 
+
+
+	hFDefn1 = OGR_L_GetLayerDefn( hLayer1 );
+	hFeature1 = OGR_F_Create( hFDefn1 );
+	OGR_F_SetFieldInteger( hFeature1, 0, (int)cnet[0]); // set field value 
+	OGR_F_SetFieldInteger( hFeature1, 1, (int)cnet[3]);
+	OGR_F_SetFieldInteger( hFeature1, 2, (int)cnet[4]);
+	OGR_F_SetFieldInteger( hFeature1, 3, (int)cnet[5]);
+	OGR_F_SetFieldInteger( hFeature1, 4, (int)cnet[7]);
+	OGR_F_SetFieldInteger( hFeature1, 5, (int)cnet[6]);
+	OGR_F_SetFieldDouble( hFeature1, 6, length);
+	OGR_F_SetFieldInteger( hFeature1, 7, (int)cnet[8]);
+	OGR_F_SetFieldDouble( hFeature1, 8,  dsarea);
+	OGR_F_SetFieldDouble( hFeature1, 9, drop);
+	OGR_F_SetFieldDouble( hFeature1, 10, slope);
+	OGR_F_SetFieldDouble( hFeature1, 11, glength);
+	OGR_F_SetFieldDouble( hFeature1, 12, usarea);
+	OGR_F_SetFieldInteger( hFeature1, 13, (int)cnet[0]);
+	OGR_F_SetFieldDouble( hFeature1, 14, dsdist);
+	OGR_F_SetFieldDouble( hFeature1, 15, usdist);
+	OGR_F_SetFieldDouble( hFeature1, 16, middist);
+
+    //creating geometry using OGR
+
+	geometry = OGR_G_CreateGeometry( wkbMultiLineString );
+
+    for(j=0; j<(np-1); j++) {
+    line = OGR_G_CreateGeometry( wkbLineString );
+    OGR_G_AddPoint(line, mypointx[j], mypointy[j], 0);
+	OGR_G_AddPoint(line, mypointx[j+1], mypointy[j+1], 0);
+	OGR_G_AddGeometryDirectly(geometry, line);
     }
-    if(np<2){   //  DGT 8/17/04 A polyline seems to require at least 2 data points
-        //  so where there was only one repeat it.
-        api_point p(x,y);
-        sh ->insertPoint(p,0);
+    OGR_F_SetGeometryDirectly(hFeature1, geometry); // set geometry to feature
+    OGR_L_CreateFeature( hLayer1, hFeature1 ); //adding feature 
+	
+	delete[] mypointx;
+    delete[] mypointy;
 
-    }
-    drop=elev[0]-elev[np-1];
-    slope=0.;
-    float dsdist=lengthd[np-1];
-    float usdist=lengthd[0];
-    float middist=(dsdist+usdist)*0.5;
-    if(length > 0.)slope=drop/length;
-    glength=sqrt((x-x1)*(x-x1)+(y-y1)*(y-y1));
-
-    shp1.insertShape(sh,0);
-    cell v;
-    v.setValue((int)cnet[0]);                              shp1[0]->setCell(v,0);
-    v.setValue((int)cnet[3]);             shp1[0]->setCell(v,1);
-    v.setValue((int)cnet[4]);             shp1[0]->setCell(v,2);
-    v.setValue((int)cnet[5]);             shp1[0]->setCell(v,3);
-    v.setValue((int)cnet[7]);   shp1[0]->setCell(v,4);
-    v.setValue((int)cnet[6]);             shp1[0]->setCell(v,5);
-    v.setValue(length);                             shp1[0]->setCell(v,6);
-    v.setValue((int)cnet[8]);                                shp1[0]->setCell(v,7);
-    v.setValue(dsarea);                             shp1[0]->setCell(v,8);
-    v.setValue(drop);                               shp1[0]->setCell(v,9);
-    v.setValue(slope);                              shp1[0]->setCell(v,10);
-    v.setValue(glength);                    shp1[0]->setCell(v,11);
-    v.setValue(usarea);                             shp1[0]->setCell(v,12);
-    v.setValue((int)cnet[0]);                                 shp1[0]->setCell(v,13);
-    v.setValue(dsdist);                             shp1[0]->setCell(v,14);
-    v.setValue(usdist);                             shp1[0]->setCell(v,15);
-    v.setValue(middist);                    shp1[0]->setCell(v,16);
-
-    //delete sh;  // DGT attempt to minimize memory leaks.  This causes a MPI error
-
-    return(0);
+    return 0;
 }
 
 struct Slink{
@@ -158,20 +344,24 @@ struct Slink{
 };
 
 int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfile,char *treefile, char *coordfile, 
-			 char *outletshapefile, char *wfile, char *streamnetshp, long useOutlets, long ordert, bool verbose, int prow, int pcol) 
+			 char *outletshapefile, char *wfile, char *streamnetshp, long useOutlets, long ordert, bool verbose) 
 {
 	// MPI Init section
 	MPI_Init(NULL,NULL);{
 		int rank,size;
 		MPI_Comm_rank(MCW,&rank);
 		MPI_Comm_size(MCW,&size);
-		if(rank==0)printf("StreamNet version %s\n",TDVERSION);
+		if(rank==0)
+			{
+				printf("StreamNet version %s\n",TDVERSION);
+				fflush(stdout);
+		}
 
 		//  Used throughout
 		float tempFloat;
-		long tempLong;
+		int32_t tempLong;
 		short tempShort;
-
+		double tempdxc,tempdyc;
 		//  Keep track of time
 		double begint = MPI_Wtime();
 
@@ -179,9 +369,14 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 		tiffIO srcIO(srcfile, SHORT_TYPE);  
 		long TotalX = srcIO.getTotalX();
 		long TotalY = srcIO.getTotalY();
-		double dx = srcIO.getdx();
-		double dy = srcIO.getdy();
-		double diag=sqrt((dx*dx)+(dy*dy));
+		double dxA = srcIO.getdxA();
+		double dyA = srcIO.getdyA();
+
+	    hSRSraster=srcIO.getspatialref();
+        //double diag=sqrt((dx*dx)+(dy*dy));
+		
+	
+
 		if(rank==0)
 		{
 			float timeestimate=(1e-4*TotalX*TotalY/pow((double) size,0.2))/60+1;  // Time estimate in minutes
@@ -193,11 +388,12 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 
 		//Create partition and read data
 		tdpartition *src;
-		src = CreateNewPartition(srcIO.getDatatype(), TotalX, TotalY, dx, dy, srcIO.getNodata());
+		src = CreateNewPartition(srcIO.getDatatype(), TotalX, TotalY, dxA, dyA, srcIO.getNodata());
 		int nx = src->getnx();
 		int ny = src->getny();
 		int xstart, ystart;  
 		src->localToGlobal(0, 0, xstart, ystart);  
+		src->savedxdyc(srcIO);
 		srcIO.read((long)xstart, (long)ystart, (long)ny, (long)nx, src->getGridPointer());
 
 		//  *** initiate flowdir grid partition from dirfile
@@ -208,7 +404,8 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 		}
 		//Create partition and read data
 		tdpartition *flowDir;
-		flowDir = CreateNewPartition(dirIO.getDatatype(), TotalX, TotalY, dx, dy, dirIO.getNodata());
+		flowDir = CreateNewPartition(dirIO.getDatatype(), TotalX, TotalY, dxA, dyA, dirIO.getNodata());
+		flowDir->savedxdyc(dirIO);
 		dirIO.read((long)xstart, (long)ystart, (long)ny, (long)nx, flowDir->getGridPointer());
 
 		tiffIO ad8IO(ad8file, FLOAT_TYPE);
@@ -218,7 +415,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 		}
 		//Create partition and read data
 		tdpartition *areaD8;
-		areaD8 = CreateNewPartition(ad8IO.getDatatype(), TotalX, TotalY, dx, dy, ad8IO.getNodata());
+		areaD8 = CreateNewPartition(ad8IO.getDatatype(), TotalX, TotalY, dxA, dyA, ad8IO.getNodata());
 		ad8IO.read((long)xstart, (long)ystart, (long)ny, (long)nx, areaD8->getGridPointer());
 
 		tiffIO elevIO(elevfile, FLOAT_TYPE);
@@ -228,19 +425,19 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 		}
 		//Create partition and read data
 		tdpartition *elev;
-		elev = CreateNewPartition(elevIO.getDatatype(), TotalX, TotalY, dx, dy, elevIO.getNodata());
+		elev = CreateNewPartition(elevIO.getDatatype(), TotalX, TotalY, dxA, dyA, elevIO.getNodata());
 		elevIO.read((long)xstart, (long)ystart, (long)ny, (long)nx, elev->getGridPointer());
 
 
 		//Create empty partition to store new ID information
 		tdpartition *idGrid;
-		idGrid = CreateNewPartition(LONG_TYPE, TotalX, TotalY, dx, dy, MISSINGLONG);
+		idGrid = CreateNewPartition(LONG_TYPE, TotalX, TotalY, dxA, dyA, MISSINGLONG);
 		//Create empty partition to store number of contributing neighbors
 		tdpartition *contribs;
-		contribs = CreateNewPartition(SHORT_TYPE, TotalX, TotalY, dx, dy, MISSINGSHORT);
+		contribs = CreateNewPartition(SHORT_TYPE, TotalX, TotalY, dxA, dyA, MISSINGSHORT);
 		//Create empty partition to stream order
 		tdpartition *wsGrid;
-		wsGrid = CreateNewPartition(LONG_TYPE, TotalX, TotalY, dx, dy, MISSINGLONG);
+		wsGrid = CreateNewPartition(LONG_TYPE, TotalX, TotalY, dxA, dyA, MISSINGLONG);
 
 		makeLinkSet();
 
@@ -254,7 +451,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 		// Read outlets 
 		if( useOutlets == 1) {
 			if(rank==0){
-				if(readoutlets(outletshapefile, &numOutlets, x, y,ids) !=0){
+				if(readoutlets(outletshapefile,hSRSraster, &numOutlets, x, y,ids) !=0){
 					printf("Exiting \n");
 					MPI_Abort(MCW,5);
 				}else {
@@ -289,13 +486,13 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 				int xlocal, ylocal;
 				idGrid->globalToLocal(xOutlets[i], yOutlets[i],xlocal,ylocal);
 				if(idGrid->isInPartition(xlocal,ylocal)){   //xOutlets[i], yOutlets[i])){
-					idGrid->setData(xlocal,ylocal,(long)ids[i]);  //xOutlets[i], yOutlets[i], (long)ids[i]);
+					idGrid->setData(xlocal,ylocal,(int32_t)ids[i]);  //xOutlets[i], yOutlets[i], (long)ids[i]);
 				}
 			}
 			idGrid->share();
 		}
 
-		// Timer read dime
+		// Timer read time
 		double readt = MPI_Wtime();
 		if(verbose)  // debug writes
 		{
@@ -312,7 +509,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 
 		//Create empty partition to store lengths
 		tdpartition *lengths;
-		lengths = CreateNewPartition(FLOAT_TYPE, TotalX, TotalY, dx, dy, MISSINGFLOAT);
+		lengths = CreateNewPartition(FLOAT_TYPE, TotalX, TotalY, dxA, dyA, MISSINGFLOAT);
 
 		src->share();
 		flowDir->share();
@@ -366,15 +563,17 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 				j=t.y;
 				que.pop();
 				p=flowDir->getData(i,j,tempShort);
+				flowDir->getdxdyc(j,tempdxc,tempdyc);
 				float llength=0.;
 				inext=i+d1[p];
 				jnext=j+d2[p];
 				if(!lengths->isNodata(inext,jnext))
 				{
 					llength += lengths->getData(inext,jnext,tempFloat);
-					if(p==1||p==5)llength=llength+dx;
-					if(p==3||p==7)llength=llength+dy;
-					if(p%2==0)llength=llength+diag;
+
+					if(p==1||p==5)llength=llength+tempdxc; // make sure that it is correct
+					if(p==3||p==7)llength=llength+tempdyc;
+					if(p%2==0)llength=llength+sqrt(tempdxc*tempdxc+tempdyc*tempdyc);
 				}
 				lengths->setData(i,j,llength);
 				//totalP++;
@@ -438,7 +637,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 
 //  Reinitialize contribs partition
 		delete contribs;
-		contribs = CreateNewPartition(SHORT_TYPE, TotalX, TotalY, dx, dy, MISSINGSHORT);
+		contribs = CreateNewPartition(SHORT_TYPE, TotalX, TotalY, dxA, dyA, MISSINGSHORT);
 		long k = 0;
 
 		for(j=0;j<ny;++j){
@@ -495,7 +694,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 				short nOrder[8];  // neighborOrders
 				short inneighbors[8];  // inflowing neighbors
 				bool junction; // junction set to true/false in newOrder
-				long Id;
+				int32_t Id;
 
 				//  Count number of grid cells on stream that point to me.  
 				// (There will be no more than 8, usually only 0, 1,2 or 3.  The queue and 
@@ -523,7 +722,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 
 				// Determine if mandatory junction indicated by a value in idGrid
 				bool mandatoryJunction=false;
-				long shapeID;
+				int32_t shapeID;
 				if(!idGrid->isNodata(i,j))
 				{
 					mandatoryJunction=true;
@@ -545,7 +744,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 					//  This is the start of a stream - instantiate new link
 					streamlink *thisLink;
 					thisLink = createLink(-1, -1, -1, addPoint); //,1); //, dx,dy);
-					long u1= thisLink->Id;
+					int32_t u1= thisLink->Id;
 					idGrid->setData(i,j, u1);
 					wsGrid->setData(i,j, u1);
 					lengths->setData(i,j,(float)thisLink->order);
@@ -574,7 +773,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 
 				//  Case for ongoing flow path with single inflow
 				else if(k==1){
-					long u1=idGrid->getData(i+d1[inneighbors[0]],j+d2[inneighbors[0]],tempLong);
+					int32_t u1=idGrid->getData(i+d1[inneighbors[0]],j+d2[inneighbors[0]],tempLong);
 					appendPoint(u1, addPoint);
 					streamlink *thisLink;
 					//TODO DGT Thinks
@@ -628,7 +827,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 					}else{
 						oOut=nOrder[k-1];
 					}
-					long u1, u2;
+					int32_t u1, u2;
 					u1 = idGrid->getData(i+d1[inneighbors[k-1]],j+d2[inneighbors[k-1]],tempLong);
 					u2 = idGrid->getData(i+d1[inneighbors[k-2]],j+d2[inneighbors[k-2]],tempLong);
 					appendPoint(u1, addPoint);
@@ -919,12 +1118,12 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 			FILE *fout;
 			fout = fopen(coordfile,"w");
 
-			//  Open shapefile
-			createStreamNetShapefile(streamnetshp);
-
-			//long ndots=100/size+4;  // number of dots to print per process
-			//long nextdot=0;
-			//long dotinc=myNumLinks/ndots;
+			//  Open shapefile 
+			//need spatial refeence information which is stored in the tiffIO object
+			createStreamNetShapefile(streamnetshp,hSRSraster); // need raster spatail information for creating spatial reference in the shapefile
+			long ndots=100/size+4;  // number of dots to print per process
+			long nextdot=0;
+			long dotinc=myNumLinks/ndots;
 
 			for(ilink=0;ilink<myNumLinks;ilink++){//only once per link
 				fprintf(fTreeOut,"\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",LinkIdU1U2DMagShapeidCoords[ilink][0],LinkIdU1U2DMagShapeidCoords[ilink][1],LinkIdU1U2DMagShapeidCoords[ilink][2],LinkIdU1U2DMagShapeidCoords[ilink][3],LinkIdU1U2DMagShapeidCoords[ilink][4],LinkIdU1U2DMagShapeidCoords[ilink][5],LinkIdU1U2DMagShapeidCoords[ilink][6],LinkIdU1U2DMagShapeidCoords[ilink][7],LinkIdU1U2DMagShapeidCoords[ilink][8]);
@@ -950,7 +1149,9 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 				long cnet[9];
 				for(int iref=0; iref<9; iref++)
 					cnet[iref]=LinkIdU1U2DMagShapeidCoords[ilink][iref];
-				reachshape(cnet,lengthd,elev,area,pointx,pointy,i2-i1+1);
+
+				reachshape(cnet,lengthd,elev,area,pointx,pointy,i2-i1+1,srcIO);
+			
 				delete[] lengthd; // DGT to free memory
 				delete[] elev;
 				delete[] area;
@@ -1002,7 +1203,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 							pointy[ipoint]=pbuf1[1];
 						}
 						//  Write shape
-						reachshape(treeBuf,lengthd,elev,area,pointx,pointy,procNumPoints);
+						reachshape(treeBuf,lengthd,elev,area,pointx,pointy,procNumPoints,srcIO);
 						delete lengthd; // DGT to free memory
 						delete elev;
 						delete area;
@@ -1022,7 +1223,12 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 			} 
 			fclose(fTreeOut);
 			fclose(fout);
+			//SHPClose(shp1);
+			//DBFClose(dbf1);
+		    OGR_DS_Destroy( hDS1 ); // destroy data source
+			/*
 			shp1.close(streamnetshp);
+			*/
 		}else{//other processes send their stuff to process 0
 			//first, wait to recieve word from process 0
 			MPI_Recv(&ibuf,1,MPI_INT,0,0,MCW,&mystatus);//then, send myNumPoints
@@ -1053,7 +1259,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 			}
 		}  // just be sure we're all here
 		MPI_Barrier(MCW);  //DGT  This seems necessary for cluster version to work, though not sure why.
-
+		
 		// Timer - link write time
 		double linkwt = MPI_Wtime();
 		if(rank==0)  // Indicating progress
@@ -1100,7 +1306,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 		//Calculate watersheds....
 		//  Reinitialize partition to delete leftovers from process above
 		delete contribs;
-		contribs = CreateNewPartition(SHORT_TYPE, TotalX, TotalY, dx, dy, MISSINGSHORT);
+		contribs = CreateNewPartition(SHORT_TYPE, TotalX, TotalY, dxA, dyA, MISSINGSHORT);
 		//MPI_Barrier(MCW);
 		for(j=0;j<ny;++j){
 			for(i=0;i<nx;++i){
@@ -1136,6 +1342,10 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 			}
 		}
 
+		if(verbose)
+		{
+			cout << rank << " Watershed initialization complete"  << endl;
+		}
 		// each process empties its que, then shares border info, and repeats till everyone is done
 		finished=false;
 		while(!finished){
@@ -1195,12 +1405,21 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 		}
 		// Timer - watershed label time
 		double wshedlabt = MPI_Wtime();
+		if(verbose)
+		{
+			cout << rank << " Writing watershed file"  << endl;
+		}
+	
 
-		long wsGridNodata=MISSINGLONG;
+		int32_t wsGridNodata=MISSINGLONG;
 		short ordNodata=MISSINGSHORT;
-		char prefix[5] = "w";
 		tiffIO wsIO(wfile, LONG_TYPE,&wsGridNodata,ad8IO);
-		wsIO.write(xstart, ystart, ny, nx, wsGrid->getGridPointer(),prefix,prow,pcol);
+		wsIO.write(xstart, ystart, ny, nx, wsGrid->getGridPointer());
+		if(verbose)
+		{
+			cout << rank << " Assigning order array"  << endl;
+		}
+
 
 		//  Use contribs as a short to write out order data that was held in lengths
 		tempShort=0;
@@ -1211,9 +1430,12 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 				if(!lengths->isNodata(i,j))
 					contribs->setData(i,j,(short)lengths->getData(i,j,tempFloat));
 			}
-		strncpy(prefix , "ord",5);
+		if(verbose)
+		{
+			cout << rank << " Writing order file"  << endl;
+		}
 		tiffIO ordIO(ordfile, SHORT_TYPE,&ordNodata,ad8IO);
-		ordIO.write(xstart, ystart, ny, nx, contribs->getGridPointer(),prefix,prow,pcol);
+		ordIO.write(xstart, ystart, ny, nx, contribs->getGridPointer());
 		
 		// Timer - write time
 		double writet = MPI_Wtime();

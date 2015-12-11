@@ -43,13 +43,13 @@ email:  dtarb@usu.edu
 #include <math.h>
 #include <queue>
 #include "commonLib.h"
-#include "linearpart.h"
+//#include "linearpart.h"   Included in commonLib.h
 #include "createpart.h"
 #include "tiffIO.h"
-#include "shape/shapefile.h"
+
 using namespace std;
 
-int area( char* angfile, char* scafile, char *shfile, char *wfile, int useOutlets, int usew, int contcheck, int prow, int pcol) {
+int area(char* angfile, char* scafile, char *shfile, char *wfile, int useOutlets, int usew, int contcheck) {
 
 	MPI_Init(NULL,NULL);{
 
@@ -63,10 +63,17 @@ int area( char* angfile, char* scafile, char *shfile, char *wfile, int useOutlet
 	double *x, *y;
 	int numOutlets=0;
 	bool usingShapeFile=false;
-
+	
+	tiffIO ang(angfile,FLOAT_TYPE);
+	long totalX = ang.getTotalX();
+	long totalY = ang.getTotalY();
+	double dxA = ang.getdxA();  
+	double dyA = ang.getdyA(); 
+	OGRSpatialReferenceH hSRSRaster;
+	hSRSRaster=ang.getspatialref();
 	if( useOutlets == 1) {
 		if(rank==0){
-			if(readoutlets(shfile, &numOutlets, x, y)==0){
+			if(readoutlets(shfile,hSRSRaster, &numOutlets, x, y)==0){
 				usingShapeFile=true;
 				MPI_Bcast(&numOutlets, 1, MPI_INT, 0, MCW);
 				MPI_Bcast(x, numOutlets, MPI_DOUBLE, 0, MCW);
@@ -91,11 +98,12 @@ int area( char* angfile, char* scafile, char *shfile, char *wfile, int useOutlet
 	double p;
 
 	//Create tiff object, read and store header info
-	tiffIO ang(angfile,FLOAT_TYPE);
+	/*tiffIO ang(angfile,FLOAT_TYPE);
 	long totalX = ang.getTotalX();
 	long totalY = ang.getTotalY();
-	double dx = ang.getdx();
-	double dy = ang.getdy();
+	double dxA = ang.getdxA();  
+	double dyA = ang.getdyA(); */
+
 	if(rank==0)
 		{
 			float timeestimate=(1.2e-6*totalX*totalY/pow((double) size,0.65))/60+1;  // Time estimate in minutes
@@ -107,11 +115,12 @@ int area( char* angfile, char* scafile, char *shfile, char *wfile, int useOutlet
 
 	//Create partition and read data
 	tdpartition *flowData;
-	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dx, dy, ang.getNodata());
+	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dxA, dyA, ang.getNodata()); 
 	int nx = flowData->getnx();
 	int ny = flowData->getny();
 	int xstart, ystart;
 	flowData->localToGlobal(0, 0, xstart, ystart);
+	flowData->savedxdyc(ang);
 	ang.read(xstart, ystart, ny, nx, flowData->getGridPointer());
 
 	//if using weightData, get information from file
@@ -119,7 +128,7 @@ int area( char* angfile, char* scafile, char *shfile, char *wfile, int useOutlet
 	if( usew == 1){
 		tiffIO w(wfile,FLOAT_TYPE);
 		if(!ang.compareTiff(w)) return 1;  //And maybe an unhappy error message
-		weightData = CreateNewPartition(w.getDatatype(), totalX, totalY, dx, dy, w.getNodata());
+		weightData = CreateNewPartition(w.getDatatype(), totalX, totalY, dxA, dyA, w.getNodata()); 
 		w.read(xstart, ystart, weightData->getny(), weightData->getnx(), weightData->getGridPointer());
 	}
 
@@ -127,18 +136,17 @@ int area( char* angfile, char* scafile, char *shfile, char *wfile, int useOutlet
 	double readt = MPI_Wtime();
 
 	//Convert geo coords to grid coords
-	int *outletsX = NULL;
-	int *outletsY = NULL;
+	int *outletsX=NULL, *outletsY=NULL;
 	if(usingShapeFile) {
 		outletsX = new int[numOutlets];
 		outletsY = new int[numOutlets];
 		for( int i=0; i<numOutlets; i++)
 			ang.geoToGlobalXY(x[i], y[i], outletsX[i], outletsY[i]);
 	}
-
+	
 	//Create empty partition to store new information
 	tdpartition *areadinf;
-	areadinf = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, -1.0f);
+	areadinf = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, -1.0f); 
 
 	// con is used to check for contamination at the edges
 	long i,j;
@@ -147,9 +155,9 @@ int area( char* angfile, char* scafile, char *shfile, char *wfile, int useOutlet
 	bool con=false, finished;
 	float tempFloat=0;
 	short tempShort=0;
-
+	double tempdxc,tempdyc;
 	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dx, dy, -32768);
+	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -32768);
 	
 	//Share information and set borders to zero
 	flowData->share();
@@ -161,12 +169,6 @@ int area( char* angfile, char* scafile, char *shfile, char *wfile, int useOutlet
 	queue<node> que;
 
 	initNeighborDinfup(neighbor,flowData,&que,nx, ny, useOutlets, outletsX, outletsY, numOutlets);
-	if (outletsX)
-		delete outletsX;
-	if (outletsY)
-		delete outletsY;
-
-
 	finished = false;
 
 	//Ring terminating while loop
@@ -178,6 +180,7 @@ int area( char* angfile, char* scafile, char *shfile, char *wfile, int useOutlet
 			que.pop();
 			i = temp.x;
 			j = temp.y;
+		
 			//  FLOW ALGEBRA EXPRESSION EVALUATION
 			if(flowData->isInPartition(i,j)){
 				// initialize the result
@@ -190,8 +193,10 @@ int area( char* angfile, char* scafile, char *shfile, char *wfile, int useOutlet
 						con=true;
 					else{
 						flowData->getData(in,jn, angle);
-						p = prop(angle, (k+4)%8);
-						if(p>0.){
+						flowData->getdxdyc(jn,tempdxc,tempdyc);
+		              
+						p = prop(angle, (k+4)%8,tempdxc,tempdyc);
+						if(p>0.0){
 							if(areadinf->isNodata(in,jn))con=true;
 							else{
 								areares=areares+p*areadinf->getData(in,jn,tempFloat);
@@ -201,7 +206,9 @@ int area( char* angfile, char* scafile, char *shfile, char *wfile, int useOutlet
 				}
 				//  Local inputs
 				if( usew==1) areares=areares+weightData->getData(i,j,tempFloat);
-				else areares=areares+dx;
+				else {
+					flowData->getdxdyc(j,tempdxc,tempdyc);
+					areares=areares+tempdxc;} 
 				if(con && contcheck==1)
 					areadinf->setToNodata(i,j);
 				else 
@@ -210,8 +217,11 @@ int area( char* angfile, char* scafile, char *shfile, char *wfile, int useOutlet
 			//  END FLOW ALGEBRA EXPRESSION EVALUATION
 			//  Decrement neighbor dependence of downslope cell
 			flowData->getData(i, j, angle);
-			for(k=1; k<=8; k++) {			
-				p = prop(angle, k);
+		    flowData->getdxdyc(j,tempdxc,tempdyc);
+		
+			for(k=1; k<=8; k++) {	
+				
+				p = prop(angle, k,tempdxc,tempdyc);
 				if(p>0.0) {
 					in = i+d1[k];  jn = j+d2[k];
 					//Decrement the number of contributing neighbors in neighbor
@@ -222,6 +232,7 @@ int area( char* angfile, char* scafile, char *shfile, char *wfile, int useOutlet
 						temp.y=jn;
 						que.push(temp);
 					}
+
 				}
 			}
 		}
@@ -256,9 +267,8 @@ int area( char* angfile, char* scafile, char *shfile, char *wfile, int useOutlet
 
 	//Create and write TIFF file
 	float scaNodata = -1.0f;
-	char prefix[5] = "sca";
 	tiffIO sca(scafile, FLOAT_TYPE, &scaNodata, ang);
-	sca.write(xstart, ystart, ny, nx, areadinf->getGridPointer(),prefix,prow,pcol);
+	sca.write(xstart, ystart, ny, nx, areadinf->getGridPointer());
 
 	double writet = MPI_Wtime();
  	double dataRead, compute, write, total,tempd;

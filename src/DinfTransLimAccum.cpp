@@ -46,9 +46,8 @@ email:  dtarb@usu.edu
 #include "linearpart.h"
 #include "createpart.h"
 #include "tiffIO.h"
-#include "shape/shapefile.h"
-using namespace std;
 
+using namespace std;
 
 // The old program was written in column major order.
 // d1 and d2 were used to translate flow data (1-8 taken from the indeces)
@@ -61,7 +60,7 @@ using namespace std;
 //Transport limited accumulation funciton
 int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *depfile, 
 			char *cinfile, char *coutfile, char *shfile, int useOutlets, int usec, 
-			int contcheck, int prow, int pcol)
+			int contcheck)
 {
 
 	MPI_Init(NULL,NULL);{
@@ -75,10 +74,16 @@ int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *de
 	//  Read shapfile 
 	double *x, *y;
 	int numOutlets=0;
-
+	tiffIO ang(angfile, FLOAT_TYPE);
+	long totalX = ang.getTotalX();
+	long totalY = ang.getTotalY();
+	double dxA = ang.getdxA();
+	double dyA = ang.getdyA();
+	OGRSpatialReferenceH hSRSRaster;
+	hSRSRaster=ang.getspatialref();
 	if( useOutlets == 1) {
 		if(rank==0){
-			if(readoutlets(shfile, &numOutlets, x, y) !=0){
+			if(readoutlets(shfile,hSRSRaster, &numOutlets, x, y) !=0){
 				printf("Exiting \n");
 				MPI_Abort(MCW,5);
 			}else {
@@ -99,17 +104,18 @@ int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *de
 	}
 
 	float loadin,loadout,transin,transout,tsupp,tcc,angle;
-	double p;
+	double p,tempdxc,tempdyc;
 
 	//  Keep track of time
 	double begint = MPI_Wtime();
 
 	//Create tiff object, read and store header info
-	tiffIO ang(angfile, FLOAT_TYPE);
+	/*tiffIO ang(angfile, FLOAT_TYPE);
 	long totalX = ang.getTotalX();
 	long totalY = ang.getTotalY();
-	double dx = ang.getdx();
-	double dy = ang.getdy();
+	double dxA = ang.getdxA();
+	double dyA = ang.getdyA();*/
+
 	if(rank==0)
 		{
 			float timeestimate=(1.2e-6*totalX*totalY/pow((double) size,0.65))/60+1;  // Time estimate in minutes
@@ -120,11 +126,12 @@ int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *de
 
 	//Create partition and read data
 	tdpartition *flowData;
-	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dx, dy, ang.getNodata());
+	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dxA, dyA, ang.getNodata());
 	int nx = flowData->getnx();
 	int ny = flowData->getny();
 	int xstart, ystart;
 	flowData->localToGlobal(0, 0, xstart, ystart);
+	flowData->savedxdyc(ang);
 	ang.read(xstart, ystart, ny, nx, flowData->getGridPointer());
 	
 	//Transport supply grid, get information from file
@@ -135,7 +142,7 @@ int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *de
 		MPI_Abort(MCW,5);
 		return 1;  
 	}
-	tsupData = CreateNewPartition(tsup.getDatatype(), totalX, totalY, dx, dy, tsup.getNodata());
+	tsupData = CreateNewPartition(tsup.getDatatype(), totalX, totalY, dxA, dyA, tsup.getNodata());
 	tsup.read(xstart, ystart, tsupData->getny(), tsupData->getnx(), tsupData->getGridPointer());
 	
 	//Transport capacity grid, get information from file
@@ -146,7 +153,7 @@ int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *de
 		MPI_Abort(MCW,5);
 		return 1;  
 	} 
-	tcData = CreateNewPartition(tc.getDatatype(), totalX, totalY, dx, dy, tc.getNodata());
+	tcData = CreateNewPartition(tc.getDatatype(), totalX, totalY, dxA, dyA, tc.getNodata());
 	tc.read(xstart, ystart, tcData->getny(), tcData->getnx(), tcData->getGridPointer());
 
 	//if using concentration grid, get information from file	
@@ -158,7 +165,7 @@ int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *de
 			MPI_Abort(MCW,5);
 			return 1;  
 		}
-		cinData = CreateNewPartition(cin.getDatatype(), totalX, totalY, dx, dy, cin.getNodata());
+		cinData = CreateNewPartition(cin.getDatatype(), totalX, totalY, dxA, dyA, cin.getNodata());
 		cin.read(xstart, ystart, cinData->getny(), cinData->getnx(), cinData->getGridPointer());
 	}
 
@@ -176,14 +183,14 @@ int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *de
 
 	//Create empty partition to store new information
 	tdpartition *tla;
-	tla = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy, MISSINGFLOAT);
+	tla = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
 
 	tdpartition *dep;
-	dep = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy,  MISSINGFLOAT);
+	dep = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA,  MISSINGFLOAT);
 	
 	tdpartition *csout;
 	if(usec==1){			
-			csout = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dx, dy,  MISSINGFLOAT);
+			csout = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA,  MISSINGFLOAT);
 	}
 
 	// con is used to check for contamination at the edges
@@ -195,7 +202,7 @@ int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *de
 	short tempShort=0;
 
 	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dx, dy, -32768);
+	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -32768);
 	
 	//Share information and set borders to zero
 	flowData->share();
@@ -220,7 +227,8 @@ int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *de
 			que.pop();
 			i = temp.x;
 			j = temp.y;
-			//  FLOW ALGEBRA EXPRESSION EVALUATION			
+			//  FLOW ALGEBRA EXPRESSION EVALUATION		
+		
 			if(flowData->isInPartition(i,j)  && (!tsupData->isNodata(i,j)) && (!tcData->isNodata(i,j))){
 			  if(usec==0 || !cinData->isNodata(i,j)){
 				//  Initialize the result
@@ -234,14 +242,19 @@ int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *de
 						con=true;
 					else{
 						flowData->getData(in,jn, angle);
-						p = prop(angle, (k+4)%8);
+						flowData->getdxdyc(jn,tempdxc,tempdyc);
+						p = prop(angle, (k+4)%8,tempdxc,tempdyc);
 						if(p>0.){
+							float neighbor_transport=0.0;
 							if(tla->isNodata(in,jn))con=true;
-							else transin=transin+p*tla->getData(in,jn,tempFloat);
+							else transin=transin+p*tla->getData(in,jn,neighbor_transport);
 							if(usec==1)
 							{
 								if(csout->isNodata(in,jn))con=true;
-								else loadin=loadin+p*tempFloat*csout->getData(in,jn,tempFloat);
+								
+								else {  // Here load of contaminant coming from the neighbor is sediment transport from neighbor * concentration of neighbor
+								loadin=loadin+p*neighbor_transport*csout->getData(in,jn,tempFloat);
+								}
 							}
 						}
 					}
@@ -288,8 +301,9 @@ int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *de
 			//  END FLOW ALGEBRA EXPRESSION EVALUATION
 			//  Decrement neighbor dependence of downslope cell
 			flowData->getData(i, j, angle);
+			flowData->getdxdyc(j,tempdxc,tempdyc);
 			for(k=1; k<=8; k++) {			
-				p = prop(angle, k);
+				p = prop(angle, k,tempdxc,tempdyc);
 				if(p>0.0) {
 					in = i+d1[k];  jn = j+d2[k];
 					//Decrement the number of contributing neighbors in neighbor
@@ -335,18 +349,15 @@ int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *de
 
 	//Create and write TIFF file
 	float scaNodata = MISSINGFLOAT;
-	char prefix[5] = "tla";
 	tiffIO ttla(tlafile, FLOAT_TYPE, &scaNodata, ang);
-	ttla.write(xstart, ystart, ny, nx, tla->getGridPointer(),prefix,prow,pcol);
-	
-	strncpy(prefix,"tdep",5);
+	ttla.write(xstart, ystart, ny, nx, tla->getGridPointer());
+
 	tiffIO ddep(depfile, FLOAT_TYPE, &scaNodata, ang);
-	ddep.write(xstart, ystart, ny, nx, dep->getGridPointer(),prefix,prow,pcol);
+	ddep.write(xstart, ystart, ny, nx, dep->getGridPointer());
 
 	if(usec == 1){
-		strncpy(prefix,"ctpt",5);
 		tiffIO ccsout(coutfile, FLOAT_TYPE, &scaNodata, ang);
-		ccsout.write(xstart, ystart, ny, nx, csout->getGridPointer(),prefix,prow,pcol);
+		ccsout.write(xstart, ystart, ny, nx, csout->getGridPointer());
 	}
 
 	double writet = MPI_Wtime();
