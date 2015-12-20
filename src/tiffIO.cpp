@@ -250,7 +250,7 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 	MPI_Status status;
 	fflush(stdout);
 	char **papszMetadata;
-	
+	char **papszOptions = NULL;
 	const char *extension_list[5] = {".tif",".img",".sdat",".bil",".bin"};  // extension list --can add more 
 	const char *driver_code[5] = {"GTiff","HFA","SAGA","EHdr","ENVI"};   //  code list -- can add more
 	const char *compression_meth[5] = {"LZW","RLE"," "," "," "};   //  code list -- can add more
