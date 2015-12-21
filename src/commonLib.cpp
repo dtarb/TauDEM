@@ -46,6 +46,7 @@ email:  dtarb@usu.edu
 
 
 
+
 //==================================
 /*  Nameadd(..)  Utility for adding suffixes to file names prior to
    "." extension   */
@@ -384,29 +385,36 @@ bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData){
 	return false;
 }
 
+	
 //get extension from OGR vector file
   char *getLayername(char *inputogrfile)
 {  
 	char pfile[MAXLN];
    strncpy(pfile, inputogrfile, 3);
-   char *filename;
-    pfile[3] = '\0'; // get only three character from begining *e.g. "E:\Test" it will give "E:\"
-     if ((pfile[2] == '\\') || (pfile[2] == '/')) {
-    if (pfile[2] == '\\')
-	    filename = strrchr(inputogrfile, '\\');// for windows
-	else  
-		filename = strrchr(inputogrfile, '/'); // for linux
-    if (filename == NULL)
-        filename = inputogrfile;
-    else
-        filename++;
-	 }
-	else 
-	{
-	filename = inputogrfile;}
+  
+   // pfile[3] = '\0'; // get only three character from begining *e.g. "E:\Test" it will give "E:\"
+ //    if ((pfile[2] == '\\') || (pfile[2] == '/')) {
+ //   if (pfile[2] == '\\')
+	//    filename = strrchr(inputogrfile, '\\');// for windows
+	//else  
+	//	filename = strrchr(inputogrfile, '/'); // for linux
+ //   if (filename == NULL)
+ //       filename = inputogrfile;
+ //   else
+ //       filename++;
+	// }
+	//else 
+	//{
+	//filename = inputogrfile;}
+ // 
 
-	
-    char *ext; 
+     std::string filenamewithpath;
+	 filenamewithpath=inputogrfile;
+     unsigned found = filenamewithpath.find_last_of("/\\");
+     std::string filenamewithoutpath;
+	 filenamewithoutpath=filenamewithpath.substr(found+1);
+	const char *filename = filenamewithoutpath.c_str(); // convert string to char
+    const char *ext; 
     ext = strrchr(filename, '.'); // getting extension
     char layername[MAXLN];
 

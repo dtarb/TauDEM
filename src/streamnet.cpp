@@ -325,13 +325,12 @@ int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *poin
     //creating geometry using OGR
 
 	geometry = OGR_G_CreateGeometry( wkbMultiLineString );
-
+	line = OGR_G_CreateGeometry( wkbLineString );
     for(j=0; j<(np-1); j++) {
-    line = OGR_G_CreateGeometry( wkbLineString );
     OGR_G_AddPoint(line, mypointx[j], mypointy[j], 0);
 	OGR_G_AddPoint(line, mypointx[j+1], mypointy[j+1], 0);
+	}
 	OGR_G_AddGeometryDirectly(geometry, line);
-    }
     OGR_F_SetGeometryDirectly(hFeature1, geometry); // set geometry to feature
     OGR_L_CreateFeature( hLayer1, hFeature1 ); //adding feature 
 	
