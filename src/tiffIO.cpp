@@ -250,9 +250,10 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 	MPI_Status status;
 	fflush(stdout);
 	char **papszMetadata;
-	
+	char **papszOptions = NULL;
 	const char *extension_list[5] = {".tif",".img",".sdat",".bil",".bin"};  // extension list --can add more 
 	const char *driver_code[5] = {"GTiff","HFA","SAGA","EHdr","ENVI"};   //  code list -- can add more
+	const char *compression_meth[5] = {"LZW","RLE"," "," "," "};   //  code list -- can add more
 	size_t extension_num=5;
 	char *ext; 
 	int index = -1; 
@@ -292,6 +293,7 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 	if (rank == 0) {
 		//if (isFileInititialized == 0) {
 			hDriver = GDALGetDriverByName(driver_code[index]);
+			papszOptions = CSLSetNameValue( papszOptions, "COMPRESS", compression_meth[index]); //
 		
 		    if (hDriver == NULL) {
 		        printf("driver is not available\n");
@@ -305,8 +307,9 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 			eBDataType = GDT_Int16;
 		else if (datatype == LONG_TYPE)
 			eBDataType = GDT_Int32;
-
-			fh = GDALCreate(hDriver, filename, totalX , totalY, 1, eBDataType, NULL);
+	        
+   
+			fh = GDALCreate(hDriver, filename, totalX , totalY, 1, eBDataType, papszOptions);
 			GDALSetProjection(fh, GDALGetProjectionRef(copyfh));
 
 			double adfGeoTransform[6];
