@@ -1,4 +1,4 @@
-cd D:\Scratch\TestSuite
+cd D:\Scratch\TestSuite\Input
 Set TDIR=D:\Dropbox\Projects\TauDEM\Programming\TauDEM5GDAL\Taudem5PCVS2010\x64\Release
 set MDIR=C:\Program Files\Microsoft HPC Pack 2012\Bin\
 set GDIR=C:\Program Files\GDAL\
@@ -120,6 +120,10 @@ mpiexec -n 4 areadinf -ang demDoubleang.tif -sca demDoublesca.tif -wg demDoublew
 rem gagewatershed test
 mpiexec -n 7 gagewatershed -p loganp.tif -o Outletsmoved.shp -gw logangw.tif -id gwid.txt
 
+rem Connect down
+mpiexec -n 8 ConnectDown -p loganp.tif -ad8 loganad8.tif -w logangw.tif -o loganOutlets.shp -od loganOutlets_Moved.shp -d 1
+
+
 cd fts
 rem tests on ft steward data with stream buffer
 mpiexec -n 3 pitremove fs_small.tif
@@ -210,4 +214,18 @@ mpiexec -n 3 slopeavedown -p enogeop.tif -fel enogeofel.tif -slpd enogeoslpd.tif
 rem gagewatershed test
 mpiexec -n 7 gagewatershed -p enogeop.tif -o Outletsmoved.shp -gw enogeogw.tif -id gwid.txt
 
+cd ..
+cd gridtypes
+Rem  Testing different file extensions
+mpiexec -np 3 PitRemove logan.tif
+mpiexec -np 3 PitRemove -z logan.tif -fel loganfelim.img
+mpiexec -np 3 PitRemove -z logan.tif -fel loganfelsd.sdat
+mpiexec -np 3 PitRemove -z logan.tif -fel loganfel.bil
+mpiexec -np 3 PitRemove -z logan.tif -fel loganfel1.bin
+mpiexec -np 3 PitRemove -z logan.tif -fel loganfel.bil
+mpiexec -np 3 D8Flowdir -fel loganfel1.bin -p bilp.bil -sd8 binsd8.bin
+mpiexec -n 5 aread8 -p bilp.bil -ad8 loganad8.img
+mpiexec -n 2 dinfflowdir -fel loganfel.bil -ang ang.ang -slp slp.slp
+mpiexec -np 3 PitRemove -z logan.tif -fel loganfel2.lg
+mpiexec -np 3 PitRemove -z logan.tif -fel loganfel3
 cd ..
