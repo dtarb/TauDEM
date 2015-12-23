@@ -149,8 +149,8 @@ masksca:  flag to indicate that locations with sca no data are to be excluded
 //			 char *ad8file, char *elevfile, char *treefile, char *coordfile, 
 //			 double *xnode, double *ynode, int nxy, long usetrace, long *idnodes);
 
-int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfile,char *treefile, char *coordfile, 
-			 char *outletshapefile, char *wfile, char *streamnetshp, long useOutlets, long ordert,bool verbose); 
+int  netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfile,char *treefile, char *coordfile, 
+			 char *outletsds, char *outletslyr, char *wfile, char *streamnetsrc, char *streamnetlyr,long useOutlets, long ordert, bool verbose) ; 
 
 //int netsetup(char *demfile, int method,
 //			 float p1,float p2,float p3,float p4, long xr,long yr, int contcheck);

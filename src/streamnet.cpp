@@ -94,11 +94,14 @@ OGRSpatialReferenceH  hSRSraster,hSRSshapefile;
 //}
 
 
-void createStreamNetShapefile(char *streamnetshp,OGRSpatialReferenceH hSRSraster){
+void createStreamNetShapefile(char *streamnetsrc,char *streamnetlyr,OGRSpatialReferenceH hSRSraster){
    
     /* Register all OGR drivers */
     OGRRegisterAll();
-    const char *pszDriverName = "ESRI Shapefile";
+    //const char *pszDriverName = "ESRI Shapefile";
+	const char *pszDriverName;
+	pszDriverName=getOGRdrivername(streamnetsrc);
+            
 	//get driver by name
     driver = OGRGetDriverByName( pszDriverName );
     if( driver == NULL )
@@ -107,15 +110,19 @@ void createStreamNetShapefile(char *streamnetshp,OGRSpatialReferenceH hSRSraster
         //exit( 1 );
     }
 
-    // Create new file using this driver 
-    hDS1 = OGR_Dr_CreateDataSource(driver, streamnetshp, NULL);
-    if (hDS1 != NULL) {
+    // Create new file using this driver if the datasoruce exists 
+	hDS1 = OGROpen(streamnetsrc, TRUE, NULL );
+   if (hDS1 ==NULL){ 
+	   hDS1 = OGR_Dr_CreateDataSource(driver, streamnetsrc, NULL);}
+   else { hDS1=hDS1 ;}
+	
+    //if (hDS1 != NULL) {
  
 
-    char *layername; // layer name is file name without extension
-    layername=getLayername(streamnetshp); // get layer name
-    hLayer1= OGR_DS_CreateLayer( hDS1, layername ,hSRSraster, wkbMultiLineString, NULL ); // provide same spatial reference as raster in streamnetshp file
-    if( layername  == NULL )
+  //  char *layername; // layer name is file name without extension
+  //  layername=getLayername(streamnetshp); // get layer name
+    hLayer1= OGR_DS_CreateLayer( hDS1, streamnetlyr,hSRSraster, wkbMultiLineString, NULL ); // provide same spatial reference as raster in streamnetshp file
+    if( hLayer1 == NULL )
     {
         printf( "warning: Layer creation failed.\n" );
         //exit( 1 );
@@ -202,7 +209,7 @@ void createStreamNetShapefile(char *streamnetshp,OGRSpatialReferenceH hSRSraster
 	OGR_Fld_SetWidth( hFieldDefn1, 16);
     OGR_Fld_SetPrecision(hFieldDefn1, 1);
 	OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
-	}
+	//}
 	}
 // Write shape from tardemlib.cpp
 int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *pointx, double *pointy, long np,tiffIO &obj)
@@ -236,7 +243,7 @@ int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *poin
 	dslast=usarea;
 	dsarea=usarea;
 	long prt = 0;
-	const char *pszDriverName = "ESRI Shapefile";
+	//const char *pszDriverName = "ESRI Shapefile";
     
 
 	for(j=0; j<np; j++)  //  loop over points
@@ -347,7 +354,7 @@ struct Slink{
 };
 
 int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfile,char *treefile, char *coordfile, 
-			 char *outletshapefile, char *wfile, char *streamnetshp, long useOutlets, long ordert, bool verbose) 
+			 char *outletsds, char *outletslyr, char *wfile, char *streamnetsrc, char *streamnetlyr,long useOutlets, long ordert, bool verbose) 
 {
 	// MPI Init section
 	MPI_Init(NULL,NULL);{
@@ -454,7 +461,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 		// Read outlets 
 		if( useOutlets == 1) {
 			if(rank==0){
-				if(readoutlets(outletshapefile,hSRSraster, &numOutlets, x, y,ids) !=0){
+				if(readoutlets(outletsds,outletslyr,hSRSraster, &numOutlets, x, y,ids) !=0){
 					printf("Exiting \n");
 					MPI_Abort(MCW,5);
 				}else {
@@ -1127,7 +1134,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 
 			//  Open shapefile 
 			//need spatial refeence information which is stored in the tiffIO object
-			createStreamNetShapefile(streamnetshp,hSRSraster); // need raster spatail information for creating spatial reference in the shapefile
+			createStreamNetShapefile(streamnetsrc,streamnetlyr,hSRSraster); // need raster spatail information for creating spatial reference in the shapefile
 			long ndots=100/size+4;  // number of dots to print per process
 			long nextdot=0;
 			long dotinc=myNumLinks/ndots;

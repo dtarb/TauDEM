@@ -385,23 +385,58 @@ bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData){
 }
 
 //get extension from OGR vector file
-  char *getLayername(char *inputogrfile)
-{  
-    std::string filenamewithpath;
-	filenamewithpath=inputogrfile;
-    size_t found = filenamewithpath.find_last_of("/\\");
-    std::string filenamewithoutpath;
-	filenamewithoutpath=filenamewithpath.substr(found+1);
-	const char *filename = filenamewithoutpath.c_str(); // convert string to char
-    const char *ext; 
-    ext = strrchr(filename, '.'); // getting extension
-    char layername[MAXLN];
-    size_t len = strlen(filename);
-	size_t len1 = strlen(ext);
-	memcpy(layername, filename, len-len1);
-	layername[len - len1] = 0; 
-    printf("%s ", layername);
-    return layername;
-}
+//we don't need that as layername is also a input provided by the user
+//  char *getLayername(char *inputogrfile)
+//{  
+//    std::string filenamewithpath;
+//	filenamewithpath=inputogrfile;
+//    size_t found = filenamewithpath.find_last_of("/\\");
+//    std::string filenamewithoutpath;
+//	filenamewithoutpath=filenamewithpath.substr(found+1);
+//	const char *filename = filenamewithoutpath.c_str(); // convert string to char
+//    const char *ext; 
+//    ext = strrchr(filename, '.'); // getting extension
+//    char layername[MAXLN];
+//    size_t len = strlen(filename);
+//	size_t len1 = strlen(ext);
+//	memcpy(layername, filename, len-len1);
+//	layername[len - len1] = 0; 
+//    printf("%s ", layername);
+//    return layername;
+//}
+//
 
+//get ogr driver index for writing shapefile
 
+ const char *getOGRdrivername(char *datasrcnew){
+	const char *ogrextension_list[3] = {".sqlite",".shp",".geojson",};  // extension list --can add more 
+	const char *ogrdriver_code[3] = {"SQLite","ESRI Shapefile","GeoJSON"};   //  code list -- can add more
+	size_t extension_num=3;
+	char *ext; 
+	int index = 1; //default is ESRI shapefile
+    ext = strrchr(datasrcnew, '.'); 
+	if(!ext){
+		
+		index=0;
+	}
+	else
+	{
+
+		//  convert to lower case for matching
+		for(int i = 0; ext[i]; i++){
+			ext[i] = tolower(ext[i]);
+		}
+		// if extension matches then set driver
+		for (size_t i = 0; i < extension_num; i++) {
+			if (strcmp(ext,ogrextension_list[i])==0) {
+				index=i; //get the index where extension of the outputfile matches with the extensionlist 
+				break;
+			}
+		}
+		
+	}
+
+	 const  char *drivername;
+	 drivername=ogrdriver_code[index];
+    return drivername;
+  }

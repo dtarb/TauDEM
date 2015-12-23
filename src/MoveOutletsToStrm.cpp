@@ -76,7 +76,7 @@ OGRFeatureH     hFeaturesh,hFeatureshmoved;
 OGRGeometryH    hGeometrysh, hGeometryshmoved;
 
 
-int outletstosrc(char *pfile, char *srcfile, char *outletshapefile, char *movedoutletshapefile, int maxdist)
+int outletstosrc(char *pfile, char *srcfile, char *outletsdatasrc, char *outletslayer,char *outletmoveddatasrc,char *outletmovedlayer, int maxdist)
 {
 
 	MPI_Init(NULL,NULL);{
@@ -160,19 +160,25 @@ int outletstosrc(char *pfile, char *srcfile, char *outletshapefile, char *movedo
 		int * indexMap;
 		//DBFFieldType * types;
 		int dmIndex;
-		OGRRegisterAll();
-		const char *pszDriverName = "ESRI Shapefile";
+		
 		if(rank==0){
-		       //read exsitng outlet shapefile 
-		       hDSsh = OGROpen( outletshapefile, FALSE, NULL );
+
+			  OGRRegisterAll();
+		       //read exsitng outlet datasource
+
+		       hDSsh = OGROpen( outletsdatasrc, FALSE, NULL );
+
                if( hDSsh != NULL ) {
-                char *layernamesh; 
-                layernamesh=getLayername(outletshapefile); // get layer name which is file name without extension
-                hLayersh = OGR_DS_GetLayerByName( hDSsh,layernamesh );
+               // char *layernamesh; 
+              //  layernamesh=getLayername(outletshapefile); // get layer name which is file name without extension
+
+                hLayersh = OGR_DS_GetLayerByName( hDSsh,outletslayer );
 				hFeaturesh=OGR_L_GetFeature(hLayersh,0);// read  feature of the shapefile
 				nxy=OGR_L_GetFeatureCount(hLayersh,1);//  
 
 			   //creating new moved outlet shapefile
+				const char *pszDriverName;
+				pszDriverName=getOGRdrivername(outletmoveddatasrc);
                 driver = OGRGetDriverByName( pszDriverName );
 			    if( driver == NULL )
 			     {
@@ -181,11 +187,16 @@ int outletstosrc(char *pfile, char *srcfile, char *outletshapefile, char *movedo
 			     }
 				
 				//create data sources for the moved outlet shapefile
-				hDSshmoved = OGR_Dr_CreateDataSource( driver, movedoutletshapefile, NULL );
+				if(strcmp(outletsdatasrc,outletmoveddatasrc)!=0){
+				hDSshmoved = OGR_Dr_CreateDataSource( driver, outletmoveddatasrc, NULL );
+				}
+				else {
+					hDSshmoved=OGROpen( outletsdatasrc, TRUE, NULL );}
+
 				if( hDSshmoved  != NULL ) {
-				char * layernameshmoved; 
-                layernameshmoved=getLayername(movedoutletshapefile); // get layer name which is file name without extension
-				hLayershmoved = OGR_DS_CreateLayer( hDSshmoved, layernameshmoved, hSRSRaster, wkbPoint, NULL ); // create layer for moved outlet, where raster layer spatial reference is used fro shapefile
+				//char * layernameshmoved; 
+              //  layernameshmoved=getLayername(movedoutletshapefile); // get layer name which is file name without extension
+				hLayershmoved = OGR_DS_CreateLayer( hDSshmoved, outletmovedlayer, hSRSRaster, wkbPoint, NULL ); // create layer for moved outlet, where raster layer spatial reference is used fro shapefile
 			    if( hLayershmoved  == NULL )
 			     {
 				    printf( "warning: Layer creation failed.\n" );
@@ -236,11 +247,12 @@ int outletstosrc(char *pfile, char *srcfile, char *outletshapefile, char *movedo
 		int itresh=1;  // Thresholding to 1 done in source
 
 		if(rank==0){
-			  
-		for ( i=0;i<nxy;i++)
+			  int i=0;
+		OGR_L_ResetReading(hLayersh);
+    while( (hFeaturesh = OGR_L_GetNextFeature(hLayersh)) != NULL )
 		      {          
-			    hFeaturesh=OGR_L_GetFeature(hLayersh,i);
-			    //hFeaturesh = OGR_L_GetNextFeature(hLayersh);
+			    //hFeaturesh=OGR_L_GetFeature(hLayersh,i);
+			   // hFeaturesh = OGR_L_GetNextFeature(hLayersh);
                 hGeometrysh = OGR_F_GetGeometryRef(hFeaturesh);
                 xnode[i]  = OGR_G_GetX(hGeometrysh, 0); // get x coordinate for the outlet shapefile
 				ynode[i] =  OGR_G_GetY(hGeometrysh, 0); // get y coordiante for the outelet shapefile
@@ -252,9 +264,12 @@ int outletstosrc(char *pfile, char *srcfile, char *outletshapefile, char *movedo
 				part_has[i]=-1; // initialize part_has to -1 for all points.  This will be set to rank later
 				//SHPDestroyObject(shp);
 				//OGR_F_Destroy( hFeaturesh );
-			}	
-		OGR_F_Destroy( hFeaturesh );
+				i=i+1;
+		//OGR_F_Destroy( hFeaturesh );
+	}
 		// destrpy shapefile feature after reading	
+	//OGR_F_Destroy( hDSsh );
+
 		}
 
 		MPI_Bcast(xnode, nxy, MPI_DOUBLE, 0, MCW);
@@ -521,11 +536,12 @@ int outletstosrc(char *pfile, char *srcfile, char *outletshapefile, char *movedo
 
 		 
          if(rank==0){
-			
-              for(i=0;i<nxy;++i){
+			 int i=0;
+			    OGR_L_ResetReading(hLayersh);
+               while( (hFeaturesh = OGR_L_GetNextFeature(hLayersh)) != NULL ){
 
 	
-                hFeaturesh=OGR_L_GetFeature(hLayersh,i); // get feature infor for outlet shapefile
+                //hFeaturesh=OGR_L_GetFeature(hLayersh,i); // get feature infor for outlet shapefile
 				double x = xnode[i];  // DGT says does not need +pdx/2.0;
 				double y = ynode[i];  // DGT +pdy/2.0;
 				if( hDSshmoved  != NULL ) {
@@ -577,6 +593,7 @@ int outletstosrc(char *pfile, char *srcfile, char *outletshapefile, char *movedo
             }
 				
 			OGR_F_Destroy( hFeatureshmoved ); // destroy feature
+			i=i+1;
 			}
 				}
 			//if(!rank)printf("closing file...",dist, totaldone,totalnodes);
@@ -589,6 +606,7 @@ int outletstosrc(char *pfile, char *srcfile, char *outletshapefile, char *movedo
 			
 		//OGR_DS_Destroy( hDSsh );
 		OGR_DS_Destroy( hDSshmoved ); // destrou datasource
+
 		}
 		//if(!rank)printf("done\n.",dist, totaldone,totalnodes);
 
