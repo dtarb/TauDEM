@@ -352,11 +352,13 @@ Global
 		{70C78058-6BEB-44D2-925B-B19E4A4FEE25}.Debug|Itanium.ActiveCfg = Debug|Win32
 		{70C78058-6BEB-44D2-925B-B19E4A4FEE25}.Debug|Win32.ActiveCfg = Debug|Win32
 		{70C78058-6BEB-44D2-925B-B19E4A4FEE25}.Debug|Win32.Build.0 = Debug|Win32
-		{70C78058-6BEB-44D2-925B-B19E4A4FEE25}.Debug|x64.ActiveCfg = Debug|Win32
+		{70C78058-6BEB-44D2-925B-B19E4A4FEE25}.Debug|x64.ActiveCfg = Debug|x64
+		{70C78058-6BEB-44D2-925B-B19E4A4FEE25}.Debug|x64.Build.0 = Debug|x64
 		{70C78058-6BEB-44D2-925B-B19E4A4FEE25}.Release|Itanium.ActiveCfg = Release|Win32
 		{70C78058-6BEB-44D2-925B-B19E4A4FEE25}.Release|Win32.ActiveCfg = Release|Win32
 		{70C78058-6BEB-44D2-925B-B19E4A4FEE25}.Release|Win32.Build.0 = Release|Win32
-		{70C78058-6BEB-44D2-925B-B19E4A4FEE25}.Release|x64.ActiveCfg = Release|Win32
+		{70C78058-6BEB-44D2-925B-B19E4A4FEE25}.Release|x64.ActiveCfg = Release|x64
+		{70C78058-6BEB-44D2-925B-B19E4A4FEE25}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

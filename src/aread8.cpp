@@ -50,7 +50,7 @@ email:  dtarb@usu.edu
 using namespace std;
 
 
-int aread8( char* pfile, char* afile, char *shfile, char *wfile, int useOutlets, int usew, int contcheck) {
+int aread8( char* pfile, char* afile, char *datasrc,char *lyrname, char *wfile, int useOutlets, int usew, int contcheck) {
 
 	MPI_Init(NULL,NULL);{
 
@@ -72,7 +72,7 @@ int aread8( char* pfile, char* afile, char *shfile, char *wfile, int useOutlets,
     hSRSRaster=p.getspatialref();
 	if( useOutlets == 1) {
 		if(rank==0){
-			if(readoutlets(shfile,hSRSRaster, &numOutlets, x, y)==0){
+			if(readoutlets(datasrc,lyrname,hSRSRaster, &numOutlets, x, y)==0){
 				usingShapeFile=true;
 				MPI_Bcast(&numOutlets, 1, MPI_INT, 0, MCW);
 				MPI_Bcast(x, numOutlets, MPI_DOUBLE, 0, MCW);

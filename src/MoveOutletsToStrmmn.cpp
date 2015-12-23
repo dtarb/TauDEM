@@ -64,7 +64,7 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char pfile[MAXLN],srcfile[MAXLN],outletmovedfile[MAXLN],outletshpfile[MAXLN];
+   char pfile[MAXLN],srcfile[MAXLN],outletsdatasrc[MAXLN],outletslayer[MAXLN],outletmoveddatasrc[MAXLN],outletmovedlayer[MAXLN];
    int err,i,maxdist=50;
    
    if(argc < 9)
@@ -96,26 +96,51 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-		else if(strcmp(argv[i],"-o")==0)
+		else if(strcmp(argv[i],"-odsrc")==0)
 		{
 			i++;
 			if(argc > i)
 			{
-				strcpy(outletshpfile,argv[i]);
+				strcpy(outletsdatasrc,argv[i]);
 				i++;
 			}
 			else goto errexit;
 		}
-		else if(strcmp(argv[i],"-om")==0)
+
+		else if(strcmp(argv[i],"-odlyr")==0)
 		{
 			i++;
 			if(argc > i)
 			{
-				strcpy(outletmovedfile,argv[i]);
+				strcpy(outletslayer,argv[i]);
 				i++;
 			}
 			else goto errexit;
 		}
+
+		else if(strcmp(argv[i],"-omdsrc")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				strcpy(outletmoveddatasrc,argv[i]);
+				i++;
+			}
+			else goto errexit;
+		}
+
+
+		else if(strcmp(argv[i],"-omdlyr")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				strcpy(outletmovedlayer,argv[i]);
+				i++;
+			}
+			else goto errexit;
+		}
+
 		else if(strcmp(argv[i],"-md")==0)
 		{
 			i++;
@@ -131,7 +156,7 @@ int main(int argc,char **argv)
 			goto errexit;
 		}
 	}
-    if(err=outletstosrc(pfile,srcfile,outletshpfile,outletmovedfile,maxdist) != 0)
+    if(err=outletstosrc(pfile,srcfile,outletsdatasrc,outletslayer,outletmoveddatasrc,outletmovedlayer,maxdist) != 0)
        printf("Move outlets to stream error %d\n",err);
 
 	return 0;
