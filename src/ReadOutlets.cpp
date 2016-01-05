@@ -49,9 +49,8 @@ email:  dtarb@usu.edu
 int readoutlets(char *outletsds,char *outletslyr,OGRSpatialReferenceH hSRSRaster,int *noutlets, double*& x, double*& y)
 
 {   
-		OGRSFDriverH    driver;
 	// initializing datasoruce,layer,feature, geomtery, spatial reference
-
+    OGRSFDriverH    driver;
     OGRDataSourceH  hDS1;
 	OGRLayerH       hLayer1;
 	OGRFeatureDefnH hFDefn1;
@@ -61,8 +60,7 @@ int readoutlets(char *outletsds,char *outletslyr,OGRSpatialReferenceH hSRSRaster
 	OGRSpatialReferenceH hRSOutlet;
 	// regiser all ogr driver related to OGR
 	OGRRegisterAll(); 
-	// open shapefile
-	
+	// open datasource
 	hDS1 = OGROpen(outletsds, FALSE,NULL); 
 	if( hDS1 == NULL )
 	{
@@ -70,12 +68,13 @@ int readoutlets(char *outletsds,char *outletslyr,OGRSpatialReferenceH hSRSRaster
 		//exit( 1 );
 	}
 
-
+	//get layer from layer name
 	hLayer1 = OGR_DS_GetLayerByName(hDS1,outletslyr);
-	// get spatial reference of ogr
+	// get spatial reference 
 	hRSOutlet = OGR_L_GetSpatialRef(hLayer1); 
 
-	//to do if there is no spatial reference 
+	//if there is spatial reference then write warnings 
+
 	if(hRSOutlet!=NULL) {
 
 	const char* epsgAuthorityIdRaster;
@@ -118,9 +117,7 @@ int readoutlets(char *outletsds,char *outletslyr,OGRSpatialReferenceH hSRSRaster
 	// loop through each feature and  get the latitude and longitude for each feature
 	OGR_L_ResetReading(hLayer1);
     while( (hFeature1 = OGR_L_GetNextFeature(hLayer1)) != NULL ){
-	//for( int j=0; j<countPts; j++) {
-
-      
+	//for( int j=0; j<countPts; j++) { //does not work for geojson file
 		 geometry = OGR_F_GetGeometryRef(hFeature1); // get geometry type
 		 x[nxy] = OGR_G_GetX(geometry, 0); 
 		 y[nxy] =  OGR_G_GetY(geometry, 0); 
@@ -137,8 +134,8 @@ int readoutlets(char *outletsds,char *outletslyr,OGRSpatialReferenceH hSRSRaster
 
 {
  
-	//OGRSFDriverH    driver;
-	// initializing 
+	// initializing datasoruce,layer,feature, geomtery, spatial reference
+    OGRSFDriverH    driver;
 	OGRDataSourceH  hDS1;
 	OGRLayerH       hLayer1;
 	OGRFeatureDefnH hFDefn1;
@@ -148,7 +145,7 @@ int readoutlets(char *outletsds,char *outletslyr,OGRSpatialReferenceH hSRSRaster
 	OGRSpatialReferenceH hRSOutlet;
 	OGRFieldDefnH hFieldDefn;
 	OGRRegisterAll();
-	// open shapefile
+	// open data soruce
 
 	hDS1 = OGROpen(outletsds, FALSE, NULL );
 	if( hDS1 == NULL )
@@ -160,7 +157,7 @@ int readoutlets(char *outletsds,char *outletslyr,OGRSpatialReferenceH hSRSRaster
     hLayer1 = OGR_DS_GetLayerByName( hDS1,outletslyr );
     //OGR_L_ResetReading(hLayer1);
 	hRSOutlet = OGR_L_GetSpatialRef(hLayer1);
-	// add if projection information is available other wise run without giving projection information error message
+	//if there is spatial reference then write warnings 
 	if(hRSOutlet!=NULL){
 	const char* epsgAuthorityIdRaster;
 	const char* epsgAuthorityIdOutlet;
@@ -197,9 +194,11 @@ int readoutlets(char *outletsds,char *outletslyr,OGRSpatialReferenceH hSRSRaster
 	int nxy=0;
 
 	//hFeature1 = OGR_L_GetNextFeature(hLayer1);
-	hFeature1=OGR_L_GetFeature(hLayer1,0); // read first feature to get all field info
-	int idfld =OGR_F_GetFieldIndex(hFeature1,"id"); // get index for the 'id' field
-	if (idfld >= 0)id = new int[countPts];
+	hFDefn1 = OGR_L_GetLayerDefn(hLayer1);
+	//hFeature1=OGR_L_GetFeature(hLayer1,0); // read first feature to get all field info
+	//int idfld =OGR_F_GetFieldIndex(hFeature1,"Id"); // get index for the 'id' field
+	//if (idfld >= 0)
+	id = new int[countPts];
 	// loop through each feature and get lat,lon and id information
 
     OGR_L_ResetReading(hLayer1);
@@ -209,6 +208,7 @@ int readoutlets(char *outletsds,char *outletslyr,OGRSpatialReferenceH hSRSRaster
 		 geometry = OGR_F_GetGeometryRef(hFeature1); // get geometry
          x[nxy] = OGR_G_GetX(geometry, 0);
 		 y[nxy] =  OGR_G_GetY(geometry, 0);
+		 int idfld =OGR_F_GetFieldIndex(hFeature1,"id");
 
 		 if (idfld >= 0)
 		   {
@@ -217,6 +217,7 @@ int readoutlets(char *outletsds,char *outletslyr,OGRSpatialReferenceH hSRSRaster
 			if( OGR_Fld_GetType(hFieldDefn) == OFTInteger ) {
 					id[nxy] =OGR_F_GetFieldAsInteger( hFeature1, idfld );} // get id value 
 		    }
+
 			nxy++; // count number of outlets point
 		   OGR_F_Destroy( hFeature1 ); // destroy feature
 		    }

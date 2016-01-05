@@ -112,6 +112,7 @@ void createStreamNetShapefile(char *streamnetsrc,char *streamnetlyr,OGRSpatialRe
 
     // Create new file using this driver if the datasoruce exists 
 	hDS1 = OGROpen(streamnetsrc, TRUE, NULL );
+	// create new data source if data source does not exist 
    if (hDS1 ==NULL){ 
 	   hDS1 = OGR_Dr_CreateDataSource(driver, streamnetsrc, NULL);}
    else { hDS1=hDS1 ;}
