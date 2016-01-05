@@ -417,7 +417,7 @@ bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData){
     ext = strrchr(datasrcnew, '.'); 
 	if(!ext){
 		
-		index=0;
+		index=1; //  if no extension then writing will be ESRI shapefile
 	}
 	else
 	{

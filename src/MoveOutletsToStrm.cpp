@@ -163,7 +163,7 @@ int outletstosrc(char *pfile, char *srcfile, char *outletsdatasrc, char *outlets
 		
 		if(rank==0){
 
-			  OGRRegisterAll();
+			    OGRRegisterAll();
 		       //read exsitng outlet datasource
 
 		       hDSsh = OGROpen( outletsdatasrc, FALSE, NULL );
@@ -179,6 +179,8 @@ int outletstosrc(char *pfile, char *srcfile, char *outletsdatasrc, char *outlets
 			   //creating new moved outlet shapefile
 				const char *pszDriverName;
 				pszDriverName=getOGRdrivername(outletmoveddatasrc);
+
+
                 driver = OGRGetDriverByName( pszDriverName );
 			    if( driver == NULL )
 			     {
@@ -186,12 +188,13 @@ int outletstosrc(char *pfile, char *srcfile, char *outletsdatasrc, char *outlets
 				  //exit( 1 );
 			     }
 				
-				//create data sources for the moved outlet shapefile
-				if(strcmp(outletsdatasrc,outletmoveddatasrc)!=0){
-				hDSshmoved = OGR_Dr_CreateDataSource( driver, outletmoveddatasrc, NULL );
-				}
-				else {
-					hDSshmoved=OGROpen( outletsdatasrc, TRUE, NULL );}
+				
+				// Create new file using this driver if the datasoruce exists 
+				hDSshmoved= OGROpen(outletmoveddatasrc, TRUE, NULL );
+	           // create new data source if data source does not exist 
+	           if (hDSshmoved ==NULL){ 
+		                hDSshmoved = OGR_Dr_CreateDataSource(driver, outletmoveddatasrc, NULL);}
+	           else { hDSshmoved=hDSshmoved ;}
 
 				if( hDSshmoved  != NULL ) {
 				//char * layernameshmoved; 
@@ -249,9 +252,9 @@ int outletstosrc(char *pfile, char *srcfile, char *outletsdatasrc, char *outlets
 		if(rank==0){
 			  int i=0;
 		OGR_L_ResetReading(hLayersh);
-    while( (hFeaturesh = OGR_L_GetNextFeature(hLayersh)) != NULL )
+            while( (hFeaturesh = OGR_L_GetNextFeature(hLayersh)) != NULL )
 		      {          
-			    //hFeaturesh=OGR_L_GetFeature(hLayersh,i);
+			    //hFeaturesh=OGR_L_GetFeature(hLayersh,i);// does not work for geojson or sqlite file
 			   // hFeaturesh = OGR_L_GetNextFeature(hLayersh);
                 hGeometrysh = OGR_F_GetGeometryRef(hFeaturesh);
                 xnode[i]  = OGR_G_GetX(hGeometrysh, 0); // get x coordinate for the outlet shapefile
