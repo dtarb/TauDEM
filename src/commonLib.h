@@ -96,8 +96,8 @@ int nameadd( char*,char*,const char*);
 double prop( float a, int k, double dx1 , double dy1);
 char *getLayername(char *inputogrfile);
 const char *getOGRdrivername(char *datasrcnew);
-int readoutlets(char *outletsds,char *outletslyr, OGRSpatialReferenceH hSRSRaster, int *noutlets, double*& x, double*& y);
-int readoutlets(char *outletsds,char *outletslyr, OGRSpatialReferenceH  hSRSraster,int *noutlets, double*& x, double*& y, int*& id);
+int readoutlets(char *outletsds,int outletslyr, OGRSpatialReferenceH hSRSRaster, int *noutlets, double*& x, double*& y);
+int readoutlets(char *outletsds,int outletslyr, OGRSpatialReferenceH  hSRSraster,int *noutlets, double*& x, double*& y, int*& id);
 
 #include <queue>
 #include "linearpart.h"
