@@ -48,9 +48,9 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char pfile[MAXLN],afile[MAXLN],wfile[MAXLN],datasrc[MAXLN];
-   int err,useOutlets=0,usew=0,contcheck=1,i,lyrno=0;
-      
+   char pfile[MAXLN],afile[MAXLN],wfile[MAXLN],datasrc[MAXLN],lyrname[MAXLN];
+   int err,useOutlets=0,uselyrname=0,usew=0,contcheck=1,i,lyrno=0;
+
    if(argc < 2)
     {  
 		printf("Error: To run this program, use either the Simple Usage option or\n");
@@ -114,7 +114,18 @@ int main(int argc,char **argv)
 			else goto errexit;
 		}
 
-
+	   
+	 else if(strcmp(argv[i],"-lyrname")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				strcpy(lyrname,argv[i]);
+		        uselyrname = 1;
+				i++;											
+			}
+			else goto errexit;
+		}
 
 	   else if(strcmp(argv[i],"-wg")==0)
 		{
@@ -143,7 +154,7 @@ int main(int argc,char **argv)
 		nameadd(pfile,argv[1],"p");
 	}
 
-    if( (err=aread8(pfile,afile,datasrc,lyrno,wfile,useOutlets,usew,contcheck)) != 0)
+    if( (err=aread8(pfile,afile,datasrc,lyrname,uselyrname,lyrno,wfile,useOutlets,usew,contcheck)) != 0)
         printf("area error %d\n",err);
 
 	return 0;

@@ -66,6 +66,7 @@ email:  dtarb@usu.edu
 #include "ogr_api.h"
 //#include "shapelib/shapefil.h"
 #include "MoveOutletsToStrm.h"
+#
 using namespace std;
 OGRSFDriverH    driver;
 OGRDataSourceH  hDSsh, hDSshmoved;
@@ -76,7 +77,7 @@ OGRFeatureH     hFeaturesh,hFeatureshmoved;
 OGRGeometryH    hGeometrysh, hGeometryshmoved;
 
 
-int outletstosrc(char *pfile, char *srcfile, char *outletsdatasrc, char *outletslayer,char *outletmoveddatasrc,char *outletmovedlayer, int maxdist)
+int outletstosrc(char *pfile, char *srcfile, char *outletsdatasrc, char *outletslayer,int uselyrname,int lyrno, char *outletmoveddatasrc,char *outletmovedlayer, int maxdist)
 {
 
 	MPI_Init(NULL,NULL);{
@@ -167,12 +168,33 @@ int outletstosrc(char *pfile, char *srcfile, char *outletsdatasrc, char *outlets
 		       //read exsitng outlet datasource
 
 		       hDSsh = OGROpen( outletsdatasrc, FALSE, NULL );
+			   if( hDSsh == NULL )
+	            {
+					printf( "Error Opening datasource %s.\n",outletsdatasrc );
+					exit( 1 );
+				}
 
+			
                if( hDSsh != NULL ) {
+
+
+				   	//get layer from layer name
+				if(uselyrname==1) { hLayersh  = OGR_DS_GetLayerByName(hDSsh,outletslayer);}
+					//get layerinfo from layer number
+				else { hLayersh = OGR_DS_GetLayer(hDSsh,lyrno);} // get layerinfo from layername
+
+				if(hLayersh == NULL)getlayerfail(hDSsh,outletsdatasrc ,lyrno);
+				OGRwkbGeometryType gtype;
+				gtype=OGR_L_GetGeomType(hLayersh);
+				if(gtype != wkbPoint)getlayerfail(hDSsh,outletsdatasrc ,lyrno);
                // char *layernamesh; 
               //  layernamesh=getLayername(outletshapefile); // get layer name which is file name without extension
 
-                hLayersh = OGR_DS_GetLayerByName( hDSsh,outletslayer );
+                //hLayersh = OGR_DS_GetLayerByName( hDSsh,outletslayer );
+
+
+
+
 				hFeaturesh=OGR_L_GetFeature(hLayersh,0);// read  feature of the shapefile
 				nxy=OGR_L_GetFeatureCount(hLayersh,1);//  
 
@@ -197,10 +219,17 @@ int outletstosrc(char *pfile, char *srcfile, char *outletsdatasrc, char *outlets
 	           else { hDSshmoved=hDSshmoved ;}
 
 				if( hDSshmoved  != NULL ) {
-				//char * layernameshmoved; 
-              //  layernameshmoved=getLayername(movedoutletshapefile); // get layer name which is file name without extension
+				
 				hLayershmoved = OGR_DS_CreateLayer( hDSshmoved, outletmovedlayer, hSRSRaster, wkbPoint, NULL ); // create layer for moved outlet, where raster layer spatial reference is used fro shapefile
-			    if( hLayershmoved  == NULL )
+			   if(strlen(outletmovedlayer)==0){
+		          char * layernameshmoved; 
+                 layernameshmoved=getLayername(outletmoveddatasrc); // get layer name which is file name without extension
+	             hLayershmoved= OGR_DS_CreateLayer( hDSshmoved,layernameshmoved,hSRSRaster, wkbPoint, NULL );} 
+
+	           else {
+		         hLayershmoved= OGR_DS_CreateLayer(hDSshmoved, outletmovedlayer, hSRSRaster, wkbPoint, NULL ); }// provide same spatial reference as raster in streamnetshp file
+				
+				if( hLayershmoved  == NULL )
 			     {
 				    printf( "warning: Layer creation failed.\n" );
 				    //exit( 1 );
@@ -251,7 +280,7 @@ int outletstosrc(char *pfile, char *srcfile, char *outletsdatasrc, char *outlets
 
 		if(rank==0){
 			  int i=0;
-		OGR_L_ResetReading(hLayersh);
+		    OGR_L_ResetReading(hLayersh);
             while( (hFeaturesh = OGR_L_GetNextFeature(hLayersh)) != NULL )
 		      {          
 			    //hFeaturesh=OGR_L_GetFeature(hLayersh,i);// does not work for geojson or sqlite file

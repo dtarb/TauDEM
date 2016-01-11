@@ -49,8 +49,8 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char pfile[MAXLN],wfile[MAXLN],shfile[MAXLN],idfile[MAXLN];
-   int err,useOutlets=0,useMask=0,thresh=0,i=1,writeid=0;
+   char pfile[MAXLN],wfile[MAXLN],datasrc[MAXLN],lyrname[MAXLN],idfile[MAXLN];
+   int err,useOutlets=0,useMask=0,uselyrname=0,lyrno=0,thresh=0,i=1,writeid=0;
    if(argc <= 2)
     {  	
 	   goto errexit;
@@ -68,16 +68,44 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
+	
 		else if(strcmp(argv[i],"-o")==0)
 		{
 			i++;
 			if(argc > i)
 			{
-				strcpy(shfile,argv[i]);
-				i++;
+				strcpy(datasrc,argv[i]);
+			
+				i++;											
 			}
 			else goto errexit;
 		}
+
+
+		   else if(strcmp(argv[i],"-lyrno")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				sscanf(argv[i],"%d",&lyrno);
+				i++;											
+			}
+			else goto errexit;
+		}
+
+	   
+	 else if(strcmp(argv[i],"-lyrname")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				strcpy(lyrname,argv[i]);
+		        uselyrname = 1;
+				i++;											
+			}
+			else goto errexit;
+		}
+
 		else if(strcmp(argv[i],"-gw")==0)
 		{
 			i++;
@@ -105,7 +133,7 @@ int main(int argc,char **argv)
 		}
 	}
 
-    if( (err=gagewatershed(pfile,wfile,shfile,idfile,writeid)) != 0)
+    if( (err=gagewatershed(pfile,wfile,datasrc,lyrname,uselyrname,lyrno,idfile,writeid)) != 0)
         printf("Gage watershed error %d\n",err);
 
 	return 0;
