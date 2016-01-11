@@ -51,8 +51,8 @@ email:  dtarb@usu.edu
 int main(int argc,char **argv)
 {
    char angfile[MAXLN],tsupfile[MAXLN],tcfile[MAXLN],tlafile[MAXLN],depfile[MAXLN];
-   char cinfile[MAXLN],coutfile[MAXLN],shfile[MAXLN];
-   int err,useOutlets=0,usec=0,compctpt=0,contcheck=1,i;
+   char cinfile[MAXLN],coutfile[MAXLN],datasrc[MAXLN],lyrname[MAXLN];
+   int err,useOutlets=0,usec=0,uselyrname=0,lyrno=0,compctpt=0,contcheck=1,i;
    
    if(argc < 2)
     {  
@@ -149,12 +149,38 @@ int main(int argc,char **argv)
 			i++;
 			if(argc > i)
 			{
-				strcpy(shfile,argv[i]);
-				i++;
-				useOutlets = 1;
+				strcpy(datasrc,argv[i]);
+				useOutlets = 1;	
+				i++;											
 			}
 			else goto errexit;
 		}
+
+
+		   else if(strcmp(argv[i],"-lyrno")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				sscanf(argv[i],"%d",&lyrno);
+				i++;											
+			}
+			else goto errexit;
+		}
+
+	   
+	 else if(strcmp(argv[i],"-lyrname")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				strcpy(lyrname,argv[i]);
+		        uselyrname = 1;
+				i++;											
+			}
+			else goto errexit;
+		}
+
 		else if(strcmp(argv[i],"-nc")==0)
 		{
 			i++;
@@ -174,7 +200,7 @@ int main(int argc,char **argv)
 
 	}  
 	usec=usec*compctpt;  //  This ensures that both cinfile and coutfile have to be provided for concentration to be evaluated
-	if((err=tlaccum(angfile,tsupfile,tcfile,tlafile,depfile,cinfile,coutfile,shfile,
+	if((err=tlaccum(angfile,tsupfile,tcfile,tlafile,depfile,cinfile,coutfile,datasrc,lyrname,uselyrname,lyrno,
 		useOutlets,usec,contcheck)) != 0)
         printf("tlaccum error %d\n",err);
 	

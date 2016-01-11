@@ -159,7 +159,7 @@ short newOrder(short nOrder[8], bool &junction, bool &source){
 
 
 int dropan(char *areafile, char *dirfile, char *elevfile, char *ssafile, char *dropfile,
-                           char *outletfile, float threshmin, float threshmax, int nthresh, int steptype,
+                           char* datasrc,char* lyrname,int uselyrname,int lyrno, float threshmin, float threshmax, int nthresh, int steptype,
                            float *threshopt)
 {
 
@@ -266,7 +266,7 @@ int dropan(char *areafile, char *dirfile, char *elevfile, char *ssafile, char *d
 	int i,j;
 	
 	if(rank==0){
-		if(readoutlets(outletfile,hSRSRaster, &nxy, xnode, ynode)==0){
+		if(readoutlets(datasrc,lyrname,uselyrname,lyrno,hSRSRaster, &nxy, xnode, ynode)==0){
 			MPI_Bcast(&nxy, 1, MPI_INT, 0, MCW);
 			MPI_Bcast(xnode, nxy, MPI_DOUBLE, 0, MCW);
 			MPI_Bcast(ynode, nxy, MPI_DOUBLE, 0, MCW);

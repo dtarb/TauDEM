@@ -46,15 +46,15 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 #include "DropAnalysis.h"
 
-int dropan(char *areafile, char *dirfile, char *elevfile, char *ssafile, char *dropfile, 
-			   char *outletfile, float threshmin, float threshmax, int nthresh, int steptype, 
-			   float *threshopt);
+int dropan(char *areafile, char *dirfile, char *elevfile, char *ssafile, char *dropfile,
+                           char* datasrc,char* lyrname,int uselyrname,int lyrno, float threshmin, float threshmax, int nthresh, int steptype,
+                           float *threshopt);
 
 int main(int argc,char **argv)  
 {
-   char areafile[MAXLN],dirfile[MAXLN], elevfile[MAXLN], ssafile[MAXLN], dropfile[MAXLN], outletfile[MAXLN];
+   char areafile[MAXLN],dirfile[MAXLN], elevfile[MAXLN], ssafile[MAXLN], dropfile[MAXLN], datasrc[MAXLN],lyrname[MAXLN];
    float threshmin, threshmax, threshopt;
-   int err, nthresh, steptype;
+   int err, nthresh, uselyrname=0,lyrno=0,steptype;
       
    if(argc < 2) goto errexit;
    // Set defaults
@@ -113,16 +113,45 @@ int main(int argc,char **argv)
 				}
 				else goto errexit;
 			}
-			else if(strcmp(argv[i],"-o")==0)
+			 else if(strcmp(argv[i],"-o")==0)
+		{
+			i++;
+			if(argc > i)
 			{
-				i++;
-				if(argc > i)
-				{
-					strcpy(outletfile,argv[i]);
-					i++;
-				}
-				else goto errexit;
+				strcpy(datasrc,argv[i]);
+				//useOutlets = 1;	
+				i++;											
 			}
+			else goto errexit;
+		}
+
+
+		   else if(strcmp(argv[i],"-lyrno")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				sscanf(argv[i],"%d",&lyrno);
+				i++;											
+			}
+			else goto errexit;
+		}
+
+	   
+	 else if(strcmp(argv[i],"-lyrname")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				strcpy(lyrname,argv[i]);
+		        uselyrname = 1;
+				i++;											
+			}
+			else goto errexit;
+		}
+
+
+
 			else if(strcmp(argv[i],"-drp")==0)
 			{
 				i++;
@@ -153,7 +182,7 @@ int main(int argc,char **argv)
 		}
    }
     if((err=dropan(areafile, dirfile, elevfile, ssafile, dropfile, 
-			   outletfile, threshmin, threshmax, nthresh, steptype, 
+			   datasrc,lyrname,uselyrname,lyrno, threshmin, threshmax, nthresh, steptype, 
 			   &threshopt)) != 0)
         printf("Drop Analysis Error %d\n",err);
 //	else printf("%f  Value for optimum that drop analysis selected - see output file for details.\n",threshopt);

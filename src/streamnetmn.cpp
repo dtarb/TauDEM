@@ -50,9 +50,9 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char pfile[MAXLN],srcfile[MAXLN],ordfile[MAXLN],ad8file[MAXLN],elevfile[MAXLN],wfile[MAXLN],streamnetsrc[MAXLN],streamnetlyr[MAXLN];
-   char treefile[MAXLN],coordfile[MAXLN],outletsds[MAXLN],outletslyr[MAXLN];
-   long ordert=1, useoutlets=0;
+   char pfile[MAXLN],srcfile[MAXLN],ordfile[MAXLN],ad8file[MAXLN],elevfile[MAXLN],wfile[MAXLN],outletsds[MAXLN],lyrname[MAXLN],streamnetsrc[MAXLN];
+   char treefile[MAXLN],coordfile[MAXLN];char streamnetlyr[MAXLN]="";
+   long ordert=1, useoutlets=0,uselayername=0,lyrno=0; 
    int err,i;
     bool verbose=false;  //  Initialize verbose flag
    
@@ -150,7 +150,7 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-		else if(strcmp(argv[i],"-odsrc")==0)
+		else if(strcmp(argv[i],"-o")==0)
 		{
 			i++;
 			if(argc > i)
@@ -162,21 +162,28 @@ int main(int argc,char **argv)
 			else goto errexit;
 		}
 
-
-		else if(strcmp(argv[i],"-odlyr")==0)
+			   else if(strcmp(argv[i],"-lyrno")==0)
 		{
 			i++;
 			if(argc > i)
 			{
-				strcpy(outletslyr,argv[i]);
-				i++;
-				useoutlets = 1;
+				sscanf(argv[i],"%d",&lyrno);
+				i++;											
 			}
 			else goto errexit;
 		}
-
-
-
+		else if(strcmp(argv[i],"-lyrname")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				strcpy(lyrname,argv[i]);
+				uselayername=1;
+				i++;
+				
+			}
+			else goto errexit;
+		}
 
 		else if(strcmp(argv[i],"-w")==0)
 		{
@@ -188,7 +195,7 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-		else if(strcmp(argv[i],"-netsrc")==0)
+		else if(strcmp(argv[i],"-net")==0)
 		{
 			i++;
 			if(argc > i)
@@ -238,7 +245,7 @@ int main(int argc,char **argv)
 		//nameadd(streamnetshp,argv[1],"net.shp");
 	} 
 
-    if(err=netsetup(pfile,srcfile,ordfile,ad8file,elevfile,treefile,coordfile,outletsds,outletslyr,wfile,streamnetsrc,streamnetlyr,useoutlets, ordert,verbose) != 0)
+    if(err=netsetup(pfile,srcfile,ordfile,ad8file,elevfile,treefile,coordfile,outletsds,lyrname,uselayername,lyrno,wfile,streamnetsrc,streamnetlyr,useoutlets, ordert,verbose) != 0)
        printf("StreamNet error %d\n",err);
 
 	return 0;

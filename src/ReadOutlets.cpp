@@ -46,23 +46,9 @@ email:  dtarb@usu.edu
 #include "ogr_api.h"
 
 
-void getlayerfail(OGRDataSourceH hDS1,char * outletsds, int outletslyr){
-int nlayer = OGR_DS_GetLayerCount(hDS1);
-const char * lname;
-printf("Error opening datasource layer in %s\n",outletsds);
-printf("This datasource contains the following %d layers.\n",nlayer);
-for(int i=0;i<nlayer;i++){
-	OGRLayerH hLayer1 = OGR_DS_GetLayer(hDS1,i);
-	lname=OGR_L_GetName(hLayer1);
-	OGRwkbGeometryType gtype;
-	gtype=OGR_L_GetGeomType(hLayer1);
-	printf("%d: %s, %d\n",i,lname,gtype);
-	// TODO print interpretive name
-}
-exit(1);
-}
 
-int readoutlets(char *outletsds,int outletslyr,OGRSpatialReferenceH hSRSRaster,int *noutlets, double*& x, double*& y)
+
+int readoutlets(char *outletsds,char *lyrname, int uselayername,int outletslyr,OGRSpatialReferenceH hSRSRaster,int *noutlets, double*& x, double*& y)
 
 {   
 	// initializing datasoruce,layer,feature, geomtery, spatial reference
@@ -85,8 +71,10 @@ int readoutlets(char *outletsds,int outletslyr,OGRSpatialReferenceH hSRSRaster,i
 	}
 
 	//get layer from layer name
-	//hLayer1 = OGR_DS_GetLayerByName(hDS1,outletslyr);
-	hLayer1 = OGR_DS_GetLayer(hDS1,outletslyr);
+	if(uselayername==1) { hLayer1 = OGR_DS_GetLayerByName(hDS1,lyrname);}
+		//get layerinfo from layer number
+	else { hLayer1 = OGR_DS_GetLayer(hDS1,outletslyr);} // get layerinfo from layername
+
 	if(hLayer1 == NULL)getlayerfail(hDS1,outletsds,outletslyr);
 	OGRwkbGeometryType gtype;
 	gtype=OGR_L_GetGeomType(hLayer1);
@@ -151,7 +139,7 @@ int readoutlets(char *outletsds,int outletslyr,OGRSpatialReferenceH hSRSRaster,i
 	return 0;
 }
 
-int readoutlets(char *outletsds,int outletslyr,OGRSpatialReferenceH hSRSRaster, int *noutlets, double*& x, double*& y, int*& id)
+int readoutlets(char *outletsds,char *lyrname,int uselayername,int outletslyr,OGRSpatialReferenceH hSRSRaster, int *noutlets, double*& x, double*& y, int*& id)
 
 {
  
@@ -175,8 +163,15 @@ int readoutlets(char *outletsds,int outletslyr,OGRSpatialReferenceH hSRSRaster, 
 	//exit( 1 );
 	}
 	
-    //hLayer1 = OGR_DS_GetLayerByName( hDS1,outletslyr );
-	hLayer1 = OGR_DS_GetLayer( hDS1,outletslyr);
+    //get layer from layer name
+	if(uselayername==1) { hLayer1 = OGR_DS_GetLayerByName(hDS1,lyrname);}
+		//get layerinfo from layer number
+	else { hLayer1 = OGR_DS_GetLayer(hDS1,outletslyr);} // get layerinfo from layername
+
+	if(hLayer1 == NULL)getlayerfail(hDS1,outletsds,outletslyr);
+	OGRwkbGeometryType gtype;
+	gtype=OGR_L_GetGeomType(hLayer1);
+	if(gtype != wkbPoint)getlayerfail(hDS1,outletsds,outletslyr);
     //OGR_L_ResetReading(hLayer1);
 	hRSOutlet = OGR_L_GetSpatialRef(hLayer1);
 	//if there is spatial reference then write warnings 
