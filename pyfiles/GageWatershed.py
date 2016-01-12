@@ -64,7 +64,8 @@ for line in process.stdout.readlines():
 arcpy.AddMessage('Executing: Calculate Statistics\n')
 arcpy.CalculateStatistics_management(gw)
 # remove converted json file
-extn_json=os.path.splitext(shfl)[1] # get extension of the converted json file
-if extn_json==".json":
+if arcpy.Exists(ogrfile):
+ extn_json=os.path.splitext(shfl)[1] # get extension of the converted json file
+ if extn_json==".json":
     os.remove(shfl)
 
