@@ -91,6 +91,7 @@ arcpy.CalculateStatistics_management(tdep)
 if arcpy.Exists(inlyr3):
     arcpy.CalculateStatistics_management(ctpt)
 # remove converted json file
-extn_json=os.path.splitext(shfl)[1] # get extension of the converted json file
-if extn_json==".json":
+if arcpy.Exists(ogrfile):
+ extn_json=os.path.splitext(shfl)[1] # get extension of the converted json file
+ if extn_json==".json":
     os.remove(shfl)
