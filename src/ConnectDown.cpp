@@ -658,19 +658,11 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletdatasrc, ch
        }
 
 		// open datasource if the datasoruce exists 
-	hDSsh= OGROpen(outletdatasrc, TRUE, NULL );
+	     if(pszDriverName=="SQLite")hDSsh= OGROpen(outletdatasrc, TRUE, NULL );
 	// create new data source if data source does not exist 
    if (hDSsh ==NULL){ 
 	   hDSsh= OGR_Dr_CreateDataSource(driver, outletdatasrc, NULL);}
    else { hDSsh=hDSsh ;}
-	
-   
- 
-
-
-
-
-
    
 	 //  The logic here is not fully understood.  
 	 //  Behaviour appears to be different when running called from ArcGIS python script and running on the command line.
@@ -753,8 +745,7 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletdatasrc, ch
          printf( "%s warning: driver not available.\n", pszDriverName );
          //exit( 1 );
       }
-
-	  hDSshmoved= OGROpen(movedoutletdatasrc, TRUE, NULL );
+	  if(pszDriverName1=="SQLite") hDSshmoved= OGROpen(movedoutletdatasrc, TRUE, NULL );
 	// create new data source if data source does not exist 
 	if ( hDSshmoved ==NULL){ 
 		     hDSshmoved = OGR_Dr_CreateDataSource(driver, movedoutletdatasrc, NULL);}
@@ -775,7 +766,7 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletdatasrc, ch
     //OGR_L_ResetReading(hLayer1);
 	 if(strlen(movedoutletlyr)==0){
 		char *mvoutletlayername;
-		mvoutletlayername=getLayername( movedoutletlyr); // get layer name if the layer name is not provided
+		mvoutletlayername=getLayername( movedoutletdatasrc); // get layer name if the layer name is not provided
 	     hLayershmoved= OGR_DS_CreateLayer( hDSshmoved, mvoutletlayername,hSRSRaster, wkbPoint, NULL );} 
 
 	 else {

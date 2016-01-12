@@ -1,10 +1,10 @@
 # Script Name: DinfTransLimitAccum
-# 
+#
 # Created By:  David Tarboton
 # Date:        9/29/11
 
 # Import ArcPy site-package and os modules
-import arcpy 
+import arcpy
 import os
 import subprocess
 
@@ -30,10 +30,20 @@ if arcpy.Exists(inlyr3):
     cs=str(desc.catalogPath)
     arcpy.AddMessage("\nInput Concentration Grid: "+cs)
 
-shapefile=arcpy.GetParameterAsText(4)
-if arcpy.Exists(shapefile):
-    desc = arcpy.Describe(shapefile)
-    shfl=str(desc.catalogPath)
+ogrfile=arcpy.GetParameterAsText(4)
+if arcpy.Exists(ogrfile):
+    desc = arcpy.Describe(ogrfile)
+    shfl1=str(desc.catalogPath)
+    extn=os.path.splitext(shfl1)[1] # get extension of a file
+ # if extention is shapfile do not convert into gjson other wise convert
+    if extn==".shp":
+       shfl=shfl1;
+    else:
+      basename = os.path.basename(shfl1) # get last part of the path
+      dirname=os.path.dirname(ang) # get directory
+      arcpy.env.workspace = dirname # does not work without specifying the workspace
+      arcpy.FeaturesToJSON_conversion(shfl1,basename+".json") # convert feature to json
+      shfl=os.path.join(dirname,basename+".json")
     arcpy.AddMessage("\nInput Outlets Shapefile: "+shfl)
 
 edgecontamination=arcpy.GetParameterAsText(5)
@@ -58,7 +68,7 @@ if arcpy.Exists(inlyr3):
 cmd = 'mpiexec -n ' + inputProc + ' DinfTransLimAccum -ang ' + '"' + ang + '"' + ' -tsup ' + '"' + tsup + '"' + ' -tc ' + '"' + tc + '"' + ' -tla ' + '"' + tla + '"' + ' -tdep ' + '"' + tdep + '"'
 if arcpy.Exists(inlyr3):
     cmd = cmd + ' -cs ' + '"' + cs + '"' + ' -ctpt ' + '"' + ctpt + '"'
-if arcpy.Exists(shapefile):
+if arcpy.Exists(ogrfile):
     cmd = cmd + ' -o ' + '"' + shfl + '"'
 if edgecontamination == 'false':
     cmd = cmd + ' -nc '
@@ -80,3 +90,7 @@ arcpy.CalculateStatistics_management(tla)
 arcpy.CalculateStatistics_management(tdep)
 if arcpy.Exists(inlyr3):
     arcpy.CalculateStatistics_management(ctpt)
+# remove converted json file
+extn_json=os.path.splitext(shfl)[1] # get extension of the converted json file
+if extn_json==".json":
+    os.remove(shfl)

@@ -1,10 +1,10 @@
 # Script Name: DinfContributingArea
-# 
+#
 # Created By:  David Tarboton
 # Date:        9/28/11
 
 # Import ArcPy site-package and os modules
-import arcpy 
+import arcpy
 import os
 import subprocess
 
@@ -14,11 +14,21 @@ desc = arcpy.Describe(inlyr)
 ang=str(desc.catalogPath)
 arcpy.AddMessage("\nInput Dinf Flow Direction file: "+ang)
 
-shapefile=arcpy.GetParameterAsText(1)
-if arcpy.Exists(shapefile):
-    desc = arcpy.Describe(shapefile)
-    shfl=str(desc.catalogPath)
-    arcpy.AddMessage("\nInput Outlets Shapefile: "+shfl)
+ogrfile=arcpy.GetParameterAsText(1)
+if arcpy.Exists(ogrfile):
+    desc = arcpy.Describe(ogrfile)
+    shfl1=str(desc.catalogPath)
+    extn=os.path.splitext(shfl1)[1] # get extension of a file
+ # if extention is shapfile do not convert into gjson other wise convert
+    if extn==".shp":
+       shfl=shfl1;
+    else:
+      basename = os.path.basename(shfl1) # get last part of the path
+      dirname=os.path.dirname(ang) # get directory
+      arcpy.env.workspace = dirname # does not work without specifying the workspace
+      arcpy.FeaturesToJSON_conversion(shfl1,basename+".json") # convert feature to json
+      shfl=os.path.join(dirname,basename+".json")
+    arcpy.AddMessage("\nInput Outlets file: "+shfl)
 
 weightgrid=arcpy.GetParameterAsText(2)
 if arcpy.Exists(weightgrid):
@@ -39,7 +49,7 @@ arcpy.AddMessage("\nOutput Dinf Specific Catchment Area Grid: "+sca)
 
 # Construct command
 cmd = 'mpiexec -n ' + inputProc + ' AreaDinf -ang ' + '"' + ang + '"' + ' -sca ' + '"' + sca + '"'
-if arcpy.Exists(shapefile):
+if arcpy.Exists(ogrfile):
     cmd = cmd + ' -o ' + '"' + shfl + '"'
 if arcpy.Exists(weightgrid):
     cmd = cmd + ' -wg ' + '"' + wtgr + '"'
@@ -62,7 +72,7 @@ if edgecontamination == 'false':
 ##    cmd = 'mpiexec -n ' + inputProc + ' AreaDinf -ang ' + '"' + ang + '"' + ' -sca ' + '"' + sca + '"' + ' -nc '
 ##else:
 ##    cmd = 'mpiexec -n ' + inputProc + ' AreaDinf -ang ' + '"' + ang + '"' + ' -sca ' + '"' + sca + '"'
-    
+
 arcpy.AddMessage("\nCommand Line: "+cmd)
 
 # Submit command to operating system
@@ -77,3 +87,7 @@ for line in process.stdout.readlines():
 # Calculate statistics on the output so that it displays properly
 arcpy.AddMessage('Executing: Calculate Statistics\n')
 arcpy.CalculateStatistics_management(sca)
+# remove converted json file
+extn_json=os.path.splitext(shfl)[1] # get extension of the converted json file
+if extn_json==".json":
+    os.remove(shfl)

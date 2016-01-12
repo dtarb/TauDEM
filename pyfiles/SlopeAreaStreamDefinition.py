@@ -1,10 +1,10 @@
 # Script Name: SlopeAreaStreamDefinition
-# 
+#
 # Created By:  David Tarboton
 # Date:        9/29/11
 
 # Import ArcPy site-package and os modules
-import arcpy 
+import arcpy
 import os
 import subprocess
 
@@ -30,11 +30,22 @@ if arcpy.Exists(masklyr):
     mask=str(desc.catalogPath)
     arcpy.AddMessage("\nInput Mask Grid: "+mask)
 
-shapelyr=arcpy.GetParameterAsText(4)
-if arcpy.Exists(shapelyr):
-    desc = arcpy.Describe(shapelyr)
-    shapefile=str(desc.catalogPath)
-    arcpy.AddMessage("\nInput Outlets Shapefile: "+shapefile)
+ogrlyr=arcpy.GetParameterAsText(4)
+if arcpy.Exists(ogrlyr):
+    desc = arcpy.Describe(ogrlyr)
+    shfl1=str(desc.catalogPath)
+    extn=os.path.splitext(shfl1)[1] # get extension of a file
+ # if extention is shapfile do not convert into gjson other wise convert
+
+    if extn==".shp":
+       shfl=shfl1;
+    else:
+      basename = os.path.basename(shfl1) # get last part of the path
+      dirname=os.path.dirname(p) # get directory
+      arcpy.env.workspace = dirname # does not work without specifying the workspace
+      arcpy.FeaturesToJSON_conversion(shfl1,basename+".json") # convert feature to json
+      shfl=os.path.join(dirname,basename+".json")
+    arcpy.AddMessage("\nInput Outlets file: "+shfl)
 
 fellyr=arcpy.GetParameterAsText(5)
 if arcpy.Exists(fellyr):
@@ -75,7 +86,7 @@ ssa = arcpy.GetParameterAsText(14)
 arcpy.AddMessage("\nOutput Maximum Upslope Grid: "+ssa)
 
 drp=arcpy.GetParameterAsText(15)
-if arcpy.Exists(drp):    
+if arcpy.Exists(drp):
     arcpy.AddMessage("\nOutput Drop Analysis Table: "+drp)
 
 usedroprange = arcpy.GetParameterAsText(16)
@@ -107,8 +118,8 @@ arcpy.CalculateStatistics_management(sa)
 
 # Construct second command
 cmd = 'mpiexec -n ' + inputProc + ' D8FlowPathExtremeUp -p ' + '"' + p + '"' + ' -sa ' + '"' + sa + '"' + ' -ssa ' + '"' + ssa + '"'
-if arcpy.Exists(shapelyr):
-    cmd = cmd + ' -o ' + '"' + shapefile + '"'
+if arcpy.Exists(ogrlyr):
+    cmd = cmd + ' -o ' + '"' + shfl + '"'
 ##if maximumupslope == 'false':
 ##    cmd = cmd + ' -min '
 if contcheck == 'false':
@@ -124,15 +135,15 @@ for line in process.stdout.readlines():
     arcpy.AddMessage(line)
 arcpy.CalculateStatistics_management(ssa)
 
-if (usedroprange == 'true') and arcpy.Exists(shapelyr):
+if (usedroprange == 'true') and arcpy.Exists(ogrlyr):
     # Construct third command
     cmd = 'mpiexec -n ' + inputProc + ' DropAnalysis -fel ' + '"' + fel + '"' + ' -p ' + '"' + p + '"' + ' -ad8 ' + '"' + ad8 + '"'
-    cmd = cmd + ' -ssa ' + '"' + ssa + '"' + ' -o ' + '"' + shapefile + '"' + ' -drp ' + '"' + drp + '"' + ' -par ' + minthresh + ' ' + maxthresh + ' ' + numthresh + ' '
-    if logspace == 'false':    
+    cmd = cmd + ' -ssa ' + '"' + ssa + '"' + ' -o ' + '"' + shfl + '"' + ' -drp ' + '"' + drp + '"' + ' -par ' + minthresh + ' ' + maxthresh + ' ' + numthresh + ' '
+    if logspace == 'false':
         cmd = cmd + '1'
     else:
         cmd = cmd + '0'
-        
+
     arcpy.AddMessage("\nCommand Line: "+cmd)
     # Submit command to operating system
     os.system(cmd)
@@ -150,10 +161,10 @@ if (usedroprange == 'true') and arcpy.Exists(shapelyr):
 
 # Construct fourth command
 cmd = 'mpiexec -n ' + inputProc + ' Threshold -ssa ' + '"' + ssa + '"' + ' -src ' + '"' + src + '"'
-if (usedroprange == 'true') and arcpy.Exists(shapelyr):
+if (usedroprange == 'true') and arcpy.Exists(ogrlyr):
     cmd = cmd + ' -thresh ' + threshold
 else:
-    cmd = cmd + ' -thresh ' + thresh    
+    cmd = cmd + ' -thresh ' + thresh
 if arcpy.Exists(masklyr):
     cmd = cmd + ' -mask ' + '"' + mask + '"'
 arcpy.AddMessage("\nCommand Line: "+cmd)
@@ -164,4 +175,9 @@ process=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 arcpy.AddMessage('\nProcess started:\n')
 for line in process.stdout.readlines():
     arcpy.AddMessage(line)
-arcpy.CalculateStatistics_management(src)
+arcpy.CalculateStatistics_management(src)# remove converted json file
+if arcpy.Exists(ogrlyr):
+ extn_json=os.path.splitext(shfl)[1] # get extension of the converted json file
+ if extn_json==".json":
+    os.remove(shfl)
+

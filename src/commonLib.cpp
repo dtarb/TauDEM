@@ -409,9 +409,9 @@ bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData){
 //get ogr driver index for writing shapefile
 
  const char *getOGRdrivername(char *datasrcnew){
-	const char *ogrextension_list[4] = {".sqlite",".shp",".geojson",".kml"};  // extension list --can add more 
-	const char *ogrdriver_code[4] = {"SQLite","ESRI Shapefile","GeoJSON","KML"};   //  code list -- can add more
-	size_t extension_num=4;
+	const char *ogrextension_list[5] = {".sqlite",".shp",".json",".kml",".geojson"};  // extension list --can add more 
+	const char *ogrdriver_code[5] = {"SQLite","ESRI Shapefile","GeoJSON","KML","GeoJSON"};   //  code list -- can add more
+	size_t extension_num=5;
 	char *ext; 
 	int index = 1; //default is ESRI shapefile
     ext = strrchr(datasrcnew, '.'); 
