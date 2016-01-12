@@ -111,7 +111,7 @@ void createStreamNetShapefile(char *streamnetsrc,char *streamnetlyr,OGRSpatialRe
     }
 
     // open datasource if the datasoruce exists 
-	hDS1 = OGROpen(streamnetsrc, TRUE, NULL );
+	if(pszDriverName=="SQLite") hDS1 = OGROpen(streamnetsrc, TRUE, NULL );
 	// create new data source if data source does not exist 
    if (hDS1 ==NULL){ 
 	   hDS1 = OGR_Dr_CreateDataSource(driver, streamnetsrc, NULL);}
@@ -127,7 +127,7 @@ void createStreamNetShapefile(char *streamnetsrc,char *streamnetlyr,OGRSpatialRe
 	    hLayer1= OGR_DS_CreateLayer( hDS1,streamnetlayername,hSRSraster, wkbMultiLineString, NULL );} 
 
 	 else {
-		 hLayer1= OGR_DS_CreateLayer( hDS1, streamnetlyr,hSRSraster, wkbMultiLineString, NULL ); }// provide same spatial reference as raster in streamnetshp file
+		 hLayer1= OGR_DS_CreateLayer( hDS1,streamnetlyr,hSRSraster, wkbMultiLineString, NULL ); }// provide same spatial reference as raster in streamnetshp file
     if( hLayer1 == NULL )
     {
         printf( "warning: Layer creation failed.\n" );

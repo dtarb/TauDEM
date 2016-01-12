@@ -212,7 +212,7 @@ int outletstosrc(char *pfile, char *srcfile, char *outletsdatasrc, char *outlets
 				
 				
 				// Create new file using this driver if the datasoruce exists 
-				hDSshmoved= OGROpen(outletmoveddatasrc, TRUE, NULL );
+				if(pszDriverName=="SQLite")hDSshmoved= OGROpen(outletmoveddatasrc, TRUE, NULL );
 	           // create new data source if data source does not exist 
 	           if (hDSshmoved ==NULL){ 
 		                hDSshmoved = OGR_Dr_CreateDataSource(driver, outletmoveddatasrc, NULL);}
@@ -220,7 +220,7 @@ int outletstosrc(char *pfile, char *srcfile, char *outletsdatasrc, char *outlets
 
 				if( hDSshmoved  != NULL ) {
 				
-				hLayershmoved = OGR_DS_CreateLayer( hDSshmoved, outletmovedlayer, hSRSRaster, wkbPoint, NULL ); // create layer for moved outlet, where raster layer spatial reference is used fro shapefile
+				//hLayershmoved = OGR_DS_CreateLayer( hDSshmoved, outletmovedlayer, hSRSRaster, wkbPoint, NULL ); // create layer for moved outlet, where raster layer spatial reference is used fro shapefile
 			   if(strlen(outletmovedlayer)==0){
 		          char * layernameshmoved; 
                  layernameshmoved=getLayername(outletmoveddatasrc); // get layer name which is file name without extension
