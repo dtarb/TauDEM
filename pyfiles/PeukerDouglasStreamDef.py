@@ -1,10 +1,10 @@
 # Script Name: PeukarDouglasStreamDef
-# 
+#
 # Created By:  David Tarboton
 # Date:        9/29/11
 
 # Import ArcPy site-package and os modules
-import arcpy 
+import arcpy
 import os
 import subprocess
 
@@ -34,11 +34,22 @@ arcpy.AddMessage("\nAccumulation Threshold: "+accthresh)
 contcheck = arcpy.GetParameterAsText(6)
 arcpy.AddMessage("\nEdge contamination checking: "+contcheck)
 
-shapelyr=arcpy.GetParameterAsText(7)
-if arcpy.Exists(shapelyr):
-    desc = arcpy.Describe(shapelyr)
-    shapefile=str(desc.catalogPath)
-    arcpy.AddMessage("\nInput Outlets Shapefile: "+shapefile)
+ogrlyr=arcpy.GetParameterAsText(7)
+if arcpy.Exists(ogrlyr):
+    desc = arcpy.Describe(ogrlyr)
+    shfl1=str(desc.catalogPath)
+    extn=os.path.splitext(shfl1)[1] # get extension of a file
+ # if extention is shapfile do not convert into gjson other wise convert
+    if extn==".shp":
+       shfl=shfl1;
+    else:
+      basename = os.path.basename(shfl1) # get last part of the path
+      dirname=os.path.dirname(p) # get directory
+      arcpy.env.workspace = dirname # does not work without specifying the workspace
+      arcpy.FeaturesToJSON_conversion(shfl1,basename+".json") # convert feature to json
+      shfl=os.path.join(dirname,basename+".json")
+
+    arcpy.AddMessage("\nInput Outlets file: "+shfl)
 
 masklyr=arcpy.GetParameterAsText(8)
 if arcpy.Exists(masklyr):
@@ -67,7 +78,7 @@ src = arcpy.GetParameterAsText(13)
 arcpy.AddMessage("\nOutput Stream Raster Grid: "+src)
 
 drp=arcpy.GetParameterAsText(14)
-if arcpy.Exists(drp):    
+if arcpy.Exists(drp):
     arcpy.AddMessage("\nOutput Drop Analysis Table: "+drp)
 
 usedroprange = arcpy.GetParameterAsText(15)
@@ -86,7 +97,7 @@ logspace=arcpy.GetParameterAsText(19)
 arcpy.AddMessage("\nLogarithmic Spacing: "+logspace)
 
 # Construct first command
-cmd = 'mpiexec -n ' + inputProc + ' PeukerDouglas -fel ' + '"' + fel + '"' + ' -ss ' + '"' + ss + '"' + ' -par ' + weightcenter + ' ' + weightside + ' ' + weightdiag 
+cmd = 'mpiexec -n ' + inputProc + ' PeukerDouglas -fel ' + '"' + fel + '"' + ' -ss ' + '"' + ss + '"' + ' -par ' + weightcenter + ' ' + weightside + ' ' + weightdiag
 arcpy.AddMessage("\nCommand Line: "+cmd)
 # Submit command to operating system
 os.system(cmd)
@@ -100,8 +111,8 @@ arcpy.CalculateStatistics_management(ss)
 # Construct second command
 cmd = 'mpiexec -n ' + inputProc + ' AreaD8 -p ' + '"' + p + '"' + ' -ad8 ' + '"' + ssa + '"'
 cmd = cmd + ' -wg ' + '"' + ss + '"'
-if arcpy.Exists(shapelyr):
-    cmd = cmd + ' -o ' + '"' + shapefile + '"'
+if arcpy.Exists(ogrlyr):
+    cmd = cmd + ' -o ' + '"' + shfl + '"'
 if contcheck == 'false':
     cmd = cmd + ' -nc'
 arcpy.AddMessage("\nCommand Line: "+cmd)
@@ -114,15 +125,15 @@ for line in process.stdout.readlines():
     arcpy.AddMessage(line)
 arcpy.CalculateStatistics_management(ssa)
 
-if (usedroprange == 'true') and arcpy.Exists(shapelyr):
+if (usedroprange == 'true') and arcpy.Exists(ogrlyr):
     # Construct third command
     cmd = 'mpiexec -n ' + inputProc + ' DropAnalysis -fel ' + '"' + fel + '"' + ' -p ' + '"' + p + '"' + ' -ad8 ' + '"' + ad8 + '"'
-    cmd = cmd + ' -ssa ' + '"' + ssa + '"' + ' -o ' + '"' + shapefile + '"' + ' -drp ' + '"' + drp + '"' + ' -par ' + minthresh + ' ' + maxthresh + ' ' + numthresh + ' '
-    if logspace == 'false':    
+    cmd = cmd + ' -ssa ' + '"' + ssa + '"' + ' -o ' + '"' + shfl + '"' + ' -drp ' + '"' + drp + '"' + ' -par ' + minthresh + ' ' + maxthresh + ' ' + numthresh + ' '
+    if logspace == 'false':
         cmd = cmd + '1'
     else:
         cmd = cmd + '0'
-        
+
     arcpy.AddMessage("\nCommand Line: "+cmd)
     # Submit command to operating system
     os.system(cmd)
@@ -140,10 +151,10 @@ if (usedroprange == 'true') and arcpy.Exists(shapelyr):
 
 # Construct fourth command
 cmd = 'mpiexec -n ' + inputProc + ' Threshold -ssa ' + '"' + ssa + '"' + ' -src ' + '"' + src + '"'
-if (usedroprange == 'true') and arcpy.Exists(shapelyr):
+if (usedroprange == 'true') and arcpy.Exists(ogrlyr):
     cmd = cmd + ' -thresh ' + threshold
 else:
-    cmd = cmd + ' -thresh ' + accthresh    
+    cmd = cmd + ' -thresh ' + accthresh
 if arcpy.Exists(masklyr):
     cmd = cmd + ' -mask ' + '"' + mask + '"'
 arcpy.AddMessage("\nCommand Line: "+cmd)
@@ -155,3 +166,8 @@ arcpy.AddMessage('\nProcess started:\n')
 for line in process.stdout.readlines():
     arcpy.AddMessage(line)
 arcpy.CalculateStatistics_management(src)
+# remove converted json file
+if arcpy.Exists(ogrlyr):
+ extn_json=os.path.splitext(shfl)[1] # get extension of the converted json file
+ if extn_json==".json":
+    os.remove(shfl)

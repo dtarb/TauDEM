@@ -1,10 +1,10 @@
 # Script Name: StreamDefWithDropAnalysis
-# 
+#
 # Created By:  David Tarboton
 # Date:        9/29/11
 
 # Import ArcPy site-package and os modules
-import arcpy 
+import arcpy
 import os
 import subprocess
 
@@ -29,10 +29,21 @@ desc = arcpy.Describe(inlyr3)
 ssa=str(desc.catalogPath)
 arcpy.AddMessage("\nInput Accumulated Stream Source Grid: "+ssa)
 
-shapefile=arcpy.GetParameterAsText(4)
-desc = arcpy.Describe(shapefile)
-shfl=str(desc.catalogPath)
-arcpy.AddMessage("\nInput Outlets Shapefile: "+shfl)
+ogrfile=arcpy.GetParameterAsText(4)
+desc = arcpy.Describe(ogrfile)
+shfl1=str(desc.catalogPath)
+extn=os.path.splitext(shfl1)[1] # get extension of a file
+ # if extention is shapfile do not convert into gjson other wise convert
+if extn==".shp":
+       shfl=shfl1;
+else:
+      basename = os.path.basename(shfl1) # get last part of the path
+      dirname=os.path.dirname(p) # get directory
+      arcpy.env.workspace = dirname # does not work without specifying the workspace
+      arcpy.FeaturesToJSON_conversion(shfl1,basename+".json") # convert feature to json
+      shfl=os.path.join(dirname,basename+".json")
+
+arcpy.AddMessage("\nInput Outlets file: "+shfl)
 
 maskgrid=arcpy.GetParameterAsText(5)
 if arcpy.Exists(maskgrid):
@@ -65,7 +76,7 @@ arcpy.AddMessage("\nOutput Stream Raster Grid: "+src)
 
 # Construct command 1
 cmd = 'mpiexec -n ' + inputProc + ' DropAnalysis -fel ' + '"' + fel + '"' + ' -p ' + '"' + p + '"' + ' -ad8 ' + '"' + ad8 + '"' + ' -ssa ' + '"' + ssa + '"' + ' -o ' + '"' + shfl + '"' + ' -drp ' + '"' + drp + '"' + ' -par ' + minthresh + ' ' + maxthresh + ' ' + numthresh + ' '
-if logspace == 'false':    
+if logspace == 'false':
     cmd = cmd + '1'
 else:
     cmd = cmd + '0'
@@ -105,4 +116,9 @@ for line in process.stdout.readlines():
 # Calculate statistics on the output so that it displays properly
 arcpy.AddMessage('Executing: Calculate Statistics\n')
 arcpy.CalculateStatistics_management(src)
+# remove converted json file
+if arcpy.Exists(ogrfile):
+  extn_json=os.path.splitext(shfl)[1] # get extension of the converted json file
+  if extn_json==".json":
+    os.remove(shfl)
 

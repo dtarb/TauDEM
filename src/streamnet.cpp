@@ -110,8 +110,8 @@ void createStreamNetShapefile(char *streamnetsrc,char *streamnetlyr,OGRSpatialRe
         //exit( 1 );
     }
 
-    // Create new file using this driver if the datasoruce exists 
-	hDS1 = OGROpen(streamnetsrc, TRUE, NULL );
+    // open datasource if the datasoruce exists 
+	if(pszDriverName=="SQLite") hDS1 = OGROpen(streamnetsrc, TRUE, NULL );
 	// create new data source if data source does not exist 
    if (hDS1 ==NULL){ 
 	   hDS1 = OGR_Dr_CreateDataSource(driver, streamnetsrc, NULL);}
@@ -120,9 +120,14 @@ void createStreamNetShapefile(char *streamnetsrc,char *streamnetlyr,OGRSpatialRe
     if (hDS1 != NULL) {
  
 
-  //  char *layername; // layer name is file name without extension
-  //  layername=getLayername(streamnetshp); // get layer name
-    hLayer1= OGR_DS_CreateLayer( hDS1, streamnetlyr,hSRSraster, wkbMultiLineString, NULL ); // provide same spatial reference as raster in streamnetshp file
+      // layer name is file name without extension
+	 if(strlen(streamnetlyr)==0){
+		char *streamnetlayername;
+		streamnetlayername=getLayername(streamnetsrc); // get layer name if the layer name is not provided
+	    hLayer1= OGR_DS_CreateLayer( hDS1,streamnetlayername,hSRSraster, wkbMultiLineString, NULL );} 
+
+	 else {
+		 hLayer1= OGR_DS_CreateLayer( hDS1,streamnetlyr,hSRSraster, wkbMultiLineString, NULL ); }// provide same spatial reference as raster in streamnetshp file
     if( hLayer1 == NULL )
     {
         printf( "warning: Layer creation failed.\n" );
@@ -355,7 +360,7 @@ struct Slink{
 };
 
 int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfile,char *treefile, char *coordfile, 
-			 char *outletsds, char *outletslyr, char *wfile, char *streamnetsrc, char *streamnetlyr,long useOutlets, long ordert, bool verbose) 
+			 char *outletsds, char *lyrname, int uselayername,int lyrno, char *wfile, char *streamnetsrc, char *streamnetlyr,long useOutlets, long ordert, bool verbose) 
 {
 	// MPI Init section
 	MPI_Init(NULL,NULL);{
@@ -462,7 +467,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 		// Read outlets 
 		if( useOutlets == 1) {
 			if(rank==0){
-				if(readoutlets(outletsds,outletslyr,hSRSraster, &numOutlets, x, y,ids) !=0){
+				if(readoutlets(outletsds,lyrname,uselayername,lyrno,hSRSraster, &numOutlets, x, y,ids) !=0){
 					printf("Exiting \n");
 					MPI_Abort(MCW,5);
 				}else {

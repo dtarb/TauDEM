@@ -31,11 +31,23 @@ desc = arcpy.Describe(inlyr3)
 src=str(desc.catalogPath)
 arcpy.AddMessage("\nInput Stream Raster Grid: "+src)
 
-shapefile=arcpy.GetParameterAsText(4)
-if arcpy.Exists(shapefile):
-    desc = arcpy.Describe(shapefile)
-    shfl=str(desc.catalogPath)
-    arcpy.AddMessage("\nInput Outlets Shapefile as Network Nodes: "+shfl)
+ogrfile=arcpy.GetParameterAsText(4)
+if arcpy.Exists(ogrfile):
+    desc = arcpy.Describe(ogrfile)
+    shfl1=str(desc.catalogPath)
+    extn=os.path.splitext(shfl1)[1] # get extension of a file
+ # if extention is shapfile do not convert into gjson other wise convert
+
+    if extn==".shp":
+       shfl=shfl1;
+    else:
+      basename = os.path.basename(shfl1) # get last part of the path
+      dirname=os.path.dirname(p) # get directory
+      arcpy.env.workspace = dirname # does not work without specifying the workspace
+      arcpy.FeaturesToJSON_conversion(shfl1,basename+".json") # convert feature to json
+      shfl=os.path.join(dirname,basename+".json")
+
+    arcpy.AddMessage("\nInput Outlets file as Network Nodes: "+shfl)
 
 delineate=arcpy.GetParameterAsText(5)
 arcpy.AddMessage("\nDelineate Single Watershed: "+delineate)
@@ -62,7 +74,7 @@ arcpy.AddMessage("\nOutput Watershed Grid: "+w)
 
 # Construct command
 cmd = 'mpiexec -n ' + inputProc + ' StreamNet -fel ' + '"' + fel + '"' + ' -p ' + '"' + p + '"' + ' -ad8 ' + '"' + ad8 + '"' + ' -src ' + '"' + src + '"' + ' -ord ' + '"' + ord + '"' + ' -tree ' + '"' + tree + '"' + ' -coord ' + '"' + coord + '"' + ' -net ' + '"' + net + '"' + ' -w ' + '"' + w + '"'
-if arcpy.Exists(shapefile):
+if arcpy.Exists(ogrfile):
     cmd = cmd + ' -o ' + '"' + shfl + '"'
 if delineate == 'true':
     cmd = cmd + ' -sw '
@@ -84,3 +96,8 @@ arcpy.CalculateStatistics_management(ord)
 #arcpy.DefineProjection_management(net, coord_sys)
 
 arcpy.CalculateStatistics_management(w)
+# remove converted json file
+if arcpy.Exists(ogrfile):
+ extn_json=os.path.splitext(shfl)[1] # get extension of the converted json file
+ if extn_json==".json":
+    os.remove(shfl)

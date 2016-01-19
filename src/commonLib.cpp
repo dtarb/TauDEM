@@ -385,33 +385,33 @@ bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData){
 }
 
 //get extension from OGR vector file
-//we don't need that as layername is also a input provided by the user
-//  char *getLayername(char *inputogrfile)
-//{  
-//    std::string filenamewithpath;
-//	filenamewithpath=inputogrfile;
-//    size_t found = filenamewithpath.find_last_of("/\\");
-//    std::string filenamewithoutpath;
-//	filenamewithoutpath=filenamewithpath.substr(found+1);
-//	const char *filename = filenamewithoutpath.c_str(); // convert string to char
-//    const char *ext; 
-//    ext = strrchr(filename, '.'); // getting extension
-//    char layername[MAXLN];
-//    size_t len = strlen(filename);
-//	size_t len1 = strlen(ext);
-//	memcpy(layername, filename, len-len1);
-//	layername[len - len1] = 0; 
-//    printf("%s ", layername);
-//    return layername;
-//}
+//get layername if not provided by user
+  char *getLayername(char *inputogrfile)
+{  
+    std::string filenamewithpath;
+	filenamewithpath=inputogrfile;
+    size_t found = filenamewithpath.find_last_of("/\\");
+    std::string filenamewithoutpath;
+	filenamewithoutpath=filenamewithpath.substr(found+1);
+	const char *filename = filenamewithoutpath.c_str(); // convert string to char
+    const char *ext; 
+    ext = strrchr(filename, '.'); // getting extension
+    char layername[MAXLN];
+    size_t len = strlen(filename);
+	size_t len1 = strlen(ext);
+	memcpy(layername, filename, len-len1);
+	layername[len - len1] = 0; 
+    printf("%s ", layername);
+    return layername;
+}
 //
 
 //get ogr driver index for writing shapefile
 
  const char *getOGRdrivername(char *datasrcnew){
-	const char *ogrextension_list[3] = {".sqlite",".shp",".geojson",};  // extension list --can add more 
-	const char *ogrdriver_code[3] = {"SQLite","ESRI Shapefile","GeoJSON"};   //  code list -- can add more
-	size_t extension_num=3;
+	const char *ogrextension_list[5] = {".sqlite",".shp",".json",".kml",".geojson"};  // extension list --can add more 
+	const char *ogrdriver_code[5] = {"SQLite","ESRI Shapefile","GeoJSON","KML","GeoJSON"};   //  code list -- can add more
+	size_t extension_num=5;
 	char *ext; 
 	int index = 1; //default is ESRI shapefile
     ext = strrchr(datasrcnew, '.'); 
@@ -440,3 +440,19 @@ bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData){
 	 drivername=ogrdriver_code[index];
     return drivername;
   }
+
+void getlayerfail(OGRDataSourceH hDS1,char * outletsds, int outletslyr){
+int nlayer = OGR_DS_GetLayerCount(hDS1);
+const char * lname;
+printf("Error opening datasource layer in %s\n",outletsds);
+printf("This datasource contains the following %d layers.\n",nlayer);
+for(int i=0;i<nlayer;i++){
+	OGRLayerH hLayer1 = OGR_DS_GetLayer(hDS1,i);
+	lname=OGR_L_GetName(hLayer1);
+	OGRwkbGeometryType gtype;
+	gtype=OGR_L_GetGeomType(hLayer1);
+	printf("%d: %s, %d\n",i,lname,gtype);
+	// TODO print interpretive name
+}
+exit(1);
+}

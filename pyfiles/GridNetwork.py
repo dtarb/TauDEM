@@ -1,10 +1,10 @@
 # Script Name: GridNetwork
-# 
+#
 # Created By:  David Tarboton
 # Date:        9/28/11
 
 # Import ArcPy site-package and os modules
-import arcpy 
+import arcpy
 import os
 import subprocess
 
@@ -18,11 +18,21 @@ arcpy.AddMessage("\nInput D8 Flow Direction file: "+p)
 inputProc=arcpy.GetParameterAsText(1)
 arcpy.AddMessage("\nInput Number of Processes: "+inputProc)
 
-shapefile=arcpy.GetParameterAsText(2)
-if arcpy.Exists(shapefile):
-    desc = arcpy.Describe(shapefile)
-    shfl=str(desc.catalogPath)
-    arcpy.AddMessage("\nInput Outlets Shapefile: "+shfl)
+ogrfile=arcpy.GetParameterAsText(2)
+if arcpy.Exists(ogrfile):
+    desc = arcpy.Describe(ogrfile)
+    shfl1=str(desc.catalogPath)
+    extn=os.path.splitext(shfl1)[1] # get extension of a file
+ # if extention is shapfile do not convert into gjson other wise convert
+    if extn==".shp":
+       shfl=shfl1;
+    else:
+      basename = os.path.basename(shfl1) # get last part of the path
+      dirname=os.path.dirname(p) # get directory
+      arcpy.env.workspace = dirname # does not work without specifying the workspace
+      arcpy.FeaturesToJSON_conversion(shfl1,basename+".json") # convert feature to json
+      shfl=os.path.join(dirname,basename+".json")
+    arcpy.AddMessage("\nInput Outlets file: "+shfl)
 
 maskgrid=arcpy.GetParameterAsText(3)
 if arcpy.Exists(maskgrid):
@@ -46,7 +56,7 @@ arcpy.AddMessage("\nOutput Total Upslope Length Grid: "+tlen)
 
 # Construct command
 cmd = 'mpiexec -n ' + inputProc + ' GridNet -p ' + '"' + p + '"' + ' -plen ' + '"' + plen + '"' + ' -tlen ' + '"' + tlen + '"' + ' -gord ' + '"' + gord + '"'
-if arcpy.Exists(shapefile):
+if arcpy.Exists(ogrfile):
     cmd = cmd + ' -o ' + '"' + shfl + '"'
 if arcpy.Exists(maskgrid):
     cmd = cmd + ' -mask ' + '"' + mkgr + '"' + ' -thresh ' + maskthreshold
@@ -76,3 +86,8 @@ arcpy.AddMessage('Executing: Calculate Statistics\n')
 arcpy.CalculateStatistics_management(gord)
 arcpy.CalculateStatistics_management(plen)
 arcpy.CalculateStatistics_management(tlen)
+# remove converted json file
+if arcpy.Exists(ogrfile):
+  extn_json=os.path.splitext(shfl)[1] # get extension of the converted json file
+  if extn_json==".json":
+    os.remove(shfl)

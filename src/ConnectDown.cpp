@@ -647,24 +647,22 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletdatasrc, ch
 	if(rank==0){
 		OGRRegisterAll();
 		int nfields;
-		nfields=2; 		
-		
-
-	  const char *pszDriverName;
-	  pszDriverName=getOGRdrivername( outletdatasrc);
-      driver = OGRGetDriverByName( pszDriverName );
-      if( driver == NULL )
-      {
+	    nfields=2; 		
+	    const char *pszDriverName;
+	    pszDriverName=getOGRdrivername( outletdatasrc);
+        driver = OGRGetDriverByName( pszDriverName );
+        if( driver == NULL )
+        {
          printf( "%s warning: driver not available.\n", pszDriverName );
          //exit( 1 );
-      }
+       }
 
-	  hDSsh= OGROpen(outletdatasrc, TRUE, NULL );
+		// open datasource if the datasoruce exists 
+	     if(pszDriverName=="SQLite")hDSsh= OGROpen(outletdatasrc, TRUE, NULL );
 	// create new data source if data source does not exist 
-	if (hDSsh ==NULL){ 
-		    hDSsh = OGR_Dr_CreateDataSource(driver, outletdatasrc, NULL);}
-	else { hDSsh=hDSsh ;}
-
+   if (hDSsh ==NULL){ 
+	   hDSsh= OGR_Dr_CreateDataSource(driver, outletdatasrc, NULL);}
+   else { hDSsh=hDSsh ;}
    
 	 //  The logic here is not fully understood.  
 	 //  Behaviour appears to be different when running called from ArcGIS python script and running on the command line.
@@ -682,7 +680,17 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletdatasrc, ch
 		//hLayer1 = OGR_DS_GetLayerByName( hDS1,layername );
 		//OGR_L_ResetReading(hLayer1);
 	    //printf("hDSsh before: %d\n",hDSsh); fflush(stdout);
-		hLayersh= OGR_DS_CreateLayer( hDSsh, outletlyr ,hSRSRaster, wkbPoint, NULL );
+
+		 
+      // layer name is file name without extension
+	 if(strlen(outletlyr)==0){
+		char *outletlayername;
+		outletlayername=getLayername( outletdatasrc); // get layer name if the layer name is not provided
+	    hLayersh= OGR_DS_CreateLayer( hDSsh,outletlayername,hSRSRaster,wkbPoint, NULL);} 
+
+	 else {
+		 hLayersh= OGR_DS_CreateLayer( hDSsh, outletlyr ,hSRSRaster, wkbPoint, NULL ); }// provide same spatial reference as raster in streamnetshp fil
+		
 		//printf("hDSsh after: %d\n",hDSsh); fflush(stdout);
 		if( hLayersh  == NULL )
 		{
@@ -737,12 +745,16 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletdatasrc, ch
          printf( "%s warning: driver not available.\n", pszDriverName );
          //exit( 1 );
       }
-
-	  hDSshmoved= OGROpen(movedoutletdatasrc, TRUE, NULL );
+	  if(pszDriverName1=="SQLite") hDSshmoved= OGROpen(movedoutletdatasrc, TRUE, NULL );
 	// create new data source if data source does not exist 
 	if ( hDSshmoved ==NULL){ 
 		     hDSshmoved = OGR_Dr_CreateDataSource(driver, movedoutletdatasrc, NULL);}
 	else { hDSshmoved =hDSshmoved  ;}
+
+
+
+
+
 
 
      if (hDSshmoved != NULL){
@@ -752,9 +764,17 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletdatasrc, ch
     //layernamemoved=getLayername(movedoutletshapefile);
     //hLayer1 = OGR_DS_GetLayerByName( hDS1,layername );
     //OGR_L_ResetReading(hLayer1);
+	 if(strlen(movedoutletlyr)==0){
+		char *mvoutletlayername;
+		mvoutletlayername=getLayername( movedoutletdatasrc); // get layer name if the layer name is not provided
+	     hLayershmoved= OGR_DS_CreateLayer( hDSshmoved, mvoutletlayername,hSRSRaster, wkbPoint, NULL );} 
+
+	 else {
+		 hLayershmoved= OGR_DS_CreateLayer( hDSshmoved, movedoutletlyr,hSRSRaster, wkbPoint, NULL ); }// provide same spatial reference as raster in streamnetshp fil
+		
+		//printf("hDSsh after: %d\n",hDSsh); fflush(stdout);
 	
 	
-	hLayershmoved= OGR_DS_CreateLayer( hDSshmoved, movedoutletlyr,hSRSRaster, wkbPoint, NULL );
     if(  hLayershmoved== NULL )
     {
         printf( "warning: Layer creation failed.\n" );
