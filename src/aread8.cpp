@@ -269,7 +269,7 @@ int aread8( char* pfile, char* afile, char *datasrc, char *lyrname,int uselyrnam
 	a.write(xstart, ystart, ny, nx, aread8->getGridPointer());
 	double writet = MPI_Wtime();
 	if( rank == 0) 
-		printf("Size: %d\nRead time: %f\nCompute time: %f\nWrite time: %f\nTotal time: %f\n",
+		printf("Number of Processes: %d\nRead time: %f\nCompute time: %f\nWrite time: %f\nTotal time: %f\n",
 		  size,readt-begint, computet-readt, writet-computet,writet-begint);
 
 	//Brackets force MPI-dependent objects to go out of scope before Finalize is called
