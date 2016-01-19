@@ -51,7 +51,7 @@ using namespace std;
 
 
 
-int gagewatershed( char *pfile, char *wfile, char *shfile, char *idfile, int writeid) 
+int gagewatershed( char *pfile, char *wfile, char* datasrc,char* lyrname,int uselyrname,int lyrno, char *idfile, int writeid) 
 {//1
 
 	MPI_Init(NULL,NULL);{
@@ -76,7 +76,7 @@ int gagewatershed( char *pfile, char *wfile, char *shfile, char *idfile, int wri
 	OGRSpatialReferenceH hSRSRaster;
     hSRSRaster=p.getspatialref();
 	if(rank==0){//4
-		if(readoutlets(shfile,hSRSRaster, &numOutlets, x, y,ids)==0){
+		if(readoutlets(datasrc,lyrname,uselyrname,lyrno,hSRSRaster, &numOutlets, x, y,ids)==0){
 			MPI_Bcast(&numOutlets, 1, MPI_INT, 0, MCW);
 			MPI_Bcast(x, numOutlets, MPI_DOUBLE, 0, MCW);
 			MPI_Bcast(y, numOutlets, MPI_DOUBLE, 0, MCW);

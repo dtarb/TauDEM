@@ -60,7 +60,7 @@ using namespace std;
 
 //Transport limited accumulation funciton
 int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *depfile, 
-			char *cinfile, char *coutfile, char *shfile, int useOutlets, int usec, 
+			char *cinfile, char *coutfile, char* datasrc,char* lyrname,int uselyrname,int lyrno, int useOutlets, int usec, 
 			int contcheck)
 {
 
@@ -84,7 +84,7 @@ int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *de
 	hSRSRaster=ang.getspatialref();
 	if( useOutlets == 1) {
 		if(rank==0){
-			if(readoutlets(shfile,hSRSRaster, &numOutlets, x, y) !=0){
+			if(readoutlets(datasrc,lyrname,uselyrname,lyrno,hSRSRaster, &numOutlets, x, y) !=0){
 				printf("Exiting \n");
 				MPI_Abort(MCW,5);
 			}else {

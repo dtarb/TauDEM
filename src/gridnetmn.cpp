@@ -49,8 +49,8 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char pfile[MAXLN],plenfile[MAXLN],tlenfile[MAXLN],gordfile[MAXLN],shfile[MAXLN],maskfile[MAXLN];
-   int err,useOutlets=0,useMask=0,thresh=0,i;
+   char pfile[MAXLN],plenfile[MAXLN],tlenfile[MAXLN],gordfile[MAXLN],datasrc[MAXLN],lyrname[MAXLN],maskfile[MAXLN];
+   int err,useOutlets=0,uselyrname=0,lyrno=0,useMask=0,thresh=0,i;
 
    if(argc < 2)
     {  	
@@ -110,17 +110,45 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-		else if(strcmp(argv[i],"-o")==0)
+		 else if(strcmp(argv[i],"-o")==0)
 		{
 			i++;
 			if(argc > i)
 			{
-				strcpy(shfile,argv[i]);
-				i++;
-				useOutlets = 1;
+				strcpy(datasrc,argv[i]);
+				useOutlets = 1;	
+				i++;											
 			}
 			else goto errexit;
 		}
+
+
+		   else if(strcmp(argv[i],"-lyrno")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				sscanf(argv[i],"%d",&lyrno);
+				i++;											
+			}
+			else goto errexit;
+		}
+
+	   
+	 else if(strcmp(argv[i],"-lyrname")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				strcpy(lyrname,argv[i]);
+		        uselyrname = 1;
+				i++;											
+			}
+			else goto errexit;
+		}
+
+
+
 		else if(strcmp(argv[i],"-mask")==0)
 		{
 			i++;
@@ -152,7 +180,7 @@ int main(int argc,char **argv)
 
 	}   
 
-    if( (err=gridnet(pfile,plenfile,tlenfile,gordfile,maskfile,shfile,useMask, useOutlets, thresh )) != 0)
+    if( (err=gridnet(pfile,plenfile,tlenfile,gordfile,maskfile,datasrc,lyrname,uselyrname,lyrno,useMask, useOutlets, thresh )) != 0)
         printf("gridnet error %d\n",err);
 
 	return 0;

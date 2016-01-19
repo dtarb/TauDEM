@@ -58,7 +58,7 @@ using namespace std;
 //const short d2[9] = { 0,1, 1, 0,-1,-1,-1,0,1};
 // moved to commonlib.h
 
-int dmarea(char* angfile,char* adecfile,char* dmfile,char* shfile,char* wfile,
+int dmarea(char* angfile,char* adecfile,char* dmfile,char* datasrc,char* lyrname,int uselyrname,int lyrno,char* wfile,
 		   int useOutlets,int usew,int contcheck)
 {
 
@@ -86,7 +86,7 @@ int dmarea(char* angfile,char* adecfile,char* dmfile,char* shfile,char* wfile,
     int *id;
 	if( useOutlets == 1) {
 		if(rank==0){
-			if(readoutlets(shfile,hSRSRaster, &numOutlets, x, y, id) !=0){
+			if(readoutlets(datasrc,lyrname,uselyrname,lyrno,hSRSRaster, &numOutlets, x, y, id) !=0){
 				printf("Exiting \n");
 				MPI_Abort(MCW,5);
 			}else {

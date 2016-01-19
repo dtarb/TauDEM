@@ -23,8 +23,19 @@ arcpy.AddMessage("\nInput Stream Raster Grid: "+src)
 
 inlyr2 = arcpy.GetParameterAsText(2)
 desc = arcpy.Describe(inlyr2)
-shfl=str(desc.catalogPath)
-arcpy.AddMessage("\nInput Outlets Shapefile: "+shfl)
+shfl1=str(desc.catalogPath)
+extn=os.path.splitext(shfl1)[1] # get extension of a file
+ # if extention is shapfile do not convert into gjson other wise convert
+if extn==".shp":
+       shfl=shfl1;
+else:
+      basename = os.path.basename(shfl1) # get last part of the path
+      dirname=os.path.dirname(p) # get directory
+      arcpy.env.workspace = dirname # does not work without specifying the workspace
+      arcpy.FeaturesToJSON_conversion(shfl1,basename+".json") # convert feature to json
+      shfl=os.path.join(dirname,basename+".json")
+
+arcpy.AddMessage("\nInput Outlets ogrfile: "+shfl)
 
 maxdistance=arcpy.GetParameterAsText(3)
 arcpy.AddMessage("\nMinimum Threshold Value: "+maxdistance)
@@ -52,3 +63,8 @@ for line in process.stdout.readlines():
     arcpy.AddMessage(line)
 
 #arcpy.DefineProjection_management(om, coord_sys)
+# remove converted json file
+if arcpy.Exists(inlyr2):
+  extn_json=os.path.splitext(shfl)[1] # get extension of the converted json file
+  if extn_json==".json":
+    os.remove(shfl)

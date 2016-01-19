@@ -52,12 +52,12 @@ email:  dtarb@usu.edu
 #include <stdlib.h>
 #include "commonLib.h"
 
-int d8flowpathextremeup(char *pfile, char*safile, char *ssafile, int usemax, char *outletfile, int useoutlets, int contcheck);
+int d8flowpathextremeup(char *pfile, char*safile, char *ssafile, int usemax, char* datasrc,char* lyrname,int uselyrname,int lyrno,int useoutlets, int contcheck);
 
 int main(int argc,char **argv)  
 {
-   char pfile[MAXLN],safile[MAXLN], ssafile[MAXLN], outletfile[MAXLN];
-   int err, useoutlets,contcheck,usemax;
+   char pfile[MAXLN],safile[MAXLN], ssafile[MAXLN],datasrc[MAXLN],lyrname[MAXLN];
+   int err, useoutlets,contcheck,usemax,lyrno=0,uselyrname=0;
       
    if(argc < 2) goto errexit;
    usemax=1;  // Set defaults
@@ -111,12 +111,38 @@ int main(int argc,char **argv)
 				i++;
 				if(argc > i)
 				{
-					strcpy(outletfile,argv[i]);
+					strcpy(datasrc,argv[i]);
 					i++;
 					useoutlets=1;
 				}
 				else goto errexit;
 			}
+
+			   else if(strcmp(argv[i],"-lyrno")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				sscanf(argv[i],"%d",&lyrno);
+				i++;											
+			}
+			else goto errexit;
+		}
+
+	   
+	 else if(strcmp(argv[i],"-lyrname")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				strcpy(lyrname,argv[i]);
+		        uselyrname = 1;
+				i++;											
+			}
+			else goto errexit;
+		}
+
+
 		   else if(strcmp(argv[i],"-min")==0)
 			{
 				i++;
@@ -130,7 +156,7 @@ int main(int argc,char **argv)
 		   else goto errexit;
 		}
    }
-    if((err=d8flowpathextremeup(pfile, safile, ssafile, usemax, outletfile, useoutlets, contcheck)) != 0)
+    if((err=d8flowpathextremeup(pfile, safile, ssafile, usemax, datasrc,lyrname,uselyrname,lyrno, useoutlets, contcheck)) != 0)
         printf("Flow Path Extreme Up Error %d\n",err);
 
 	return 0;

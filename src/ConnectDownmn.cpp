@@ -52,7 +52,7 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char pfile[MAXLN],wfile[MAXLN],ad8file[MAXLN],outletdatasrc[MAXLN], outletlyr[MAXLN],movedoutletdatasrc[MAXLN],movedoutletlyr[MAXLN];
+   char pfile[MAXLN],wfile[MAXLN],ad8file[MAXLN],outletdatasrc[MAXLN],outletlyr[MAXLN]="",movedoutletdatasrc[MAXLN],movedoutletlyr[MAXLN]="";
    int err,i,movedist=10;
    if(argc < 10)
     {  
@@ -93,7 +93,7 @@ int main(int argc,char **argv)
 			else goto errexit;
 		}
 
-		else if(strcmp(argv[i],"-osrc")==0)
+		else if(strcmp(argv[i],"-o")==0)
 		{
 			i++;
 			if(argc > i)
@@ -115,10 +115,7 @@ int main(int argc,char **argv)
 			else goto errexit;
 		}
 
-
-
-
-		else if(strcmp(argv[i],"-odsrc")==0)
+		else if(strcmp(argv[i],"-od")==0)
 		{
 			i++;
 			if(argc > i)
