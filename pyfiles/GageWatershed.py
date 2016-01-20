@@ -22,24 +22,25 @@ extn=os.path.splitext(shfl1)[1] # get extension of a file
 if extn==".shp":
        shfl=shfl1;
 else:
+      arcpy.AddMessage("Extracting json outlet file from: "+shfl1)
       basename = os.path.basename(shfl1) # get last part of the path
       dirname=os.path.dirname(p) # get directory
       arcpy.env.workspace = dirname # does not work without specifying the workspace
       arcpy.FeaturesToJSON_conversion(shfl1,basename+".json") # convert feature to json
       shfl=os.path.join(dirname,basename+".json")
-arcpy.AddMessage("\nInput Outlets Shapefile: "+shfl)
+arcpy.AddMessage("Using Outlets file: "+shfl)
 
 # Input Number of Processes
 inputProc=arcpy.GetParameterAsText(2)
-arcpy.AddMessage("\nInput Number of Processes: "+inputProc)
+arcpy.AddMessage("Input Number of Processes: "+inputProc)
 
 # Output
 gw = arcpy.GetParameterAsText(3)
-arcpy.AddMessage("\nOutput GageWatershed Grid: "+gw)
+arcpy.AddMessage("Output GageWatershed Grid: "+gw)
 
 # Output
 idf = arcpy.GetParameterAsText(4)
-arcpy.AddMessage("\nOutput Downstream ID Text File: "+idf)
+arcpy.AddMessage("Output Downstream ID Text File: "+idf)
 
 # Construct command
 cmd = 'mpiexec -n ' + inputProc + ' GageWatershed'
@@ -56,12 +57,14 @@ os.system(cmd)
 
 # Capture the contents of shell command and print it to the arcgis dialog box
 process=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-arcpy.AddMessage('\nProcess started:\n')
+#arcpy.AddMessage('\nProcess started:\n')
+message="\n"
 for line in process.stdout.readlines():
-    arcpy.AddMessage(line)
+    message=message+line
+arcpy.AddMessage(message)
 
 # Calculate statistics on the output so that it displays properly
-arcpy.AddMessage('Executing: Calculate Statistics\n')
+arcpy.AddMessage('Calculate Statistics\n')
 arcpy.CalculateStatistics_management(gw)
 # remove converted json file
 if arcpy.Exists(ogrfile):
