@@ -17,18 +17,18 @@ arcpy.AddMessage("\nInput D8 Flow Direction Grid: "+p)
 inlyr1 = arcpy.GetParameterAsText(1)
 desc = arcpy.Describe(inlyr1)
 sca=str(desc.catalogPath)
-arcpy.AddMessage("\nInput D-Infinity Contributing Area Grid: "+sca)
+arcpy.AddMessage("Input D-Infinity Contributing Area Grid: "+sca)
 
 inlyr2 = arcpy.GetParameterAsText(2)
 desc = arcpy.Describe(inlyr2)
 slp=str(desc.catalogPath)
-arcpy.AddMessage("\nInput Slope Grid: "+slp)
+arcpy.AddMessage("Input Slope Grid: "+slp)
 
 masklyr=arcpy.GetParameterAsText(3)
 if arcpy.Exists(masklyr):
     desc = arcpy.Describe(masklyr)
     mask=str(desc.catalogPath)
-    arcpy.AddMessage("\nInput Mask Grid: "+mask)
+    arcpy.AddMessage("Input Mask Grid: "+mask)
 
 ogrlyr=arcpy.GetParameterAsText(4)
 if arcpy.Exists(ogrlyr):
@@ -40,69 +40,70 @@ if arcpy.Exists(ogrlyr):
     if extn==".shp":
        shfl=shfl1;
     else:
+      arcpy.AddMessage("Extracting json outlet file from: "+shfl1)
       basename = os.path.basename(shfl1) # get last part of the path
       dirname=os.path.dirname(p) # get directory
       arcpy.env.workspace = dirname # does not work without specifying the workspace
       arcpy.FeaturesToJSON_conversion(shfl1,basename+".json") # convert feature to json
       shfl=os.path.join(dirname,basename+".json")
-    arcpy.AddMessage("\nInput Outlets file: "+shfl)
+    arcpy.AddMessage("Using Outlets : "+shfl)
 
 fellyr=arcpy.GetParameterAsText(5)
 if arcpy.Exists(fellyr):
     desc = arcpy.Describe(fellyr)
     fel=str(desc.catalogPath)
-    arcpy.AddMessage("\nInput Pit Filled Elevation Grid for Drop Analysis: "+fel)
+    arcpy.AddMessage("Input Pit Filled Elevation Grid for Drop Analysis: "+fel)
 
 ad8lyr=arcpy.GetParameterAsText(6)
 if arcpy.Exists(ad8lyr):
     desc = arcpy.Describe(ad8lyr)
     ad8=str(desc.catalogPath)
-    arcpy.AddMessage("\nInput D8 Contributing Area Grid for Drop Analysis: "+ad8)
+    arcpy.AddMessage("Input D8 Contributing Area Grid for Drop Analysis: "+ad8)
 
 contcheck = arcpy.GetParameterAsText(7)
-arcpy.AddMessage("\nEdge contamination checking: "+contcheck)
+arcpy.AddMessage("Edge contamination checking: "+contcheck)
 
 slpexp = arcpy.GetParameterAsText(8)
-arcpy.AddMessage("\nSlope Exponent(m): "+slpexp)
+arcpy.AddMessage("Slope Exponent(m): "+slpexp)
 
 areaexp = arcpy.GetParameterAsText(9)
-arcpy.AddMessage("\nArea Exponent(n): "+areaexp)
+arcpy.AddMessage("Area Exponent(n): "+areaexp)
 
 thresh = arcpy.GetParameterAsText(10)
-arcpy.AddMessage("\nThreshold(T): "+thresh)
+arcpy.AddMessage("Threshold(T): "+thresh)
 
 # Input Number of Processes
 inputProc=arcpy.GetParameterAsText(11)
-arcpy.AddMessage("\nInput Number of Processes: "+inputProc)
+arcpy.AddMessage("Number of Processes: "+inputProc)
 
 # Outputs
 src = arcpy.GetParameterAsText(12)
-arcpy.AddMessage("\nOutput Stream Raster Grid: "+src)
+arcpy.AddMessage("Output Stream Raster Grid: "+src)
 
 sa = arcpy.GetParameterAsText(13)
-arcpy.AddMessage("\nOutput Source Area Grid: "+sa)
+arcpy.AddMessage("Output Source Area Grid: "+sa)
 
 ssa = arcpy.GetParameterAsText(14)
-arcpy.AddMessage("\nOutput Maximum Upslope Grid: "+ssa)
+arcpy.AddMessage("Output Maximum Upslope Grid: "+ssa)
 
 drp=arcpy.GetParameterAsText(15)
 if arcpy.Exists(drp):
-    arcpy.AddMessage("\nOutput Drop Analysis Table: "+drp)
+    arcpy.AddMessage("Output Drop Analysis Table: "+drp)
 
 usedroprange = arcpy.GetParameterAsText(16)
-arcpy.AddMessage("\nSelect Threshold by Drop Analysis: "+usedroprange)
+arcpy.AddMessage("Select Threshold by Drop Analysis: "+usedroprange)
 
 minthresh=arcpy.GetParameterAsText(17)
-arcpy.AddMessage("\nMinimum Threshold Value: "+minthresh)
+arcpy.AddMessage("Minimum Threshold Value: "+minthresh)
 
 maxthresh=arcpy.GetParameterAsText(18)
-arcpy.AddMessage("\nMaximum Threshold Value: "+maxthresh)
+arcpy.AddMessage("Maximum Threshold Value: "+maxthresh)
 
 numthresh=arcpy.GetParameterAsText(19)
-arcpy.AddMessage("\nNumber of Threshold Values: "+numthresh)
+arcpy.AddMessage("Number of Threshold Values: "+numthresh)
 
 logspace=arcpy.GetParameterAsText(20)
-arcpy.AddMessage("\nLogarithmic Spacing: "+logspace)
+arcpy.AddMessage("Logarithmic Spacing: "+logspace)
 
 # Construct first command
 cmd = 'mpiexec -n ' + inputProc + ' SlopeArea -slp ' + '"' + slp + '"' + ' -sca ' + '"' + sca + '"' + ' -sa ' + '"' + sa + '"' + ' -par ' + slpexp + ' ' + areaexp
@@ -111,9 +112,11 @@ arcpy.AddMessage("\nCommand Line: "+cmd)
 os.system(cmd)
 # Capture the contents of shell command and print it to the arcgis dialog box
 process=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-arcpy.AddMessage('\nProcess started:\n')
+#arcpy.AddMessage('\nProcess started:\n')
+message="\n"
 for line in process.stdout.readlines():
-    arcpy.AddMessage(line)
+      message=message+line
+arcpy.AddMessage(message)
 arcpy.CalculateStatistics_management(sa)
 
 # Construct second command
@@ -130,9 +133,11 @@ arcpy.AddMessage("\nCommand Line: "+cmd)
 os.system(cmd)
 # Capture the contents of shell command and print it to the arcgis dialog box
 process=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-arcpy.AddMessage('\nProcess started:\n')
+#arcpy.AddMessage('\nProcess started:\n')
+message1="\n"
 for line in process.stdout.readlines():
-    arcpy.AddMessage(line)
+        message1=message1+line
+arcpy.AddMessage(message1)
 arcpy.CalculateStatistics_management(ssa)
 
 if (usedroprange == 'true') and arcpy.Exists(ogrlyr):
@@ -149,9 +154,11 @@ if (usedroprange == 'true') and arcpy.Exists(ogrlyr):
     os.system(cmd)
     # Capture the contents of shell command and print it to the arcgis dialog box
     process=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    arcpy.AddMessage('\nProcess started:\n')
+    #arcpy.AddMessage('\nProcess started:\n')
+    message2="\n"
     for line in process.stdout.readlines():
-        arcpy.AddMessage(line)
+            message2=message2+line
+    arcpy.AddMessage(message2)
         #(threshold,rest)=line.split(' ',1)
 
     drpfile = open(drp,"r")
@@ -172,9 +179,11 @@ arcpy.AddMessage("\nCommand Line: "+cmd)
 os.system(cmd)
 # Capture the contents of shell command and print it to the arcgis dialog box
 process=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-arcpy.AddMessage('\nProcess started:\n')
+#arcpy.AddMessage('\nProcess started:\n')
+message3="\n"
 for line in process.stdout.readlines():
-    arcpy.AddMessage(line)
+        message3=message3+line
+arcpy.AddMessage(message3)
 arcpy.CalculateStatistics_management(src)# remove converted json file
 if arcpy.Exists(ogrlyr):
  extn_json=os.path.splitext(shfl)[1] # get extension of the converted json file

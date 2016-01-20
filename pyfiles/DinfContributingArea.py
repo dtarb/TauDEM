@@ -23,29 +23,30 @@ if arcpy.Exists(ogrfile):
     if extn==".shp":
        shfl=shfl1;
     else:
+      arcpy.AddMessage("Extracting json outlet file from: "+shfl1)
       basename = os.path.basename(shfl1) # get last part of the path
       dirname=os.path.dirname(ang) # get directory
       arcpy.env.workspace = dirname # does not work without specifying the workspace
       arcpy.FeaturesToJSON_conversion(shfl1,basename+".json") # convert feature to json
       shfl=os.path.join(dirname,basename+".json")
-    arcpy.AddMessage("\nInput Outlets file: "+shfl)
+    arcpy.AddMessage("Using Outlets file: "+shfl)
 
 weightgrid=arcpy.GetParameterAsText(2)
 if arcpy.Exists(weightgrid):
     desc = arcpy.Describe(weightgrid)
     wtgr=str(desc.catalogPath)
-    arcpy.AddMessage("\nInput Weight Grid: "+wtgr)
+    arcpy.AddMessage("Using Weight Grid: "+wtgr)
 
 edgecontamination=arcpy.GetParameterAsText(3)
-arcpy.AddMessage("\nEdge Contamination: "+edgecontamination)
+arcpy.AddMessage("Edge Contamination: "+edgecontamination)
 
 # Input Number of Processes
 inputProc=arcpy.GetParameterAsText(4)
-arcpy.AddMessage("\nInput Number of Processes: "+inputProc)
+arcpy.AddMessage("Number of Processes: "+inputProc)
 
 # Output
 sca = arcpy.GetParameterAsText(5)
-arcpy.AddMessage("\nOutput Dinf Specific Catchment Area Grid: "+sca)
+arcpy.AddMessage("Output Dinf Specific Catchment Area Grid: "+sca)
 
 # Construct command
 cmd = 'mpiexec -n ' + inputProc + ' AreaDinf -ang ' + '"' + ang + '"' + ' -sca ' + '"' + sca + '"'
@@ -80,12 +81,14 @@ os.system(cmd)
 
 # Capture the contents of shell command and print it to the arcgis dialog box
 process=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-arcpy.AddMessage('\nProcess started:\n')
+#arcpy.AddMessage('\nProcess started:\n')
+message="\n"
 for line in process.stdout.readlines():
-    arcpy.AddMessage(line)
+     message=message+line
+arcpy.AddMessage(message)
 
 # Calculate statistics on the output so that it displays properly
-arcpy.AddMessage('Executing: Calculate Statistics\n')
+arcpy.AddMessage('Calculate Statistics\n')
 arcpy.CalculateStatistics_management(sca)
 # remove converted json file
 if arcpy.Exists(ogrfile):
