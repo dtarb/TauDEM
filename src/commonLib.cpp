@@ -451,7 +451,8 @@ for(int i=0;i<nlayer;i++){
 	lname=OGR_L_GetName(hLayer1);
 	OGRwkbGeometryType gtype;
 	gtype=OGR_L_GetGeomType(hLayer1);
-	printf("%d: %s, %d\n",i,lname,gtype);
+	const char *gtype_name[8] = {"Unknown","Point","LineString","Polygon","MultiPoint","MultiLineString","MultiPolygon","GeometryCollection"};  // extension list --can add more 
+	printf("%d: %s, %s\n",i,lname,gtype_name[gtype]);
 	// TODO print interpretive name
 }
 exit(1);
