@@ -29,7 +29,7 @@ mpiexec -n 7 areadinf -ang loganang.tif -o Loganoutlet.shp -sca logansca_1.tif
 test using sqlite file
 mpiexec -n 1 areadinf -ang loganang.tif -o LoganSample.sqlite -lyrno 1 -sca logansca_2.tif
 mpiexec -n 3 areadinf -ang loganang.tif -o LoganSample.sqlite -lyrname LoganOutlet -sca logansca_3.tif
-mpiexec -n 5 areadinf -ang loganang.tif -o LoganSample.sqlite -lyrno 3 -sca logansca_4.tif
+mpiexec -n 5 areadinf -ang loganang.tif -o LoganSample.sqlite -lyrno 1 -sca logansca_4.tif
 
 test using json file
 mpiexec -n 3 areadinf -ang loganang.tif -o LoganOutlet.json -sca logansca_5.tif
@@ -45,11 +45,10 @@ mpiexec -n 6 areadinf -ang loganang.tif -o Logan.gdb -lyrno 0 -sca logansca_9.ti
 cd ../Gridnet
 
 mpiexec -n 7 Gridnet -p loganp.tif -plen loganplen1.tif -tlen logantlen1.tif -gord logangord1.tif -o Loganoutlet.shp 
-mpiexec -n 4 Gridnet -p loganp.tif -plen loganplen2.tif -tlen logantlen2.tif -gord logangord2.tif -o LoganSample.sqlite 
 mpiexec -n 6 Gridnet -p loganp.tif -plen loganplen3.tif -tlen logantlen3.tif -gord logangord3.tif -o LoganSample.sqlite -lyrname LoganOutlet
 mpiexec -n 3 Gridnet -p loganp.tif -plen loganplen4.tif -tlen logantlen4.tif -gord logangord4.tif -o LoganSample.sqlite -lyrno 1
 mpiexec -n 3 Gridnet -p loganp.tif -plen loganplen5.tif -tlen logantlen5.tif -gord logangord5.tif -o LoganOutlet.json
-mpiexec -n 7 Gridnet -p loganp.tif -plen loganplen6.tif -tlen logantlen6.tif -gord logangord6.tif -o LoganOutlet.json -lyrname OGRJson 
+mpiexec -n 7 Gridnet -p loganp.tif -plen loganplen6.tif -tlen logantlen6.tif -gord logangord6.tif -o LoganOutlet.json -lyrname OGRGeoJson 
 mpiexec -n 1 Gridnet -p loganp.tif -plen loganplen7.tif -tlen logantlen7.tif -gord logangord7.tif -o Logan.gdb
 mpiexec -n 3 Gridnet -p loganp.tif -plen loganplen8.tif -tlen logantlen8.tif -gord logangord8.tif -o Logan.gdb -lyrname Outlet
 mpiexec -n 2 Gridnet -p loganp.tif -plen loganplen9.tif -tlen logantlen9.tif -gord logangord9.tif -o Logan.gdb -lyrno 0
@@ -59,7 +58,6 @@ mpiexec -n 2 Gridnet -p loganp.tif -plen loganplen9.tif -tlen logantlen9.tif -go
 Rem stream network peuker douglas
 cd ../peukerDouglas
 mpiexec -n 1 Dropanalysis -p loganp.tif -fel loganfel.tif -ad8 loganad8.tif -ssa loganssa.tif -drp logandrp1.txt -o Loganoutlet.shp -par 5 500 10 0 
-mpiexec -n 3 Dropanalysis -p loganp.tif -fel loganfel.tif -ad8 loganad8.tif -ssa loganssa.tif -drp logandrp2.txt -o LoganSample.sqlite -par 5 500 10 0 
 mpiexec -n 5 Dropanalysis -p loganp.tif -fel loganfel.tif -ad8 loganad8.tif -ssa loganssa.tif -drp logandrp3.txt -o LoganSample.sqlite -lyrname LoganOutlet -par 5 500 10 0 
 mpiexec -n 2 Dropanalysis -p loganp.tif -fel loganfel.tif -ad8 loganad8.tif -ssa loganssa.tif -drp logandrp4.txt -o LoganSample.sqlite -lyrno 1 -par 5 500 10 0 
 mpiexec -n 5 Dropanalysis -p loganp.tif -fel loganfel.tif -ad8 loganad8.tif -ssa loganssa.tif -drp logandrp5.txt -o LoganOutlet.json -par 5 500 10 0 
@@ -87,7 +85,7 @@ mpiexec -n 8 D8FlowpathExtremeUp -p loganp.tif -sa logansa.tif -ssa loganssa5.ti
 
 Rem downslope influence
 cd ../DinfConcLimAccum
-mpiexec -n 1 dinfConcLimAccum -ang loganang.tif -dm logandm08.tif -dg logandg.tif -ctpt loganctpto1.tif -q logansca.tif  -o Loganoutlet.shp -csol 2.4
+mpiexec -n 1 dinfConcLimAccum -ang loganang.tif -dm logandm08.tif -dg logandg.tif -ctpt loganctpto1.img -q logansca.tif  -o Loganoutlet.shp -csol 2.4
 mpiexec -n 5 dinfConcLimAccum -ang loganang.tif -dm logandm08.tif -dg logandg.tif -ctpt loganctpto2.tif -q logansca.tif  -o LoganSample.sqlite -lyrname Loganoutlet -csol 2.4
 mpiexec -n 3 dinfConcLimAccum -ang loganang.tif -dm logandm08.tif -dg logandg.tif -ctpt loganctpto3.tif -q logansca.tif  -o LoganSample.sqlite -lyrno 0 -csol 2.4
 mpiexec -n 7 dinfConcLimAccum -ang loganang.tif -dm logandm08.tif -dg logandg.tif -ctpt loganctpto4.tif -q logansca.tif  -o Logan.gdb -csol 2.4
@@ -95,7 +93,7 @@ mpiexec -n 8 dinfConcLimAccum -ang loganang.tif -dm logandm08.tif -dg logandg.ti
 
 Rem Trans lim accum
 cd ../DinfTransLimAcc
-mpiexec -n 2 dinfTransLimAccum -ang loganang.tif -tsup logantsup.tif -tc logantc.tif -tla logantla1.tif -tdep logantdep1.tif -o Loganoutlet.shp -cs logandg.tif -ctpt loganctpt1.tif 
+mpiexec -n 2 dinfTransLimAccum -ang loganang.tif -tsup logantsup.tif -tc logantc.tif -tla logantla1.img -tdep logantdep1.tif -o Loganoutlet.shp -cs logandg.tif -ctpt loganctpt1.tif 
 mpiexec -n 6 dinfTransLimAccum -ang loganang.tif -tsup logantsup.tif -tc logantc.tif -tla logantla2.tif -tdep logantdep2.tif -o LoganSample.sqlite -lyrname Loganoutlet  -cs logandg.tif -ctpt loganctpt2.tif 
 mpiexec -n 3 dinfTransLimAccum -ang loganang.tif -tsup logantsup.tif -tc logantc.tif -tla logantla3.tif -tdep logantdep3.tif -o LoganSample.sqlite -lyrno 0 -cs logandg.tif -ctpt loganctpt3.tif 
 mpiexec -n 5 dinfTransLimAccum -ang loganang.tif -tsup logantsup.tif -tc logantc.tif -tla logantla4.tif -tdep logantdep4.tif -o Logan.gdb  -cs logandg.tif -ctpt loganctpt4.tif 
@@ -108,7 +106,7 @@ mpiexec -np 1 MoveOutletstoStreams -p loganp.tif -src logansrc.tif -o OutletstoM
 mpiexec -np 3 MoveOutletstoStreams -p loganp.tif -src logansrc.tif -o OutletstoMove.json -om Outletsmoved.kml -md 20 
 mpiexec -np 5 MoveOutletstoStreams -p loganp.tif -src logansrc.tif -o LoganSample.sqlite -om Outletsmoved.kml -md 20 
 mpiexec -np 4 MoveOutletstoStreams -p loganp.tif -src logansrc.tif -o LoganSample.sqlite -lyrno 2 -om Outletsmoved5.kml -md 20 
-mpiexec -np 7 MoveOutletstoStreams -p loganp.tif -src logansrc.tif -o Logan.gdb -lyrno 0 -om Outletsmove.json -md 20 
+mpiexec -np 7 MoveOutletstoStreams -p loganp.tif -src logansrc.tif -o Logan.gdb -lyrno 0 -om Outletsmove.json  Outletsmove -md 20 
 
 
 
