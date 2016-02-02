@@ -9,7 +9,7 @@ cd AreaD8_data
 mpiexec -n 7 aread8 -p loganp.tif -o Loganoutlet.shp -ad8 loganad8_1.tif
 
 test using sqlite file
-mpiexec -n 1 aread8 -p loganp.tif -o LoganSample.sqlite -lyrno 1 -ad8 loganad8_2.tif
+mpiexec -n 1 aread8 -p loganp.tif -o LoganSample.sqlite -lyrno 3 -ad8 loganad8_2.tif
 mpiexec -n 3 aread8 -p loganp.tif -o LoganSample.sqlite -lyrname LoganOutlet -ad8 loganad8_3.tif
 
 
