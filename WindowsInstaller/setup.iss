@@ -23,7 +23,7 @@
 ; TauDEMArcGIS/
 
 #define MyAppName "TauDEM"
-#define MyAppVersion "5.4"
+#define MyAppVersion "5.3.2"
 #define MyAppPublisher "Utah State University"
 #define MyAppURL "http://hydrology.usu.edu/taudem/taudem5/index.html"
 
@@ -41,16 +41,16 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={pf}\TauDEM
 DefaultGroupName={#MyAppName}
-OutputBaseFilename=setup
+OutputBaseFilename=TauDEM_setup
 Compression=lzma
-SolidCompression=yes
+SolidCompression=yes        
 ; "ArchitecturesInstallIn64BitMode=x64" requests that the install be
 ; done in "64-bit mode" on x64, meaning it should use the native
 ; 64-bit Program Files directory and the 64-bit view of the registry.
 ; On all other architectures it will install in "32-bit mode".
 ArchitecturesInstallIn64BitMode=x64
 WizardSmallImageFile=taudem.bmp
-; Don't show the welcome wizard page
+; Don't show the welcome wizard page  and ready to install page
 DisableWelcomePage=yes
 DisableReadyPage=yes
 
@@ -120,7 +120,7 @@ var notes_string: string;
 begin
   notes_string := 'NOTES:'#13'1. The redistributables listed above will only be installed if they are not already installed.'#13 +
       '2. You will need to accept the license agreements associated with this software and click through several screens.'#13 +
-      '3. When prompted to Choose Setup Type for GDAL, choose ìTypicalî.'#13 +
+      '3. When prompted to Choose Setup Type for GDAL, choose ‚ÄúTypical‚Äù.'#13 +
       '4. The installer will also add firewall exceptions to allow TauDEM programs to run. These allow MPI interprocess communication used in the parallel computations.  This is communication within your computer and not over any external network.'#13 +
       '5. The installer will also add the following path entries:' +
       'C:\Program Files\Microsoft HPC Pack 2012\Bin\;C:\GDAL;C:\Program Files\GDAL;C:\Program Files\TauDEM\TauDEM5Exe'; 

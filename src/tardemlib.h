@@ -315,3 +315,7 @@ int slopearea(char *slopefile, char*scafile, char *safile, float *p);
 int lengtharea(char *plenfile, char*ad8file, char *ssfile, float *p);
 //This function returns an indicator (1,0) grid of grid cells that have values >= the input grid
 int threshold(char *ssafile,char *srcfile,char *maskfile, float thresh, int usemask);
+//This function creates a grid that has combined stability index (SINMAP)
+int sindexcombined(char *slopefile,  char *scaterrainfile, char *scarminroadfile,char* scarmaxroadfile,
+           char *tergridfile, char *terparfile, char *satfile,char* sincombinedfile,double Rminter,double Rmaxter, 
+		   double *par);
