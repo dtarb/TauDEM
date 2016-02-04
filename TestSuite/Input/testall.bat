@@ -1,5 +1,7 @@
 cd D:\Scratch\TestSuite
+Rem The 'TDIR' needs to be reset to the directory where the TauDEM executables exist on your machine
 Set TDIR=D:\Dropbox\Projects\TauDEM\Programming\TauDEM5GDAL\Taudem5PCVS2010\x64\Release
+
 set MDIR=C:\Program Files\Microsoft HPC Pack 2012\Bin\
 set GDIR=C:\Program Files\GDAL\
 set path=%MDIR%;%TDIR%;%GDIR%
@@ -228,4 +230,10 @@ mpiexec -n 5 aread8 -p bilp.bil -ad8 loganad8.img
 mpiexec -n 2 dinfflowdir -fel loganfel.bil -ang ang.ang -slp slp.slp
 mpiexec -np 3 PitRemove -z logan.tif -fel loganfel2.lg
 mpiexec -np 3 PitRemove -z logan.tif -fel loganfel3
+
+
+cd ..
+cd sinmapsi
+Rem Testing SinmapSI
+mpiexec -n 1 SinmapSI -slp demslp.tif -sca demsca.tif -calpar demcalp.txt -cal demcal.tif -si demsi.tif -sat demsat.tif -par 0.0009 0.00135 9.81 1000
 cd ..
