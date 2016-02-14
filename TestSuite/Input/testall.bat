@@ -1,4 +1,4 @@
-cd D:\Scratch\TestSuite
+cd D:\Scratch\TestSuite\Input
 Rem The 'TDIR' needs to be reset to the directory where the TauDEM executables exist on your machine
 Set TDIR=D:\Dropbox\Projects\TauDEM\Programming\TauDEM5GDAL\Taudem5PCVS2010\x64\Release
 
@@ -141,10 +141,13 @@ cd ..
 cd Base
 rem test with compressed 16 bit unsigned integer that a user had trouble with
 mpiexec -n 8 pitremove MED_01_01.tif
-rem
+
+rem test with VRT format
 mpiexec -n 8 pitremove -z LoganVRT\output.vrt -fel loganvrtfel.tif
+
 rem test with img file format
 mpiexec -n 8 pitremove -z loganIMG\logan.img -fel loganimgfel.tif
+
 rem test with ESRIGRID file format
 mpiexec -n 8 pitremove -z loganESRIGRID\logan -fel loganesrigridfel.tif
 cd ..
@@ -239,7 +242,16 @@ mpiexec -np 3 PitRemove -z logan.tif -fel loganfel3
 cd ..
 cd sinmapsi
 Rem Testing SinmapSI
-mpiexec -n 1 SinmapSI -slp demslp.tif -sca demsca.tif -calpar demcalp.txt -cal demcal.tif -si demsi.tif -sat demsat.tif -par 0.0009 0.00135 9.81 1000
+mpiexec -n 1 SinmapSI -slp dmslp.tif -sca dmsca.tif -calpar dmcalp.txt -cal dmcal.tif -si dmsi.tif -sat dmsat.tif -par 0.0009 0.00135 9.81 1000
+
+Rem Testing with Sinmap manual example
+mpiexec -n 4 pitremove dem
+mpiexec -n 4 dinfflowdir -fel demfel.tif -slp demslp.tif -ang demang.tif
+mpiexec -n 2 areadinf -ang demang.tif -sca demsca.tif
+mpiexec -n 3 SinmapSI -slp demslp.tif -sca demsca.tif -cal demreg12.tif -calpar dempar12.csv -si demsi1.tif -sat demsat1.tif -par 0.0009 0.00135 9.81 1000
+mpiexec -n 3 SinmapSI -slp demslp.tif -sca demsca.tif -cal demregsh.tif -calpar demparsh.dat -si demsi2.tif -sat demsat2.tif -par 0.0009 0.00135 9.81 1000
+
+
 cd ..
 
 Rem Testing of OGR starts here 
@@ -322,10 +334,10 @@ mpiexec -n 8 D8FlowpathExtremeUp -p loganp.tif -sa logansa.tif -ssa loganssa5.ti
 
 Rem downslope influence
 cd ../DinfConcLimAccum
-mpiexec -n 1 dinfConcLimAccum -ang loganang.tif -dm logandm08.tif -dg logandg.tif -ctpt loganctpto1.img -q logansca.tif  -o Loganoutlet.shp -csol 2.4
-mpiexec -n 5 dinfConcLimAccum -ang loganang.tif -dm logandm08.tif -dg logandg.tif -ctpt loganctpto2.tif -q logansca.tif  -o LoganSample.sqlite -lyrname Loganoutlet -csol 2.4
-mpiexec -n 7 dinfConcLimAccum -ang loganang.tif -dm logandm08.tif -dg logandg.tif -ctpt loganctpto4.tif -q logansca.tif  -o Logan.gdb -csol 2.4
-mpiexec -n 8 dinfConcLimAccum -ang loganang.tif -dm logandm08.tif -dg logandg.tif -ctpt loganctpto5.tif -q logansca.tif  -o Logan.gdb -lyrno 0 -csol 2.4
+mpiexec -n 1 dinfConcLimAccum -ang loganang.tif -dm logandm08.tif -dg logandg.tif -ctpt loganctpto1.img -q logansca.tif -o Loganoutlet.shp -csol 2.4
+mpiexec -n 5 dinfConcLimAccum -ang loganang.tif -dm logandm08.tif -dg logandg.tif -ctpt loganctpto2.tif -q logansca.tif -o LoganSample.sqlite -lyrname Loganoutlet -csol 2.4
+mpiexec -n 7 dinfConcLimAccum -ang loganang.tif -dm logandm08.tif -dg logandg.tif -ctpt loganctpto4.tif -q logansca.tif -o Logan.gdb -csol 2.4
+mpiexec -n 8 dinfConcLimAccum -ang loganang.tif -dm logandm08.tif -dg logandg.tif -ctpt loganctpto5.tif -q logansca.tif -o Logan.gdb -lyrno 0 -csol 2.4
 
 Rem Trans lim accum
 cd ../DinfTransLimAcc

@@ -103,15 +103,13 @@ int getRegionIndex(char* calpfile, long nor)
 	readline(fp, headers);
 	reg = (int*)calloc(nor, sizeof(int));
 	index = 0;
-	do				  
+	//  2/14/16 DGT switched this to for loop to avoid cases where index was >= nor and overflowed allocated memory
+	for(index=0; index < nor; index++)				  
 	{			   
 		j = fscanf(fp,"%i,%f,%f,%f,%f,%f,%f,%f \n", &rno, &tqmin,
 					&tqmax, &cmin, &cmax, &tphimin, &tphimax, &rhos);  //TODO fix up based on indexing in to lookup table
-
-		reg[index] = rno;
-		index++;
-				
-	}while (j != EOF);
+		reg[index] = rno;			
+	}
 
 	fclose(fp);
  
@@ -163,6 +161,16 @@ int sindexcombined(char *slopefile,  char *scaterrainfile, char *scarminroadfile
 		float r;
 	} ;  /* this could be malloced or should be checked
                     to ensure fewer than 100 regions */
+
+	int rank, size;
+	MPI_Comm_rank(MCW, &rank);
+	MPI_Comm_size(MCW, &size);
+	if(rank == 0) printf("SinmapSI version %s\n", TDVERSION);
+
+	double begin,end;
+	//Begin timer
+	begin = MPI_Wtime();
+
 	g=par[0];
 	rw=par[1];
 	nor = 0;
@@ -214,39 +222,13 @@ int sindexcombined(char *slopefile,  char *scaterrainfile, char *scarminroadfile
 
 	(std::fclose)(fp);
 
-	//MPI_Init(NULL,NULL);{
-
-	int rank, size;
-	MPI_Comm_rank(MCW, &rank);
-	MPI_Comm_size(MCW, &size);
-	if(rank == 0) printf("SinmapSI version %s\n", TDVERSION);
-
-	double begin,end;
-	//Begin timer
-	begin = MPI_Wtime();
 
 	//Create tiff object, read and store header info
 	tiffIO slp(slopefile, FLOAT_TYPE);
 	long totalX = slp.getTotalX();
 	long totalY = slp.getTotalY();
 	dx = slp.getdxA();
-	dy = slp.getdyA();	
-	
-	tiffIO sca(scaterrainfile, FLOAT_TYPE);
-
-	tiffIO *sca_min = NULL;
-	if (*scarminroadfile != NULL)
-	{
-		sca_min = new tiffIO(scarminroadfile, FLOAT_TYPE);		
-	}
-	
-	tiffIO *sca_max = NULL;
-	if (*scarmaxroadfile != NULL)
-	{
-		sca_max = new tiffIO(scarmaxroadfile, FLOAT_TYPE);		
-	}
-		
-	tiffIO cal(tergridfile, SHORT_TYPE);
+	dy = slp.getdyA();
 
 	if(rank==0)
 	{
@@ -256,6 +238,37 @@ int sindexcombined(char *slopefile,  char *scaterrainfile, char *scarminroadfile
 		fflush(stderr);
 	}
 
+	tiffIO sca(scaterrainfile, FLOAT_TYPE);
+	if(!slp.compareTiff(sca)) { //Unhappy error message and error return
+		if(rank==0)fprintf(stderr,"Slope (%s) and Contributing area (%s) files have different dimensions",slopefile, scaterrainfile);
+		return 1; 
+	}
+
+	tiffIO *sca_min = NULL;
+	if (*scarminroadfile != NULL)
+	{
+		sca_min = new tiffIO(scarminroadfile, FLOAT_TYPE);	
+	    if(!slp.compareTiff(*sca_min)) { //Unhappy error message and error return
+			if(rank==0)fprintf(stderr,"Slope (%s) and road min contributing area (%s) files have different dimensions",slopefile, scarminroadfile);
+			return 1; 
+	    }
+	}
+	
+	tiffIO *sca_max = NULL;
+	if (*scarmaxroadfile != NULL)
+	{
+		sca_max = new tiffIO(scarmaxroadfile, FLOAT_TYPE);		
+	    if(!slp.compareTiff(*sca_max)) { //Unhappy error message and error return
+			if(rank==0)fprintf(stderr,"Slope (%s) and road max contributing area (%s) files have different dimensions",slopefile, scarmaxroadfile);
+			return 1; 
+		}
+	}
+		
+	tiffIO cal(tergridfile, SHORT_TYPE);
+    if(!slp.compareTiff(cal)) { //Unhappy error message and error return
+		if(rank==0)fprintf(stderr,"Slope (%s) and road max contributing area (%s) files have different dimensions",slopefile, tergridfile);
+		return 1; 
+	}
 	
 	//Create partition and read data from slope file
 	tdpartition *slpData;
@@ -412,6 +425,15 @@ int sindexcombined(char *slopefile,  char *scaterrainfile, char *scarminroadfile
 	//Create and write to the sat TIFF file
 	tiffIO sat(satfile, FLOAT_TYPE, &aNodata, slp);
 	sat.write(xstart, ystart, ny, nx, satData->getGridPointer());
+
+	double writetime=MPI_Wtime()-end;
+	MPI_Allreduce (&writetime, &temp, 1, MPI_DOUBLE, MPI_SUM, MCW);
+	writetime=temp/size;
+	if( rank == 0)
+	{
+		printf("File write time: %f\n",writetime);		
+	}
+
 
 	}MPI_Finalize();
 

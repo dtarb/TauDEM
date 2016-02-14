@@ -50,7 +50,7 @@ def main():
 
     messages = _generate_combined_stability_index_grid(params_dict)
     for msg in messages:
-        print(msg + '\n')
+        print(msg)
 
     if params_dict[ParameterNames.is_delete_intermediate_output_files] == 'True':
         _delete_intermidiate_output_files(params_dict)
@@ -138,9 +138,9 @@ def _validate_args(params, params_dict):
             if not os.path.dirname(input_file):
                 input_file = os.path.join(os.getcwd(), params_dict[key])
 
-            if not os.path.isfile(input_file):
-                raise Utils.ValidationException("Invalid input control file (%s). %s file can't be found." %
-                                                (params, params_dict[key]))
+            #if not os.path.isfile(input_file):
+                #raise Utils.ValidationException("Invalid input control file (%s). %s file can't be found." %
+                                                #(params, params_dict[key]))
 
         # check that all other input grid files can be opened.
         if key in (ParameterNames.demang_file, ParameterNames.dinf_sca_file, ParameterNames.dinf_slope_file,
@@ -191,13 +191,14 @@ def _taudem_area_dinf(weight_grid_file, demang_grid_file, output_sca_file):
           ' -wg ' + weight_grid_file + \
           ' -sca ' + output_sca_file
 
+    taudem_messages = []
+    taudem_messages.append('Areadinf started:')
+    taudem_messages.append(cmd)
+
     # Capture the contents of shell command and print it to the arcgis dialog box
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    taudem_messages = []
-    # Submit command to operating system
-    os.system(cmd)
     for line in process.stdout.readlines():
-        taudem_messages.append(line)
+        taudem_messages.append(line.rstrip())
     return taudem_messages
 
 
@@ -226,13 +227,13 @@ def _generate_combined_stability_index_grid(params_dict):
                ' -scamax ' + os.path.join(params_dict[ParameterNames.temporary_output_files_directory],
                                           IntermediateFiles.sca_max_raster)
 
+    taudem_messages = []
+    taudem_messages.append('SinmapSI started:')
+    taudem_messages.append(cmd)
     # Capture the contents of shell command and print it to the arcgis dialog box
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    taudem_messages = []
-    # Submit command to operating system
-    os.system(cmd)
     for line in process.stdout.readlines():
-        taudem_messages.append(line)
+        taudem_messages.append(line.rstrip())
     return taudem_messages
 
 
