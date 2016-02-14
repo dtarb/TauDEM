@@ -36,26 +36,29 @@ To see the help on command line parameters for this script, type the following i
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Creates calibration region grid')
+    parser = argparse.ArgumentParser(description='Creates SI region grid')
     parser.add_argument('--dem', help='Input dem raster')
     parser.add_argument('--parreg', help='Output parameter region grid raster')
     parser.add_argument('--att', help='Output calibration table text file')
     parser.add_argument('--parreg-in', default=None, help='Input region dataset')
     parser.add_argument('--shp', default=None, help='Input region feature class')
     parser.add_argument('--shp-att-name', default='ID', help='Input feature class attribute')
-    parser.add_argument('--att-tmin', default=2.708, help='TODO ...')
-    parser.add_argument('--att-tmax', default=2.708, help='TODO ...')
-    parser.add_argument('--att-cmin', default=0.0, help='TODO ...')
-    parser.add_argument('--att-cmax', default=0.25, help='TODO ...')
-    parser.add_argument('--att-phimin', default=30.0, help='TODO ...')
-    parser.add_argument('--att-phimax', default=45.0, help='TODO ...')
-    parser.add_argument('--att-soildens', default=2000.0, help='TODO ...')
+    parser.add_argument('--att-tmin', default=2.708, help='Transmissivity lower bound (m^2/day)')
+    parser.add_argument('--att-tmax', default=2.708, help='Transmissivity upper bound (m^2/day)')
+    parser.add_argument('--att-cmin', default=0.0, help='Dimensionless cohesion lower bound')
+    parser.add_argument('--att-cmax', default=0.25, help='Dimensionless cohesion upper bound')
+    parser.add_argument('--att-phimin', default=30.0, help='Soil friction angle lower bound')
+    parser.add_argument('--att-phimax', default=45.0, help='Soil friction angle upper bound')
+    parser.add_argument('--att-soildens', default=2000.0, help='Soil density (kg/m^3)')
     args = parser.parse_args()
     if args.shp_att_name:
         args.shp_att_name = args.shp_att_name.encode('ascii', 'ignore')
 
-    _validate_args(args.dem, args.parreg_in, args.shp, args.shp_att_name, args.parreg, args.att)
+    NoDataValue = _validate_args(args.dem, args.parreg_in, args.shp, args.shp_att_name, args.parreg, args.att)
+    print NoDataValue
+#    _create_parameter_region_grid(args.dem, args.shp, args.shp_att_name, args.parreg_in, args.parreg, NoDataValue)
     _create_parameter_region_grid(args.dem, args.shp, args.shp_att_name, args.parreg_in, args.parreg)
+
     _create_parameter_attribute_table_text_file(args.parreg, args.parreg_in, args.shp, args.att, args.att_tmin,
                                                 args.att_tmax, args.att_cmin, args.att_cmax,
                                                 args.att_phimin, args.att_phimax, args.att_soildens)
@@ -69,6 +72,7 @@ def _validate_args(dem, parreg_in, shp, shp_att_name, parreg, att):
     else:
         dataSource = None
 
+    NoDataValue = -999   # Set a no data value
     if parreg_in:
         dataSource = gdal.Open(parreg_in, 1)
         if not dataSource:
@@ -85,6 +89,9 @@ def _validate_args(dem, parreg_in, shp, shp_att_name, parreg, att):
 
             else:
                 dataSource = None
+            # Get no data value from input raster regions grid
+            #NoDataValue = parreg_in_band.GetNoDataValue()
+            #print NoDataValue
 
     if parreg_in and shp:
         raise Utils.ValidationException("Either a value for the parameter '--parreg-in' or '--shp' should be "
@@ -128,9 +135,11 @@ def _validate_args(dem, parreg_in, shp, shp_att_name, parreg, att):
         raise Utils.ValidationException("File path '(%s)' for output parameter attribute table (parameter '--att') "
                                         "does not exist." % att_dir)
 
+    return NoDataValue
     #TODO: check the extension of the parreg grid file is 'tif'
 
 
+#def _create_parameter_region_grid(dem, shp, shp_att_name, parreg_in, parreg,NoDataValue):
 def _create_parameter_region_grid(dem, shp, shp_att_name, parreg_in, parreg):
     if os.path.exists(parreg):
             os.remove(parreg)
@@ -155,7 +164,8 @@ def _create_parameter_region_grid(dem, shp, shp_att_name, parreg_in, parreg):
             #target_ds = gdal.Open(parreg)
 
             # For some reason the gdal RasterizeLayer function works with a in memory output raster dataset only
-            target_ds = _create_in_memory_raster(dem, data_type=gdal.GDT_UInt32)
+            #target_ds = _create_in_memory_raster(dem, data_type=gdal.GDT_UInt32, NoDataValue)
+			target_ds = _create_in_memory_raster(dem, data_type=gdal.GDT_UInt32)
             source_ds = ogr.Open(shp)
             source_layer = source_ds.GetLayer()
             # Rasterize
@@ -179,6 +189,7 @@ def _create_parameter_region_grid(dem, shp, shp_att_name, parreg_in, parreg):
             if os.path.exists(temp_parreg):
                 arcpy.Delete_management(temp_parreg)
                 #os.remove(temp_parreg)
+            #target_ds = _create_in_memory_raster(dem, data_type=gdal.GDT_UInt32, NoDataValue)
             target_ds = _create_in_memory_raster(dem, data_type=gdal.GDT_UInt32)
             #utils.initialize_output_raster_file(dem, parreg, initial_data=utils.NO_DATA_VALUE, data_type=gdal.GDT_UInt32)
             #arcpy.Resample_management(parreg_in, parreg, str(pixelWidth), "NEAREST")
@@ -191,6 +202,7 @@ def _create_parameter_region_grid(dem, shp, shp_att_name, parreg_in, parreg):
             arcpy.Delete_management(temp_parreg)
 
 
+#def _create_in_memory_raster(base_raster, data_type, NoDataValue):
 def _create_in_memory_raster(base_raster, data_type):
     # TODO: document this method
 
@@ -209,7 +221,9 @@ def _create_in_memory_raster(base_raster, data_type):
     outRaster.SetGeoTransform((originX, pixelWidth, 0, originY, 0, pixelHeight))
 
     outband = outRaster.GetRasterBand(1)
-    outband.SetNoDataValue(0)
+    # Dont know why but can not get no data value passed in here to set
+    # outband.SetNoDataValue(NoDataValue)
+	outband.SetNoDataValue(-999)
 
     # set the projection of the tif file same as that of the base_raster file
     outRasterSRS = osr.SpatialReference()
@@ -253,8 +267,8 @@ def _create_parameter_attribute_table_text_file(parreg, parreg_in, shp, att, att
 if __name__ == '__main__':
     try:
         main()
-        print("Calibration region computation is successful.")
+        print("Region computation successful.")
     except Exception as e:
-        print "Calibration region computation failed."
+        print "Region computation failed."
         print(e.message)
         sys.exit(1)
