@@ -9,7 +9,7 @@ dem_grid = arcpy.GetParameterAsText(0)
 desc = arcpy.Describe(dem_grid)
 dem_grid = str(desc.catalogPath)
 
-# parameter 1 is the calibration region creation option - ignore this parameter
+# parameter 1 is the region creation option - ignore this parameter
 
 region_grid = arcpy.GetParameterAsText(2)
 if arcpy.Exists(region_grid):
@@ -38,7 +38,7 @@ if len(region_feature_class) > 0:
 output_region_grid = '"' + output_region_grid + '"'
 calibration_table_text_file = '"' + calibration_table_text_file + '"'
 
-py_script_to_execute = os.path.join(current_script_dir, 'CalibrationRegionTool.py')
+py_script_to_execute = os.path.join(current_script_dir, 'SIRegionTool.py')
 py_script_to_execute = '"' + py_script_to_execute + '"'
 cmd = py_script_to_execute + \
       ' --dem ' + dem_grid + \

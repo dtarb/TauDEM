@@ -1,10 +1,10 @@
 # Script Name: DinfDecayingAccumulation
-# 
+#
 # Created By:  David Tarboton
 # Date:        9/29/11
 
 # Import ArcPy site-package and os modules
-import arcpy 
+import arcpy
 import os
 import subprocess
 
@@ -17,34 +17,45 @@ arcpy.AddMessage("\nInput D-Infinity Flow Direction Grid: "+ang)
 decaymultiplier=arcpy.GetParameterAsText(1)
 desc = arcpy.Describe(decaymultiplier)
 dm=str(desc.catalogPath)
-arcpy.AddMessage("\nInput Decay Multiplier Grid: "+dm)
+arcpy.AddMessage("Input Decay Multiplier Grid: "+dm)
 
 weightgrid=arcpy.GetParameterAsText(2)
 if arcpy.Exists(weightgrid):
     desc = arcpy.Describe(weightgrid)
     wg=str(desc.catalogPath)
-    arcpy.AddMessage("\nInput Weight Grid: "+wg)
+    arcpy.AddMessage("Input Weight Grid: "+wg)
 
-shapefile=arcpy.GetParameterAsText(3)
-if arcpy.Exists(shapefile):
-    desc = arcpy.Describe(shapefile)
-    shfl=str(desc.catalogPath)
-    arcpy.AddMessage("\nInput Outlets Shapefile: "+shfl)
+ogrfile=arcpy.GetParameterAsText(3)
+if arcpy.Exists(ogrfile):
+    desc = arcpy.Describe(ogrfile)
+    shfl1=str(desc.catalogPath)
+    extn=os.path.splitext(shfl1)[1] # get extension of a file
+ # if extention is shapfile do not convert into gjson other wise convert
+    if extn==".shp":
+       shfl=shfl1;
+    else:
+      arcpy.AddMessage("Extracting json outlet file from: "+shfl1)
+      basename = os.path.basename(shfl1) # get last part of the path
+      dirname=os.path.dirname(ang) # get directory
+      arcpy.env.workspace = dirname # does not work without specifying the workspace
+      arcpy.FeaturesToJSON_conversion(shfl1,basename+".json") # convert feature to json
+      shfl=os.path.join(dirname,basename+".json")
+    arcpy.AddMessage("Using Outlets file: "+shfl)
 
 edgecontamination=arcpy.GetParameterAsText(4)
-arcpy.AddMessage("\nEdge Contamination: "+edgecontamination)
+arcpy.AddMessage("Edge Contamination: "+edgecontamination)
 
 # Input Number of Processes
 inputProc=arcpy.GetParameterAsText(5)
-arcpy.AddMessage("\nInput Number of Processes: "+inputProc)
+arcpy.AddMessage("Number of Processes: "+inputProc)
 
 # Output
 dsca = arcpy.GetParameterAsText(6)
-arcpy.AddMessage("\nOutput Decayed Specific Catchment Area Grid: "+dsca)
+arcpy.AddMessage("Output Decayed Specific Catchment Area Grid: "+dsca)
 
 # Construct command
 cmd = 'mpiexec -n ' + inputProc + ' DinfDecayAccum -ang ' + '"' + ang + '"' + ' -dsca ' + '"' + dsca + '"' + ' -dm ' + '"' + dm + '"'
-if arcpy.Exists(shapefile):
+if arcpy.Exists(ogrfile):
     cmd = cmd + ' -o ' + '"' + shfl + '"'
 if arcpy.Exists(weightgrid):
     cmd = cmd + ' -wg ' + '"' + wg + '"'
@@ -58,10 +69,17 @@ os.system(cmd)
 
 # Capture the contents of shell command and print it to the arcgis dialog box
 process=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-arcpy.AddMessage('\nProcess started:\n')
+#arcpy.AddMessage('\nProcess started:\n')
+message="\n"
 for line in process.stdout.readlines():
-    arcpy.AddMessage(line)
+    message=message+line
+arcpy.AddMessage(message)
 
 # Calculate statistics on the output so that it displays properly
-arcpy.AddMessage('Executing: Calculate Statistics\n')
+arcpy.AddMessage('Calculate Statistics\n')
 arcpy.CalculateStatistics_management(dsca)
+# remove converted json file
+if arcpy.Exists(ogrfile):
+  extn_json=os.path.splitext(shfl)[1] # get extension of the converted json file
+  if extn_json==".json":
+    os.remove(shfl)

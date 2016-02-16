@@ -385,6 +385,7 @@ bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData){
 }
 
 //get extension from OGR vector file
+//get layername if not provided by user
   char *getLayername(char *inputogrfile)
 {  
     std::string filenamewithpath;
@@ -403,5 +404,56 @@ bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData){
     printf("%s ", layername);
     return layername;
 }
+//
 
+//get ogr driver index for writing shapefile
 
+ const char *getOGRdrivername(char *datasrcnew){
+	const char *ogrextension_list[5] = {".sqlite",".shp",".json",".kml",".geojson"};  // extension list --can add more 
+	const char *ogrdriver_code[5] = {"SQLite","ESRI Shapefile","GeoJSON","KML","GeoJSON"};   //  code list -- can add more
+	size_t extension_num=5;
+	char *ext; 
+	int index = 1; //default is ESRI shapefile
+    ext = strrchr(datasrcnew, '.'); 
+	if(!ext){
+		
+		index=1; //  if no extension then writing will be ESRI shapefile
+	}
+	else
+	{
+
+		//  convert to lower case for matching
+		for(int i = 0; ext[i]; i++){
+			ext[i] = tolower(ext[i]);
+		}
+		// if extension matches then set driver
+		for (size_t i = 0; i < extension_num; i++) {
+			if (strcmp(ext,ogrextension_list[i])==0) {
+				index=i; //get the index where extension of the outputfile matches with the extensionlist 
+				break;
+			}
+		}
+		
+	}
+
+	 const  char *drivername;
+	 drivername=ogrdriver_code[index];
+    return drivername;
+  }
+
+void getlayerfail(OGRDataSourceH hDS1,char * outletsds, int outletslyr){
+int nlayer = OGR_DS_GetLayerCount(hDS1);
+const char * lname;
+printf("Error opening datasource layer in %s\n",outletsds);
+printf("This datasource contains the following %d layers.\n",nlayer);
+for(int i=0;i<nlayer;i++){
+	OGRLayerH hLayer1 = OGR_DS_GetLayer(hDS1,i);
+	lname=OGR_L_GetName(hLayer1);
+	OGRwkbGeometryType gtype;
+	gtype=OGR_L_GetGeomType(hLayer1);
+	const char *gtype_name[8] = {"Unknown","Point","LineString","Polygon","MultiPoint","MultiLineString","MultiPolygon","GeometryCollection"};  // extension list --can add more 
+	printf("%d: %s, %s\n",i,lname,gtype_name[gtype]);
+	// TODO print interpretive name
+}
+exit(1);
+}

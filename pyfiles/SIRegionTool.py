@@ -36,20 +36,20 @@ To see the help on command line parameters for this script, type the following i
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Creates calibration region grid')
+    parser = argparse.ArgumentParser(description='Creates SI region grid')
     parser.add_argument('--dem', help='Input dem raster')
     parser.add_argument('--parreg', help='Output parameter region grid raster')
     parser.add_argument('--att', help='Output calibration table text file')
     parser.add_argument('--parreg-in', default=None, help='Input region dataset')
     parser.add_argument('--shp', default=None, help='Input region feature class')
     parser.add_argument('--shp-att-name', default='ID', help='Input feature class attribute')
-    parser.add_argument('--att-tmin', default=2.708, help='TODO ...')
-    parser.add_argument('--att-tmax', default=2.708, help='TODO ...')
-    parser.add_argument('--att-cmin', default=0.0, help='TODO ...')
-    parser.add_argument('--att-cmax', default=0.25, help='TODO ...')
-    parser.add_argument('--att-phimin', default=30.0, help='TODO ...')
-    parser.add_argument('--att-phimax', default=45.0, help='TODO ...')
-    parser.add_argument('--att-soildens', default=2000.0, help='TODO ...')
+    parser.add_argument('--att-tmin', default=2.708, help='Transmissivity lower bound (m^2/hr)')
+    parser.add_argument('--att-tmax', default=2.708, help='Transmissivity upper bound (m^2/hr)')
+    parser.add_argument('--att-cmin', default=0.0, help='Dimensionless cohesion lower bound')
+    parser.add_argument('--att-cmax', default=0.25, help='Dimensionless cohesion upper bound')
+    parser.add_argument('--att-phimin', default=30.0, help='Soil friction angle lower bound')
+    parser.add_argument('--att-phimax', default=45.0, help='Soil friction angle upper bound')
+    parser.add_argument('--att-soildens', default=2000.0, help='Soil density (kg/m^3)')
     args = parser.parse_args()
     if args.shp_att_name:
         args.shp_att_name = args.shp_att_name.encode('ascii', 'ignore')
@@ -253,8 +253,8 @@ def _create_parameter_attribute_table_text_file(parreg, parreg_in, shp, att, att
 if __name__ == '__main__':
     try:
         main()
-        print("Calibration region computation is successful.")
+        print("Region computation successful.")
     except Exception as e:
-        print "Calibration region computation failed."
+        print "Region computation failed."
         print(e.message)
         sys.exit(1)

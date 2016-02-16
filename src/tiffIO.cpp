@@ -75,10 +75,10 @@ tiffIO::tiffIO(char *fname, DATA_TYPE newtype) {
 	hSRS = OSRNewSpatialReference(pszProjection);
     IsGeographic=OSRIsGeographic(hSRS);
 	if (IsGeographic ==0) {
-		if(rank == 0)printf("Input file has projected coordinate system.\n");
+		if(rank == 0)printf("Input file %s has projected coordinate system.\n",fname);
 	}
 	else
-		if(rank == 0)printf("Input file has geographic coordinate system.\n");
+		if(rank == 0)printf("Input file %s has geographic coordinate system.\n",fname);
     // cout<<getproj<<endl; // for test
 	char *test_unit=NULL;
 	double ss;

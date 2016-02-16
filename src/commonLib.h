@@ -59,7 +59,7 @@ email:  dtarb@usu.edu
 #define NOTFINISHED 0
 #define FINISHED 1
 
-#define TDVERSION "5.3"
+#define TDVERSION "5.3.2"
 
 enum DATA_TYPE
 	{ SHORT_TYPE,
@@ -95,14 +95,13 @@ const int d2[9] = { 0,0,-1,-1,-1, 0, 1,1,1};
 int nameadd( char*,char*,const char*);
 double prop( float a, int k, double dx1 , double dy1);
 char *getLayername(char *inputogrfile);
-int readoutlets(char *outletsfile, OGRSpatialReferenceH hSRSRaster, int *noutlets, double*& x, double*& y);
-int readoutlets(char *outletsfile, OGRSpatialReferenceH  hSRSraster,int *noutlets, double*& x, double*& y, int*& id);
+const char *getOGRdrivername(char *datasrcnew);
+void getlayerfail(OGRDataSourceH hDS1,char * outletsds, int outletslyr);
+int readoutlets(char *outletsds,char *lyrname,int uselayername, int outletslyr, OGRSpatialReferenceH hSRSRaster, int *noutlets, double*& x, double*& y);
+int readoutlets(char *outletsds,char *lyrname,int uselayername, int outletslyr, OGRSpatialReferenceH  hSRSraster,int *noutlets, double*& x, double*& y, int*& id);
 
 #include <queue>
 #include "linearpart.h"
-
-
-
 
 bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData);
 

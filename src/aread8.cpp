@@ -50,7 +50,7 @@ email:  dtarb@usu.edu
 using namespace std;
 
 
-int aread8( char* pfile, char* afile, char *shfile, char *wfile, int useOutlets, int usew, int contcheck) {
+int aread8( char* pfile, char* afile, char *datasrc, char *lyrname,int uselyrname,int lyrno, char *wfile, int useOutlets, int usew, int contcheck) {
 
 	MPI_Init(NULL,NULL);{
 
@@ -72,7 +72,7 @@ int aread8( char* pfile, char* afile, char *shfile, char *wfile, int useOutlets,
     hSRSRaster=p.getspatialref();
 	if( useOutlets == 1) {
 		if(rank==0){
-			if(readoutlets(shfile,hSRSRaster, &numOutlets, x, y)==0){
+			if(readoutlets(datasrc,lyrname,uselyrname,lyrno,hSRSRaster, &numOutlets, x, y)==0){
 				usingShapeFile=true;
 				MPI_Bcast(&numOutlets, 1, MPI_INT, 0, MCW);
 				MPI_Bcast(x, numOutlets, MPI_DOUBLE, 0, MCW);
@@ -269,7 +269,7 @@ int aread8( char* pfile, char* afile, char *shfile, char *wfile, int useOutlets,
 	a.write(xstart, ystart, ny, nx, aread8->getGridPointer());
 	double writet = MPI_Wtime();
 	if( rank == 0) 
-		printf("Size: %d\nRead time: %f\nCompute time: %f\nWrite time: %f\nTotal time: %f\n",
+		printf("Number of Processes: %d\nRead time: %f\nCompute time: %f\nWrite time: %f\nTotal time: %f\n",
 		  size,readt-begint, computet-readt, writet-computet,writet-begint);
 
 	//Brackets force MPI-dependent objects to go out of scope before Finalize is called
