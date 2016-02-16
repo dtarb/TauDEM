@@ -15,6 +15,7 @@ import Utils
 
 gdal.UseExceptions()
 
+
 class IntermediateFiles(object):
     weight_min_raster = 'weightmin.tif'
     weight_max_raster = 'weightmax.tif'
@@ -23,6 +24,7 @@ class IntermediateFiles(object):
     si_control_file = 'Si_Control.txt'
 
 # for the format of the input control file see python script file "ArcGISStabilityIndex.py"
+
 
 def main():
     parser = argparse.ArgumentParser(description='Computes terrain stability index')
@@ -53,7 +55,7 @@ def main():
         print(msg)
 
     if params_dict[ParameterNames.is_delete_intermediate_output_files] == 'True':
-        _delete_intermidiate_output_files(params_dict)
+        _delete_intermediate_output_files(params_dict)
 
     print("done....")
 
@@ -127,7 +129,7 @@ def _validate_args(params, params_dict):
                 raise Utils.ValidationException("Invalid input control file (%s). Parameter (%s) needs to have a "
                                                 "numeric value." % (params, key))
 
-        # check that certain parameters that have file path values, that those file exists
+        # check that certain parameters that have file path values, that those file/directory exists
         if key in (ParameterNames.demang_file, ParameterNames.cal_csv_file,
                    ParameterNames.dinf_sca_file, ParameterNames.dinf_slope_file, ParameterNames.cal_grid_file):
             if key == ParameterNames.demang_file:
@@ -138,9 +140,9 @@ def _validate_args(params, params_dict):
             if not os.path.dirname(input_file):
                 input_file = os.path.join(os.getcwd(), params_dict[key])
 
-            #if not os.path.isfile(input_file):
-                #raise Utils.ValidationException("Invalid input control file (%s). %s file can't be found." %
-                                                #(params, params_dict[key]))
+            if not os.path.exists(input_file):
+                raise Utils.ValidationException("Invalid input control file (%s). %s file/directory can't "
+                                                "be found." % (params, params_dict[key]))
 
         # check that all other input grid files can be opened.
         if key in (ParameterNames.demang_file, ParameterNames.dinf_sca_file, ParameterNames.dinf_slope_file,
@@ -161,14 +163,13 @@ def _validate_args(params, params_dict):
                 raise Utils.ValidationException(ex.message)
 
         # check that the output grid file path exists
-        #if key in (ParameterNames.csi_grid_file, ParameterNames.sat_grid_file, ParameterNames.dinf_sca_min_file, ParameterNames.dinf_sca_max_file):
         if key in (ParameterNames.csi_grid_file, ParameterNames.sat_grid_file):
             if params_dict[key]:
                 grid_file_dir = os.path.dirname(os.path.abspath(params_dict[key]))
                 if not os.path.exists(grid_file_dir):
                     raise Utils.ValidationException("Invalid output file (%s). File path (%s) for grid output file "
                                                     "does not exist. Invalid parameter (%s) value."
-                                                    % (params, grid_file_dir, key) )
+                                                    % (params, grid_file_dir, key))
 
         if key == ParameterNames.is_delete_intermediate_output_files:
             if params_dict[ParameterNames.is_delete_intermediate_output_files] not in ('True', 'False'):
@@ -184,7 +185,7 @@ def _validate_args(params, params_dict):
 def _taudem_area_dinf(weight_grid_file, demang_grid_file, output_sca_file):
 
     # mpiexec -n 4 Areadinf -ang demang.tif -wg demdpsi.tif -sca demsac.tif
-    #taudem_funtion_to_run = 'mpiexec -n 4 Areadinf'
+    # taudem_funtion_to_run = 'mpiexec -n 4 Areadinf'
     taudem_function_to_run = 'Areadinf'
     cmd = taudem_function_to_run + \
           ' -ang ' + demang_grid_file + \
@@ -237,12 +238,12 @@ def _generate_combined_stability_index_grid(params_dict):
     return taudem_messages
 
 
-def _delete_intermidiate_output_files(parm_dict):
+def _delete_intermediate_output_files(parm_dict):
     file_names_to_delete = [IntermediateFiles.weight_min_raster,
-                       IntermediateFiles.weight_max_raster,
-                       IntermediateFiles.sca_min_raster,
-                       IntermediateFiles.sca_max_raster,
-                       IntermediateFiles.si_control_file]
+                            IntermediateFiles.weight_max_raster,
+                            IntermediateFiles.sca_min_raster,
+                            IntermediateFiles.sca_max_raster,
+                            IntermediateFiles.si_control_file]
 
     for file_name in file_names_to_delete:
         file_to_delete = os.path.join(parm_dict[ParameterNames.temporary_output_files_directory], file_name)
