@@ -97,8 +97,8 @@ usew is flag:  0 means do not use weight file, 1 means use weight file
 contcheck is flag:  0 means do not check for edge contamination, 
                     1 means check for edge contamination  */
 
-int gridnet(char *pfile,char *plenfile,char *tlenfile,char *gordfile,char *maskfile, char *shfile,
-			int useMask, int useOutlets, int thresh);
+int gridnet(char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *maskfile,
+		char* datasrc,char* lyrname,int uselyrname,int lyrno, int useMask, int useOutlets, int thresh);
 //int gridnet(char *pfile,char *plenfile,char *tlenfile,char *gordfile,char *maskfile,
 //			double *x, double *y,long nxy, int useMask, int useOutlets, int thresh);
 /*  Uses D8 flow drections in pfile (input) with optional basin maskfile (input)
@@ -110,7 +110,7 @@ mask is a flag with value 0 if there is no mask file, 1 if there is.
 outlet is a flag with value 0 if no outlet is specifies, 1 if it is.
 thresh is the mask threshold used in >= test.  */
 
-int gagewatershed(char *pfile,char *wfile, char *shfile, char *idfile, int writeid);
+int gagewatershed(char *pfile, char *wfile, char* datasrc,char* lyrname,int uselyrname,int lyrno, char *idfile, int writeid);
 
 
 int source(char *areafile,char *slopefile,char *plenfile,char *dirfile, 
@@ -149,8 +149,8 @@ masksca:  flag to indicate that locations with sca no data are to be excluded
 //			 char *ad8file, char *elevfile, char *treefile, char *coordfile, 
 //			 double *xnode, double *ynode, int nxy, long usetrace, long *idnodes);
 
-int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfile,char *treefile, char *coordfile, 
-			 char *outletshapefile, char *wfile, char *streamnetshp, long useOutlets, long ordert,bool verbose); 
+int  netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfile,char *treefile, char *coordfile, 
+			 char *outletsds, char *lyrname,int uselayername, int lyrno, char *wfile, char *streamnetsrc, char *streamnetlyr,long useOutlets, long ordert, bool verbose) ; 
 
 //int netsetup(char *demfile, int method,
 //			 float p1,float p2,float p3,float p4, long xr,long yr, int contcheck);
@@ -258,8 +258,8 @@ int topsetup(char *atanbfile, char *distfile, char *raincoordfile, char *flowcoo
 
 //int dmarea(char *angfile, char *adecfile, char *dmfile, double *x, double *y, long nxy, 
 //		 char *wfile, int usew, int contcheck);
-int dmarea(char *angfile, char *adecfile, char *dmfile, char *wfile, char *outletshapefile, int useOutlets,
-		  int usew, int contcheck);
+int dmarea(char* angfile,char* adecfile,char* dmfile,char* datasrc,char* lyrname,int uselyrname,int lyrno,char* wfile,
+		   int useOutlets,int usew,int contcheck);
 
 //int dsaccum(char *angfile,char *wgfile, char *depfile, char *maxfile, int touch, float wgval);
 int dsaccum(char *angfile,char *wgfile, char *raccfile, char *dmaxfile);
@@ -268,15 +268,15 @@ int dsaccum(char *angfile,char *wgfile, char *raccfile, char *dmaxfile);
 //			char *cfile, char *coutfile,
 //			double  *x, double *y, int nxy,   int usec, int contcheck);
 int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *depfile, 
-			char *cinfile, char *coutfile, char *shfile, int useOutlets, int usec, 
+			char *cinfile, char *coutfile, char* datasrc,char* lyrname,int uselyrname,int lyrno, int useOutlets, int usec, 
 			int contcheck);
 /*int tlaccum(char *pfile, char *wfile, char *tcfile, char *tlafile, char *depfile, 
 			char *cfile, char *coutfile,
 			double  *x, double *y, int nxy,   int usec, int contcheck, ItkCallback * callback = NULL);*/
 
 
-int dsllArea(char *angfile, char *ctptfile, char *dmfile,char *shfile, 
-		 char *qfile, char *dgfile, int useOutlets, int contcheck, float cSol);
+int dsllArea(char* angfile,char* ctptfile,char* dmfile,char* datasrc,char* lyrname,int uselyrname,int lyrno,char* qfile, char* dgfile, 
+		   int useOutlets, int contcheck, float cSol);
 
 /*int dsllArea(char *pfile, char *afile, char *dmfile, double *x, double *y,  long nxy, 
 		 char *wfile, char *indicatorFile, int contcheck, float cSol,ItkCallback * callback = NULL);  */

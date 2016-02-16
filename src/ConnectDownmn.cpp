@@ -52,7 +52,7 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char pfile[MAXLN],wfile[MAXLN],ad8file[MAXLN],outletshapefile[MAXLN],movedoutletshapefile[MAXLN];
+   char pfile[MAXLN],wfile[MAXLN],ad8file[MAXLN],outletdatasrc[MAXLN],outletlyr[MAXLN]="",movedoutletdatasrc[MAXLN],movedoutletlyr[MAXLN]="";
    int err,i,movedist=10;
    if(argc < 10)
     {  
@@ -92,26 +92,53 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
+
 		else if(strcmp(argv[i],"-o")==0)
 		{
 			i++;
 			if(argc > i)
 			{
-				strcpy(outletshapefile,argv[i]);
+				strcpy(outletdatasrc,argv[i]);
 				i++;
 			}
 			else goto errexit;
 		}
+
+		else if(strcmp(argv[i],"-olyr")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				strcpy(outletlyr,argv[i]);
+				i++;
+			}
+			else goto errexit;
+		}
+
 		else if(strcmp(argv[i],"-od")==0)
 		{
 			i++;
 			if(argc > i)
 			{
-				strcpy(movedoutletshapefile,argv[i]);
+				strcpy(movedoutletdatasrc,argv[i]);
 				i++;
 			}
 			else goto errexit;
 		}
+
+			else if(strcmp(argv[i],"-odlyr")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				strcpy(movedoutletlyr,argv[i]);
+				i++;
+			}
+			else goto errexit;
+		}
+
+
+
 		else if(strcmp(argv[i],"-d")==0)
 		{
 			i++;
@@ -127,7 +154,7 @@ int main(int argc,char **argv)
 			goto errexit;
 		}
 	}
-	err=connectdown(pfile, wfile, ad8file, outletshapefile, movedoutletshapefile, movedist);
+	err=connectdown(pfile, wfile, ad8file, outletdatasrc, outletlyr, movedoutletdatasrc,movedoutletlyr, movedist);
     if(err != 0)
        printf("Move down error %d\n",err);
 

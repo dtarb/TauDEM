@@ -76,7 +76,7 @@ OGRFeatureH     hFeaturesh,hFeatureshmoved;
 OGRGeometryH    hGeometrysh, hGeometryshmoved;
 
 	
-int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, char *movedoutletshapefile, int movedist)
+int connectdown(char *pfile, char *wfile, char *ad8file, char *outletdatasrc, char *outletlyr,char *movedoutletdatasrc,char *movedoutletlyr, int movedist)
 {
 
 	MPI_Init(NULL,NULL);{
@@ -647,18 +647,23 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 	if(rank==0){
 		OGRRegisterAll();
 		int nfields;
-		nfields=2; 		
-
-      const char *pszDriverName = "ESRI Shapefile";
-      driver = OGRGetDriverByName( pszDriverName );
-      if( driver == NULL )
-      {
+	    nfields=2; 		
+	    const char *pszDriverName;
+	    pszDriverName=getOGRdrivername( outletdatasrc);
+        driver = OGRGetDriverByName( pszDriverName );
+        if( driver == NULL )
+        {
          printf( "%s warning: driver not available.\n", pszDriverName );
          //exit( 1 );
-      }
+       }
 
-    /* Create new file using this driver */
-     hDSsh = OGR_Dr_CreateDataSource(driver, outletshapefile, NULL);
+		// open datasource if the datasoruce exists 
+	     if(pszDriverName=="SQLite")hDSsh= OGROpen(outletdatasrc, TRUE, NULL );
+	// create new data source if data source does not exist 
+   if (hDSsh ==NULL){ 
+	   hDSsh= OGR_Dr_CreateDataSource(driver, outletdatasrc, NULL);}
+   else { hDSsh=hDSsh ;}
+   
 	 //  The logic here is not fully understood.  
 	 //  Behaviour appears to be different when running called from ArcGIS python script and running on the command line.
 	 //  hDSsh is not null when running on command line
@@ -670,14 +675,24 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 		//flag=flag*2;  
 		//printf("Flag: %d\n",flag);
 		//fflush(stdout);
-        char *layername; 
-        layername=getLayername(outletshapefile); // get layer name
+      // char *layername; 
+        //layername=getLayername(outletshapefile); // get layer name
 		//hLayer1 = OGR_DS_GetLayerByName( hDS1,layername );
 		//OGR_L_ResetReading(hLayer1);
 	    //printf("hDSsh before: %d\n",hDSsh); fflush(stdout);
-		hLayersh= OGR_DS_CreateLayer( hDSsh, layername ,hSRSRaster, wkbPoint, NULL );
+
+		 
+      // layer name is file name without extension
+	 if(strlen(outletlyr)==0){
+		char *outletlayername;
+		outletlayername=getLayername( outletdatasrc); // get layer name if the layer name is not provided
+	    hLayersh= OGR_DS_CreateLayer( hDSsh,outletlayername,hSRSRaster,wkbPoint, NULL);} 
+
+	 else {
+		 hLayersh= OGR_DS_CreateLayer( hDSsh, outletlyr ,hSRSRaster, wkbPoint, NULL ); }// provide same spatial reference as raster in streamnetshp fil
+		
 		//printf("hDSsh after: %d\n",hDSsh); fflush(stdout);
-		if( layername  == NULL )
+		if( hLayersh  == NULL )
 		{
 			printf( "Warning: Layer creation failed.\n" );
 		}	
@@ -720,18 +735,47 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletshapefile, 
 	 //printf("Flag final value: %d\n",flag);
 	 //fflush(stdout);
       OGR_DS_Destroy( hDSsh );
-     hDSshmoved = OGR_Dr_CreateDataSource(driver, movedoutletshapefile, NULL);
+
+
+      const char *pszDriverName1;
+	  pszDriverName1=getOGRdrivername( movedoutletdatasrc);
+      driver = OGRGetDriverByName( pszDriverName1 );
+      if( driver == NULL )
+      {
+         printf( "%s warning: driver not available.\n", pszDriverName );
+         //exit( 1 );
+      }
+	  if(pszDriverName1=="SQLite") hDSshmoved= OGROpen(movedoutletdatasrc, TRUE, NULL );
+	// create new data source if data source does not exist 
+	if ( hDSshmoved ==NULL){ 
+		     hDSshmoved = OGR_Dr_CreateDataSource(driver, movedoutletdatasrc, NULL);}
+	else { hDSshmoved =hDSshmoved  ;}
+
+
+
+
+
+
+
      if (hDSshmoved != NULL){
  
-     char *layernamemoved;
+     //char *layernamemoved;
 	// extract leyer information from shapefile
-    layernamemoved=getLayername(movedoutletshapefile);
+    //layernamemoved=getLayername(movedoutletshapefile);
     //hLayer1 = OGR_DS_GetLayerByName( hDS1,layername );
     //OGR_L_ResetReading(hLayer1);
+	 if(strlen(movedoutletlyr)==0){
+		char *mvoutletlayername;
+		mvoutletlayername=getLayername( movedoutletdatasrc); // get layer name if the layer name is not provided
+	     hLayershmoved= OGR_DS_CreateLayer( hDSshmoved, mvoutletlayername,hSRSRaster, wkbPoint, NULL );} 
+
+	 else {
+		 hLayershmoved= OGR_DS_CreateLayer( hDSshmoved, movedoutletlyr,hSRSRaster, wkbPoint, NULL ); }// provide same spatial reference as raster in streamnetshp fil
+		
+		//printf("hDSsh after: %d\n",hDSsh); fflush(stdout);
 	
 	
-	hLayershmoved= OGR_DS_CreateLayer( hDSshmoved, layernamemoved,hSRSRaster, wkbPoint, NULL );
-    if(  layernamemoved == NULL )
+    if(  hLayershmoved== NULL )
     {
         printf( "warning: Layer creation failed.\n" );
         //exit( 1 );

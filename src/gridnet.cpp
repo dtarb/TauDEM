@@ -52,7 +52,7 @@ using namespace std;
 
 
 int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *maskfile,
-		char *shfile, int useMask, int useOutlets, int thresh) 
+		char* datasrc,char* lyrname,int uselyrname,int lyrno, int useMask, int useOutlets, int thresh) 
 {//1
 
 	MPI_Init(NULL,NULL);{
@@ -77,7 +77,7 @@ int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *
 
 	if( useOutlets == 1) {//3
 		if(rank==0){//4
-			if(readoutlets(shfile, hSRSRaster,&numOutlets, x, y)==0){
+			if(readoutlets(datasrc,lyrname,uselyrname,lyrno, hSRSRaster,&numOutlets, x, y)==0){
 //				for(int i=0; i< numOutlets; i++)
 //					printf("rank: %d, X: %lf, Y: %lf\n",rank,x[i],y[i]);
 				usingShapeFile=true;

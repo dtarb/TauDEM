@@ -49,8 +49,8 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char angfile[MAXLN],ctptfile[MAXLN],dmfile[MAXLN],qfile[MAXLN],shfile[MAXLN],dgfile[MAXLN];
-   int err,useOutlets=0,contcheck=1,i;
+   char angfile[MAXLN],ctptfile[MAXLN],dmfile[MAXLN],qfile[MAXLN],dgfile[MAXLN],datasrc[MAXLN],lyrname[MAXLN];
+   int err,useOutlets=0,uselyrname=0,lyrno=0,contcheck=1,i;
    float cSol=1.;
    
    if(argc < 2)
@@ -131,17 +131,46 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
+		
+
 		else if(strcmp(argv[i],"-o")==0)
 		{
 			i++;
 			if(argc > i)
 			{
-				strcpy(shfile,argv[i]);
-				i++;
-				useOutlets = 1;
+				strcpy(datasrc,argv[i]);
+				useOutlets = 1;	
+				i++;											
 			}
 			else goto errexit;
 		}
+
+
+		   else if(strcmp(argv[i],"-lyrno")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				sscanf(argv[i],"%d",&lyrno);
+				i++;											
+			}
+			else goto errexit;
+		}
+
+	   
+	 else if(strcmp(argv[i],"-lyrname")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				strcpy(lyrname,argv[i]);
+		        uselyrname = 1;
+				i++;											
+			}
+			else goto errexit;
+		}
+
+
 		else if(strcmp(argv[i],"-nc")==0)
 		{
 			i++;
@@ -160,7 +189,7 @@ int main(int argc,char **argv)
 		nameadd(ctptfile,argv[1],"ctpt");
 
 	}  
-	if((err=dsllArea(angfile,ctptfile,dmfile,shfile,qfile,dgfile,useOutlets,contcheck,cSol)) != 0)
+	if((err=dsllArea(angfile,ctptfile,dmfile,datasrc,lyrname,uselyrname,lyrno,qfile,dgfile,useOutlets,contcheck,cSol)) != 0)
         printf("area error %d\n",err);
 
 	return 0;
