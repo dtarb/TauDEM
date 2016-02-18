@@ -1,10 +1,10 @@
 # Script Name: DinfDistDown
-# 
+#
 # Created By:  David Tarboton
 # Date:        9/29/11
 
 # Import ArcPy site-package and os modules
-import arcpy 
+import arcpy
 import os
 import subprocess
 
@@ -17,35 +17,35 @@ arcpy.AddMessage("\nInput D-Infinity Flow Direction Grid: "+ang)
 inlyr1 = arcpy.GetParameterAsText(1)
 desc = arcpy.Describe(inlyr1)
 fel=str(desc.catalogPath)
-arcpy.AddMessage("\nInput Pit Filled Elevation Grid: "+fel)
+arcpy.AddMessage("Input Pit Filled Elevation Grid: "+fel)
 
 inlyr2 = arcpy.GetParameterAsText(2)
 desc = arcpy.Describe(inlyr2)
 src=str(desc.catalogPath)
-arcpy.AddMessage("\nInput Stream Raster Grid: "+src)
+arcpy.AddMessage("Input Stream Raster Grid: "+src)
 
 statisticalmethod=arcpy.GetParameterAsText(3)
-arcpy.AddMessage("\nStatistical Method: "+statisticalmethod)
+arcpy.AddMessage("Statistical Method: "+statisticalmethod)
 
 distancemethod=arcpy.GetParameterAsText(4)
-arcpy.AddMessage("\nDistance Method: "+distancemethod)
+arcpy.AddMessage("Distance Method: "+distancemethod)
 
 edgecontamination=arcpy.GetParameterAsText(5)
-arcpy.AddMessage("\nEdge Contamination: "+edgecontamination)
+arcpy.AddMessage("Edge Contamination: "+edgecontamination)
 
 weightgrid = arcpy.GetParameterAsText(6)
 if arcpy.Exists(weightgrid):
     desc = arcpy.Describe(weightgrid)
     wg=str(desc.catalogPath)
-    arcpy.AddMessage("\nInput Weight Path Grid: "+wg)
+    arcpy.AddMessage("Input Weight Path Grid: "+wg)
 
 # Input Number of Processes
 inputProc=arcpy.GetParameterAsText(7)
-arcpy.AddMessage("\nInput Number of Processes: "+inputProc)
+arcpy.AddMessage("Number of Processes: "+inputProc)
 
 # Output
 dd = arcpy.GetParameterAsText(8)
-arcpy.AddMessage("\nOutput D-Infinity Drop to Stream Grid: "+dd)
+arcpy.AddMessage("Output D-Infinity Drop to Stream Grid: "+dd)
 
 # Construct command
 if statisticalmethod == 'Average':
@@ -75,10 +75,12 @@ os.system(cmd)
 
 # Capture the contents of shell command and print it to the arcgis dialog box
 process=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-arcpy.AddMessage('\nProcess started:\n')
+#arcpy.AddMessage('\nProcess started:\n')
+message="\n"
 for line in process.stdout.readlines():
-    arcpy.AddMessage(line)
+    message=message+line
+arcpy.AddMessage(message)
 
 # Calculate statistics on the output so that it displays properly
-arcpy.AddMessage('Executing: Calculate Statistics\n')
+arcpy.AddMessage('Calculate Statistics\n')
 arcpy.CalculateStatistics_management(dd)

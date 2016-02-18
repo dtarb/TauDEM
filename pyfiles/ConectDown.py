@@ -19,27 +19,27 @@ arcpy.AddMessage("Spatial Reference: "+str(coord_sys.name))
 inlyr1 = arcpy.GetParameterAsText(1)
 desc = arcpy.Describe(inlyr1)
 ad8=str(desc.catalogPath)
-arcpy.AddMessage("\nInput D8Contributing Area Grid: "+ad8)
+arcpy.AddMessage("Input D8Contributing Area Grid: "+ad8)
 
 inlyr2 = arcpy.GetParameterAsText(2)
 desc = arcpy.Describe(inlyr2)
 ws=str(desc.catalogPath)
-arcpy.AddMessage("\nInput Watershed Grid: "+ws)
+arcpy.AddMessage("Input Watershed Grid: "+ws)
 
 mvdistance=arcpy.GetParameterAsText(3)
-arcpy.AddMessage("\nNumber of Grid cell: "+mvdistance)
+arcpy.AddMessage("Number of Grid cell: "+mvdistance)
 
 # Input Number of Processes
 inputProc=arcpy.GetParameterAsText(4)
-arcpy.AddMessage("\nInput Number of Processes: "+inputProc)
+arcpy.AddMessage("Input Number of Processes: "+inputProc)
 
 # Output
 om = arcpy.GetParameterAsText(5)
-arcpy.AddMessage("\nOutput Outlet Shapefile: "+om)
+arcpy.AddMessage("Output Outlet file: "+om)
 
 # Output
 omd = arcpy.GetParameterAsText(6)
-arcpy.AddMessage("\nOutput MovedOutlet Shapefile: "+omd)
+arcpy.AddMessage("Output MovedOutlet file: "+omd)
 
 
 
@@ -53,8 +53,10 @@ os.system(cmd)
 
 # Capture the contents of shell command and print it to the arcgis dialog box
 process=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-arcpy.AddMessage('\nProcess started:\n')
+#arcpy.AddMessage('\nProcess started:\n')
+message="\n"
 for line in process.stdout.readlines():
-    arcpy.AddMessage(line)
+    message=message+line
+arcpy.AddMessage(message)
 
 

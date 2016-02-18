@@ -1,10 +1,10 @@
 # Script Name: WatershedGridToShapefile
-# 
+#
 # Created By:  David Tarboton
 # Date:        9/29/11
 
 # Import ArcPy site-package and os modules
-import arcpy 
+import arcpy
 import os
 import subprocess
 
@@ -16,7 +16,7 @@ arcpy.AddMessage("\nInput Elevation file: "+w)
 
 # Output
 shfl = arcpy.GetParameterAsText(1)
-arcpy.AddMessage("\nOutput Stream Source file: "+shfl)
+arcpy.AddMessage("Output Stream Source file: "+shfl)
 
 # Convert tiff to shp
 cmd = arcpy.RasterToPolygon_conversion(w, shfl, "NO_SIMPLIFY", "Value")
