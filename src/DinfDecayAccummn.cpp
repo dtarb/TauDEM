@@ -50,8 +50,8 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char angfile[MAXLN],adecfile[MAXLN],dmfile[MAXLN],wfile[MAXLN],shfile[MAXLN];
-   int err,useOutlets=0,usew=0,contcheck=1,i;
+   char angfile[MAXLN],adecfile[MAXLN],dmfile[MAXLN],wfile[MAXLN],datasrc[MAXLN],lyrname[MAXLN];
+   int err,useOutlets=0,usew=0,uselyrname=0,lyrno=0,contcheck=1,i;
    
    if(argc < 2)
     {  
@@ -112,17 +112,44 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-		else if(strcmp(argv[i],"-o")==0)
+		 else if(strcmp(argv[i],"-o")==0)
 		{
 			i++;
 			if(argc > i)
 			{
-				strcpy(shfile,argv[i]);
-				i++;
-				useOutlets = 1;
+				strcpy(datasrc,argv[i]);
+				useOutlets = 1;	
+				i++;											
 			}
 			else goto errexit;
 		}
+
+
+		   else if(strcmp(argv[i],"-lyrno")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				sscanf(argv[i],"%d",&lyrno);
+				i++;											
+			}
+			else goto errexit;
+		}
+
+	   
+	 else if(strcmp(argv[i],"-lyrname")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				strcpy(lyrname,argv[i]);
+		        uselyrname = 1;
+				i++;											
+			}
+			else goto errexit;
+		}
+
+
 		else if(strcmp(argv[i],"-nc")==0)
 		{
 			i++;
@@ -139,7 +166,7 @@ int main(int argc,char **argv)
 		nameadd(adecfile,argv[1],"dsca");
 	}  
 	
-	if(err=dmarea(angfile,adecfile,dmfile,shfile,wfile,useOutlets,usew, contcheck) != 0)
+	if(err=dmarea(angfile,adecfile,dmfile,datasrc,lyrname,uselyrname,lyrno,wfile,useOutlets,usew, contcheck) != 0)
         printf("area error %d\n",err);
 
 	return 0;

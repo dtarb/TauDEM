@@ -1,10 +1,10 @@
 # Script Name: StreamDefByThreshold
-# 
+#
 # Created By:  David Tarboton
 # Date:        9/29/11
 
 # Import ArcPy site-package and os modules
-import arcpy 
+import arcpy
 import os
 import subprocess
 
@@ -15,21 +15,21 @@ ssa=str(desc.catalogPath)
 arcpy.AddMessage("\nInput Accumulated Stream Source Grid: "+ssa)
 
 maskgrid = arcpy.GetParameterAsText(1)
-if arcpy.Exists(maskgrid):        
+if arcpy.Exists(maskgrid):
     desc = arcpy.Describe(maskgrid)
     mask=str(desc.catalogPath)
-    arcpy.AddMessage("\nInput Mask Grid: "+mask)
+    arcpy.AddMessage("Input Mask Grid: "+mask)
 
 threshold=arcpy.GetParameterAsText(2)
-arcpy.AddMessage("\nThreshold: "+threshold)
+arcpy.AddMessage("Threshold: "+threshold)
 
 # Input Number of Processes
 inputProc=arcpy.GetParameterAsText(3)
-arcpy.AddMessage("\nInput Number of Processes: "+inputProc)
+arcpy.AddMessage("Number of Processes: "+inputProc)
 
 # Output
 src = arcpy.GetParameterAsText(4)
-arcpy.AddMessage("\nOutput Stream Raster Grid: "+src)
+arcpy.AddMessage("Output Stream Raster Grid: "+src)
 
 # Construct command
 cmd = 'mpiexec -n ' + inputProc + ' Threshold -ssa ' + '"' + ssa + '"' + ' -src ' + '"' + src + '"' + ' -thresh ' + threshold
@@ -43,10 +43,12 @@ os.system(cmd)
 
 # Capture the contents of shell command and print it to the arcgis dialog box
 process=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-arcpy.AddMessage('\nProcess started:\n')
+#arcpy.AddMessage('\nProcess started:\n')
+message="\n"
 for line in process.stdout.readlines():
-    arcpy.AddMessage(line)
+       message=message+line
+arcpy.AddMessage(message)
 
 # Calculate statistics on the output so that it displays properly
-arcpy.AddMessage('Executing: Calculate Statistics\n')
+arcpy.AddMessage('Calculate Statistics\n')
 arcpy.CalculateStatistics_management(src)

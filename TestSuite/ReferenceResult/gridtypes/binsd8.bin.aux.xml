@@ -1,0 +1,18 @@
+<PAMDataset>
+  <Metadata domain="IMAGE_STRUCTURE">
+    <MDI key="INTERLEAVE">BAND</MDI>
+  </Metadata>
+  <Metadata domain="ENVI">
+    <MDI key="bands">1</MDI>
+    <MDI key="byte_order">0</MDI>
+    <MDI key="data_type">4</MDI>
+    <MDI key="file_type">ENVI Standard</MDI>
+    <MDI key="header_offset">0</MDI>
+    <MDI key="interleave">bsq</MDI>
+    <MDI key="lines">1660</MDI>
+    <MDI key="samples">985</MDI>
+  </Metadata>
+  <PAMRasterBand band="1">
+    <NoDataValue>-1.00000000000000E+000</NoDataValue>
+  </PAMRasterBand>
+</PAMDataset>
