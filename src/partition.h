@@ -48,6 +48,7 @@ class tdpartition{
 	protected:
 		long totalx, totaly;
 		long nx, ny;
+		long cx, cy;
 		double dxA, dyA, *dxc,*dyc;
 		
 

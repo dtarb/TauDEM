@@ -80,7 +80,7 @@ CONNECTDOWN = ConnectDown.o ConnectDownmn.o $(OBJFILES) $(SHAPEFILES)
 CC = mpic++
 CFLAGS=-O2
 CFLAGS=-g -Wall
-CFLAGS=-g
+CFLAGS=-g -I/usr/include/gdal
 LARGEFILEFLAG= -D_FILE_OFFSET_BITS=64
 #INCDIRS=-I/usr/lib/openmpi/include -I/usr/include/gdal
 #LIBDIRS=-lgdal
