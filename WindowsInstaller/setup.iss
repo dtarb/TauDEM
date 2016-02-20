@@ -4,8 +4,9 @@
 
 ; ****  REQUIREMENTS FOR COMPILING THIS INSTALLER SCRIPT  ****
 ; The following files must exist in the same directory location as this script
-; gdal-111-1600-core.msi
-; gdal-111-1600-x64-core.msi
+; GDAL-1.9.2.win32-py2.7.exe (Python GDAL)
+; gdal-111-1600-core.msi   (C++ GDAL
+; gdal-111-1600-x64-core.msi  (C++ GDAL
 ; mpi_x86.msi
 ; mpi_x64.msi
 ; vcredist_x86_2010.exe
@@ -65,6 +66,7 @@ Name: "C:\GDAL"
 
 [Files]
 ; copy files 
+Source: "GDAL-1.9.2.win32-py2.7.exe"; DestDir: "{app}\setup_files"; Flags: ignoreversion
 Source: "gdal-111-1600-core.msi"; DestDir: "{app}\setup_files"; Flags: ignoreversion; Check: not Is64BitInstallMode
 Source: "gdal-111-1600-x64-core.msi"; DestDir: "{app}\setup_files"; Flags: ignoreversion; Check: Is64BitInstallMode
 
@@ -88,6 +90,7 @@ Source: "Firewall.bat"; DestDir: "{app}\setup_files"; Flags: ignoreversion
 
 [Run]
 ; install GDAL core components
+Filename: "{app}\setup_files\GDAL-1.9.2.win32-py2.7.exe"; Flags: waituntilterminated shellexec
 Filename: "{app}\setup_files\gdal-111-1600-core.msi"; Flags: waituntilterminated shellexec; Check: not Is64BitInstallMode
 Filename: "{app}\setup_files\gdal-111-1600-x64-core.msi"; Flags: waituntilterminated shellexec; Check: Is64BitInstallMode  
  
@@ -106,6 +109,10 @@ Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environmen
 ;set GDAL program path
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType:string; ValueName:"PATH"; ValueData:"{olddata};{pf}\GDAL"; Check: NeedsAddPath('{pf}\GDAL', True, True); Flags: preservestringtype
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType:string; ValueName:"PATH"; ValueData:"{olddata};{pf}\GDAL"; Check: NeedsAddPath('{pf}\GDAL', False, True); Flags: preservestringtype
+
+;set GDAL_DATA  (new environment variable)
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType:string; ValueName:"GDAL_DATA"; ValueData:"{pf}\GDAL\gdal-data"; Flags: preservestringtype
+
 ; set TauDEM path
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType:string; ValueName:"PATH"; ValueData:"{olddata};{app}\TauDEM5Exe"; Check: NeedsAddPath('{app}\TauDEM5Exe', False, True); Flags: preservestringtype
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType:string; ValueName:"PATH"; ValueData:"{olddata};{app}\TauDEM5Exe"; Check: NeedsAddPath('{app}\TauDEM5Exe', True, True); Flags: preservestringtype
@@ -129,14 +136,14 @@ begin
   begin
     UserPage := CreateInputQueryPage(wpWelcome,
       'The following programs will be installed', '',
-      'TauDEM version 5.3, GDAL 111 (MSVC 2010) for 64 bit Winodws PC, Microsoft Visual C++ 2010 SP1 Redistributable Package (x86), ' +
+      'TauDEM version 5.3.2, GDAL 1.9.2 (Python 2.7), GDAL 111 (MSVC 2010) for 64 bit Winodws PC, Microsoft Visual C++ 2010 SP1 Redistributable Package (x86), ' +
       'Microsoft Visual C++ 2010 SP1 Redistributable Package (x64), Microsoft HPC Pack 2012 MS-MPI Redistributable Package'#13#13 +  notes_string);   
   end
   else
     begin
       UserPage := CreateInputQueryPage(wpWelcome,
       'The following programs will be installed', '',
-      'TauDEM version 5.3, GDAL 111 (MSVC 2010) for 32 bit Windows PC, Microsoft Visual C++ 2010 SP1 Redistributable Package (x86), ' + 
+      'TauDEM version 5.3.2, GDAL 1.9.2 (Python 2.7), GDAL 111 (MSVC 2010) for 32 bit Windows PC, Microsoft Visual C++ 2010 SP1 Redistributable Package (x86), ' + 
       'Microsoft HPC Pack 2012 MS-MPI Redistributable Package'#13#13 +  notes_string);
     end
 end;
@@ -255,6 +262,25 @@ begin
   //  MsgBox('Result of path matching:match not found', mbInformation, MB_OK)
   //else
   //  MsgBox('Result of path matching:match found', mbInformation, MB_OK)
+end;
+
+function GetPathData(Param: String): String;
+{ The 'Param' parameter has the value of the existing value for the system 'Path' variable }
+var 
+  index: integer;
+  dataToAdd: string;
+begin 
+  { This is the data we want to add to the system 'Path' variable} 
+  dataToAdd:= ExpandConstant('{app}') + '\GDAL\gdalwin32-1.6\bin;' +  ExpandConstant('{app}') + '\GDAL_Proj\proj\bin';
+
+  { check if the data we want to add is already in the 'Path' variable }
+  index:=pos(dataToAdd, Param)
+  if index > 0 then
+     { no need to change data for the path - so return the existing data}
+     Result:= Param
+  else
+    { append new data to existing path data and return the resultant data }
+    Result:= Param + ';' + dataToAdd; 
 end;
 
 procedure CleanUp(FolderToDelete: string);
