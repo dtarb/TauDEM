@@ -4,7 +4,7 @@
   Utah State University  
   May 23, 2010
   
-*/
+ */
 
 /*  Copyright (C) 2010  David Tarboton, Utah State University
 
@@ -34,7 +34,7 @@ Logan, UT 84322-8200
 USA 
 http://www.engineering.usu.edu/dtarb/ 
 email:  dtarb@usu.edu 
-*/
+ */
 
 //  This software is distributed from http://hydrology.usu.edu/taudem/
 
@@ -47,360 +47,785 @@ email:  dtarb@usu.edu
 
 
 //==================================
+
 /*  Nameadd(..)  Utility for adding suffixes to file names prior to
    "." extension   */
-int nameadd(char *full,char *arg,const char *suff)
-{
-        const char *ext, *extsuff;
-        long nmain;
-    ext=strrchr(arg,'.');
-	extsuff=strrchr(suff,'.');
-    if(ext == NULL)
-        {
-                nmain=(long)strlen(arg);
-                sprintf(full,"%s%s",arg,suff);
-        }
-        else
-        {
-                nmain=(long)(strlen(arg)-strlen(ext));
-                strcpy(full,"");
-                strncat(full,arg,nmain);
-                strcat(full,suff);
-				if(extsuff == NULL)strcat(full,ext);  //  Only append original extension if suffix does not have an extension already
-        }
-        return(nmain);
+int nameadd(char *full, char *arg, const char *suff) {
+    const char *ext, *extsuff;
+    long nmain;
+    ext = strrchr(arg, '.');
+    extsuff = strrchr(suff, '.');
+    if (ext == NULL) {
+        nmain = (long) strlen(arg);
+        sprintf(full, "%s%s", arg, suff);
+    } else {
+        nmain = (long) (strlen(arg) - strlen(ext));
+        strcpy(full, "");
+        strncat(full, arg, nmain);
+        strcat(full, suff);
+        if (extsuff == NULL)strcat(full, ext); //  Only append original extension if suffix does not have an extension already
+    }
+    return (nmain);
 }
 
 //TODO - does this function go here, or in areadinf?
-double prop( float a, int k, double dx1 , double dy1) {
 
-	double aref[10] = { -atan2(dy1,dx1), 0., -aref[0],(double)(0.5*PI),PI-aref[2],(double)PI,
-                       PI+aref[2],(double)(1.5*PI),2.*PI-aref[2],(double)(2.*PI) };
-	double p=0.;
-	if(k<=0)k=k+8;  // DGT to guard against remainder calculations that give k=0
-	if(k == 1 && a > PI)a=(float)(a-2.0*PI);
-	if(a > aref[k-1] && a < aref[k+1]){
-		if( a > aref[k])
-			p=(aref[k+1]-a)/(aref[k+1]-aref[k]);
-		else
-			p=(a-aref[k-1])/(aref[k]-aref[k-1]);
-	}
-	if( p < 1e-5) return -1.;
-	else return(p);
-}
-void initNeighborDinfup(tdpartition* neighbor,tdpartition* flowData,queue<node> *que,
-					  int nx,int ny,int useOutlets, int *outletsX,int *outletsY,long numOutlets)
-{
-	//  Function to initialize the neighbor partition either whole partition or just upstream of outlets
-	//  and place locations with no neighbors that drain to them on the que
-	int i,j,k,in,jn;
-	short tempShort;
-	float angle,p;double tempdxc, tempdyc;
-	
-	
-	node temp;
-	if(useOutlets != 1) {
-		//Count the contributing neighbors and put on queue
-		for(j=0; j<ny; j++) {
-			for(i=0; i<nx; i++) {
+double prop(float a, int k, double dx1, double dy1) {
 
-			
-				//Initialize neighbor count to no data, but then 0 if flow direction is defined
-				neighbor->setToNodata(i,j);
-				if(!flowData->isNodata(i,j)) {
-					//Set contributing neighbors to 0 
-					neighbor->setData(i,j,(short)0);
-					//Count number of contributing neighbors
-					for(k=1; k<=8; k++){
-						in = i+d1[k];
-						jn = j+d2[k];
-						if(flowData->hasAccess(in,jn) && !flowData->isNodata(in,jn)){
-							flowData->getData(in, jn, angle);
-							 flowData->getdxdyc(jn, tempdxc,tempdyc);
-		                
-							p = prop(angle,(k+4)%8,tempdxc,tempdyc);  //  if neighbor drains to me
-							if(p>0.0)
-								neighbor->addToData(i,j,(short)1);
-						}
-					}
-					if(neighbor->getData(i, j, tempShort) == 0){
-						//Push nodes with no contributing neighbors on queue
-						temp.x = i;
-						temp.y = j;
-						que->push(temp);
-					}
-				}
-			}
-		} 
-	}
-	// If Outlets are specified
-	else {
-	//Put outlets on queue to be evalutated
-		queue<node> toBeEvaled;
-		for( i=0; i<numOutlets; i++) {
-			flowData->globalToLocal(outletsX[i], outletsY[i], temp.x, temp.y);
-			if(flowData->isInPartition(temp.x, temp.y))
-				toBeEvaled.push(temp);
-		}
-
-		//TODO - this is 100% linear partition dependent.
-		//Create a packet for message passing
-		int *bufferAbove = new int[nx];
-		int *bufferBelow = new int[nx];
-		int countA, countB;
-
-		//TODO - consider copying this statement into other memory allocations
-		if( bufferAbove == NULL || bufferBelow == NULL ) {
-			printf("Error allocating memory\n");
-			MPI_Abort(MCW,5);
-		}
-		
-		int rank,size;
-		MPI_Comm_rank(MCW,&rank);
-		MPI_Comm_size(MCW,&size);
-
-		bool finished = false;
-		while(!finished) {
-			countA = 0;
-			countB = 0;
-			while(!toBeEvaled.empty()) {
-				temp = toBeEvaled.front();
-				toBeEvaled.pop();
-				i = temp.x;
-				j = temp.y;
-				// Only evaluate if cell hasn't been evaled yet
-				if(neighbor->isNodata(i,j)){
-					//Set contributing neighbors to 0
-					neighbor->setData(i,j,(short)0);
-					//Count number of contributing neighbors
-					for(k=1; k<=8; k++){
-						in = i+d1[k];
-						jn = j+d2[k];
-						if(flowData->hasAccess(in,jn) && !flowData->isNodata(in,jn)){ 
-							flowData->getData(in, jn, angle);
-							flowData->getdxdyc(jn,tempdxc,tempdyc);
-		                    p = prop(angle, (k+4)%8, tempdxc,tempdyc);
-							if(p>0.) {
-								if( jn == -1 ) {
-									bufferAbove[countA] = in;
-									countA +=1;
-								}
-								else if( jn == ny ) {
-									bufferBelow[countB] = in;
-									countB += 1;
-								}
-								else {
-									temp.x = in;
-									temp.y = jn;
-									toBeEvaled.push(temp);
-								}
-								neighbor->addToData(i,j,(short)1);
-							}
-						}
-					}					
-					if(neighbor->getData(i,j, tempShort) == 0){
-						//Push nodes with no contributing neighbors on queue
-						temp.x = i;
-						temp.y = j;
-						que->push(temp);
-					}
-				}	
-			}
-			finished = true;
-			
-			neighbor->transferPack( &countA, bufferAbove, &countB, bufferBelow );
-
-			if( countA > 0 || countB > 0 )
-				finished = false;
-
-			if( rank < size-1 ) {
-				for( k=0; k<countA; k++ ) {
-					temp.x = bufferAbove[k];
-					temp.y = ny-1;
-					toBeEvaled.push(temp);
-				}
-			}
-			if( rank > 0 ) {
-				for( k=0; k<countB; k++ ) {
-					temp.x = bufferBelow[k];
-					temp.y = 0;
-					toBeEvaled.push(temp);
-				}
-			}
-			finished = neighbor->ringTerm( finished );
-		}
-
-		delete bufferAbove;
-		delete bufferBelow;
-	}
+    double aref[10] = {-atan2(dy1, dx1), 0., -aref[0], (double) (0.5 * PI), PI - aref[2], (double) PI,
+        PI + aref[2], (double) (1.5 * PI), 2. * PI - aref[2], (double) (2. * PI)};
+    double p = 0.;
+    if (k <= 0)k = k + 8; // DGT to guard against remainder calculations that give k=0
+    if (k == 1 && a > PI)a = (float) (a - 2.0 * PI);
+    if (a > aref[k - 1] && a < aref[k + 1]) {
+        if (a > aref[k])
+            p = (aref[k + 1] - a) / (aref[k + 1] - aref[k]);
+        else
+            p = (a - aref[k - 1]) / (aref[k] - aref[k - 1]);
+    }
+    if (p < 1e-5) return -1.;
+    else return (p);
 }
 
-void initNeighborD8up(tdpartition* neighbor,tdpartition* flowData,queue<node> *que,
-					  int nx,int ny,int useOutlets, int *outletsX,int *outletsY,long numOutlets)
-{
-	//  Function to initialize the neighbor partition either whole partition or just upstream of outlets
-	//  and place locations with no neighbors that drain to them on the que
-	int i,j,k,in,jn;
-	short tempShort;
-	//float tempFloat,angle,p;
-	node temp;
-	if(useOutlets != 1) {
-		//Count the contributing neighbors and put on queue
-		for(j=0; j<ny; j++) {
-			for(i=0; i<nx; i++) {
-				//Initialize neighbor count to no data, but then 0 if flow direction is defined
-				neighbor->setToNodata(i,j);
-				if(!flowData->isNodata(i,j)) {
-					//Set contributing neighbors to 0 
-					neighbor->setData(i,j,(short)0);
-					//Count number of contributing neighbors
-					for(k=1; k<=8; k++){
-						in = i+d1[k];
-						jn = j+d2[k];
-						if(flowData->hasAccess(in,jn) && !flowData->isNodata(in,jn)){
-							flowData->getData(in, jn, tempShort);
-							if(tempShort-k == 4 || tempShort-k == -4)
-								neighbor->addToData(i,j,(short)1);
-						}
-					}
-					if(neighbor->getData(i, j, tempShort) == 0){
-						//Push nodes with no contributing neighbors on queue
-						temp.x = i;
-						temp.y = j;
-						que->push(temp);
-					}
-				}
-			}
-		} 
-	}
-	// If Outlets are specified
-	else {
-	//Put outlets on queue to be evalutated
-		queue<node> toBeEvaled;
-		for( i=0; i<numOutlets; i++) {
-			flowData->globalToLocal(outletsX[i], outletsY[i], temp.x, temp.y);
-			if(flowData->isInPartition(temp.x, temp.y))
-				toBeEvaled.push(temp);
-		}
+void initNeighborDinfup(tdpartition* neighbor, tdpartition* flowData, queue<node> *que,
+        int nx, int ny, int useOutlets, int *outletsX, int *outletsY, long numOutlets) {
+    //  Function to initialize the neighbor partition either whole partition or just upstream of outlets
+    //  and place locations with no neighbors that drain to them on the que
+    int i, j, k, in, jn;
+    short tempShort;
+    float angle, p;
+    double tempdxc, tempdyc;
 
-		//TODO - this is 100% linear partition dependent.
-		//Create a packet for message passing
-		int *bufferAbove = new int[nx];
-		int *bufferBelow = new int[nx];
-		int countA, countB;
 
-		//TODO - consider copying this statement into other memory allocations
-		if( bufferAbove == NULL || bufferBelow == NULL ) {
-			printf("Error allocating memory\n");
-			MPI_Abort(MCW,5);
-		}
-		
-		int rank,size;
-		MPI_Comm_rank(MCW,&rank);
-		MPI_Comm_size(MCW,&size);
+    node temp;
+    if (useOutlets != 1) {
+        //Count the contributing neighbors and put on queue
+        for (j = 0; j < ny; j++) {
+            for (i = 0; i < nx; i++) {
 
-		bool finished = false;
-		while(!finished) {
-			countA = 0;
-			countB = 0;
-			while(!toBeEvaled.empty()) {
-				temp = toBeEvaled.front();
-				toBeEvaled.pop();
-				i = temp.x;
-				j = temp.y;
-				// Only evaluate if cell hasn't been evaled yet
-				if(neighbor->isNodata(i,j)){
-					//Set contributing neighbors to 0
-					neighbor->setData(i,j,(short)0);
-					//Count number of contributing neighbors
-					for(k=1; k<=8; k++){
-						in = i+d1[k];
-						jn = j+d2[k];
-						if(flowData->hasAccess(in,jn) && !flowData->isNodata(in,jn)){
-							flowData->getData(in, jn, tempShort);
-							//  Does neighbor drain to me
-							if(tempShort-k == 4 || tempShort-k == -4){
-								if( jn == -1 ) {
-									bufferAbove[countA] = in;
-									countA +=1;
-								}
-								else if( jn == ny ) {
-									bufferBelow[countB] = in;
-									countB += 1;
-								}
-								else {
-									temp.x = in;
-									temp.y = jn;
-									toBeEvaled.push(temp);
-								}
-								neighbor->addToData(i,j,(short)1);
-							}
-						}
-					}					
-					if(neighbor->getData(i,j, tempShort) == 0){
-						//Push nodes with no contributing neighbors on queue
-						temp.x = i;
-						temp.y = j;
-						que->push(temp);
-					}
-				}	
-			}
-			finished = true;
-			
-			neighbor->transferPack( &countA, bufferAbove, &countB, bufferBelow );
 
-			if( countA > 0 || countB > 0 )
-				finished = false;
+                //Initialize neighbor count to no data, but then 0 if flow direction is defined
+                neighbor->setToNodata(i, j);
+                if (!flowData->isNodata(i, j)) {
+                    //Set contributing neighbors to 0 
+                    neighbor->setData(i, j, (short) 0);
+                    //Count number of contributing neighbors
+                    for (k = 1; k <= 8; k++) {
+                        in = i + d1[k];
+                        jn = j + d2[k];
+                        if (flowData->hasAccess(in, jn) && !flowData->isNodata(in, jn)) {
+                            flowData->getData(in, jn, angle);
+                            flowData->getdxdyc(jn, tempdxc, tempdyc);
 
-			if( rank < size-1 ) {
-				for( k=0; k<countA; k++ ) {
-					temp.x = bufferAbove[k];
-					temp.y = ny-1;
-					toBeEvaled.push(temp);
-				}
-			}
-			if( rank > 0 ) {
-				for( k=0; k<countB; k++ ) {
-					temp.x = bufferBelow[k];
-					temp.y = 0;
-					toBeEvaled.push(temp);
-				}
-			}
-			finished = neighbor->ringTerm( finished );
-		}
-		delete bufferAbove;
-		delete bufferBelow;
-	}
+                            p = prop(angle, (k + 4) % 8, tempdxc, tempdyc); //  if neighbor drains to me
+                            if (p > 0.0)
+                                neighbor->addToData(i, j, (short) 1);
+                        }
+                    }
+                    if (neighbor->getData(i, j, tempShort) == 0) {
+                        //Push nodes with no contributing neighbors on queue
+                        temp.x = i;
+                        temp.y = j;
+                        que->push(temp);
+                    }
+                }
+            }
+        }
+    }// If Outlets are specified
+    else {
+        //Put outlets on queue to be evalutated
+        queue<node> toBeEvaled;
+        for (i = 0; i < numOutlets; i++) {
+            flowData->globalToLocal(outletsX[i], outletsY[i], temp.x, temp.y);
+            if (flowData->isInPartition(temp.x, temp.y))
+                toBeEvaled.push(temp);
+        }
+
+        //TODO - this is 100% linear partition dependent.
+        //Create a packet for message passing
+        int *bufferAbove = NULL;
+        int *bufferBelow = NULL;
+        int *bufferLeft = NULL;
+        int *bufferRight = NULL;
+        int* bufferTopLeft = NULL;
+        int* bufferTopRight = NULL;
+        int* bufferBottomLeft = NULL;
+        int* bufferBottomRight = NULL;
+        int countA, countB, countL, countR, countTL, countTR, countBL, countBR;
+
+        int neighbourCount = neighbor->getNeighbourCount();
+        int ** neighbourBuffers = NULL;
+        int ** neighbourCountArr = NULL;
+
+        if (neighbourCount > 0) {
+            neighbourBuffers = new int*[neighbourCount];
+            neighbourCountArr = new int*[neighbourCount];
+
+            int neighbourIndex = 0;
+
+            if (neighbor->hasTopNeighbour()) {
+                bufferAbove = new int[nx];
+                if (!bufferAbove) {
+                    printf("Error allocating memory\n");
+                    MPI_Abort(MCW, 5);
+                }
+                neighbourBuffers[neighbourIndex] = bufferAbove;
+                neighbourCountArr[neighbourIndex] = &countA;
+
+                ++neighbourIndex;
+            }
+
+            if (neighbor->hasBottomNeighbour()) {
+                bufferBelow = new int[nx];
+                if (!bufferBelow) {
+                    printf("Error allocating memory\n");
+                    MPI_Abort(MCW, 5);
+                }
+                neighbourBuffers[neighbourIndex] = bufferBelow;
+                neighbourCountArr[neighbourIndex] = &countB;
+
+                ++neighbourIndex;
+            }
+
+            if (neighbor->hasLeftNeighbour()) {
+                bufferLeft = new int[ny];
+                if (!bufferLeft) {
+                    printf("Error allocating memory\n");
+                    MPI_Abort(MCW, 5);
+                }
+                neighbourBuffers[neighbourIndex] = bufferLeft;
+                neighbourCountArr[neighbourIndex] = &countL;
+
+                ++neighbourIndex;
+            }
+
+            if (neighbor->hasRightNeighbour()) {
+                bufferRight = new int[ny];
+                if (!bufferRight) {
+                    printf("Error allocating memory\n");
+                    MPI_Abort(MCW, 5);
+                }
+                neighbourBuffers[neighbourIndex] = bufferRight;
+                neighbourCountArr[neighbourIndex] = &countR;
+
+                ++neighbourIndex;
+            }
+
+            if (neighbor->hasTopLeftNeighbour()) {
+                bufferTopLeft = new int;
+                neighbourBuffers[neighbourIndex] = bufferTopLeft;
+                neighbourCountArr[neighbourIndex] = &countTL;
+
+                ++neighbourIndex;
+            }
+
+            if (neighbor->hasTopRightNeighbour()) {
+                bufferTopRight = new int;
+                neighbourBuffers[neighbourIndex] = bufferTopRight;
+                neighbourCountArr[neighbourIndex] = &countTR;
+
+                ++neighbourIndex;
+            }
+
+
+            if (neighbor->hasBottomLeftNeighbour()) {
+                bufferBottomLeft = new int;
+                neighbourBuffers[neighbourIndex] = bufferBottomLeft;
+                neighbourCountArr[neighbourIndex] = &countBL;
+
+                ++neighbourIndex;
+            }
+
+            if (neighbor->hasBottomRightNeighbour()) {
+                bufferBottomRight = new int;
+                neighbourBuffers[neighbourIndex] = bufferBottomRight;
+                neighbourCountArr[neighbourIndex] = &countBR;
+            }
+        }
+
+        bool finished = false;
+        while (!finished) {
+            countA = 0;
+            countB = 0;
+            countL = 0;
+            countR = 0;
+            countTL = 0;
+            countTR = 0;
+            countBL = 0;
+            countBR = 0;
+
+            while (!toBeEvaled.empty()) {
+                temp = toBeEvaled.front();
+                toBeEvaled.pop();
+                i = temp.x;
+                j = temp.y;
+                // Only evaluate if cell hasn't been evaled yet
+                if (neighbor->isNodata(i, j)) {
+                    //Set contributing neighbors to 0
+                    neighbor->setData(i, j, (short) 0);
+                    //Count number of contributing neighbors
+                    for (k = 1; k <= 8; k++) {
+                        in = i + d1[k];
+                        jn = j + d2[k];
+                        if (flowData->hasAccess(in, jn) && !flowData->isNodata(in, jn)) {
+                            flowData->getData(in, jn, angle);
+                            flowData->getdxdyc(jn, tempdxc, tempdyc);
+                            p = prop(angle, (k + 4) % 8, tempdxc, tempdyc);
+                            if (p > 0.) {
+                                if (in == -1 && jn == -1) {
+                                    bufferTopLeft[0] = -1;
+                                    countTL = 1;
+                                } else if (jn == -1 && in == nx) {
+                                    bufferTopRight[0] = -1;
+                                    countTR = 1;
+                                } else if (jn == ny && in == -1) {
+                                    bufferBottomLeft[0] = -1;
+                                    countBL = 1;
+                                } else if (jn == ny && in == nx) {
+                                    bufferBottomRight[0] = -1;
+                                    countBR = 1;
+                                } else if (jn == -1) {
+                                    bufferAbove[countA] = in;
+                                    countA += 1;
+                                } else if (jn == ny) {
+                                    bufferBelow[countB] = in;
+                                    countB += 1;
+                                } else if (in == -1) {
+                                    bufferLeft[countL] = jn;
+                                    countL += 1;
+                                } else if (in == nx) {
+                                    bufferRight[countR] = jn;
+                                    countR += 1;
+                                } else {
+                                    temp.x = in;
+                                    temp.y = jn;
+                                    toBeEvaled.push(temp);
+                                }
+                                
+                                neighbor->addToData(i, j, (short) 1);
+                            }
+                        }
+                    }
+                    if (neighbor->getData(i, j, tempShort) == 0) {
+                        //Push nodes with no contributing neighbors on queue
+                        temp.x = i;
+                        temp.y = j;
+                        que->push(temp);
+                    }
+                }
+            }
+            finished = true;
+
+            neighbor->transferPack(neighbourBuffers, neighbourCountArr);
+
+            for (int i = 0; i < neighbourCount; i++) {
+                if (*neighbourCountArr[i] > 0) {
+                    finished = false;
+                    break;
+                }
+            }
+
+            // added to prevent duplications in toBeEvaled list
+            bool isTopLeftAdded = false;
+            bool isTopRightAdded = false;
+            bool isBottomLeftAdded = false;
+            bool isBottomRightAdded = false;
+
+            if (neighbor->hasTopNeighbour()) {
+                for (k = 0; k < countA; k++) {
+                    temp.x = bufferAbove[k];
+                    temp.y = 0;
+                    toBeEvaled.push(temp);
+
+                    if (temp.x == 0)
+                        isTopLeftAdded = true;
+
+                    if (temp.x == nx - 1)
+                        isTopRightAdded = true;
+                }
+            }
+
+            if (neighbor->hasBottomNeighbour()) {
+                for (k = 0; k < countB; k++) {
+                    temp.x = bufferBelow[k];
+                    temp.y = ny - 1;
+                    toBeEvaled.push(temp);
+
+                    if (temp.x == 0)
+                        isBottomLeftAdded = true;
+
+                    if (temp.x == nx - 1)
+                        isBottomRightAdded = true;
+                }
+            }
+
+            if (neighbor->hasLeftNeighbour()) {
+                for (k = 0; k < countL; k++) {
+                    temp.x = 0;
+                    temp.y = bufferLeft[k];
+
+                    if (temp.y == 0 && !isTopLeftAdded) {
+                        toBeEvaled.push(temp);
+                        isTopLeftAdded = true;
+                    } else if (temp.y == ny - 1 && !isBottomLeftAdded) {
+                        toBeEvaled.push(temp);
+                        isBottomLeftAdded = true;
+                    } else if (temp.y != 0 && temp.y != ny - 1) {
+                        toBeEvaled.push(temp);
+                    }
+                }
+            }
+
+            if (neighbor->hasRightNeighbour()) {
+                for (k = 0; k < countR; k++) {
+                    temp.x = nx - 1;
+                    temp.y = bufferRight[k];
+
+                    if (temp.y == 0 && !isTopRightAdded) {
+                        toBeEvaled.push(temp);
+                        isTopRightAdded = true;
+                    } else if (temp.y == ny - 1 && !isBottomRightAdded) {
+                        toBeEvaled.push(temp);
+                        isBottomRightAdded = true;
+                    } else if (temp.y != 0 && temp.y != ny - 1) {
+                        toBeEvaled.push(temp);
+                    }
+                }
+            }
+
+            if (neighbor->hasTopLeftNeighbour()) {
+                if (countTL == 1 && !isTopLeftAdded) {
+                    temp.x = 0;
+                    temp.y = 0;
+                    toBeEvaled.push(temp);
+                    isTopLeftAdded = true;
+                }
+            }
+
+            if (neighbor->hasTopRightNeighbour()) {
+                if (countTR == 1 && !isTopRightAdded) {
+                    temp.x = nx - 1;
+                    temp.y = 0;
+                    toBeEvaled.push(temp);
+                    isTopRightAdded = true;
+                }
+            }
+
+            if (neighbor->hasBottomLeftNeighbour()) {
+                if (countBL == 1 && !isBottomLeftAdded) {
+                    temp.x = 0;
+                    temp.y = ny - 1;
+                    toBeEvaled.push(temp);
+                    isBottomLeftAdded = true;
+                }
+            }
+
+            if (neighbor->hasBottomRightNeighbour()) {
+                if (countBR == 1 && !isBottomRightAdded) {
+                    temp.x = nx - 1;
+                    temp.y = ny - 1;
+                    toBeEvaled.push(temp);
+                    isBottomRightAdded = true;
+                }
+            }
+            
+            finished = neighbor->ringTerm(finished);
+        }
+
+        if (neighbourBuffers) {
+            for (int i = 0; i < neighbourCount; i++) {
+                delete [] neighbourBuffers[i];
+            }
+            
+            delete[] neighbourBuffers;
+        }
+
+        if (neighbourCountArr) {
+            delete[] neighbourCountArr;
+        }
+    }
+}
+
+void initNeighborD8up(tdpartition* neighbor, tdpartition* flowData, queue<node> *que,
+        int nx, int ny, int useOutlets, int *outletsX, int *outletsY, long numOutlets) {
+    //  Function to initialize the neighbor partition either whole partition or just upstream of outlets
+    //  and place locations with no neighbors that drain to them on the que
+    int i, j, k, in, jn;
+    short tempShort;
+    //float tempFloat,angle,p;
+    node temp;
+    if (useOutlets != 1) {
+        //Count the contributing neighbors and put on queue
+        for (j = 0; j < ny; j++) {
+            for (i = 0; i < nx; i++) {
+                //Initialize neighbor count to no data, but then 0 if flow direction is defined
+                neighbor->setToNodata(i, j);
+                if (!flowData->isNodata(i, j)) {
+                    //Set contributing neighbors to 0 
+                    neighbor->setData(i, j, (short) 0);
+                    //Count number of contributing neighbors
+                    for (k = 1; k <= 8; k++) {
+                        in = i + d1[k];
+                        jn = j + d2[k];
+                        if (flowData->hasAccess(in, jn) && !flowData->isNodata(in, jn)) {
+                            flowData->getData(in, jn, tempShort);
+                            if (tempShort - k == 4 || tempShort - k == -4)
+                                neighbor->addToData(i, j, (short) 1);
+                        }
+                    }
+                    if (neighbor->getData(i, j, tempShort) == 0) {
+                        //Push nodes with no contributing neighbors on queue
+                        temp.x = i;
+                        temp.y = j;
+                        que->push(temp);
+                    }
+                }
+            }
+        }
+    }// If Outlets are specified
+    else {
+        //Put outlets on queue to be evalutated
+        queue<node> toBeEvaled;
+        for (i = 0; i < numOutlets; i++) {
+            flowData->globalToLocal(outletsX[i], outletsY[i], temp.x, temp.y);
+            if (flowData->isInPartition(temp.x, temp.y))
+                toBeEvaled.push(temp);
+        }
+
+        //TODO - this is 100% linear partition dependent.
+        //Create a packet for message passing
+        int *bufferAbove = NULL;
+        int *bufferBelow = NULL;
+        int *bufferLeft = NULL;
+        int *bufferRight = NULL;
+        int* bufferTopLeft = NULL;
+        int* bufferTopRight = NULL;
+        int* bufferBottomLeft = NULL;
+        int* bufferBottomRight = NULL;
+        int countA, countB, countL, countR, countTL, countTR, countBL, countBR;
+
+        int neighbourCount = neighbor->getNeighbourCount();
+        int ** neighbourBuffers = NULL;
+        int ** neighbourCountArr = NULL;
+
+        if (neighbourCount > 0) {
+            neighbourBuffers = new int*[neighbourCount];
+            neighbourCountArr = new int*[neighbourCount];
+
+            int neighbourIndex = 0;
+
+            if (neighbor->hasTopNeighbour()) {
+                bufferAbove = new int[nx];
+                if (!bufferAbove) {
+                    printf("Error allocating memory\n");
+                    MPI_Abort(MCW, 5);
+                }
+                neighbourBuffers[neighbourIndex] = bufferAbove;
+                neighbourCountArr[neighbourIndex] = &countA;
+
+                ++neighbourIndex;
+            }
+
+            if (neighbor->hasBottomNeighbour()) {
+                bufferBelow = new int[nx];
+                if (!bufferBelow) {
+                    printf("Error allocating memory\n");
+                    MPI_Abort(MCW, 5);
+                }
+                neighbourBuffers[neighbourIndex] = bufferBelow;
+                neighbourCountArr[neighbourIndex] = &countB;
+
+                ++neighbourIndex;
+            }
+
+            if (neighbor->hasLeftNeighbour()) {
+                bufferLeft = new int[ny];
+                if (!bufferLeft) {
+                    printf("Error allocating memory\n");
+                    MPI_Abort(MCW, 5);
+                }
+                neighbourBuffers[neighbourIndex] = bufferLeft;
+                neighbourCountArr[neighbourIndex] = &countL;
+
+                ++neighbourIndex;
+            }
+
+            if (neighbor->hasRightNeighbour()) {
+                bufferRight = new int[ny];
+                if (!bufferRight) {
+                    printf("Error allocating memory\n");
+                    MPI_Abort(MCW, 5);
+                }
+                neighbourBuffers[neighbourIndex] = bufferRight;
+                neighbourCountArr[neighbourIndex] = &countR;
+
+                ++neighbourIndex;
+            }
+
+            if (neighbor->hasTopLeftNeighbour()) {
+                bufferTopLeft = new int;
+                neighbourBuffers[neighbourIndex] = bufferTopLeft;
+                neighbourCountArr[neighbourIndex] = &countTL;
+
+                ++neighbourIndex;
+            }
+
+            if (neighbor->hasTopRightNeighbour()) {
+                bufferTopRight = new int;
+                neighbourBuffers[neighbourIndex] = bufferTopRight;
+                neighbourCountArr[neighbourIndex] = &countTR;
+
+                ++neighbourIndex;
+            }
+
+
+            if (neighbor->hasBottomLeftNeighbour()) {
+                bufferBottomLeft = new int;
+                neighbourBuffers[neighbourIndex] = bufferBottomLeft;
+                neighbourCountArr[neighbourIndex] = &countBL;
+
+                ++neighbourIndex;
+            }
+
+            if (neighbor->hasBottomRightNeighbour()) {
+                bufferBottomRight = new int;
+                neighbourBuffers[neighbourIndex] = bufferBottomRight;
+                neighbourCountArr[neighbourIndex] = &countBR;
+            }
+        }
+
+        bool finished = false;
+        while (!finished) {
+            countA = 0;
+            countB = 0;
+            countL = 0;
+            countR = 0;
+            countTL = 0;
+            countTR = 0;
+            countBL = 0;
+            countBR = 0;
+
+            while (!toBeEvaled.empty()) {
+                temp = toBeEvaled.front();
+                toBeEvaled.pop();
+                i = temp.x;
+                j = temp.y;
+                // Only evaluate if cell hasn't been evaled yet
+                if (neighbor->isNodata(i, j)) {
+                    //Set contributing neighbors to 0
+                    neighbor->setData(i, j, (short) 0);
+                    //Count number of contributing neighbors
+                    for (k = 1; k <= 8; k++) {
+                        in = i + d1[k];
+                        jn = j + d2[k];
+                        if (flowData->hasAccess(in, jn) && !flowData->isNodata(in, jn)) {
+                            flowData->getData(in, jn, tempShort);
+                            //  Does neighbor drain to me
+                            if (tempShort - k == 4 || tempShort - k == -4) {
+                                if (in == -1 && jn == -1) {
+                                    bufferTopLeft[0] = -1;
+                                    countTL = 1;
+                                } else if (jn == -1 && in == nx) {
+                                    bufferTopRight[0] = -1;
+                                    countTR = 1;
+                                } else if (jn == ny && in == -1) {
+                                    bufferBottomLeft[0] = -1;
+                                    countBL = 1;
+                                } else if (jn == ny && in == nx) {
+                                    bufferBottomRight[0] = -1;
+                                    countBR = 1;
+                                } else if (jn == -1) {
+                                    bufferAbove[countA] = in;
+                                    countA += 1;
+                                } else if (jn == ny) {
+                                    bufferBelow[countB] = in;
+                                    countB += 1;
+                                } else if (in == -1) {
+                                    bufferLeft[countL] = jn;
+                                    countL += 1;
+                                } else if (in == nx) {
+                                    bufferRight[countR] = jn;
+                                    countR += 1;
+                                } else {
+                                    temp.x = in;
+                                    temp.y = jn;
+                                    toBeEvaled.push(temp);
+                                }
+
+                                neighbor->addToData(i, j, (short) 1);
+                            }
+                        }
+                    }
+                    if (neighbor->getData(i, j, tempShort) == 0) {
+                        //Push nodes with no contributing neighbors on queue
+                        temp.x = i;
+                        temp.y = j;
+                        que->push(temp);
+                    }
+                }
+            }
+            finished = true;
+
+            neighbor->transferPack(neighbourBuffers, neighbourCountArr);
+
+            for (int i = 0; i < neighbourCount; i++) {
+                if (*neighbourCountArr[i] > 0) {
+                    finished = false;
+                    break;
+                }
+            }
+
+            bool isTopLeftAdded = false;
+            bool isTopRightAdded = false;
+            bool isBottomLeftAdded = false;
+            bool isBottomRightAdded = false;
+
+            if (neighbor->hasTopNeighbour()) {
+                for (k = 0; k < countA; k++) {
+                    temp.x = bufferAbove[k];
+                    temp.y = 0;
+                    toBeEvaled.push(temp);
+
+                    if (temp.x == 0)
+                        isTopLeftAdded = true;
+
+                    if (temp.x == nx - 1)
+                        isTopRightAdded = true;
+                }
+            }
+
+            if (neighbor->hasBottomNeighbour()) {
+                for (k = 0; k < countB; k++) {
+                    temp.x = bufferBelow[k];
+                    temp.y = ny - 1;
+                    toBeEvaled.push(temp);
+
+                    if (temp.x == 0)
+                        isBottomLeftAdded = true;
+
+                    if (temp.x == nx - 1)
+                        isBottomRightAdded = true;
+                }
+            }
+
+            if (neighbor->hasLeftNeighbour()) {
+                for (k = 0; k < countL; k++) {
+                    temp.x = 0;
+                    temp.y = bufferLeft[k];
+
+                    if (temp.y == 0 && !isTopLeftAdded) {
+                        toBeEvaled.push(temp);
+                        isTopLeftAdded = true;
+                    } else if (temp.y == ny - 1 && !isBottomLeftAdded) {
+                        toBeEvaled.push(temp);
+                        isBottomLeftAdded = true;
+                    } else if (temp.y != 0 && temp.y != ny - 1) {
+                        toBeEvaled.push(temp);
+                    }
+                }
+            }
+
+            if (neighbor->hasRightNeighbour()) {
+                for (k = 0; k < countR; k++) {
+                    temp.x = nx - 1;
+                    temp.y = bufferRight[k];
+
+                    if (temp.y == 0 && !isTopRightAdded) {
+                        toBeEvaled.push(temp);
+                        isTopRightAdded = true;
+                    } else if (temp.y == ny - 1 && !isBottomRightAdded) {
+                        toBeEvaled.push(temp);
+                        isBottomRightAdded = true;
+                    } else if (temp.y != 0 && temp.y != ny - 1) {
+                        toBeEvaled.push(temp);
+                    }
+                }
+            }
+
+            if (neighbor->hasTopLeftNeighbour()) {
+                if (countTL == 1 && !isTopLeftAdded) {
+                    temp.x = 0;
+                    temp.y = 0;
+                    toBeEvaled.push(temp);
+                    isTopLeftAdded = true;
+                }
+            }
+
+            if (neighbor->hasTopRightNeighbour()) {
+                if (countTR == 1 && !isTopRightAdded) {
+                    temp.x = nx - 1;
+                    temp.y = 0;
+                    toBeEvaled.push(temp);
+                    isTopRightAdded = true;
+                }
+            }
+
+            if (neighbor->hasBottomLeftNeighbour()) {
+                if (countBL == 1 && !isBottomLeftAdded) {
+                    temp.x = 0;
+                    temp.y = ny - 1;
+                    toBeEvaled.push(temp);
+                    isBottomLeftAdded = true;
+                }
+            }
+
+            if (neighbor->hasBottomRightNeighbour()) {
+                if (countBR == 1 && !isBottomRightAdded) {
+                    temp.x = nx - 1;
+                    temp.y = ny - 1;
+                    toBeEvaled.push(temp);
+                    isBottomRightAdded = true;
+                }
+            }
+
+            finished = neighbor->ringTerm(finished);
+        }
+
+        if (neighbourBuffers) {
+            for (int i = 0; i < neighbourCount; i++) {
+                delete [] neighbourBuffers[i];
+            }
+            
+            delete[] neighbourBuffers;
+        }
+
+        if (neighbourCountArr) {
+            delete[] neighbourCountArr;
+        }
+    }
 }
 
 //returns true iff cell at [nrow][ncol] points to cell at [row][col]
-bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData){
-	short d;
-	if(!dirData->hasAccess(ncol,nrow) || dirData->isNodata(ncol,nrow)){return false;}
-	d=dirData->getData(ncol,nrow,d);
-	if(nrow+d2[d]==row && ncol+d1[d]==col){
-		return true;
-	}
-	return false;
+
+bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData) {
+    short d;
+    if (!dirData->hasAccess(ncol, nrow) || dirData->isNodata(ncol, nrow)) {
+        return false;
+    }
+    d = dirData->getData(ncol, nrow, d);
+    if (nrow + d2[d] == row && ncol + d1[d] == col) {
+        return true;
+    }
+    return false;
 }
 
 //get extension from OGR vector file
 //get layername if not provided by user
-  char *getLayername(char *inputogrfile)
-{  
+
+char *getLayername(char *inputogrfile) {
     std::string filenamewithpath;
-	filenamewithpath=inputogrfile;
+    filenamewithpath = inputogrfile;
     size_t found = filenamewithpath.find_last_of("/\\");
     std::string filenamewithoutpath;
-	filenamewithoutpath=filenamewithpath.substr(found+1);
-	const char *filename = filenamewithoutpath.c_str(); // convert string to char
-    const char *ext; 
+    filenamewithoutpath = filenamewithpath.substr(found + 1);
+    const char *filename = filenamewithoutpath.c_str(); // convert string to char
+    const char *ext;
     ext = strrchr(filename, '.'); // getting extension
     char layername[MAXLN];
     size_t len = strlen(filename);
-	size_t len1 = strlen(ext);
-	memcpy(layername, filename, len-len1);
-	layername[len - len1] = 0; 
+    size_t len1 = strlen(ext);
+    memcpy(layername, filename, len - len1);
+    layername[len - len1] = 0;
     printf("%s ", layername);
     return layername;
 }
@@ -408,52 +833,50 @@ bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData){
 
 //get ogr driver index for writing shapefile
 
- const char *getOGRdrivername(char *datasrcnew){
-	const char *ogrextension_list[5] = {".sqlite",".shp",".json",".kml",".geojson"};  // extension list --can add more 
-	const char *ogrdriver_code[5] = {"SQLite","ESRI Shapefile","GeoJSON","KML","GeoJSON"};   //  code list -- can add more
-	size_t extension_num=5;
-	char *ext; 
-	int index = 1; //default is ESRI shapefile
-    ext = strrchr(datasrcnew, '.'); 
-	if(!ext){
-		
-		index=1; //  if no extension then writing will be ESRI shapefile
-	}
-	else
-	{
+const char *getOGRdrivername(char *datasrcnew) {
+    const char *ogrextension_list[5] = {".sqlite", ".shp", ".json", ".kml", ".geojson"}; // extension list --can add more 
+    const char *ogrdriver_code[5] = {"SQLite", "ESRI Shapefile", "GeoJSON", "KML", "GeoJSON"}; //  code list -- can add more
+    size_t extension_num = 5;
+    char *ext;
+    int index = 1; //default is ESRI shapefile
+    ext = strrchr(datasrcnew, '.');
+    if (!ext) {
 
-		//  convert to lower case for matching
-		for(int i = 0; ext[i]; i++){
-			ext[i] = tolower(ext[i]);
-		}
-		// if extension matches then set driver
-		for (size_t i = 0; i < extension_num; i++) {
-			if (strcmp(ext,ogrextension_list[i])==0) {
-				index=i; //get the index where extension of the outputfile matches with the extensionlist 
-				break;
-			}
-		}
-		
-	}
+        index = 1; //  if no extension then writing will be ESRI shapefile
+    } else {
 
-	 const  char *drivername;
-	 drivername=ogrdriver_code[index];
+        //  convert to lower case for matching
+        for (int i = 0; ext[i]; i++) {
+            ext[i] = tolower(ext[i]);
+        }
+        // if extension matches then set driver
+        for (size_t i = 0; i < extension_num; i++) {
+            if (strcmp(ext, ogrextension_list[i]) == 0) {
+                index = i; //get the index where extension of the outputfile matches with the extensionlist 
+                break;
+            }
+        }
+
+    }
+
+    const char *drivername;
+    drivername = ogrdriver_code[index];
     return drivername;
-  }
-
-void getlayerfail(OGRDataSourceH hDS1,char * outletsds, int outletslyr){
-int nlayer = OGR_DS_GetLayerCount(hDS1);
-const char * lname;
-printf("Error opening datasource layer in %s\n",outletsds);
-printf("This datasource contains the following %d layers.\n",nlayer);
-for(int i=0;i<nlayer;i++){
-	OGRLayerH hLayer1 = OGR_DS_GetLayer(hDS1,i);
-	lname=OGR_L_GetName(hLayer1);
-	OGRwkbGeometryType gtype;
-	gtype=OGR_L_GetGeomType(hLayer1);
-	const char *gtype_name[8] = {"Unknown","Point","LineString","Polygon","MultiPoint","MultiLineString","MultiPolygon","GeometryCollection"};  // extension list --can add more 
-	printf("%d: %s, %s\n",i,lname,gtype_name[gtype]);
-	// TODO print interpretive name
 }
-exit(1);
+
+void getlayerfail(OGRDataSourceH hDS1, char * outletsds, int outletslyr) {
+    int nlayer = OGR_DS_GetLayerCount(hDS1);
+    const char * lname;
+    printf("Error opening datasource layer in %s\n", outletsds);
+    printf("This datasource contains the following %d layers.\n", nlayer);
+    for (int i = 0; i < nlayer; i++) {
+        OGRLayerH hLayer1 = OGR_DS_GetLayer(hDS1, i);
+        lname = OGR_L_GetName(hLayer1);
+        OGRwkbGeometryType gtype;
+        gtype = OGR_L_GetGeomType(hLayer1);
+        const char *gtype_name[8] = {"Unknown", "Point", "LineString", "Polygon", "MultiPoint", "MultiLineString", "MultiPolygon", "GeometryCollection"}; // extension list --can add more 
+        printf("%d: %s, %s\n", i, lname, gtype_name[gtype]);
+        // TODO print interpretive name
+    }
+    exit(1);
 }
