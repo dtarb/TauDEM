@@ -314,6 +314,8 @@ void linearpart<datatype>::init(long totalx, long totaly, double dx_in, double d
     neighbourRanks = NULL;
     tmpBorderPointers = NULL;
     borderLengths = NULL;
+    borderTypes = NULL;
+    tmpIntBorderPointers = NULL;
 
     this->totalx = totalx;
     this->totaly = totaly;
