@@ -124,10 +124,10 @@ void createStreamNetShapefile(char *streamnetsrc,char *streamnetlyr,OGRSpatialRe
 	 if(strlen(streamnetlyr)==0){
 		char *streamnetlayername;
 		streamnetlayername=getLayername(streamnetsrc); // get layer name if the layer name is not provided
-	    hLayer1= OGR_DS_CreateLayer( hDS1,streamnetlayername,hSRSraster, wkbMultiLineString, NULL );} 
+	    hLayer1= OGR_DS_CreateLayer( hDS1,streamnetlayername,hSRSraster, wkbLineString, NULL );} 
 
 	 else {
-		 hLayer1= OGR_DS_CreateLayer( hDS1,streamnetlyr,hSRSraster, wkbMultiLineString, NULL ); }// provide same spatial reference as raster in streamnetshp file
+		 hLayer1= OGR_DS_CreateLayer( hDS1,streamnetlyr,hSRSraster, wkbLineString, NULL ); }// provide same spatial reference as raster in streamnetshp file
     if( hLayer1 == NULL )
     {
         printf( "warning: Layer creation failed.\n" );
@@ -337,14 +337,14 @@ int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *poin
 
     //creating geometry using OGR
 
-	geometry = OGR_G_CreateGeometry( wkbMultiLineString );
+	//geometry = OGR_G_CreateGeometry( wkbMultiLineString );// want Linestring
 	line = OGR_G_CreateGeometry( wkbLineString );
-    for(j=0; j<(np-1); j++) {
+    for(j=0; j<np; j++) {
     OGR_G_AddPoint(line, mypointx[j], mypointy[j], 0);
-	OGR_G_AddPoint(line, mypointx[j+1], mypointy[j+1], 0);
+	//OGR_G_AddPoint(line, mypointx[j+1], mypointy[j+1], 0); // it repates the coordinate and increase the file size 
 	}
-	OGR_G_AddGeometryDirectly(geometry, line);
-    OGR_F_SetGeometryDirectly(hFeature1, geometry); // set geometry to feature
+	//OGR_G_AddGeometryDirectly(line, line); // don't need 
+    OGR_F_SetGeometryDirectly(hFeature1,line); // set geometry to feature
     OGR_L_CreateFeature( hLayer1, hFeature1 ); //adding feature 
 	
 	delete[] mypointx;
