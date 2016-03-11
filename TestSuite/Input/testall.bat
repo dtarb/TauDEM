@@ -1,10 +1,10 @@
-cd D:\Scratch\TestSuite\Input
+Rem cd D:\Scratch\TestSuite\Input
 Rem The 'TDIR' needs to be reset to the directory where the TauDEM executables exist on your machine
-Set TDIR=D:\Dropbox\Projects\TauDEM\Programming\TauDEM5GDAL\Taudem5PCVS2010\x64\Release
+Set TDIR=D:\Dropbox\Projects\TauDEM\Taudemdev\Taudem5PCVS2010\x64\Release
 
 set MDIR=C:\Program Files\Microsoft HPC Pack 2012\Bin\
 set GDIR=C:\Program Files\GDAL\
-rem set path=%MDIR%;%TDIR%;%GDIR%
+set path=%MDIR%;%TDIR%;%GDIR%
 
 Rem  Basic grid analysis
 cd Base
