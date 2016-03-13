@@ -124,10 +124,10 @@ void createStreamNetShapefile(char *streamnetsrc,char *streamnetlyr,OGRSpatialRe
 	 if(strlen(streamnetlyr)==0){
 		char *streamnetlayername;
 		streamnetlayername=getLayername(streamnetsrc); // get layer name if the layer name is not provided
-	    hLayer1= OGR_DS_CreateLayer( hDS1,streamnetlayername,hSRSraster, wkbMultiLineString, NULL );} 
+	    hLayer1= OGR_DS_CreateLayer( hDS1,streamnetlayername,hSRSraster, wkbLineString, NULL );} 
 
 	 else {
-		 hLayer1= OGR_DS_CreateLayer( hDS1,streamnetlyr,hSRSraster, wkbMultiLineString, NULL ); }// provide same spatial reference as raster in streamnetshp file
+		 hLayer1= OGR_DS_CreateLayer( hDS1,streamnetlyr,hSRSraster, wkbLineString, NULL ); }// provide same spatial reference as raster in streamnetshp file
     if( hLayer1 == NULL )
     {
         printf( "warning: Layer creation failed.\n" );
@@ -221,7 +221,6 @@ void createStreamNetShapefile(char *streamnetsrc,char *streamnetlyr,OGRSpatialRe
 int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *pointx, double *pointy, long np,tiffIO &obj)
 {
 // Function to write stream network shapefile
-
 	int nVertices;
 	if (np < 2) {//singleton - will be duplicated
 		nVertices = 2;
@@ -229,17 +228,13 @@ int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *poin
 	else {
 		nVertices = np;
 	}
-	 
 	double *mypointx = new double[nVertices];
 	double *mypointy = new double[nVertices];
-	
 	double x,y,length,glength,x1,y1,xlast,ylast,usarea,dsarea,dslast,dl,drop,slope;
 	int istart,iend,j;
 
 	istart=cnet[1];  //  start coord for first link
 	iend=cnet[2];//  end coord for first link
-
-
 	x1=pointx[0];
 	y1=pointy[0];
 	length=0.;
@@ -249,8 +244,6 @@ int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *poin
 	dslast=usarea;
 	dsarea=usarea;
 	long prt = 0;
-	//const char *pszDriverName = "ESRI Shapefile";
-    
 
 	for(j=0; j<np; j++)  //  loop over points
 	{
@@ -298,7 +291,6 @@ int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *poin
 		  glength=sqrt((x-x1)*(x-x1)+(y-y1)*(y-y1));
 		}
 
-
 	// ensure at least two points (assuming have at least 1) by repeating singleton
 	if (np < 2) {
 		mypointx[1] = mypointx[0];
@@ -311,9 +303,6 @@ int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *poin
 	//	mypointx,						// X values
 	//	mypointy,						// Y values
 	//	NULL);							// Z values
-
-	 
-
 
 	hFDefn1 = OGR_L_GetLayerDefn( hLayer1 );
 	hFeature1 = OGR_F_Create( hFDefn1 );
@@ -337,19 +326,15 @@ int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *poin
 
     //creating geometry using OGR
 
-	geometry = OGR_G_CreateGeometry( wkbMultiLineString );
 	line = OGR_G_CreateGeometry( wkbLineString );
-    for(j=0; j<(np-1); j++) {
-    OGR_G_AddPoint(line, mypointx[j], mypointy[j], 0);
-	OGR_G_AddPoint(line, mypointx[j+1], mypointy[j+1], 0);
+    for(j=0; j<np; j++) {
+		OGR_G_AddPoint(line, mypointx[j], mypointy[j], 0);
 	}
-	OGR_G_AddGeometryDirectly(geometry, line);
-    OGR_F_SetGeometryDirectly(hFeature1, geometry); // set geometry to feature
+	OGR_F_SetGeometryDirectly(hFeature1,line); // set geometry to feature
     OGR_L_CreateFeature( hLayer1, hFeature1 ); //adding feature 
 	
 	delete[] mypointx;
     delete[] mypointy;
-
 	
 return 0;
 }
