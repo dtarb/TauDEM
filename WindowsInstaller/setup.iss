@@ -24,7 +24,7 @@
 ; TauDEMArcGIS/
 
 #define MyAppName "TauDEM"
-#define MyAppVersion "5.3.2"
+#define MyAppVersion "5.3.3"
 #define MyAppPublisher "Utah State University"
 #define MyAppURL "http://hydrology.usu.edu/taudem/taudem5/index.html"
 
@@ -127,7 +127,7 @@ var notes_string: string;
 begin
   notes_string := 'NOTES:'#13'1. The redistributables listed above will only be installed if they are not already installed.'#13 +
       '2. You will need to accept the license agreements associated with this software and click through several screens.'#13 +
-      '3. When prompted to Choose Setup Type for GDAL, choose “Typical”.'#13 +
+      '3. When prompted to Choose Setup Type for GDAL, choose "Typical".'#13 +
       '4. The installer will also add firewall exceptions to allow TauDEM programs to run. These allow MPI interprocess communication used in the parallel computations.  This is communication within your computer and not over any external network.'#13 +
       '5. The installer will also add the following path entries:' +
       'C:\Program Files\Microsoft HPC Pack 2012\Bin\;C:\GDAL;C:\Program Files\GDAL;C:\Program Files\TauDEM\TauDEM5Exe'; 
@@ -136,14 +136,14 @@ begin
   begin
     UserPage := CreateInputQueryPage(wpWelcome,
       'The following programs will be installed', '',
-      'TauDEM version 5.3.2, GDAL 1.9.2 (Python 2.7), GDAL 111 (MSVC 2010) for 64 bit Winodws PC, Microsoft Visual C++ 2010 SP1 Redistributable Package (x86), ' +
+      'TauDEM version 5.3.3, GDAL 1.9.2 (Python 2.7), GDAL 111 (MSVC 2010) for 64 bit Winodws PC, Microsoft Visual C++ 2010 SP1 Redistributable Package (x86), ' +
       'Microsoft Visual C++ 2010 SP1 Redistributable Package (x64), Microsoft HPC Pack 2012 MS-MPI Redistributable Package'#13#13 +  notes_string);   
   end
   else
     begin
       UserPage := CreateInputQueryPage(wpWelcome,
       'The following programs will be installed', '',
-      'TauDEM version 5.3.2, GDAL 1.9.2 (Python 2.7), GDAL 111 (MSVC 2010) for 32 bit Windows PC, Microsoft Visual C++ 2010 SP1 Redistributable Package (x86), ' + 
+      'TauDEM version 5.3.3, GDAL 1.9.2 (Python 2.7), GDAL 111 (MSVC 2010) for 32 bit Windows PC, Microsoft Visual C++ 2010 SP1 Redistributable Package (x86), ' + 
       'Microsoft HPC Pack 2012 MS-MPI Redistributable Package'#13#13 +  notes_string);
     end
 end;
