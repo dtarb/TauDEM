@@ -308,8 +308,10 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 			if (datatype == SHORT_TYPE)cellbytes=2;
 			double fileGB=(double)cellbytes*(double)totalX*(double)totalY/1000000000.0;  // This purposely neglects the lower significant digits to overvalue GB to allow space for header information in the file
 			if(fileGB > 4.0){
-				if(index==0 || index==6)papszOptions = CSLSetNameValue( papszOptions, "BIGTIFF", "YES");
-				printf("Setting BIGTIFF, File: %s, Anticipated size (GB):%.2f\n", filename,fileGB);
+				if(index==0 || index==6){
+					papszOptions = CSLSetNameValue( papszOptions, "BIGTIFF", "YES");
+					printf("Setting BIGTIFF, File: %s, Anticipated size (GB):%.2f\n", filename,fileGB);
+				}
 			}
 
 			GDALDataType eBDataType;
