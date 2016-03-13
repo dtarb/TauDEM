@@ -9,7 +9,7 @@ set path=%MDIR%;%TDIR%;%GDIR%
 Rem  Basic grid analysis
 cd Base
 mpiexec -np 3 PitRemove logan.tif
-mpiexec -np 3 PitRemove -z logan.tif -fel loganfel4.tif -4way
+mpiexec -np 3 PitRemove -z logan.tif -fel loganfel4.tiff -4way
 mpiexec -np 3 PitRemove -z logan.tif -fel loganfeldm.tif -depmask logpitmask.tif
 mpiexec -np 3 PitRemove -z logan.tif -fel loganfeldm4.tif -depmask logpitmask.tif -4way
 mpiexec -n 5 D8Flowdir -p loganp.tif -sd8 logansd8.tif -fel loganfel.tif
@@ -44,7 +44,7 @@ mpiexec -n 8 Streamnet -fel loganfel.tif -p loganp.tif -ad8 loganad8.tif -src lo
 mpiexec -n 3 LengthArea -plen loganplen.tif -ad8 loganad8.tif -ss loganlass.tif -par 0.03 1.3
 
 Rem Specialized grid analysis
-mpiexec -n 3 SlopeAreaRatio -slp loganslp.tif -sca logansca.tif -sar logansar.tif
+mpiexec -n 3 SlopeAreaRatio -slp loganslp.tif -sca logansca.tif -sar logansar.tiff
 mpiexec -np 7 D8HDisttoStrm -p loganp.tif -src loganad8.tif -dist logandist1.tif -thresh 200 
 mpiexec -np 5 D8HDisttoStrm -p loganp.tif -src logansrc.tif -dist logandist.tif 
 
@@ -169,8 +169,8 @@ mpiexec -n 5 Gridnet -p enogeop.tif -plen enogeoplen1.tif -tlen enogeotlen1.tif 
 mpiexec -n 7 Gridnet -p enogeop.tif -plen enogeoplen2.tif -tlen enogeotlen2.tif -gord enogeogord2.tif -o Outlets.shp 
 
 Rem stream network peuker douglas
-mpiexec -np 7 PeukerDouglas -fel enogeofel.tif -ss enogeoss.tif
-mpiexec -n 4 Aread8 -p enogeop.tif -o Outlets.shp -ad8 enogeossa.tif -wg enogeoss.tif
+mpiexec -np 7 PeukerDouglas -fel enogeofel.tif -ss enogeoss.tiff
+mpiexec -n 4 Aread8 -p enogeop.tif -o Outlets.shp -ad8 enogeossa.tif -wg enogeoss.tiff
 mpiexec -n 4 Dropanalysis -p enogeop.tif -fel enogeofel.tif -ad8 enogeoad8.tif -ssa enogeossa.tif -drp enogeodrp.txt -o Outlets.shp -par 5 500 10 0 
 mpiexec -n 5 Threshold -ssa enogeossa.tif -src enogeosrc.tif -thresh 180
 mpiexec -n 5 Streamnet -fel enogeofel.tif -p enogeop.tif -ad8 enogeoad8.tif -src enogeosrc.tif -ord enogeoord3.tif -tree enogeotree.dat -coord enogeocoord.dat -net enogeonet.shp -w enogeow.tif -o Outlets.shp

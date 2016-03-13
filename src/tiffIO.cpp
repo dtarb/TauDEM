@@ -251,10 +251,10 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 	fflush(stdout);
 	char **papszMetadata;
 	char **papszOptions = NULL;
-	const char *extension_list[5] = {".tif",".img",".sdat",".bil",".bin"};  // extension list --can add more 
-	const char *driver_code[5] = {"GTiff","HFA","SAGA","EHdr","ENVI"};   //  code list -- can add more
-	const char *compression_meth[5] = {"LZW","RLE"," "," "," "};   //  code list -- can add more
-	size_t extension_num=5;
+	const char *extension_list[6] = {".tif",".img",".sdat",".bil",".bin",".tiff"};  // extension list --can add more 
+	const char *driver_code[6] = {"GTiff","HFA","SAGA","EHdr","ENVI","GTiff"};   //  code list -- can add more
+	const char *compression_meth[6] = {"LZW","YES"," "," "," "," "};   //  code list -- can add more
+	size_t extension_num=6;
 	char *ext; 
 	int index = -1; 
 
@@ -293,20 +293,34 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 	if (rank == 0) {
 		//if (isFileInititialized == 0) {
 			hDriver = GDALGetDriverByName(driver_code[index]);
-			papszOptions = CSLSetNameValue( papszOptions, "COMPRESS", compression_meth[index]); //
-		
 		    if (hDriver == NULL) {
 		        printf("driver is not available\n");
 				MPI_Abort(MPI_COMM_WORLD, 22);
 			}
+			// Set options
+			if(index==0){  // for .tif files
+				papszOptions = CSLSetNameValue( papszOptions, "COMPRESS", compression_meth[index]); 
+			}
+			else if(index==1){ // .img files
+				papszOptions = CSLSetNameValue( papszOptions, "COMPRESSED", compression_meth[index]);
+			}
+			int cellbytes=4;	
+			if (datatype == SHORT_TYPE)cellbytes=2;
+			double fileGB=(double)cellbytes*(double)totalX*(double)totalY/1000000000.0;  // This purposely neglects the lower significant digits to overvalue GB to allow space for header information in the file
+			if(fileGB > 4.0){
+				if(index==0 || index==6)papszOptions = CSLSetNameValue( papszOptions, "BIGTIFF", "YES");
+				printf("Setting BIGTIFF, File: %s, Anticipated size (GB):%.2f\n", filename,fileGB);
+			}
 
 			GDALDataType eBDataType;
-		if (datatype == FLOAT_TYPE)
-			eBDataType = GDT_Float32;
-		else if (datatype == SHORT_TYPE)
-			eBDataType = GDT_Int16;
-		else if (datatype == LONG_TYPE)
-			eBDataType = GDT_Int32;
+			if (datatype == FLOAT_TYPE)
+				eBDataType = GDT_Float32;
+			else if (datatype == SHORT_TYPE)
+			{
+				eBDataType = GDT_Int16;
+			}
+			else if (datatype == LONG_TYPE)
+				eBDataType = GDT_Int32;
 	        
    
 			fh = GDALCreate(hDriver, filename, totalX , totalY, 1, eBDataType, papszOptions);
