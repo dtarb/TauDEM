@@ -298,17 +298,17 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 				MPI_Abort(MPI_COMM_WORLD, 22);
 			}
 			// Set options
-			if(index==0){  // for .tif files
+			if(index==0){  // for .tif files.  Refer to http://www.gdal.org/frmt_gtiff.html for GTiff options.
 				papszOptions = CSLSetNameValue( papszOptions, "COMPRESS", compression_meth[index]); 
 			}
-			else if(index==1){ // .img files
+			else if(index==1){ // .img files.  Refer to http://www.gdal.org/frmt_hfa.html where COMPRESSED = YES are create options for ERDAS .img files
 				papszOptions = CSLSetNameValue( papszOptions, "COMPRESSED", compression_meth[index]);
 			}
 			int cellbytes=4;	
 			if (datatype == SHORT_TYPE)cellbytes=2;
 			double fileGB=(double)cellbytes*(double)totalX*(double)totalY/1000000000.0;  // This purposely neglects the lower significant digits to overvalue GB to allow space for header information in the file
 			if(fileGB > 4.0){
-				if(index==0 || index==6){
+				if(index==0 || index==6){  // .tiff files.  Need to explicity indicate BIGTIFF.  See http://www.gdal.org/frmt_gtiff.html.
 					papszOptions = CSLSetNameValue( papszOptions, "BIGTIFF", "YES");
 					printf("Setting BIGTIFF, File: %s, Anticipated size (GB):%.2f\n", filename,fileGB);
 				}
