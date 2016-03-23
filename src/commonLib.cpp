@@ -151,78 +151,107 @@ void initNeighborDinfup(tdpartition* neighbor, tdpartition* flowData, queue<node
         int* bufferTopRight = NULL;
         int* bufferBottomLeft = NULL;
         int* bufferBottomRight = NULL;
-        int countA, countB, countL, countR, countTL, countTR, countBL, countBR;
+        int* countA = new int;
+        int* countB = new int;
+        int* countL = new int;
+        int* countR = new int;
+        int* countTL = new int;
+        int* countTR = new int;
+        int* countBL = new int;
+        int* countBR = new int;
+        int *bufferAboveVisited = NULL;
+        int *bufferBelowVisited = NULL;
+        int *bufferLeftVisited = NULL;
+        int *bufferRightVisited = NULL;
+        int* bufferTopLeftVisited = NULL;
+        int* bufferTopRightVisited = NULL;
+        int* bufferBottomLeftVisited = NULL;
+        int* bufferBottomRightVisited = NULL;
 
         int neighbourCount = neighbor->getNeighbourCount();
         int ** neighbourBuffers = NULL;
         int ** neighbourCountArr = NULL;
+        int ** neighbourBuffersVisited = NULL;
 
         if (neighbourCount > 0) {
             neighbourBuffers = new int*[neighbourCount];
             neighbourCountArr = new int*[neighbourCount];
+            neighbourBuffersVisited = new int*[neighbourCount];
 
             int neighbourIndex = 0;
 
             if (neighbor->hasTopNeighbour()) {
                 bufferAbove = new int[nx];
-                if (!bufferAbove) {
+                bufferAboveVisited = new int[nx];
+                if (!bufferAbove || !bufferAboveVisited) {
                     printf("Error allocating memory\n");
                     MPI_Abort(MCW, 5);
                 }
                 neighbourBuffers[neighbourIndex] = bufferAbove;
-                neighbourCountArr[neighbourIndex] = &countA;
+                neighbourCountArr[neighbourIndex] = countA;
+                neighbourBuffersVisited[neighbourIndex] = bufferAboveVisited;
 
                 ++neighbourIndex;
             }
 
             if (neighbor->hasBottomNeighbour()) {
                 bufferBelow = new int[nx];
-                if (!bufferBelow) {
+                bufferBelowVisited = new int[nx];
+                if (!bufferBelow || !bufferBelowVisited) {
                     printf("Error allocating memory\n");
                     MPI_Abort(MCW, 5);
                 }
                 neighbourBuffers[neighbourIndex] = bufferBelow;
-                neighbourCountArr[neighbourIndex] = &countB;
+                neighbourCountArr[neighbourIndex] = countB;
+                neighbourBuffersVisited[neighbourIndex] = bufferBelowVisited;
 
                 ++neighbourIndex;
             }
 
             if (neighbor->hasLeftNeighbour()) {
                 bufferLeft = new int[ny];
-                if (!bufferLeft) {
+                bufferLeftVisited = new int[ny];
+                if (!bufferLeft || !bufferLeftVisited) {
                     printf("Error allocating memory\n");
                     MPI_Abort(MCW, 5);
                 }
                 neighbourBuffers[neighbourIndex] = bufferLeft;
-                neighbourCountArr[neighbourIndex] = &countL;
+                neighbourCountArr[neighbourIndex] = countL;
+                neighbourBuffersVisited[neighbourIndex] = bufferLeftVisited;
 
                 ++neighbourIndex;
             }
 
             if (neighbor->hasRightNeighbour()) {
                 bufferRight = new int[ny];
-                if (!bufferRight) {
+                bufferRightVisited = new int[ny];
+                if (!bufferRight || !bufferRightVisited) {
                     printf("Error allocating memory\n");
                     MPI_Abort(MCW, 5);
                 }
                 neighbourBuffers[neighbourIndex] = bufferRight;
-                neighbourCountArr[neighbourIndex] = &countR;
+                neighbourCountArr[neighbourIndex] = countR;
+                neighbourBuffersVisited[neighbourIndex] = bufferRightVisited;
 
                 ++neighbourIndex;
             }
 
             if (neighbor->hasTopLeftNeighbour()) {
                 bufferTopLeft = new int;
+                bufferTopLeftVisited = new int;
                 neighbourBuffers[neighbourIndex] = bufferTopLeft;
-                neighbourCountArr[neighbourIndex] = &countTL;
+                neighbourCountArr[neighbourIndex] = countTL;
+                neighbourBuffersVisited[neighbourIndex] = bufferTopLeftVisited;
 
                 ++neighbourIndex;
             }
 
             if (neighbor->hasTopRightNeighbour()) {
                 bufferTopRight = new int;
+                bufferTopRightVisited = new int;
                 neighbourBuffers[neighbourIndex] = bufferTopRight;
-                neighbourCountArr[neighbourIndex] = &countTR;
+                neighbourCountArr[neighbourIndex] = countTR;
+                neighbourBuffersVisited[neighbourIndex] = bufferTopRightVisited;
 
                 ++neighbourIndex;
             }
@@ -230,29 +259,57 @@ void initNeighborDinfup(tdpartition* neighbor, tdpartition* flowData, queue<node
 
             if (neighbor->hasBottomLeftNeighbour()) {
                 bufferBottomLeft = new int;
+                bufferBottomLeftVisited = new int;
                 neighbourBuffers[neighbourIndex] = bufferBottomLeft;
-                neighbourCountArr[neighbourIndex] = &countBL;
+                neighbourCountArr[neighbourIndex] = countBL;
+                neighbourBuffersVisited[neighbourIndex] = bufferBottomLeftVisited;
 
                 ++neighbourIndex;
             }
 
             if (neighbor->hasBottomRightNeighbour()) {
                 bufferBottomRight = new int;
+                bufferBottomRightVisited = new int;
                 neighbourBuffers[neighbourIndex] = bufferBottomRight;
-                neighbourCountArr[neighbourIndex] = &countBR;
+                neighbourCountArr[neighbourIndex] = countBR;
+                neighbourBuffersVisited[neighbourIndex] = bufferBottomRightVisited;
             }
         }
 
         bool finished = false;
         while (!finished) {
-            countA = 0;
-            countB = 0;
-            countL = 0;
-            countR = 0;
-            countTL = 0;
-            countTR = 0;
-            countBL = 0;
-            countBR = 0;
+            *countA = 0;
+            *countB = 0;
+            *countL = 0;
+            *countR = 0;
+            *countTL = 0;
+            *countTR = 0;
+            *countBL = 0;
+            *countBR = 0;
+
+            if (bufferAboveVisited)
+                memset(bufferAboveVisited, 0, sizeof (int) * nx);
+
+            if (bufferBelowVisited)
+                memset(bufferBelowVisited, 0, sizeof (int) * nx);
+
+            if (bufferLeftVisited)
+                memset(bufferLeftVisited, 0, sizeof (int) * ny);
+
+            if (bufferRightVisited)
+                memset(bufferRightVisited, 0, sizeof (int) * ny);
+
+            if (bufferTopLeftVisited)
+                *bufferTopLeftVisited = 0;
+
+            if (bufferTopRightVisited)
+                *bufferTopRightVisited = 0;
+
+            if (bufferBottomLeftVisited)
+                *bufferBottomLeftVisited = 0;
+
+            if (bufferBottomRightVisited)
+                *bufferBottomRightVisited = 0;
 
             while (!toBeEvaled.empty()) {
                 temp = toBeEvaled.front();
@@ -273,35 +330,59 @@ void initNeighborDinfup(tdpartition* neighbor, tdpartition* flowData, queue<node
                             p = prop(angle, (k + 4) % 8, tempdxc, tempdyc);
                             if (p > 0.) {
                                 if (in == -1 && jn == -1) {
-                                    bufferTopLeft[0] = -1;
-                                    countTL = 1;
+                                    if (*bufferTopLeftVisited == 0) {
+                                        bufferTopLeft[0] = -1;
+                                        *countTL = 1;
+                                        *bufferTopLeftVisited = 1;
+                                    }
                                 } else if (jn == -1 && in == nx) {
-                                    bufferTopRight[0] = -1;
-                                    countTR = 1;
+                                    if (*bufferTopRightVisited == 0) {
+                                        bufferTopRight[0] = -1;
+                                        *countTR = 1;
+                                        *bufferTopRightVisited = 1;
+                                    }
                                 } else if (jn == ny && in == -1) {
-                                    bufferBottomLeft[0] = -1;
-                                    countBL = 1;
+                                    if (*bufferBottomLeftVisited == 0) {
+                                        bufferBottomLeft[0] = -1;
+                                        *countBL = 1;
+                                        *bufferBottomLeftVisited = 1;
+                                    }
                                 } else if (jn == ny && in == nx) {
-                                    bufferBottomRight[0] = -1;
-                                    countBR = 1;
+                                    if (*bufferBottomRightVisited == 0) {
+                                        bufferBottomRight[0] = -1;
+                                        *countBR = 1;
+                                        *bufferBottomRightVisited = 1;
+                                    }
                                 } else if (jn == -1) {
-                                    bufferAbove[countA] = in;
-                                    countA += 1;
+                                    if (bufferAboveVisited[in] == 0) {
+                                        bufferAbove[*countA] = in;
+                                        *countA = *countA + 1;
+                                        bufferAboveVisited[in] = 1;
+                                    }
                                 } else if (jn == ny) {
-                                    bufferBelow[countB] = in;
-                                    countB += 1;
+                                    if (bufferBelowVisited[in] == 0) {
+                                        bufferBelow[*countB] = in;
+                                        *countB = *countB + 1;
+                                        bufferBelowVisited[in] = 1;
+                                    }
                                 } else if (in == -1) {
-                                    bufferLeft[countL] = jn;
-                                    countL += 1;
+                                    if (bufferLeftVisited[jn] == 0) {
+                                        bufferLeft[*countL] = jn;
+                                        *countL = *countL + 1;
+                                        bufferLeftVisited[jn] = 1;
+                                    }
                                 } else if (in == nx) {
-                                    bufferRight[countR] = jn;
-                                    countR += 1;
+                                    if (bufferRightVisited[jn] == 0) {
+                                        bufferRight[*countR] = jn;
+                                        *countR = *countR + 1;
+                                        bufferRightVisited[jn] = 1;
+                                    }
                                 } else {
                                     temp.x = in;
                                     temp.y = jn;
                                     toBeEvaled.push(temp);
                                 }
-                                
+
                                 neighbor->addToData(i, j, (short) 1);
                             }
                         }
@@ -314,6 +395,7 @@ void initNeighborDinfup(tdpartition* neighbor, tdpartition* flowData, queue<node
                     }
                 }
             }
+
             finished = true;
 
             neighbor->transferPack(neighbourBuffers, neighbourCountArr);
@@ -332,7 +414,7 @@ void initNeighborDinfup(tdpartition* neighbor, tdpartition* flowData, queue<node
             bool isBottomRightAdded = false;
 
             if (neighbor->hasTopNeighbour()) {
-                for (k = 0; k < countA; k++) {
+                for (int k = 0; k < *countA; k++) {
                     temp.x = bufferAbove[k];
                     temp.y = 0;
                     toBeEvaled.push(temp);
@@ -346,7 +428,8 @@ void initNeighborDinfup(tdpartition* neighbor, tdpartition* flowData, queue<node
             }
 
             if (neighbor->hasBottomNeighbour()) {
-                for (k = 0; k < countB; k++) {
+
+                for (int k = 0; k < *countB; k++) {
                     temp.x = bufferBelow[k];
                     temp.y = ny - 1;
                     toBeEvaled.push(temp);
@@ -358,9 +441,9 @@ void initNeighborDinfup(tdpartition* neighbor, tdpartition* flowData, queue<node
                         isBottomRightAdded = true;
                 }
             }
-
+            
             if (neighbor->hasLeftNeighbour()) {
-                for (k = 0; k < countL; k++) {
+                for (int k = 0; k < *countL; k++) {
                     temp.x = 0;
                     temp.y = bufferLeft[k];
 
@@ -377,7 +460,7 @@ void initNeighborDinfup(tdpartition* neighbor, tdpartition* flowData, queue<node
             }
 
             if (neighbor->hasRightNeighbour()) {
-                for (k = 0; k < countR; k++) {
+                for (int k = 0; k < *countR; k++) {
                     temp.x = nx - 1;
                     temp.y = bufferRight[k];
 
@@ -394,7 +477,7 @@ void initNeighborDinfup(tdpartition* neighbor, tdpartition* flowData, queue<node
             }
 
             if (neighbor->hasTopLeftNeighbour()) {
-                if (countTL == 1 && !isTopLeftAdded) {
+                if (*countTL == 1 && !isTopLeftAdded) {
                     temp.x = 0;
                     temp.y = 0;
                     toBeEvaled.push(temp);
@@ -403,7 +486,7 @@ void initNeighborDinfup(tdpartition* neighbor, tdpartition* flowData, queue<node
             }
 
             if (neighbor->hasTopRightNeighbour()) {
-                if (countTR == 1 && !isTopRightAdded) {
+                if (*countTR == 1 && !isTopRightAdded) {
                     temp.x = nx - 1;
                     temp.y = 0;
                     toBeEvaled.push(temp);
@@ -412,7 +495,7 @@ void initNeighborDinfup(tdpartition* neighbor, tdpartition* flowData, queue<node
             }
 
             if (neighbor->hasBottomLeftNeighbour()) {
-                if (countBL == 1 && !isBottomLeftAdded) {
+                if (*countBL == 1 && !isBottomLeftAdded) {
                     temp.x = 0;
                     temp.y = ny - 1;
                     toBeEvaled.push(temp);
@@ -421,14 +504,14 @@ void initNeighborDinfup(tdpartition* neighbor, tdpartition* flowData, queue<node
             }
 
             if (neighbor->hasBottomRightNeighbour()) {
-                if (countBR == 1 && !isBottomRightAdded) {
+                if (*countBR == 1 && !isBottomRightAdded) {
                     temp.x = nx - 1;
                     temp.y = ny - 1;
                     toBeEvaled.push(temp);
                     isBottomRightAdded = true;
                 }
             }
-            
+
             finished = neighbor->ringTerm(finished);
         }
 
@@ -436,13 +519,22 @@ void initNeighborDinfup(tdpartition* neighbor, tdpartition* flowData, queue<node
             for (int i = 0; i < neighbourCount; i++) {
                 delete [] neighbourBuffers[i];
             }
-            
+
             delete[] neighbourBuffers;
         }
 
         if (neighbourCountArr) {
             delete[] neighbourCountArr;
         }
+
+        delete countA;
+        delete countB;
+        delete countL;
+        delete countR;
+        delete countTL;
+        delete countTR;
+        delete countBL;
+        delete countBR;
     }
 }
 
@@ -785,7 +877,7 @@ void initNeighborD8up(tdpartition* neighbor, tdpartition* flowData, queue<node> 
             for (int i = 0; i < neighbourCount; i++) {
                 delete [] neighbourBuffers[i];
             }
-            
+
             delete[] neighbourBuffers;
         }
 

@@ -749,6 +749,26 @@ void linearpart<datatype>::addBorders() {
         else
             addToData(nx - 1, i, rightBorder[i]);
     }
+
+    if (isNodata(-1, -1) || isNodata(0, 0))
+        setData(0, 0, noData);
+    else
+        addToData(0, 0, topleftBorder[0]);
+
+    if (isNodata(nx, -1) || isNodata(nx - 1, 0))
+        setData(nx - 1, 0, noData);
+    else
+        addToData(nx - 1, 0, toprightBorder[0]);
+
+    if (isNodata(-1, ny) || isNodata(0, ny - 1))
+        setData(0, ny - 1, noData);
+    else
+        addToData(0, ny - 1, bottomleftBorder[0]);
+
+    if (isNodata(nx, ny) || isNodata(nx - 1, ny - 1))
+        setData(nx - 1, ny - 1, noData);
+    else
+        addToData(nx - 1, ny - 1, bottomrightBorder[0]);
 }
 
 //Clears borders (sets them to zero).
@@ -776,10 +796,10 @@ template<class datatype>
 int linearpart<datatype>::ringTerm(int isFinished) {
     if (size == 1)
         return isFinished;
-    
+
     int ringBool;
     MPI_Allreduce(&isFinished, &ringBool, 1, MPI_INT, MPI_MIN, MCW);
-    
+
     return ringBool;
 }
 
@@ -832,8 +852,7 @@ int linearpart<datatype>::getGridXY(int x, int y, int *i, int *j) {
 template<class datatype>
 void linearpart<datatype>::transferPack(int** neighbourBuffers, int**neighbourCountArr) {
     if (size == 1) return;
-
-    // swaps the borders and store the data in the temp-data buffer of each border
+    
     MPI_Request *requests = (MPI_Request *) malloc(sizeof (MPI_Request) * numOfNeighbours * 2);
 
     for (unsigned int i = 0; i < numOfNeighbours; ++i) {
@@ -855,8 +874,12 @@ void linearpart<datatype>::transferPack(int** neighbourBuffers, int**neighbourCo
 
     MPI_Waitall(numOfNeighbours, requests + numOfNeighbours, statuses + numOfNeighbours);
 
+
     for (unsigned int i = 0; i < numOfNeighbours; ++i) {
-        memcpy(neighbourBuffers[i], tmpIntBorderPointers[i], sizeof (int) * *neighbourCountArr[i]);
+        int bufsize = *neighbourCountArr[i];
+        if (bufsize > 0) {
+            memcpy(neighbourBuffers[i], tmpIntBorderPointers[i], sizeof (int) * bufsize);
+        }
     }
 
     delete requests;
@@ -874,11 +897,15 @@ bool linearpart<datatype>::isNodata(long inx, long iny) {
     if (x >= 0 && x < nx && y >= 0 && y < ny)return (abs((float) (gridData[x + y * nx] - noData)) < MINEPS);
         //	if(isInPartition(x,y)) return (abs(gridData[x+y*nx]-noData)<MINEPS);
     else if (x >= 0 && x < nx) {
-        if (y == -1) return (abs((float) (topBorder[x] - noData)) < MINEPS);
-        else if (y == ny) return (abs((float) (bottomBorder[x] - noData)) < MINEPS);
+        if (y == -1)
+            return (abs((float) (topBorder[x] - noData)) < MINEPS);
+        else if (y == ny)
+            return (abs((float) (bottomBorder[x] - noData)) < MINEPS);
     } else if (y >= 0 && y < ny) {
-        if (x == -1) return (abs((float) (leftBorder[y] - noData)) < MINEPS);
-        else if (x == nx) return (abs((float) (rightBorder[y] - noData)) < MINEPS);
+        if (x == -1)
+            return (abs((float) (leftBorder[y] - noData)) < MINEPS);
+        else if (x == nx)
+            return (abs((float) (rightBorder[y] - noData)) < MINEPS);
     } else if (x == -1 && y == -1) {
         return (abs((float) (topleftBorder[0] - noData)) < MINEPS);
     } else if (x == nx && y == -1) {
@@ -901,11 +928,15 @@ void linearpart<datatype>::setToNodata(long inx, long iny) {
     if (x >= 0 && x < nx && y >= 0 && y < ny) gridData[x + y * nx] = noData;
         //	if(isInPartition(x,y)) gridData[x+y*nx] = noData;
     else if (x >= 0 && x < nx) {
-        if (y == -1) topBorder[x] = noData;
-        else if (y == ny) bottomBorder[x] = noData;
+        if (y == -1)
+            topBorder[x] = noData;
+        else if (y == ny)
+            bottomBorder[x] = noData;
     } else if (y >= 0 && y < ny) {
-        if (x == -1) leftBorder[y] = noData;
-        else if (x == nx) rightBorder[y] = noData;
+        if (x == -1)
+            leftBorder[y] = noData;
+        else if (x == nx)
+            rightBorder[y] = noData;
     } else if (x == -1 && y == -1) {
         topleftBorder[0] = noData;
     } else if (x == nx && y == -1) {
