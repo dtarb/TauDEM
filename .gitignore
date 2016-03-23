@@ -1,6 +1,7 @@
 #################
 ## Eclipse
-
+src/.idea/
+TestSuite/
 *.pydevproject
 .project
 .metadata
