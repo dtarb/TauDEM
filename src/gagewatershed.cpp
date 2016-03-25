@@ -66,7 +66,6 @@ int gagewatershed( char *pfile, char *swfile,char *wfile, char* datasrc,char* ly
 	int numOutlets=0;
 	int *ids=NULL;
 	int *dsids=NULL;
-	int upids=-999;
 	int idnodata;
 	
 	double begint = MPI_Wtime();
@@ -173,9 +172,6 @@ int gagewatershed( char *pfile, char *swfile,char *wfile, char* datasrc,char* ly
 	node temp;
 	queue<node> que;
 
-	//int maxall;
-
-
 	
 
 	for( int i=0; i<numOutlets; i++)
@@ -187,8 +183,6 @@ int gagewatershed( char *pfile, char *swfile,char *wfile, char* datasrc,char* ly
 		if(wshed->isInPartition(xlocal,ylocal)){   //xOutlets[i], yOutlets[i])){
 			wshed->setData(xlocal,ylocal,(int32_t)ids[i]);  //xOutlets[i], yOutlets[i], (long)ids[i]);
 							//Push outlet cells on to que
-				//if(useswg==1) { outletpointswgrid = swData->getData(xlocal,ylocal,tempSubwgrid);
-		             //   printf("%d",outletpointswgrid);}
 						temp.x = xlocal;
 						temp.y = ylocal;
 						que.push(temp);	
@@ -197,8 +191,7 @@ int gagewatershed( char *pfile, char *swfile,char *wfile, char* datasrc,char* ly
 		}
 		dsids[i]= idnodata;  
 	}
-	// get subwatershed grid for the outletpoint 
-
+	
 	// con is used to check for contamination at the edges
 	long i,j;
 	short k;
@@ -207,9 +200,6 @@ int gagewatershed( char *pfile, char *swfile,char *wfile, char* datasrc,char* ly
 	float tempFloat=0.0;
 	short tempShort=0;
 	int32_t tempLong=0;
-	
-
-
 
 	tdpartition *neighbor;
 	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, MISSINGSHORT);
@@ -229,10 +219,11 @@ int gagewatershed( char *pfile, char *swfile,char *wfile, char* datasrc,char* ly
 	flowData->share();
 	neighbor->clearBorders();
 	wshed->share();
-	
-	FILE *fp;
-	fp = fopen(upidfile,"a");
-	if (!rank) fprintf(fp,"Optimum Threshold Value:\n");
+	// open upid file to write and update upstream watershed id file ( need to confirm)
+	FILE *fp1;
+	if(useswg == 1) {
+	          fp1 = fopen(upidfile,"a");
+			  if (!rank) fprintf(fp1,"Upstream Contributing Watershed ID:\n"); }
 
 	//flowData->getData(500,600,tempShort);
 	finished = false;
@@ -271,25 +262,18 @@ int gagewatershed( char *pfile, char *swfile,char *wfile, char* datasrc,char* ly
 						if(flowData->hasAccess(in,jn) && !flowData->isNodata(in,jn) && wshed->isNodata(in,jn)){
 							//Decrement the number of contributing neighbors in neighbor
 							neighbor->addToData(in,jn,(short)-1);
-						
 							// for rapid watershed delineation
-							if(useswg==1){
-							 
-							short swgrid = swData->getData(in,jn,tempSubwgrid); //get subwatershed grid
-						   
-							//if(swgrid!=outletpointswgrid) // check whether subwatershed grid is equal to outletpoint subwatershed grid
-							    
-							short swidup=swData->getData(in,jn,tempSubwgrid);
-							short swidme=swData->getData(i,j,tempSubwgrid);
-							if((swidup!=swidme) & (swidup>=0)){
-								//printf( "%d",swidme); // proivde outlet point subwatershed grid
-								fprintf (fp,"%d\n",swidup); // provide upstream watershed grid
-							
-							 upids=swidup;
-						
-							} 
-							
-
+							if(useswg==1){    
+							         short swidup=swData->getData(in,jn,tempSubwgrid); // get upstream watershed ID
+							         short swidme=swData->getData(i,j,tempSubwgrid); // get outlet point watershed ID
+									 // if upstream ID is not equal to outlet point watershed ID then write into upidfile 
+									 // swidup may be nodata value therefore also check is it greater than or equal to zero
+							         if((swidup!=swidme) & (swidup>=0)){
+								          // write into upidfile
+										 printf("Upstream edge is reached\n");
+								         fprintf (fp1,"%d\n",swidup);
+									      } 
+									
 							}
 							
 							//Check if neighbor needs to be added to que
@@ -345,8 +329,6 @@ int gagewatershed( char *pfile, char *swfile,char *wfile, char* datasrc,char* ly
 	//  Reduce all values to the 0 process
 	int *dsidsr;	
     dsidsr=new int[numOutlets];
-	int glen;
-	MPI_Reduce(&upids,&glen,1,MPI_DOUBLE,MPI_SUM,0,MCW);
 	MPI_Reduce(dsids, dsidsr,numOutlets,MPI_INT, MPI_MAX,0, MCW);
 //	MPI_Reduce(upids, dsidsr,numOutlets,MPI_INT, MPI_MAX,0, MCW);
 
@@ -370,11 +352,7 @@ int gagewatershed( char *pfile, char *swfile,char *wfile, char* datasrc,char* ly
 				}
 		}
 	}
-		
 
-		
-      
-	
 
 	//Create and write TIFF file
 	long lNodata = MISSINGLONG;
@@ -385,7 +363,7 @@ int gagewatershed( char *pfile, char *swfile,char *wfile, char* datasrc,char* ly
 	if( rank == 0) 
 		printf("Size: %d\nRead time: %f\nCompute time: %f\nWrite time: %f\nTotal time: %f\n",
 		  size,readt-begint, computet-readt, writet-computet,writet-begint);
-	fclose(fp);
+	fclose(fp1);
 
 	//Brackets force MPI-dependent objects to go out of scope before Finalize is called
 	}MPI_Finalize();
