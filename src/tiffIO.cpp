@@ -50,7 +50,7 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 #include <iostream>
 #include <string>
-#include <c++/4.7/bits/stringfwd.h>
+
 using namespace std;
 
 tiffIO::tiffIO(char *fname, DATA_TYPE newtype) {
