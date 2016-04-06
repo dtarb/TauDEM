@@ -997,6 +997,11 @@ int propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<short>
 
                 if (flow == 0 && (neighSt == 0 || neighSt > st + 1 || -neighSt > st + 1)) {
                     queue.push_back({in, jn, st + 1});
+
+                    // Here we set a negative increment if it's still pending
+                    //
+                    // Another flat might be neighboring the same cell with a lower increment,
+                    // which has to override the higher increment.
                     inc.setData(in, jn, -(st + 1));
                 }
             }
@@ -1029,9 +1034,9 @@ int propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<short>
                     short flow = flowDir.getData(in, jn);
                     auto neighInc = inc.getData(in, jn);
 
-                    if (flow == 0 && (neighInc == 0 || neighInc > flat.inc + 1)) {
+                    if (flow == 0 && (neighInc == 0 || neighInc > flat.inc + 1 || -neighInc > flat.inc + 1)) {
                         newFlats.push_back({in, jn, flat.inc + 1});
-                        inc.setData(in, jn, -1);
+                        inc.setData(in, jn, -(flat.inc + 1));
                     }
                 }
             }
@@ -1040,6 +1045,7 @@ int propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<short>
             numInc++;
         }
 
+        std::sort(newFlats.begin(), newFlats.end());
         queue.swap(newFlats);
     }
 
