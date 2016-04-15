@@ -97,11 +97,10 @@ int readoutlets(char *outletsds,char *lyrname, int uselayername,int outletslyr,O
 		OutletProjectionName = OSRGetAttrValue(hRSOutlet,sprs,0);
 
 		if (pj_raster==pj_outlet){
-			  
 			 int rc= strcmp(RasterProjectionName,OutletProjectionName); // compare string
 			 if(rc!=0){
-				printf("Projection of Raster datasource %s.\n",RasterProjectionName);
-                printf("Projecttion of Outlet feature %s.\n",OutletProjectionName);
+				printf("Projection of Raster datasource %s.\n", RasterProjectionName);
+                printf("Projecttion of Outlet feature %s.\n", OutletProjectionName);
 				printf( "Warning: Projection of Outlet shapefile and Raster data are different.\n" );
 				// TODO - Print the WKT and EPSG code of each.  If no spatial reference information, print unknown
 				// TODO - Test how this works if spatial reference information is incomplete, and create at least one of the unit test functions with a shapefile without a .prj file, and one of the unit test functions a raster without a projection (eg an ASCII file)
