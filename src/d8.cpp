@@ -434,6 +434,10 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
         }
         t.end("Resolve local flats");
 
+        t.start("Barrier to shared");
+        MPI_Barrier(MPI_COMM_WORLD);
+        t.end("Barrier to shared");
+
         t.start("Resolve shared flats");
         MPI_Allreduce(&localSharedFlats, &sharedFlats, 1, MPI_INT, MPI_SUM, MCW);
 
