@@ -51,6 +51,8 @@ email:  dtarb@usu.edu
 #include "tiffIO.h"
 #include "Node.h"
 
+#include "mpitimer.h"
+
 template<typename T> long resolveFlats(T& elev, SparsePartition<short>& inc, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands);
 template<typename T> long resolveFlats_parallel(T& elevDEM, SparsePartition<short>& inc, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands);
 
@@ -184,7 +186,7 @@ void calcSlope(linearpart<short>& flowDir, linearpart<float>& elevDEM, linearpar
                 slope.setToNodata(i, j);
             } else {
                 short flowDirection = flowDir.getData(i,j);
-
+  
                 int in = i + d1[flowDirection];
                 int jn = j + d2[flowDirection];
 
@@ -200,16 +202,21 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
 {
     MPI_Init(NULL,NULL);
 
-    //Only needed to output time
     int rank,size;
     MPI_Comm_rank(MCW,&rank);
     MPI_Comm_size(MCW,&size);
+
     if (rank==0) {
         printf("D8FlowDir version %s\n",TDVERSION);
         fflush(stdout);
     }
 
+    MPITimer t;
+
     double begint = MPI_Wtime();
+
+    t.start("Total");
+    t.start("Header read");
 
     //Read DEM from file
     tiffIO dem(demfile, FLOAT_TYPE);
@@ -227,6 +234,8 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
     elevDEM.localToGlobal(0, 0, xstart, ystart);
     elevDEM.savedxdyc(dem);
 
+    t.end("Header read");
+
     double headert = MPI_Wtime();
 
     if (rank==0) {
@@ -237,8 +246,10 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
         fflush(stderr);
     }
 
+    t.start("Data read");
     dem.read(xstart, ystart, ny, nx, elevDEM.getGridPointer());
     elevDEM.share();
+    t.end("Data read");
 
     double readt = MPI_Wtime();
 
@@ -280,24 +291,22 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
 
     long numFlat = 0;
 
-    double computeSlopet;
     {
+        t.start("Calculate slope");
         //Creates empty partition to store new slopes
         float slopeNodata = -1.0f;
         linearpart<float> slope(totalX, totalY, dx, dy, MPI_FLOAT, slopeNodata);
 
         numFlat = setPosDir(elevDEM, flowDir, area, useflowfile);
         calcSlope(flowDir, elevDEM, slope);
+        t.end("Calculate slope");
 
-        //Stop timer
-        computeSlopet = MPI_Wtime();
-
+        t.start("Write slope");
         tiffIO slopeIO(slopefile, FLOAT_TYPE, &slopeNodata, dem);
         slopeIO.write(xstart, ystart, ny, nx, slope.getGridPointer());
+        t.end("Write slope");
     }  // This bracket intended to destruct slope partition and release memory
 
-    double writeSlopet = MPI_Wtime();
-    
     flowDir.share();
 
     size_t totalNumFlat = 0;
@@ -308,8 +317,12 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
         fflush(stderr);
     }
 
+    t.start("Resolve flats");
+
     if (totalNumFlat > 0) {
         std::vector<node> flats;
+
+        t.start("Add flats");
 
         // FIXME: Should do this during slope calculation
         for (int j=0; j<ny; j++) {
@@ -319,6 +332,8 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
                 }
             }
         }
+
+        t.end("Add flats");
 
         if (rank == 0) {
             fprintf(stderr, "Finding flat islands...\n");
@@ -330,6 +345,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
         std::vector<std::vector<node>> islands;
         std::set<int> bordering_island_labels;
 
+        t.start("Find islands");
         {
             SparsePartition<int> island_marker(nx, ny, 0);
 
@@ -377,6 +393,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
                 }
             }
         }
+        t.end("Find islands");
 
         std::vector<std::vector<node>> borderingIslands;
         int localSharedFlats = 0, sharedFlats = 0;
@@ -391,10 +408,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
         //printf("rank %d: Done, %d islands. Took %.2f seconds\n", rank, numIslands, MPI_Wtime() - flatFindStart);
         //printf("rank %d: %lu bordering islands with %d flats\n", rank, bordering_islands.size(), localSharedFlats);
 
-        if (rank == 0) {
-            printf("Finding flat islands took %.2f seconds\n", MPI_Wtime() - flatFindStart);
-        }
-
+        t.start("Resolve local flats");
         if (!islands.empty()) {
             SparsePartition<short> inc(nx, ny, 0);
             size_t lastNumFlat = resolveFlats(elevDEM, inc, flowDir, islands);
@@ -418,12 +432,14 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
                 }
             } 
         }
+        t.end("Resolve local flats");
 
+        t.start("Resolve shared flats");
         MPI_Allreduce(&localSharedFlats, &sharedFlats, 1, MPI_INT, MPI_SUM, MCW);
 
         if (rank == 0) {
             fprintf(stderr, "Processing partial flats\n");
-            printf("PRL: %d flats shared across processors\n", sharedFlats);
+            printf("PRL: %d flats shared across processors (%d local -> %.2f%% shared)\n", sharedFlats, totalNumFlat - sharedFlats, 100. * sharedFlats / (totalNumFlat - sharedFlats));
         }
 
         if (sharedFlats > 0) {
@@ -448,42 +464,19 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
                 }
             }
         }
+        t.end("Resolve shared flats");
     }
 
-    //Timing info
-    double computeFlatt = MPI_Wtime();
+    t.end("Resolve flats");
+
+    t.start("Write directions");
     tiffIO pointIO(pointfile, SHORT_TYPE, &flowDirNodata, dem);
     pointIO.write(xstart, ystart, ny, nx, flowDir.getGridPointer());
-    double writet = MPI_Wtime();
+    t.end("Write directions");
 
-    double headerRead, dataRead, computeSlope, writeSlope, computeFlat,writeFlat, total,temp;
-    headerRead = headert-begint;
-    dataRead = readt-headert;
-    computeSlope = computeSlopet-readt;
-    writeSlope = writeSlopet-computeSlopet;
-    computeFlat = computeFlatt-writeSlopet;
-    writeFlat = writet-computeFlatt;
-    total = writet - begint;
-
-    MPI_Allreduce(&headerRead, &temp, 1, MPI_DOUBLE, MPI_SUM, MCW);
-    headerRead = temp/size;
-    MPI_Allreduce(&dataRead, &temp, 1, MPI_DOUBLE, MPI_SUM, MCW);
-    dataRead = temp/size;
-    MPI_Allreduce(&computeSlope, &temp, 1, MPI_DOUBLE, MPI_SUM, MCW);
-    computeSlope = temp/size;
-    MPI_Allreduce(&computeFlat, &temp, 1, MPI_DOUBLE, MPI_SUM, MCW);
-    computeFlat = temp/size;
-    MPI_Allreduce(&writeSlope, &temp, 1, MPI_DOUBLE, MPI_SUM, MCW);
-    writeSlope = temp/size;
-    MPI_Allreduce(&writeFlat, &temp, 1, MPI_DOUBLE, MPI_SUM, MCW);
-    writeFlat = temp/size;
-    MPI_Allreduce(&total, &temp, 1, MPI_DOUBLE, MPI_SUM, MCW);
-    total = temp/size;
-
-    if (rank == 0) {
-        printf("Processors: %d\nHeader read time: %f\nData read time: %f\nCompute Slope time: %f\nWrite Slope time: %f\nResolve Flat time: %f\nWrite Flat time: %f\nTotal time: %f\n",
-               size,headerRead,dataRead, computeSlope, writeSlope,computeFlat,writeFlat,total);
-    }
+    t.end("Total");
+    t.stop();
+    t.save("timing_info");
 
     MPI_Finalize();
     return 0;
