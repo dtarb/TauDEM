@@ -13,16 +13,20 @@
 class MPITimer
 {
     public:
-        MPITimer() : level(0) { }
+        MPITimer() : level(0), cur_id(0)
+        {
+            offset = MPI_Wtime();
+        }
 
         void start(std::string name) {
             timings[name].name = name;
+            timings[name].id = cur_id++;
             timings[name].level = level++;
-            timings[name].start = MPI_Wtime();
+            timings[name].start = MPI_Wtime() - offset;
         }
 
         void end(std::string name) {
-            timings[name].end = MPI_Wtime();
+            timings[name].end = MPI_Wtime() - offset;
             level--;
         }
 
@@ -39,7 +43,7 @@ class MPITimer
                 ordered.push_back(x.second);
             }
            
-            std::sort(ordered.begin(), ordered.end(), [](timing& a, timing& b) { return a.start < b.start; });
+            std::sort(ordered.begin(), ordered.end(), [](timing& a, timing& b) { return a.id < b.id; });
 
             // FIXME
 
@@ -133,6 +137,7 @@ class MPITimer
             MPI_Comm_size(MPI_COMM_WORLD, &size);
             
             fprintf(fp, "np,%d\n", size);
+            fprintf(fp, "offset,%f\n", offset);
 
             for (auto& x : agg_timings) {
                 std::vector<double> times;;
@@ -162,9 +167,14 @@ class MPITimer
         }
 
     private:
+        double offset;
+
         int level;
+        int cur_id;
 
         struct timing {
+            int id; // used for ordering
+
             std::string name;
             int level;
             double start;
