@@ -443,7 +443,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
 
         if (rank == 0) {
             fprintf(stderr, "Processing partial flats\n");
-            printf("PRL: %d flats shared across processors (%d local -> %.2f%% shared)\n", sharedFlats, totalNumFlat - sharedFlats, 100. * sharedFlats / (totalNumFlat - sharedFlats));
+            printf("PRL: %d flats shared across processors (%d local -> %.2f%% shared)\n", sharedFlats, totalNumFlat - sharedFlats, 100. * sharedFlats / totalNumFlat);
         }
 
         if (sharedFlats > 0) {
