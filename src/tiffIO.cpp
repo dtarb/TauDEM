@@ -317,8 +317,8 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
         fh = GDALCreate(hDriver, partition_filename, numCols, numRows, 1, eBDataType, NULL);
         GDALSetProjection(fh, GDALGetProjectionRef(copyfh));
 
-        adfGeoTransform[0] = adfGeoTransform[1] * xstart;
-        adfGeoTransform[3] = adfGeoTransform[5] * ystart;
+        adfGeoTransform[0] = adfGeoTransform[1] * xstart + xleftedge;
+        adfGeoTransform[3] = adfGeoTransform[5] * ystart + ytopedge;
 
         GDALSetGeoTransform(fh, adfGeoTransform);
 
