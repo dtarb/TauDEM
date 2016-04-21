@@ -47,6 +47,7 @@ email:  dtarb@usu.edu
 #include "linearpart.h"
 #include "createpart.h"
 #include "tiffIO.h"
+#include "ogrsf_frmts.h"
 using namespace std;
 
 
@@ -145,13 +146,14 @@ int gagewatershed( char *pfile, char *swfile,char *wfile, char* datasrc,char* ly
 	//if using subwatershed grid for rapid watershed delineation, get information from file
 	tdpartition *swData;
 	if( useswg == 1){
-		tiffIO sw(swfile,SHORT_TYPE);
+		tiffIO sw(swfile,LONG_TYPE);
 		if(!p.compareTiff(sw)){
 			printf("File sizes do not match\n%s\n",swfile);
 			MPI_Abort(MCW,5);
 			return 1;  
 		} 
 		swData = CreateNewPartition(sw.getDatatype(), totalX, totalY, dxA, dyA, sw.getNodata()); 
+		swData->localToGlobal(0, 0, xstart, ystart);
 		sw.read(xstart, ystart, swData->getny(), swData->getnx(), swData->getGridPointer());
 	}
 
@@ -165,7 +167,7 @@ int gagewatershed( char *pfile, char *swfile,char *wfile, char* datasrc,char* ly
 	wshed = CreateNewPartition(LONG_TYPE, totalX, totalY, dxA, dyA, MISSINGLONG);
 
 	//Convert geo coords to grid coords
-	int *outletsX, *outletsY; short outletpointswgrid; short tempSubwgrid; 
+	int *outletsX, *outletsY; short outletpointswgrid; long tempSubwgrid; 
 	outletsX = new int[numOutlets];
 	outletsY = new int[numOutlets];
 
@@ -221,9 +223,9 @@ int gagewatershed( char *pfile, char *swfile,char *wfile, char* datasrc,char* ly
 	wshed->share();
 	// open upid file to write and update upstream watershed id file ( need to confirm)
 	FILE *fp1;
-	if(useswg == 1) {
+
 	          fp1 = fopen(upidfile,"a");
-			  if (!rank) fprintf(fp1,"Upstream Contributing Watershed ID:\n"); }
+			  if (!rank) fprintf(fp1,"Upstream Contributing Watershed ID:\n"); 
 
 	//flowData->getData(500,600,tempShort);
 	finished = false;
@@ -253,6 +255,18 @@ int gagewatershed( char *pfile, char *swfile,char *wfile, char* datasrc,char* ly
 				jn=j+d2[k];
 				/* test if neighbor drains towards cell excluding boundaries */
 				short sdir = flowData->getData(in,jn,tempShort);
+			
+				if(sdir==NULL) 	{ 
+					
+					double wi,wj;
+					int gx,gy;  //  Global x and y (col and row) coordinates
+						flowData->localToGlobal(in,jn,gx,gy);
+						p.globalXYToGeo(gx,gy,wi,wj);
+						//printf("%f, %f", wi,wj);
+						fprintf (fp1,"%f, %f\n",wi,wj);
+						if(useswg==1);// {long sss=swData->getData(in,jn,tempLong);
+						//fprintf (fp1,"%ld\n",sss);}
+				}
 				if(sdir > 0) 
 				{
 					int idex=0;
@@ -264,18 +278,21 @@ int gagewatershed( char *pfile, char *swfile,char *wfile, char* datasrc,char* ly
 							neighbor->addToData(in,jn,(short)-1);
 							// for rapid watershed delineation
 							if(useswg==1){    
-							         short swidup=swData->getData(in,jn,tempSubwgrid); // get upstream watershed ID
-							         short swidme=swData->getData(i,j,tempSubwgrid); // get outlet point watershed ID
-									 // if upstream ID is not equal to outlet point watershed ID then write into upidfile 
-									 // swidup may be nodata value therefore also check is it greater than or equal to zero
-							         if((swidup!=swidme) & (swidup>=0)){
-								          // write into upidfile
-										 printf("Upstream edge is reached\n");
-								         fprintf (fp1,"%d\n",swidup);
-									      } 
+							        // short swidup=swData->getData(in,jn,tempSubwgrid); // get upstream watershed ID
+							        // short swidme=swData->getData(i,j,tempSubwgrid); // get outlet point watershed ID
+									//  if upstream ID is not equal to outlet point watershed ID then write into upidfile 
+									//  swidup may be nodata value therefore also check is it greater than or equal to zero
+							       //  if((swidup!=swidme) & (swidup>=0)){
+								      //     write into upidfile
+										// printf("Upstream edge is reached\n");
+								       //  fprintf (fp1,"%d\n",swidup);
+									   //   } 
 									
 							}
 							
+
+							
+
 							//Check if neighbor needs to be added to que
 							if(flowData->isInPartition(in,jn) && neighbor->getData(in, jn, tempShort) == 0 ){
 								temp.x=in;
