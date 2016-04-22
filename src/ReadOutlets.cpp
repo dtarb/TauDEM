@@ -48,7 +48,7 @@ email:  dtarb@usu.edu
 
 
 
-int readoutlets(char *outletsds,char *lyrname, int uselayername,int outletslyr,OGRSpatialReferenceH hSRSRaster,int *noutlets, double*& x, double*& y)
+int readoutlets(char *outletsds,char *lyrname, int uselayername,int outletslyr,OGRSpatialReferenceH hSRSRaster,int *noutlets, double*& x, double*& y,int*& id)
 
 {   
 	// initializing datasoruce,layer,feature, geomtery, spatial reference
@@ -62,100 +62,6 @@ int readoutlets(char *outletsds,char *lyrname, int uselayername,int outletslyr,O
 	OGRSpatialReferenceH hRSOutlet;
 	// regiser all ogr driver related to OGR
 	OGRRegisterAll(); 
-	// open datasource
-	hDS1 = OGROpen(outletsds, FALSE,NULL); 
-	if( hDS1 == NULL )
-	{
-		printf( "Error Opening datasource %s.\n",outletsds );
-		exit( 1 );
-	}
-
-	//get layer from layer name
-	if(uselayername==1) { hLayer1 = OGR_DS_GetLayerByName(hDS1,lyrname);}
-		//get layerinfo from layer number
-	else { hLayer1 = OGR_DS_GetLayer(hDS1,outletslyr);} // get layerinfo from layername
-
-	if(hLayer1 == NULL)getlayerfail(hDS1,outletsds,outletslyr);
-	OGRwkbGeometryType gtype;
-	gtype=OGR_L_GetGeomType(hLayer1);
-	if(gtype != wkbPoint)getlayerfail(hDS1,outletsds,outletslyr);
-	// get spatial reference 
-	hRSOutlet = OGR_L_GetSpatialRef(hLayer1); 
-
-	//if there is spatial reference then write warnings 
-
-	if(hRSOutlet!=NULL) {
-
-		int pj_raster=OSRIsProjected(hSRSRaster); // find if projected or not
-		int pj_outlet=OSRIsProjected(hRSOutlet);
-		const char *sprs;
-		if(pj_raster==0) {sprs="GEOGCS";} else { sprs="PROJCS"; }
-
-		const char* RasterProjectionName;
-		const char* OutletProjectionName;
-		RasterProjectionName = OSRGetAttrValue(hSRSRaster,sprs,0); // get projection name
-		OutletProjectionName = OSRGetAttrValue(hRSOutlet,sprs,0);
-
-		if (pj_raster==pj_outlet){
-			 int rc= strcmp(RasterProjectionName,OutletProjectionName); // compare string
-			 if(rc!=0){
-				printf("Projection of Raster datasource %s.\n", RasterProjectionName);
-                printf("Projecttion of Outlet feature %s.\n", OutletProjectionName);
-				printf( "Warning: Projection of Outlet shapefile and Raster data are different.\n" );
-				// TODO - Print the WKT and EPSG code of each.  If no spatial reference information, print unknown
-				// TODO - Test how this works if spatial reference information is incomplete, and create at least one of the unit test functions with a shapefile without a .prj file, and one of the unit test functions a raster without a projection (eg an ASCII file)
-			 }
-		}
-    
-		else {
-			  printf( "Warning: Spatial References of Outlet shapefile and Raster data are different.\n" );
-			  // TODO - Print the WKT of each.  The general idea is that if these match, do not print anything.  
-			  //  If these do not match give the user a warning.  Only give an error if the program can not proceed, such as would be the case if rows and columns did not match.
-		}
-
-	}
-
-
-	long countPts=0;
-	// count number of feature
-	countPts=OGR_L_GetFeatureCount(hLayer1,0); 
-	// get schema i.e geometry, properties (e.g. ID)
-	hFDefn1 = OGR_L_GetLayerDefn(hLayer1); 
-	x = new double[countPts];
-	y = new double[countPts];
-	int iField;
-	int nxy=0;
-	// loop through each feature and  get the latitude and longitude for each feature
-	OGR_L_ResetReading(hLayer1);
-    while( (hFeature1 = OGR_L_GetNextFeature(hLayer1)) != NULL ){
-	//for( int j=0; j<countPts; j++) { //does not work for geojson file
-		 geometry = OGR_F_GetGeometryRef(hFeature1); // get geometry type
-		 x[nxy] = OGR_G_GetX(geometry, 0); 
-		 y[nxy] =  OGR_G_GetY(geometry, 0); 
-		 OGR_F_Destroy( hFeature1); // destroy feature
-		 nxy++;
-		}
-    *noutlets=nxy; // total number of outlets point
-	
-	OGR_DS_Destroy( hDS1); // destroy data source
-	return 0;
-}
-
-int readoutlets(char *outletsds,char *lyrname,int uselayername,int outletslyr,OGRSpatialReferenceH hSRSRaster, int *noutlets, double*& x, double*& y, int*& id)
-
-{
- 
-	// initializing datasoruce,layer,feature, geomtery, spatial reference
-    OGRSFDriverH    driver;
-	OGRDataSourceH  hDS1;
-	OGRLayerH       hLayer1;
-	OGRFeatureDefnH hFDefn1;
-	OGRFieldDefnH   hFieldDefn1;
-	OGRFeatureH     hFeature1;
-	OGRGeometryH    geometry, line;
-	OGRSpatialReferenceH hRSOutlet;
-	OGRFieldDefnH hFieldDefn;
-	OGRRegisterAll();
 	// open data soruce
 
 	hDS1 = OGROpen(outletsds, FALSE, NULL );
@@ -176,8 +82,7 @@ int readoutlets(char *outletsds,char *lyrname,int uselayername,int outletslyr,OG
 	if(gtype != wkbPoint)getlayerfail(hDS1,outletsds,outletslyr);
     //OGR_L_ResetReading(hLayer1);
 	hRSOutlet = OGR_L_GetSpatialRef(hLayer1);
-	//if there is spatial reference then write warnings 
-	if(hRSOutlet!=NULL){
+
 	    int pj_raster=OSRIsProjected(hSRSRaster); // find if projected or not
 		int pj_outlet=OSRIsProjected(hRSOutlet);
 		const char *sprs;
@@ -188,13 +93,19 @@ int readoutlets(char *outletsds,char *lyrname,int uselayername,int outletslyr,OG
 		RasterProjectionName = OSRGetAttrValue(hSRSRaster,sprs,0); // get projection name
 		OutletProjectionName = OSRGetAttrValue(hRSOutlet,sprs,0);
 
+
+
+	//if there is spatial reference then write warnings 
+	if(hRSOutlet!=NULL && hSRSRaster!=NULL){
+	
 		if (pj_raster==pj_outlet){
 			  
 			 int rc= strcmp(RasterProjectionName,OutletProjectionName); // compare string
 			 if(rc!=0){
+				printf( "Warning: Projection of Outlet shapefile and Raster data may be different.\n" );
 				printf("Projection of Raster datasource %s.\n",RasterProjectionName);
-                printf("Projecttion of Outlet feature %s.\n",OutletProjectionName);
-				printf( "Warning: Projection of Outlet shapefile and Raster data are different.\n" );
+                printf("Projection of Outlet feature %s.\n",OutletProjectionName);
+				
 				// TODO - Print the WKT and EPSG code of each.  If no spatial reference information, print unknown
 				// TODO - Test how this works if spatial reference information is incomplete, and create at least one of the unit test functions with a shapefile without a .prj file, and one of the unit test functions a raster without a projection (eg an ASCII file)
 			 }
@@ -202,24 +113,43 @@ int readoutlets(char *outletsds,char *lyrname,int uselayername,int outletslyr,OG
     
 		else {
 			  printf( "Warning: Spatial References of Outlet shapefile and Raster data are different.\n" );
+			  printf("Projection of Raster datasource %s.\n",RasterProjectionName);
+              printf("Projection of Outlet feature %s.\n",OutletProjectionName);
+
+
 			  // TODO - Print the WKT of each.  The general idea is that if these match, do not print anything.  
 			  //  If these do not match give the user a warning.  Only give an error if the program can not proceed, such as would be the case if rows and columns did not match.
 		}
 	}
+	
+	else if(hSRSRaster==NULL && hRSOutlet!=NULL) {
+		      printf( "Warning: Spatial References of Raster is missing.\n" );
+			 // printf("Projection of Raster datasource %s.\n",RasterProjectionName);
+              printf("Projection of Outlet feature %s.\n",OutletProjectionName);
+
+		 }
+	else if(hSRSRaster!=NULL && hRSOutlet==NULL) {
+	          printf( "Warning: Spatial References of Outlet shapefile is missing.\n" );
+			  printf("Projection of Raster datasource %s.\n",RasterProjectionName);
+              //printf("Projection of Outlet feature %s.\n",OutletProjectionName);
+}
+	else {
+	          printf( "Warning: Spatial References of Outlet shapefile and Raster data are missing.\n" );
+			//  printf("Projection of Raster datasource %s.\n",RasterProjectionName);
+              //printf("Projection of Outlet feature %s.\n",OutletProjectionName);
+}
+
+
 
 	long countPts=0;
-	countPts=OGR_L_GetFeatureCount(hLayer1,0); // get feature count
-	hFDefn1 = OGR_L_GetLayerDefn(hLayer1); // get schema i.e geometry, properties (e.g. ID)
+	// count number of feature
+	countPts=OGR_L_GetFeatureCount(hLayer1,0); 
+	// get schema i.e geometry, properties (e.g. ID)
+	hFDefn1 = OGR_L_GetLayerDefn(hLayer1); 
 	x = new double[countPts];
 	y = new double[countPts];
 	int iField;
 	int nxy=0;
-
-	//hFeature1 = OGR_L_GetNextFeature(hLayer1);
-	hFDefn1 = OGR_L_GetLayerDefn(hLayer1);
-	//hFeature1=OGR_L_GetFeature(hLayer1,0); // read first feature to get all field info
-	//int idfld =OGR_F_GetFieldIndex(hFeature1,"Id"); // get index for the 'id' field
-	//if (idfld >= 0)
 	id = new int[countPts];
 	// loop through each feature and get lat,lon and id information
 
@@ -235,16 +165,27 @@ int readoutlets(char *outletsds,char *lyrname,int uselayername,int outletslyr,OG
 		 if (idfld >= 0)
 		   {
 			 
-			hFieldDefn = OGR_FD_GetFieldDefn( hFDefn1,idfld); // get field definiton based on index
-			if( OGR_Fld_GetType(hFieldDefn) == OFTInteger ) {
+			hFieldDefn1 = OGR_FD_GetFieldDefn( hFDefn1,idfld); // get field definiton based on index
+			if( OGR_Fld_GetType(hFieldDefn1) == OFTInteger ) {
 					id[nxy] =OGR_F_GetFieldAsInteger( hFeature1, idfld );} // get id value 
 		    }
-
+		 else {
+		      id[nxy]=1;// if there is no id field         
+		 } 
 			nxy++; // count number of outlets point
 		   OGR_F_Destroy( hFeature1 ); // destroy feature
 		    }
 	*noutlets=nxy;
 	 OGR_DS_Destroy( hDS1); // destroy data source
+	 return 0;
+}
+	
+
+int readoutlets(char *outletsds,char *lyrname,int uselayername,int outletslyr,OGRSpatialReferenceH hSRSRaster, int *noutlets, double*& x, double*& y)
+
+{     
+	int *id;
+	readoutlets(outletsds,lyrname,uselayername,outletslyr,hSRSRaster, noutlets,x,y,id);
 	return 0;
 }
 
