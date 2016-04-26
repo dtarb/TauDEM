@@ -81,17 +81,23 @@ int readoutlets(char *outletsds,char *lyrname, int uselayername,int outletslyr,O
 	gtype=OGR_L_GetGeomType(hLayer1);
 	if(gtype != wkbPoint)getlayerfail(hDS1,outletsds,outletslyr);
     //OGR_L_ResetReading(hLayer1);
-	hRSOutlet = OGR_L_GetSpatialRef(hLayer1);
-
-	int pj_raster=OSRIsProjected(hSRSRaster); // find if projected or not
-	int pj_outlet=OSRIsProjected(hRSOutlet);
-	const char *sprs;
-	if(pj_raster==0) {sprs="GEOGCS";} else { sprs="PROJCS"; }
-
 	const char* RasterProjectionName;
+	const char *sprs;
 	const char* OutletProjectionName;
-	RasterProjectionName = OSRGetAttrValue(hSRSRaster,sprs,0); // get projection name
+	int pj_raster,pj_outlet;
+	hRSOutlet = OGR_L_GetSpatialRef(hLayer1);
+	if(hSRSRaster!=NULL){
+	 pj_raster=OSRIsProjected(hSRSRaster); // find if projected or not
+	if(pj_raster==0) {sprs="GEOGCS";} else { sprs="PROJCS"; }
+	RasterProjectionName = OSRGetAttrValue(hSRSRaster,sprs,0); }// get projection name
+	if(hRSOutlet!=NULL){
+	pj_outlet=OSRIsProjected(hRSOutlet);
+	if(pj_outlet==0) {sprs="GEOGCS";} else { sprs="PROJCS"; }
 	OutletProjectionName = OSRGetAttrValue(hRSOutlet,sprs,0);
+
+	}
+	
+	
 
 	//if there is spatial reference then write warnings 
 	if(hRSOutlet!=NULL && hSRSRaster!=NULL){
