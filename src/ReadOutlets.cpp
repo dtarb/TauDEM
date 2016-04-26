@@ -67,8 +67,8 @@ int readoutlets(char *outletsds,char *lyrname, int uselayername,int outletslyr,O
 	hDS1 = OGROpen(outletsds, FALSE, NULL );
 	if( hDS1 == NULL )
 	{
-	printf( "Error Opening in Shapefile .\n" );
-	//exit( 1 );
+	printf( "Error Opening OGR Data Source .\n" );
+	return 1;
 	}
 	
     //get layer from layer name
@@ -82,24 +82,23 @@ int readoutlets(char *outletsds,char *lyrname, int uselayername,int outletslyr,O
 	if(gtype != wkbPoint)getlayerfail(hDS1,outletsds,outletslyr);
     //OGR_L_ResetReading(hLayer1);
 	const char* RasterProjectionName;
-	const char *sprs;
+	const char* sprs;
+	const char* sprso;
 	const char* OutletProjectionName;
 	int pj_raster,pj_outlet;
 	hRSOutlet = OGR_L_GetSpatialRef(hLayer1);
 	if(hSRSRaster!=NULL){
-	 pj_raster=OSRIsProjected(hSRSRaster); // find if projected or not
-	if(pj_raster==0) {sprs="GEOGCS";} else { sprs="PROJCS"; }
-	RasterProjectionName = OSRGetAttrValue(hSRSRaster,sprs,0); }// get projection name
-	if(hRSOutlet!=NULL){
-	pj_outlet=OSRIsProjected(hRSOutlet);
-	if(pj_outlet==0) {sprs="GEOGCS";} else { sprs="PROJCS"; }
-	OutletProjectionName = OSRGetAttrValue(hRSOutlet,sprs,0);
-
+	  pj_raster=OSRIsProjected(hSRSRaster); // find if projected or not
+	  if(pj_raster==0) {sprs="GEOGCS";} else { sprs="PROJCS"; }
+	  RasterProjectionName = OSRGetAttrValue(hSRSRaster,sprs,0); // get projection name
 	}
-	
-	
+	if(hRSOutlet!=NULL){
+	  pj_outlet=OSRIsProjected(hRSOutlet);
+	  if(pj_outlet==0) {sprso="GEOGCS";} else { sprso="PROJCS"; }
+	  OutletProjectionName = OSRGetAttrValue(hRSOutlet,sprso,0);
+	}
 
-	//if there is spatial reference then write warnings 
+	//Write warnings where projections may not match
 	if(hRSOutlet!=NULL && hSRSRaster!=NULL){
 	
 		if (pj_raster==pj_outlet){
@@ -109,39 +108,28 @@ int readoutlets(char *outletsds,char *lyrname, int uselayername,int outletslyr,O
 				printf( "Warning: Projection of Outlet shapefile and Raster data may be different.\n" );
 				printf("Projection of Raster datasource %s.\n",RasterProjectionName);
                 printf("Projection of Outlet feature %s.\n",OutletProjectionName);
-				
-				// TODO - Print the WKT and EPSG code of each.  If no spatial reference information, print unknown
-				// TODO - Test how this works if spatial reference information is incomplete, and create at least one of the unit test functions with a shapefile without a .prj file, and one of the unit test functions a raster without a projection (eg an ASCII file)
-			 }
+			}
 		}
     
 		else {
 			  printf( "Warning: Spatial References of Outlet shapefile and Raster data are different.\n" );
 			  printf("Projection of Raster datasource %s.\n",RasterProjectionName);
               printf("Projection of Outlet feature %s.\n",OutletProjectionName);
-
-
-			  // TODO - Print the WKT of each.  The general idea is that if these match, do not print anything.  
-			  //  If these do not match give the user a warning.  Only give an error if the program can not proceed, such as would be the case if rows and columns did not match.
 		}
 	}
 	
 	else if(hSRSRaster==NULL && hRSOutlet!=NULL) {
 		      printf( "Warning: Spatial References of Raster is missing.\n" );
-			 // printf("Projection of Raster datasource %s.\n",RasterProjectionName);
               printf("Projection of Outlet feature %s.\n",OutletProjectionName);
 
-		 }
+	}
 	else if(hSRSRaster!=NULL && hRSOutlet==NULL) {
 	          printf( "Warning: Spatial References of Outlet shapefile is missing.\n" );
 			  printf("Projection of Raster datasource %s.\n",RasterProjectionName);
-              //printf("Projection of Outlet feature %s.\n",OutletProjectionName);
-}
+	}
 	else {
 	          printf( "Warning: Spatial References of Outlet shapefile and Raster data are missing.\n" );
-			//  printf("Projection of Raster datasource %s.\n",RasterProjectionName);
-              //printf("Projection of Outlet feature %s.\n",OutletProjectionName);
-}
+	}
 
 
 
@@ -175,12 +163,12 @@ int readoutlets(char *outletsds,char *lyrname, int uselayername,int outletslyr,O
 		 else {
 		      id[nxy]=1;// if there is no id field         
 		 } 
-			nxy++; // count number of outlets point
-		   OGR_F_Destroy( hFeature1 ); // destroy feature
-		    }
+		 nxy++; // count number of outlets point
+		 OGR_F_Destroy( hFeature1 ); // destroy feature
+	}
 	*noutlets=nxy;
-	 OGR_DS_Destroy( hDS1); // destroy data source
-	 return 0;
+	OGR_DS_Destroy( hDS1); // destroy data source
+	return 0;
 }
 	
 
@@ -188,7 +176,7 @@ int readoutlets(char *outletsds,char *lyrname,int uselayername,int outletslyr,OG
 
 {     
 	int *id;
-	readoutlets(outletsds,lyrname,uselayername,outletslyr,hSRSRaster, noutlets,x,y,id);
-	return 0;
+	int retval=readoutlets(outletsds,lyrname,uselayername,outletslyr,hSRSRaster, noutlets,x,y,id);
+	return retval;  // Do this so that if ever we use the return from readoutlets with id it gets captured in the wrapper function
 }
 
