@@ -83,17 +83,15 @@ int readoutlets(char *outletsds,char *lyrname, int uselayername,int outletslyr,O
     //OGR_L_ResetReading(hLayer1);
 	hRSOutlet = OGR_L_GetSpatialRef(hLayer1);
 
-	    int pj_raster=OSRIsProjected(hSRSRaster); // find if projected or not
-		int pj_outlet=OSRIsProjected(hRSOutlet);
-		const char *sprs;
-		if(pj_raster==0) {sprs="GEOGCS";} else { sprs="PROJCS"; }
+	int pj_raster=OSRIsProjected(hSRSRaster); // find if projected or not
+	int pj_outlet=OSRIsProjected(hRSOutlet);
+	const char *sprs;
+	if(pj_raster==0) {sprs="GEOGCS";} else { sprs="PROJCS"; }
 
-		const char* RasterProjectionName;
-		const char* OutletProjectionName;
-		RasterProjectionName = OSRGetAttrValue(hSRSRaster,sprs,0); // get projection name
-		OutletProjectionName = OSRGetAttrValue(hRSOutlet,sprs,0);
-
-
+	const char* RasterProjectionName;
+	const char* OutletProjectionName;
+	RasterProjectionName = OSRGetAttrValue(hSRSRaster,sprs,0); // get projection name
+	OutletProjectionName = OSRGetAttrValue(hRSOutlet,sprs,0);
 
 	//if there is spatial reference then write warnings 
 	if(hRSOutlet!=NULL && hSRSRaster!=NULL){
@@ -161,7 +159,6 @@ int readoutlets(char *outletsds,char *lyrname, int uselayername,int outletslyr,O
          x[nxy] = OGR_G_GetX(geometry, 0);
 		 y[nxy] =  OGR_G_GetY(geometry, 0);
 		 int idfld =OGR_F_GetFieldIndex(hFeature1,"id");
-
 		 if (idfld >= 0)
 		   {
 			 
