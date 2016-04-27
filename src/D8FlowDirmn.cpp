@@ -48,7 +48,7 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-  char demfile[MAXLN], pointfile[MAXLN], slopefile[MAXLN], flowfile[MAXLN];
+  char demfile[MAXLN] = { 0 }, pointfile[MAXLN] = { 0 }, slopefile[MAXLN] = { 0 }, flowfile[MAXLN] = { 0 };
   int err, i;
     short useflowfile=0;
 
