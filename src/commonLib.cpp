@@ -39,13 +39,15 @@ email:  dtarb@usu.edu
 //  This software is distributed from http://hydrology.usu.edu/taudem/
 
 
-#include <stdio.h>
-#include <string.h>
+#include <cmath>
+#include <cstdio>
+#include <cstring>
 
+#include <cstdint>
+#include <cinttypes>
 #include <queue>
 
 #include "commonLib.h"
-#include <math.h>
 
 using std::queue;
 
@@ -239,8 +241,8 @@ void initNeighborDinfup(tdpartition* neighbor,tdpartition* flowData,queue<node> 
 			finished = neighbor->ringTerm( finished );
 		}
 
-		delete bufferAbove;
-		delete bufferBelow;
+		delete[] bufferAbove;
+		delete[] bufferBelow;
 	}
 }
 
@@ -377,8 +379,8 @@ void initNeighborD8up(tdpartition* neighbor,tdpartition* flowData,queue<node> *q
 			}
 			finished = neighbor->ringTerm( finished );
 		}
-		delete bufferAbove;
-		delete bufferBelow;
+		delete[] bufferAbove;
+		delete[] bufferBelow;
 	}
 }
 
@@ -429,5 +431,32 @@ bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData){
 
     printf("%s ", layername);
     return layername;
+}
+
+std::string humanReadableSize(uint64_t size)
+{
+    static const char     *sizes[]   = { "PB", "TB", "GB", "MB", "KB", "B" };
+    static const uint64_t petabytes = 1024ULL * 1024ULL * 1024ULL * 1024ULL * 1024ULL;
+
+    std::string result;
+    result.reserve(20);
+
+    uint64_t multiplier = petabytes;
+
+    for (size_t i = 0; i < std::extent<decltype(sizes)>::value; i++, multiplier /= 1024)
+    {   
+        if (size < multiplier)
+            continue;
+
+        if (size % multiplier == 0)
+            sprintf(&result[0], "%" PRIu64 " %s", size / multiplier, sizes[i]);
+        else
+            sprintf(&result[0], "%.1f %s", (float) size / multiplier, sizes[i]);
+        return result;
+    }
+
+    result.append("0");
+
+    return result;
 }
 
