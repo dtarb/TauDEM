@@ -148,8 +148,8 @@ void linearpart<datatype>::init(long totalx, long totaly, double dx_in, double d
 	    // We store the borders right before and after the grid.
 	    // This way y=-1 and ny can be safely used with getData 
 	    // without additional checks
-	    
-		prod=nx*ny+2*nx;
+	   
+        prod=(uint64_t)nx*(uint64_t)ny+2*(uint64_t)nx; 
 
         rawData = new datatype[prod];
 
@@ -166,12 +166,8 @@ void linearpart<datatype>::init(long totalx, long totaly, double dx_in, double d
 		MPI_Abort(MCW, -999);
 	}
 
-	for(uint64_t j=0; j<nx; j++){
-		for(uint64_t i=0; i<ny; i++)
-		    gridData[i*nx+j] = noData;
-		topBorder[j] = noData;
-		bottomBorder[j] = noData;
-	}
+    // Set no-data for borders and partition
+    std::fill(rawData, rawData + prod, noData);
 }
 
 //Returns true if (x,y) is in partition
