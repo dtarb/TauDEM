@@ -12,6 +12,6 @@ void writeSlope(tdpartition *flowDir, tdpartition *elevDEM, tdpartition* slopefi
 //Open files, initialize grid memory....
 int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, int useflowfile);
 
-long setPosDir(linearpart<float>& elevDEM, linearpart<short>& flowDir, SparsePartition<long>& flow, int useflowfile);
+long setPosDir(linearpart<float>& elevDEM, linearpart<short>& flowDir);
 
 #endif

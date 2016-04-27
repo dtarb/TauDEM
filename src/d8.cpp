@@ -114,7 +114,7 @@ int dontCross(int k, int i, int j, linearpart<short>& flowDir)
 }
 
 //Set positive flowdirections of elevDEM
-void setFlow(int i, int j, linearpart<short>& flowDir, linearpart<float>& elevDEM, SparsePartition<long>& area, int useflowfile)
+void setFlow(int i, int j, linearpart<short>& flowDir, linearpart<float>& elevDEM)
 {
     int in,jn;
     int amax=0;
@@ -127,19 +127,6 @@ void setFlow(int i, int j, linearpart<short>& flowDir, linearpart<float>& elevDE
         jn=j+d2[k];
 
         float slope = fact[j][k] * (elev - elevDEM.getData(in,jn));
-
-        if (useflowfile == 1) {
-            int aneigh = area.getData(in,jn);
-
-            if (aneigh > amax && slope >= 0) {
-                amax = aneigh;
-
-                short dirnb = flowDir.getData(in,jn);
-                if (dirnb > 0 && abs(dirnb - k) != 4) {
-                    flowDir.setData(i, j, k);
-                }
-            }
-        }
 
         if (slope > smax) {
             smax=slope;
@@ -265,8 +252,6 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
     short flowDirNodata = MISSINGSHORT;
 
     linearpart<short> flowDir(totalX, totalY, dx, dy, MPI_SHORT, flowDirNodata);
-    //linearpart<long> area(totalX, totalY, dx, dy, MPI_LONG, -1);
-    SparsePartition<long> area(totalX, totalY, -1);
 
     //If using a flowfile, read it in
     if (useflowfile == 1) {
@@ -292,20 +277,14 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
                 }
             }
         }
-
-        //TODO - why is this here?
-        //darea( &flowDir, &area, NULL, NULL, 0, 1, NULL, 0, 0 );
     }
 
     if (rank == 0) fprintf(stderr, "Calculating flow directions... ");
     t.start("Calculate flow directions");
-
-    long numFlat = setPosDir(elevDEM, flowDir, area, useflowfile);
-
+    long numFlat = setPosDir(elevDEM, flowDir);
     t.end("Calculate flow directions");
-    if (rank == 0) fprintf(stderr, "done. %lu flats to resolve.\n", numFlat);
 
-    if (slopefile != NULL)
+    if (strlen(slopefile) > 0)
     {
         t.start("Calculate slope");
         
@@ -500,7 +479,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
 
 // Sets only flowDir only where there is a positive slope
 // Returns number of cells which are flat
-long setPosDir(linearpart<float>& elevDEM, linearpart<short>& flowDir, SparsePartition<long>& area, int useflowfile)
+long setPosDir(linearpart<float>& elevDEM, linearpart<short>& flowDir)
 {
     double dxA = elevDEM.getdxA();
     double dyA = elevDEM.getdyA();
@@ -549,7 +528,7 @@ long setPosDir(linearpart<float>& elevDEM, linearpart<short>& flowDir, SparsePar
             } else {
                 // If cell is not contaminated,
                 flowDir.setData(i, j, 0);
-                setFlow(i,j, flowDir, elevDEM, area, useflowfile);
+                setFlow(i,j, flowDir, elevDEM);
 
                 if (flowDir.getData(i,j) == 0) {
                     numFlat++;
