@@ -185,7 +185,6 @@ template <class datatype>
 inline bool linearpart<datatype>::hasAccess(int x, int y) const {
     // Partition has access to top and bottom rows on other processors
     // so valid x [0, nx) and y [-1, ny] (unless at top/bottom partition)
-    
     bool badTopAccess = rank == 0 && y == -1;
     bool badBottomAccess = rank == size - 1 && y == ny;
 

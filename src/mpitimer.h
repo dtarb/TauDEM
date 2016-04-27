@@ -25,9 +25,11 @@ class MPITimer
             timings[name].start = MPI_Wtime() - offset;
         }
 
-        void end(std::string name) {
+        double end(std::string name) {
             timings[name].end = MPI_Wtime() - offset;
             level--;
+
+            return timings[name].end;
         }
 
         void stop() {

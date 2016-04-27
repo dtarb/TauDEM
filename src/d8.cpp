@@ -178,7 +178,7 @@ void calcSlope(linearpart<short>& flowDir, linearpart<float>& elevDEM, linearpar
     int nx = elevDEM.getnx();
     int ny = elevDEM.getny();
 
-    for (int j = 0; j < ny; j++) {
+    for (int j=0; j < ny; j++) {
         for (int i=0; i < nx; i++) {
             // If i,j is on the border or flowDir has no data, set slope(i,j) to slopeNoData
             if (flowDir.isNodata(i,j) || !flowDir.hasAccess(i-1,j) || !flowDir.hasAccess(i+1,j) ||
@@ -246,12 +246,20 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
         fflush(stderr);
     }
 
+    auto bytes_to_read = nx * ny * sizeof(float);
+    if (rank == 0) { 
+        fprintf(stderr, "Reading input data (%s)... ", humanReadableSize(bytes_to_read).c_str());
+    }
+
     t.start("Data read");
+
     dem.read(xstart, ystart, ny, nx, elevDEM.getGridPointer());
     elevDEM.share();
-    t.end("Data read");
-
-    double readt = MPI_Wtime();
+    double data_read_time = t.end("Data read");
+   
+    if (rank == 0) {
+        fprintf(stderr, "done (%s/s).\n", humanReadableSize(bytes_to_read / data_read_time).c_str());
+    }
 
     //Creates empty partition to store new flow direction
     short flowDirNodata = MISSINGSHORT;
@@ -289,23 +297,31 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
         //darea( &flowDir, &area, NULL, NULL, 0, 1, NULL, 0, 0 );
     }
 
-    long numFlat = 0;
+    if (rank == 0) fprintf(stderr, "Calculating flow directions... ");
+    t.start("Calculate flow directions");
 
+    long numFlat = setPosDir(elevDEM, flowDir, area, useflowfile);
+
+    t.end("Calculate flow directions");
+    if (rank == 0) fprintf(stderr, "done. %lu flats to resolve.\n", numFlat);
+
+    if (slopefile != NULL)
     {
         t.start("Calculate slope");
+        
         //Creates empty partition to store new slopes
         float slopeNodata = -1.0f;
         linearpart<float> slope(totalX, totalY, dx, dy, MPI_FLOAT, slopeNodata);
 
-        numFlat = setPosDir(elevDEM, flowDir, area, useflowfile);
         calcSlope(flowDir, elevDEM, slope);
+
         t.end("Calculate slope");
 
         t.start("Write slope");
         tiffIO slopeIO(slopefile, FLOAT_TYPE, &slopeNodata, dem);
         slopeIO.write(xstart, ystart, ny, nx, slope.getGridPointer());
         t.end("Write slope");
-    }  // This bracket intended to destruct slope partition and release memory
+    }
 
     flowDir.share();
 
@@ -313,7 +329,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
     MPI_Allreduce(&numFlat, &totalNumFlat, 1, MPI_LONG, MPI_SUM, MCW);
    
     if (rank == 0) {
-        fprintf(stderr, "All slopes evaluated. %ld flats to resolve.\n", totalNumFlat);
+        fprintf(stderr, "done. %ld flats to resolve.\n", totalNumFlat);
         fflush(stderr);
     }
 
@@ -348,6 +364,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
         t.start("Find islands");
         {
             SparsePartition<int> island_marker(nx, ny, 0);
+            std::vector<node> q;
 
             for(node flat : flats)
             {
@@ -355,7 +372,6 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
                     continue;
                 }
 
-                std::vector<node> q;
                 q.push_back(flat);
 
                 int label = ++numIslands;
@@ -405,39 +421,6 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
             borderingIslands.push_back(island);
         }
 
-        //printf("rank %d: Done, %d islands. Took %.2f seconds\n", rank, numIslands, MPI_Wtime() - flatFindStart);
-        //printf("rank %d: %lu bordering islands with %d flats\n", rank, bordering_islands.size(), localSharedFlats);
-
-        t.start("Resolve local flats");
-        if (!islands.empty()) {
-            SparsePartition<short> inc(nx, ny, 0);
-            size_t lastNumFlat = resolveFlats(elevDEM, inc, flowDir, islands);
-
-            if (rank==0) {
-                fprintf(stderr, "Iteration complete. Number of flats remaining: %ld\n\n", lastNumFlat);
-                fflush(stderr);
-            }
-
-            // Repeatedly call resolve flats until there is no change
-            while (lastNumFlat > 0)
-            {
-                SparsePartition<short> newInc(nx, ny, 0);
-
-                lastNumFlat = resolveFlats(inc, newInc, flowDir, islands); 
-                inc = std::move(newInc);
-
-                if (rank==0) {
-                    fprintf(stderr, "Iteration complete. Number of flats remaining: %ld\n\n", lastNumFlat);
-                    fflush(stderr);
-                }
-            } 
-        }
-        t.end("Resolve local flats");
-
-        t.start("Barrier to shared");
-        MPI_Barrier(MPI_COMM_WORLD);
-        t.end("Barrier to shared");
-
         t.start("Resolve shared flats");
         MPI_Allreduce(&localSharedFlats, &sharedFlats, 1, MPI_INT, MPI_SUM, MCW);
 
@@ -469,6 +452,35 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
             }
         }
         t.end("Resolve shared flats");
+
+        //printf("rank %d: Done, %d islands. Took %.2f seconds\n", rank, numIslands, MPI_Wtime() - flatFindStart);
+        //printf("rank %d: %lu bordering islands with %d flats\n", rank, bordering_islands.size(), localSharedFlats);
+
+        t.start("Resolve local flats");
+        if (!islands.empty()) {
+            SparsePartition<short> inc(nx, ny, 0);
+            size_t lastNumFlat = resolveFlats(elevDEM, inc, flowDir, islands);
+
+            if (rank==0) {
+                fprintf(stderr, "Iteration complete. Number of flats remaining: %ld\n\n", lastNumFlat);
+                fflush(stderr);
+            }
+
+            // Repeatedly call resolve flats until there is no change
+            while (lastNumFlat > 0)
+            {
+                SparsePartition<short> newInc(nx, ny, 0);
+
+                lastNumFlat = resolveFlats(inc, newInc, flowDir, islands); 
+                inc = std::move(newInc);
+
+                if (rank==0) {
+                    fprintf(stderr, "Iteration complete. Number of flats remaining: %ld\n\n", lastNumFlat);
+                    fflush(stderr);
+                }
+            } 
+        }
+        t.end("Resolve local flats");
     }
 
     t.end("Resolve flats");
@@ -522,12 +534,13 @@ long setPosDir(linearpart<float>& elevDEM, linearpart<short>& flowDir, SparsePar
             //Check if cell is "contaminated" (neighbors have no data)
             //  set flowDir to noData if contaminated
             bool contaminated = false;
-            for (int k=1; k<=8 && !contaminated; k++) {
+            for (int k=1; k<=8; k++) {
                 int in=i+d1[k];
                 int jn=j+d2[k];
 
                 if (elevDEM.isNodata(in,jn)) {
                     contaminated = true;
+                    break;
                 }
             }
 
