@@ -912,9 +912,8 @@ size_t propagateIncrements(linearpart<short>& flowDir, SparsePartition<short>& i
     size_t numInc = 0;
     int st = 1;
     
+    std::vector<node> newFlats;
     while (!queue.empty()) {
-        std::vector<node> newFlats;
-
         for(node flat : queue) {
             // Duplicate. already set
             if (inc.getData(flat.x, flat.y) > 0)
@@ -941,6 +940,7 @@ size_t propagateIncrements(linearpart<short>& flowDir, SparsePartition<short>& i
             inc.setData(flat.x, flat.y, st);
         }
 
+        queue.clear();
         queue.swap(newFlats);
         st++;
     }
@@ -1001,10 +1001,9 @@ size_t propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<sho
 
     // Sort queue by lowest increment
     std::sort(queue.begin(), queue.end());
+    std::vector<pnode> newFlats;
 
     while (!queue.empty()) {
-        std::vector<pnode> newFlats;
-
         for(pnode flat : queue) {
             // Skip if the increment was already set and it is lower 
             auto st = inc.getData(flat.x, flat.y);
@@ -1035,6 +1034,7 @@ size_t propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<sho
         }
 
         std::sort(newFlats.begin(), newFlats.end());
+        queue.clear();
         queue.swap(newFlats);
     }
 
