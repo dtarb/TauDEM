@@ -39,14 +39,19 @@ email:  dtarb@usu.edu
 //  This software is distributed from http://hydrology.usu.edu/taudem/
 
 #include <mpi.h>
-#include <math.h>
+
+#include <cmath>
+#include <iostream>
 #include <queue>
+
 #include "commonLib.h"
 #include "linearpart.h"
 #include "createpart.h"
 #include "tiffIO.h"
 
-using namespace std;
+using std::queue;
+using std::cout;
+using std::endl;
 
 int aread8(char* pfile, char* afile, char *shfile, char *wfile, int useOutlets, int usew, int contcheck) {
 
