@@ -233,7 +233,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
         fflush(stderr);
     }
 
-    auto bytes_to_read = nx * ny * sizeof(float);
+    uint64_t bytes_to_read = (uint64_t) nx * ny * sizeof(float);
     if (rank == 0) { 
         fprintf(stderr, "Reading input data (%s)... ", humanReadableSize(bytes_to_read).c_str());
     }
