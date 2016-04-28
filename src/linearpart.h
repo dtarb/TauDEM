@@ -206,55 +206,6 @@ void linearpart<datatype>::share() {
                     topBorder, nx, MPI_type, rank-1, 0,
                     MCW, MPI_STATUS_IGNORE);
     }
-
-	//datatype *ptr;
-	//int place;
-	//datatype *buf;
-	//int bsize=nx*sizeof(datatype)+MPI_BSEND_OVERHEAD; 
-	//buf = new datatype[bsize];
-
-	//if(rank<size-1){
-		//MPI_Buffer_attach(buf,bsize);
-		//MPI_Bsend(gridData+((ny-1)*nx), nx, MPI_type, rank+1, 0, MCW);
-		//MPI_Buffer_detach(&ptr,&place);
-	//}
-	//if(rank >0)	MPI_Recv(topBorder, nx, MPI_type, rank-1, 0, MCW, &status);
-	//if(rank>0){
-		//MPI_Buffer_attach(buf,bsize);
-		//MPI_Bsend(gridData, nx, MPI_type, rank-1, 0, MCW);
-		//MPI_Buffer_detach(&ptr,&place);
-	//}
-	//if(rank<size-1) MPI_Recv(bottomBorder, nx, MPI_type, rank+1, 0, MCW, &status);
-
-	//delete [] buf;   // added by dww -- why not elsewhere?
-
-/*
-	if(rank == 0){ //Top partition in grid - only send and receive the bottom
-		
-//		cout << rank << " 1" << endl;
-		MPI_Bsend(gridData+((ny-1)*nx), nx, MPI_type, rank+1, 0, MCW);
-		MPI_Recv(bottomBorder, nx, MPI_type, rank+1, 0, MCW, &status);
-//		cout << rank << " end" << endl;
-
-	}else if(rank == size-1){ //Bottom partition - only send and receive top
-		MPI_Bsend(gridData, nx, MPI_type, rank-1, 0, MCW);
-		MPI_Recv(topBorder, nx, MPI_type, rank-1, 0, MCW, &status);
-//		cout << rank << " end" << endl;
-
-	}else{ //Send and receive top and bottom
-		MPI_Bsend(gridData+((ny-1)*nx), nx, MPI_type, rank+1, 0, MCW);
-		MPI_Recv(bottomBorder, nx, MPI_type, rank+1, 0, MCW, &status);
-
-		MPI_Buffer_detach(&ptr,&place);
-		MPI_Buffer_attach(buf,bsize);
-
-		MPI_Bsend(gridData, nx, MPI_type, rank-1, 0, MCW);
-		MPI_Recv(topBorder, nx, MPI_type, rank-1, 0, MCW, &status);
-//		cout << rank << " end" << endl;
-
-	}
-	MPI_Buffer_detach(&ptr,&place);
-*/
 }
 
 //Swaps border information between adjacent processes.  In this way, no data is
