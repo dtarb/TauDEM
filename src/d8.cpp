@@ -60,8 +60,8 @@ template<typename T> void flowTowardsLower(T& elev, linearpart<short>& flowDir, 
 template<typename T> void flowFromHigher(T& elevDEM, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, SparsePartition<short>& inc);
 template<typename T> int markPits(T& elevDEM, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, SparsePartition<short>& inc);
 
-int propagateIncrements(linearpart<short>& flowDir, SparsePartition<short>& inc, std::vector<node>& queue);
-int propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<short>& inc);
+size_t propagateIncrements(linearpart<short>& flowDir, SparsePartition<short>& inc, std::vector<node>& queue);
+size_t propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<short>& inc);
 
 double **fact;
 
@@ -304,11 +304,11 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
 
     flowDir.share();
 
-    size_t totalNumFlat = 0;
-    MPI_Allreduce(&numFlat, &totalNumFlat, 1, MPI_LONG, MPI_SUM, MCW);
+    uint64_t totalNumFlat = 0;
+    MPI_Allreduce(&numFlat, &totalNumFlat, 1, MPI_UINT64_T, MPI_SUM, MCW);
    
     if (rank == 0) {
-        fprintf(stderr, "done. %ld flats to resolve.\n", totalNumFlat);
+        fprintf(stderr, "done. %llu flats to resolve.\n", totalNumFlat);
         fflush(stderr);
     }
 
@@ -391,7 +391,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
         t.end("Find islands");
 
         std::vector<std::vector<node>> borderingIslands;
-        int localSharedFlats = 0, sharedFlats = 0;
+        uint64_t localSharedFlats = 0, sharedFlats = 0;
 
         for (auto& label : bordering_island_labels) {
             std::vector<node> island = std::move(islands[label - 1]);
@@ -401,11 +401,11 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
         }
 
         t.start("Resolve shared flats");
-        MPI_Allreduce(&localSharedFlats, &sharedFlats, 1, MPI_INT, MPI_SUM, MCW);
+        MPI_Allreduce(&localSharedFlats, &sharedFlats, 1, MPI_UINT64_T, MPI_SUM, MCW);
 
         if (rank == 0) {
             fprintf(stderr, "Processing partial flats\n");
-            printf("PRL: %d flats shared across processors (%d local -> %.2f%% shared)\n", sharedFlats, totalNumFlat - sharedFlats, 100. * sharedFlats / totalNumFlat);
+            printf("PRL: %llu flats shared across processors (%llu local -> %.2f%% shared)\n", sharedFlats, totalNumFlat - sharedFlats, 100. * sharedFlats / totalNumFlat);
         }
 
         if (sharedFlats > 0) {
@@ -627,7 +627,7 @@ void flowTowardsLower(T& elev, linearpart<short>& flowDir, std::vector<std::vect
         }
     }
 
-    int numInc = propagateIncrements(flowDir, inc, lowBoundaries);
+    size_t numInc = propagateIncrements(flowDir, inc, lowBoundaries);
 
     // Not all grid cells were resolved - pits remain
     // Remaining grid cells are unresolvable pits
@@ -879,7 +879,7 @@ long resolveFlats_parallel(T& elev, SparsePartition<short>& inc, linearpart<shor
         fflush(stderr);
     }
 
-    long localFlatsRemaining = 0, globalFlatsRemaining = 0;
+    uint64_t localFlatsRemaining = 0, globalFlatsRemaining = 0;
 
     for (auto& island : islands) {
         for (node flat : island) {
@@ -892,7 +892,7 @@ long resolveFlats_parallel(T& elev, SparsePartition<short>& inc, linearpart<shor
     }
 
     flowDir.share();
-    MPI_Allreduce(&localFlatsRemaining, &globalFlatsRemaining, 1, MPI_LONG, MPI_SUM, MCW); 
+    MPI_Allreduce(&localFlatsRemaining, &globalFlatsRemaining, 1, MPI_UINT64_T, MPI_SUM, MCW);
 
     auto hasFlowDirection = [&](const node& n) { return flowDir.getData(n.x, n.y) != 0; };
     auto isEmpty = [&](const std::vector<node>& i) { return i.empty(); };
@@ -908,8 +908,8 @@ long resolveFlats_parallel(T& elev, SparsePartition<short>& inc, linearpart<shor
     return globalFlatsRemaining;
 }
 
-int propagateIncrements(linearpart<short>& flowDir, SparsePartition<short>& inc, std::vector<node>& queue) {
-    int numInc = 0;
+size_t propagateIncrements(linearpart<short>& flowDir, SparsePartition<short>& inc, std::vector<node>& queue) {
+    size_t numInc = 0;
     int st = 1;
     
     while (!queue.empty()) {
@@ -948,7 +948,7 @@ int propagateIncrements(linearpart<short>& flowDir, SparsePartition<short>& inc,
     return numInc;
 }
 
-int propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<short>& inc)
+size_t propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<short>& inc)
 {
     int nx = flowDir.getnx();
     int ny = flowDir.getny();
@@ -990,17 +990,17 @@ int propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<short>
                     // Here we set a negative increment if it's still pending
                     //
                     // Another flat might be neighboring the same cell with a lower increment,
-                    // which has to override the higher increment.
+                    // which has to override the higher increment (that hasn't been set yet but is in the queue).
                     inc.setData(in, jn, -(st + 1));
                 }
             }
         }
     }
 
+    size_t numChanged = 0;
+
     // Sort queue by lowest increment
     std::sort(queue.begin(), queue.end());
-
-    int numInc = 0;
 
     while (!queue.empty()) {
         std::vector<pnode> newFlats;
@@ -1031,12 +1031,12 @@ int propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<short>
             }
 
             inc.setData(flat.x, flat.y, flat.inc);
-            numInc++;
+            numChanged++;
         }
 
         std::sort(newFlats.begin(), newFlats.end());
         queue.swap(newFlats);
     }
 
-    return numInc;
+    return numChanged;
 }
