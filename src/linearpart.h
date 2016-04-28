@@ -493,7 +493,7 @@ template <class datatype>
 inline datatype linearpart<datatype>::getData(int x, int y) const
 {
     assert(x >= 0 && x < nx && y >= -1 && y <= ny);
-    return gridData[x+y*nx];
+    return gridData[x+y*(int64_t)nx];
 }
 
 // FIXME: get rid of this ugly function
@@ -530,7 +530,7 @@ template <class datatype>
 inline void linearpart<datatype>::setData(int x, int y, datatype val){
     assert(isInPartition(x, y));
 
-    gridData[x + y*nx] = val;
+    gridData[x + y*(int64_t)nx] = val;
 }
 
 //Increments the element in the grid by the specified value.
@@ -538,6 +538,6 @@ template <class datatype>
 inline void linearpart<datatype>::addToData(int x, int y, datatype val) {
     assert(isInPartition(x, y));
 
-    gridData[x + y*nx] += val;
+    gridData[x + y*(int64_t)nx] += val;
 }
 #endif
