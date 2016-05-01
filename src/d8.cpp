@@ -40,6 +40,7 @@ email:  dtarb@usu.edu
 //  This software is distributed from http://hydrology.usu.edu/taudem/
 
 #include <algorithm>
+#include <cinttypes>
 #include <set>
 
 #include <mpi.h>
@@ -281,7 +282,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
 
     if (rank == 0) fprintf(stderr, "Calculating flow directions... ");
     t.start("Calculate flow directions");
-    long numFlat = setPosDir(elevDEM, flowDir);
+    uint64_t numFlat = setPosDir(elevDEM, flowDir);
     t.end("Calculate flow directions");
 
     if (strlen(slopefile) > 0)
@@ -308,7 +309,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
     MPI_Allreduce(&numFlat, &totalNumFlat, 1, MPI_UINT64_T, MPI_SUM, MCW);
    
     if (rank == 0) {
-        fprintf(stderr, "done. %llu flats to resolve.\n", totalNumFlat);
+        fprintf(stderr, "done. %" PRIu64 " flats to resolve.\n", totalNumFlat);
         fflush(stderr);
     }
 
@@ -413,7 +414,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
             size_t lastNumFlat = resolveFlats_parallel(elevDEM, inc, flowDir, borderingIslands);
 
             if (rank==0) {
-                fprintf(stderr, "PRL: Iteration complete. Number of flats remaining: %ld\n", lastNumFlat);
+                fprintf(stderr, "PRL: Iteration complete. Number of flats remaining: %zu\n", lastNumFlat);
                 fflush(stderr);
             }
 
@@ -425,7 +426,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
                 inc = std::move(newInc);
 
                 if (rank==0) {
-                    fprintf(stderr, "PRL: Iteration complete. Number of flats remaining: %ld\n", lastNumFlat);
+                    fprintf(stderr, "PRL: Iteration complete. Number of flats remaining: %zu\n", lastNumFlat);
                     fflush(stderr);
                 }
             }
@@ -441,7 +442,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
             size_t lastNumFlat = resolveFlats(elevDEM, inc, flowDir, islands);
 
             if (rank==0) {
-                fprintf(stderr, "Iteration complete. Number of flats remaining: %ld\n\n", lastNumFlat);
+                fprintf(stderr, "Iteration complete. Number of flats remaining: %zu\n\n", lastNumFlat);
                 fflush(stderr);
             }
 
@@ -454,7 +455,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
                 inc = std::move(newInc);
 
                 if (rank==0) {
-                    fprintf(stderr, "Iteration complete. Number of flats remaining: %ld\n\n", lastNumFlat);
+                    fprintf(stderr, "Iteration complete. Number of flats remaining: %zu\n\n", lastNumFlat);
                     fflush(stderr);
                 }
             } 
