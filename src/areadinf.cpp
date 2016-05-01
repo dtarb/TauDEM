@@ -49,8 +49,8 @@ email:  dtarb@usu.edu
 
 using namespace std;
 
-int area(char* angfile, char* scafile, char *shfile, char *wfile, int useOutlets, int usew, int contcheck) {
-
+int area(char* angfile, char* scafile, char* datasrc, char* lyrname, int uselyrname, int lyrno, char *wfile, int useOutlets, int usew, int contcheck)
+{
 	MPI_Init(NULL,NULL);{
 
 	int rank,size;
@@ -73,7 +73,7 @@ int area(char* angfile, char* scafile, char *shfile, char *wfile, int useOutlets
 	hSRSRaster=ang.getspatialref();
 	if( useOutlets == 1) {
 		if(rank==0){
-			if(readoutlets(shfile,hSRSRaster, &numOutlets, x, y)==0){
+			if(readoutlets(datasrc,lyrname,uselyrname,lyrno,hSRSRaster, &numOutlets, x, y)==0){
 				usingShapeFile=true;
 				MPI_Bcast(&numOutlets, 1, MPI_INT, 0, MCW);
 				MPI_Bcast(x, numOutlets, MPI_DOUBLE, 0, MCW);

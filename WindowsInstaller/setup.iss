@@ -4,8 +4,9 @@
 
 ; ****  REQUIREMENTS FOR COMPILING THIS INSTALLER SCRIPT  ****
 ; The following files must exist in the same directory location as this script
-; gdal-111-1600-core.msi
-; gdal-111-1600-x64-core.msi
+; GDAL-1.9.2.win32-py2.7.exe (Python GDAL)
+; gdal-111-1600-core.msi   (C++ GDAL
+; gdal-111-1600-x64-core.msi  (C++ GDAL
 ; mpi_x86.msi
 ; mpi_x64.msi
 ; vcredist_x86_2010.exe
@@ -23,7 +24,7 @@
 ; TauDEMArcGIS/
 
 #define MyAppName "TauDEM"
-#define MyAppVersion "5.4"
+#define MyAppVersion "5.3.4"
 #define MyAppPublisher "Utah State University"
 #define MyAppURL "http://hydrology.usu.edu/taudem/taudem5/index.html"
 
@@ -41,16 +42,16 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={pf}\TauDEM
 DefaultGroupName={#MyAppName}
-OutputBaseFilename=setup
+OutputBaseFilename=TauDEM_setup
 Compression=lzma
-SolidCompression=yes
+SolidCompression=yes        
 ; "ArchitecturesInstallIn64BitMode=x64" requests that the install be
 ; done in "64-bit mode" on x64, meaning it should use the native
 ; 64-bit Program Files directory and the 64-bit view of the registry.
 ; On all other architectures it will install in "32-bit mode".
 ArchitecturesInstallIn64BitMode=x64
 WizardSmallImageFile=taudem.bmp
-; Don't show the welcome wizard page
+; Don't show the welcome wizard page  and ready to install page
 DisableWelcomePage=yes
 DisableReadyPage=yes
 
@@ -65,6 +66,7 @@ Name: "C:\GDAL"
 
 [Files]
 ; copy files 
+Source: "GDAL-1.9.2.win32-py2.7.exe"; DestDir: "{app}\setup_files"; Flags: ignoreversion
 Source: "gdal-111-1600-core.msi"; DestDir: "{app}\setup_files"; Flags: ignoreversion; Check: not Is64BitInstallMode
 Source: "gdal-111-1600-x64-core.msi"; DestDir: "{app}\setup_files"; Flags: ignoreversion; Check: Is64BitInstallMode
 
@@ -88,6 +90,7 @@ Source: "Firewall.bat"; DestDir: "{app}\setup_files"; Flags: ignoreversion
 
 [Run]
 ; install GDAL core components
+Filename: "{app}\setup_files\GDAL-1.9.2.win32-py2.7.exe"; Flags: waituntilterminated shellexec
 Filename: "{app}\setup_files\gdal-111-1600-core.msi"; Flags: waituntilterminated shellexec; Check: not Is64BitInstallMode
 Filename: "{app}\setup_files\gdal-111-1600-x64-core.msi"; Flags: waituntilterminated shellexec; Check: Is64BitInstallMode  
  
@@ -106,6 +109,10 @@ Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environmen
 ;set GDAL program path
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType:string; ValueName:"PATH"; ValueData:"{olddata};{pf}\GDAL"; Check: NeedsAddPath('{pf}\GDAL', True, True); Flags: preservestringtype
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType:string; ValueName:"PATH"; ValueData:"{olddata};{pf}\GDAL"; Check: NeedsAddPath('{pf}\GDAL', False, True); Flags: preservestringtype
+
+;set GDAL_DATA  (new environment variable)
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType:string; ValueName:"GDAL_DATA"; ValueData:"{pf}\GDAL\gdal-data"; Flags: preservestringtype
+
 ; set TauDEM path
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType:string; ValueName:"PATH"; ValueData:"{olddata};{app}\TauDEM5Exe"; Check: NeedsAddPath('{app}\TauDEM5Exe', False, True); Flags: preservestringtype
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType:string; ValueName:"PATH"; ValueData:"{olddata};{app}\TauDEM5Exe"; Check: NeedsAddPath('{app}\TauDEM5Exe', True, True); Flags: preservestringtype
@@ -120,7 +127,7 @@ var notes_string: string;
 begin
   notes_string := 'NOTES:'#13'1. The redistributables listed above will only be installed if they are not already installed.'#13 +
       '2. You will need to accept the license agreements associated with this software and click through several screens.'#13 +
-      '3. When prompted to Choose Setup Type for GDAL, choose “Typical”.'#13 +
+      '3. When prompted to Choose Setup Type for GDAL, choose "Typical".'#13 +
       '4. The installer will also add firewall exceptions to allow TauDEM programs to run. These allow MPI interprocess communication used in the parallel computations.  This is communication within your computer and not over any external network.'#13 +
       '5. The installer will also add the following path entries:' +
       'C:\Program Files\Microsoft HPC Pack 2012\Bin\;C:\GDAL;C:\Program Files\GDAL;C:\Program Files\TauDEM\TauDEM5Exe'; 
@@ -129,14 +136,14 @@ begin
   begin
     UserPage := CreateInputQueryPage(wpWelcome,
       'The following programs will be installed', '',
-      'TauDEM version 5.3, GDAL 111 (MSVC 2010) for 64 bit Winodws PC, Microsoft Visual C++ 2010 SP1 Redistributable Package (x86), ' +
+      'TauDEM version 5.3.4, GDAL 1.9.2 (Python 2.7), GDAL 111 (MSVC 2010) for 64 bit Winodws PC, Microsoft Visual C++ 2010 SP1 Redistributable Package (x86), ' +
       'Microsoft Visual C++ 2010 SP1 Redistributable Package (x64), Microsoft HPC Pack 2012 MS-MPI Redistributable Package'#13#13 +  notes_string);   
   end
   else
     begin
       UserPage := CreateInputQueryPage(wpWelcome,
       'The following programs will be installed', '',
-      'TauDEM version 5.3, GDAL 111 (MSVC 2010) for 32 bit Windows PC, Microsoft Visual C++ 2010 SP1 Redistributable Package (x86), ' + 
+      'TauDEM version 5.3.4, GDAL 1.9.2 (Python 2.7), GDAL 111 (MSVC 2010) for 32 bit Windows PC, Microsoft Visual C++ 2010 SP1 Redistributable Package (x86), ' + 
       'Microsoft HPC Pack 2012 MS-MPI Redistributable Package'#13#13 +  notes_string);
     end
 end;
@@ -255,6 +262,25 @@ begin
   //  MsgBox('Result of path matching:match not found', mbInformation, MB_OK)
   //else
   //  MsgBox('Result of path matching:match found', mbInformation, MB_OK)
+end;
+
+function GetPathData(Param: String): String;
+{ The 'Param' parameter has the value of the existing value for the system 'Path' variable }
+var 
+  index: integer;
+  dataToAdd: string;
+begin 
+  { This is the data we want to add to the system 'Path' variable} 
+  dataToAdd:= ExpandConstant('{app}') + '\GDAL\gdalwin32-1.6\bin;' +  ExpandConstant('{app}') + '\GDAL_Proj\proj\bin';
+
+  { check if the data we want to add is already in the 'Path' variable }
+  index:=pos(dataToAdd, Param)
+  if index > 0 then
+     { no need to change data for the path - so return the existing data}
+     Result:= Param
+  else
+    { append new data to existing path data and return the resultant data }
+    Result:= Param + ';' + dataToAdd; 
 end;
 
 procedure CleanUp(FolderToDelete: string);

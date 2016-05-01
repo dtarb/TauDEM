@@ -57,7 +57,7 @@ using namespace std;
 //const short d2[9] = { 0,1, 1, 0,-1,-1,-1,0,1};
 // moved to commonlib.h
 
-int dsllArea(char* angfile,char* ctptfile,char* dmfile,char* shfile,char* qfile, char* dgfile, 
+int dsllArea(char* angfile,char* ctptfile,char* dmfile,char* datasrc,char* lyrname,int uselyrname,int lyrno,char* qfile, char* dgfile, 
 		   int useOutlets, int contcheck, float cSol)
 {
 
@@ -88,7 +88,7 @@ int dsllArea(char* angfile,char* ctptfile,char* dmfile,char* shfile,char* qfile,
 	hSRSRaster=ang.getspatialref();
 	if( useOutlets == 1) {
 		if(rank==0){
-			if(readoutlets(shfile,hSRSRaster, &numOutlets, x, y) !=0){
+			if(readoutlets(datasrc,lyrname,uselyrname,lyrno,hSRSRaster, &numOutlets, x, y) !=0){
 				printf("Exiting \n");
 				MPI_Abort(MCW,5);
 			}else {
