@@ -54,6 +54,8 @@ class SparsePartition {
             free_blocks();
             blocks = bp.blocks;
             bp.blocks = nullptr;
+
+			return *this;
         };
 
         ~SparsePartition() {
