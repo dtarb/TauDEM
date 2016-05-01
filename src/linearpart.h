@@ -161,7 +161,7 @@ void linearpart<datatype>::init(long totalx, long totaly, double dx_in, double d
 	{
 	//  DGT added clause below to try trap for insufficient memory in the computer.
 		fprintf(stdout,"Memory allocation error during partition initialization in process %d.\n",rank);
-		fprintf(stdout,"NCols: %ld, NRows: %ld, NCells: %ld\n",nx,ny,prod);
+		fprintf(stdout,"NCols: %ld, NRows: %ld, NCells: %" PRIu64 "\n",nx,ny,prod);
 		fflush(stdout);
 		MPI_Abort(MCW, -999);
 	}
