@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <string>
 
-#include <algorithm>
+#include <numeric>
 #include <vector>
 #include <unordered_map>
 

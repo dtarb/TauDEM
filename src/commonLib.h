@@ -44,6 +44,7 @@ email:  dtarb@usu.edu
 
 #include <mpi.h>
 #include <gdal.h>
+#include <ogr_api.h>
 
 #include "const.h"
 #include "linearpart.h"

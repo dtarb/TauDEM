@@ -404,7 +404,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
         t.start("Resolve shared flats");
         MPI_Allreduce(&localSharedFlats, &sharedFlats, 1, MPI_UINT64_T, MPI_SUM, MCW);
 
-        if (rank == 0) {
+        if (rank == 0 && size > 1) {
             fprintf(stderr, "Processing partial flats\n");
             printf("PRL: %llu flats shared across processors (%llu local -> %.2f%% shared)\n", sharedFlats, totalNumFlat - sharedFlats, 100. * sharedFlats / totalNumFlat);
         }
@@ -472,7 +472,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
 
     t.end("Total");
     t.stop();
-    t.save("timing_info");
+    //t.save("timing_info");
 
     MPI_Finalize();
     return 0;
