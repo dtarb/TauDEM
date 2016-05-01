@@ -41,8 +41,8 @@ email:  dtarb@usu.edu
 #define COMMON_H
 
 #include <queue>
-#include <mpi.h>
 
+#include <mpi.h>
 #include <gdal.h>
 
 #include "const.h"
@@ -55,8 +55,10 @@ email:  dtarb@usu.edu
 int nameadd(char* full, char* arg, const char* suff);
 double prop(float a, int k, double dx1 , double dy1);
 char *getLayername(char *inputogrfile);
-int readoutlets(char *outletsfile, OGRSpatialReferenceH hSRSRaster, int *noutlets, double*& x, double*& y);
-int readoutlets(char *outletsfile, OGRSpatialReferenceH  hSRSraster,int *noutlets, double*& x, double*& y, int*& id);
+const char *getOGRdrivername(char *datasrcnew);
+void getlayerfail(OGRDataSourceH hDS1,char * outletsds, int outletslyr);
+int readoutlets(char *outletsds,char *lyrname,int uselayername, int outletslyr, OGRSpatialReferenceH hSRSRaster, int *noutlets, double*& x, double*& y);
+int readoutlets(char *outletsds,char *lyrname,int uselayername, int outletslyr, OGRSpatialReferenceH  hSRSraster,int *noutlets, double*& x, double*& y, int*& id);
 
 bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData);
 

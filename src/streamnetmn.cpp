@@ -50,9 +50,9 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char pfile[MAXLN],srcfile[MAXLN],ordfile[MAXLN],ad8file[MAXLN],elevfile[MAXLN],wfile[MAXLN],streamnetshp[MAXLN];
-   char treefile[MAXLN],coordfile[MAXLN],outletshapefile[MAXLN];
-   long ordert=1, useoutlets=0;
+   char pfile[MAXLN],srcfile[MAXLN],ordfile[MAXLN],ad8file[MAXLN],elevfile[MAXLN],wfile[MAXLN],outletsds[MAXLN],lyrname[MAXLN],streamnetsrc[MAXLN];
+   char treefile[MAXLN],coordfile[MAXLN];char streamnetlyr[MAXLN]="";
+   long ordert=1, useoutlets=0,uselayername=0,lyrno=0; 
    int err,i;
     bool verbose=false;  //  Initialize verbose flag
    
@@ -155,12 +155,36 @@ int main(int argc,char **argv)
 			i++;
 			if(argc > i)
 			{
-				strcpy(outletshapefile,argv[i]);
+				strcpy(outletsds,argv[i]);
 				i++;
 				useoutlets = 1;
 			}
 			else goto errexit;
 		}
+
+			   else if(strcmp(argv[i],"-lyrno")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				sscanf(argv[i],"%d",&lyrno);
+				i++;											
+			}
+			else goto errexit;
+		}
+		else if(strcmp(argv[i],"-lyrname")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				strcpy(lyrname,argv[i]);
+				uselayername=1;
+				i++;
+				
+			}
+			else goto errexit;
+		}
+
 		else if(strcmp(argv[i],"-w")==0)
 		{
 			i++;
@@ -176,11 +200,24 @@ int main(int argc,char **argv)
 			i++;
 			if(argc > i)
 			{
-				strcpy(streamnetshp,argv[i]);
+				strcpy(streamnetsrc,argv[i]);
 				i++;
 			}
 			else goto errexit;
 		}
+
+		else if(strcmp(argv[i],"-netlyr")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				strcpy(streamnetlyr,argv[i]);
+				i++;
+			}
+			else goto errexit;
+		}
+
+
 		else if(strcmp(argv[i],"-sw")==0)
 		{
 			i++;
@@ -205,10 +242,10 @@ int main(int argc,char **argv)
 		nameadd(treefile,argv[1],"tree.txt");
 		nameadd(coordfile,argv[1],"coord.txt");
 		nameadd(wfile,argv[1],"w");
-		nameadd(streamnetshp,argv[1],"net.shp");
+		//nameadd(streamnetshp,argv[1],"net.shp");
 	} 
 
-    if(err=netsetup(pfile,srcfile,ordfile,ad8file,elevfile,treefile,coordfile,outletshapefile,wfile,streamnetshp, useoutlets, ordert,verbose) != 0)
+    if(err=netsetup(pfile,srcfile,ordfile,ad8file,elevfile,treefile,coordfile,outletsds,lyrname,uselayername,lyrno,wfile,streamnetsrc,streamnetlyr,useoutlets, ordert,verbose) != 0)
        printf("StreamNet error %d\n",err);
 
 	return 0;

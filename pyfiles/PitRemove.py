@@ -21,25 +21,25 @@ arcpy.AddMessage("\nInput Elevation file: "+inZfile)
 
 
 considering4way=arcpy.GetParameterAsText(1)
-arcpy.AddMessage("\nConsidering4way: "+considering4way)
+arcpy.AddMessage("Considering4way: "+considering4way)
 
 maskgrid=arcpy.GetParameterAsText(2)
 if arcpy.Exists(maskgrid):
     desc = arcpy.Describe(maskgrid)
     mkgr=str(desc.catalogPath)
-    arcpy.AddMessage("\nInput Mask Grid: "+mkgr)
+    arcpy.AddMessage("Input Mask Grid: "+mkgr)
 
 
 
 # Get the Input No. of Processes
 #
 inputProc=arcpy.GetParameterAsText(3)
-arcpy.AddMessage("\nInput Number of Processes: "+inputProc)
+arcpy.AddMessage(" Number of Processes: "+inputProc)
 
 # Get the output file
 #
 outFile = arcpy.GetParameterAsText(4)
-arcpy.AddMessage("\nOutput Pit Removed Elevation file: "+outFile)
+arcpy.AddMessage("Output Pit Removed Elevation file: "+outFile)
 
 # Construct the taudem command line.  Put quotes around file names in case there are spaces
 # Construct command
@@ -54,12 +54,14 @@ if ((arcpy.Exists(maskgrid)) & (considering4way == 'true')):
 arcpy.AddMessage("\nCommand Line: "+cmd)
 os.system(cmd)
 process=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-arcpy.AddMessage('\nProcess started:\n')
+#arcpy.AddMessage('\nProcess started:\n')
+message="\n"
 for line in process.stdout.readlines():
-    arcpy.AddMessage(line)
+    message=message+line
+arcpy.AddMessage(message)
 
 #  Calculate statistics so that grids display with correct bounds
-arcpy.AddMessage('Executing: Calculate Statistics\n')
+arcpy.AddMessage('Calculate Statistics\n')
 arcpy.CalculateStatistics_management(outFile)
 
 

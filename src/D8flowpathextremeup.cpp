@@ -55,7 +55,7 @@ email:  dtarb@usu.edu
 
 using namespace std;
 
-int d8flowpathextremeup(char *pfile, char*safile, char *ssafile, int usemax, char *outletsfile, int useOutlets, int contcheck)
+int d8flowpathextremeup(char *pfile, char*safile, char *ssafile, int usemax, char* datasrc,char* lyrname,int uselyrname,int lyrno,int useOutlets, int contcheck)
 {
 MPI_Init(NULL,NULL);
 {  //  All code within braces so that objects go out of context and destruct before MPI is closed
@@ -78,7 +78,7 @@ MPI_Init(NULL,NULL);
     double begint = MPI_Wtime();
 	if( useOutlets == 1) {
 		if(rank==0){
-			if(readoutlets(outletsfile, hSRSRaster,&numOutlets, x, y) !=0){
+			if(readoutlets(datasrc,lyrname,uselyrname,lyrno, hSRSRaster,&numOutlets, x, y) !=0){
 				printf("Exiting \n");
 				MPI_Abort(MCW,5);
 			}else {

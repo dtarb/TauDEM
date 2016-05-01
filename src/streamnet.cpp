@@ -91,11 +91,14 @@ OGRSpatialReferenceH  hSRSraster,hSRSshapefile;
 //}
 
 
-void createStreamNetShapefile(char *streamnetshp,OGRSpatialReferenceH hSRSraster){
+void createStreamNetShapefile(char *streamnetsrc,char *streamnetlyr,OGRSpatialReferenceH hSRSraster){
    
     /* Register all OGR drivers */
     OGRRegisterAll();
-    const char *pszDriverName = "ESRI Shapefile";
+    //const char *pszDriverName = "ESRI Shapefile";
+	const char *pszDriverName;
+	pszDriverName=getOGRdrivername(streamnetsrc);
+            
 	//get driver by name
     driver = OGRGetDriverByName( pszDriverName );
     if( driver == NULL )
@@ -104,15 +107,25 @@ void createStreamNetShapefile(char *streamnetshp,OGRSpatialReferenceH hSRSraster
         //exit( 1 );
     }
 
-    // Create new file using this driver 
-    hDS1 = OGR_Dr_CreateDataSource(driver, streamnetshp, NULL);
+    // open datasource if the datasoruce exists 
+	if(pszDriverName=="SQLite") hDS1 = OGROpen(streamnetsrc, TRUE, NULL );
+	// create new data source if data source does not exist 
+   if (hDS1 ==NULL){ 
+	   hDS1 = OGR_Dr_CreateDataSource(driver, streamnetsrc, NULL);}
+   else { hDS1=hDS1 ;}
+	
     if (hDS1 != NULL) {
  
 
-    char *layername; // layer name is file name without extension
-    layername=getLayername(streamnetshp); // get layer name
-    hLayer1= OGR_DS_CreateLayer( hDS1, layername ,hSRSraster, wkbMultiLineString, NULL ); // provide same spatial reference as raster in streamnetshp file
-    if( layername  == NULL )
+      // layer name is file name without extension
+	 if(strlen(streamnetlyr)==0){
+		char *streamnetlayername;
+		streamnetlayername=getLayername(streamnetsrc); // get layer name if the layer name is not provided
+	    hLayer1= OGR_DS_CreateLayer( hDS1,streamnetlayername,hSRSraster, wkbLineString, NULL );} 
+
+	 else {
+		 hLayer1= OGR_DS_CreateLayer( hDS1,streamnetlyr,hSRSraster, wkbLineString, NULL ); }// provide same spatial reference as raster in streamnetshp file
+    if( hLayer1 == NULL )
     {
         printf( "warning: Layer creation failed.\n" );
         //exit( 1 );
@@ -213,17 +226,13 @@ int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *poin
 	else {
 		nVertices = np;
 	}
-	 
 	double *mypointx = new double[nVertices];
 	double *mypointy = new double[nVertices];
-	
 	double x,y,length,glength,x1,y1,xlast,ylast,usarea,dsarea,dslast,dl,drop,slope;
 	int istart,iend,j;
 
 	istart=cnet[1];  //  start coord for first link
 	iend=cnet[2];//  end coord for first link
-
-
 	x1=pointx[0];
 	y1=pointy[0];
 	length=0.;
@@ -233,8 +242,6 @@ int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *poin
 	dslast=usarea;
 	dsarea=usarea;
 	long prt = 0;
-	const char *pszDriverName = "ESRI Shapefile";
-    
 
 	for(j=0; j<np; j++)  //  loop over points
 	{
@@ -282,7 +289,6 @@ int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *poin
 		  glength=sqrt((x-x1)*(x-x1)+(y-y1)*(y-y1));
 		}
 
-
 	// ensure at least two points (assuming have at least 1) by repeating singleton
 	if (np < 2) {
 		mypointx[1] = mypointx[0];
@@ -295,9 +301,6 @@ int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *poin
 	//	mypointx,						// X values
 	//	mypointy,						// Y values
 	//	NULL);							// Z values
-
-	 
-
 
 	hFDefn1 = OGR_L_GetLayerDefn( hLayer1 );
 	hFeature1 = OGR_F_Create( hFDefn1 );
@@ -321,15 +324,11 @@ int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *poin
 
     //creating geometry using OGR
 
-	geometry = OGR_G_CreateGeometry( wkbMultiLineString );
-
-    for(j=0; j<(np-1); j++) {
-    line = OGR_G_CreateGeometry( wkbLineString );
-    OGR_G_AddPoint(line, mypointx[j], mypointy[j], 0);
-	OGR_G_AddPoint(line, mypointx[j+1], mypointy[j+1], 0);
-	OGR_G_AddGeometryDirectly(geometry, line);
-    }
-    OGR_F_SetGeometryDirectly(hFeature1, geometry); // set geometry to feature
+	line = OGR_G_CreateGeometry( wkbLineString );
+    for(j=0; j<np; j++) {
+		OGR_G_AddPoint(line, mypointx[j], mypointy[j], 0);
+	}
+	OGR_F_SetGeometryDirectly(hFeature1,line); // set geometry to feature
     OGR_L_CreateFeature( hLayer1, hFeature1 ); //adding feature 
 	
 	delete[] mypointx;
@@ -344,7 +343,7 @@ struct Slink{
 };
 
 int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfile,char *treefile, char *coordfile, 
-			 char *outletshapefile, char *wfile, char *streamnetshp, long useOutlets, long ordert, bool verbose) 
+			 char *outletsds, char *lyrname, int uselayername,int lyrno, char *wfile, char *streamnetsrc, char *streamnetlyr,long useOutlets, long ordert, bool verbose) 
 {
 	// MPI Init section
 	MPI_Init(NULL,NULL);{
@@ -451,7 +450,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 		// Read outlets 
 		if( useOutlets == 1) {
 			if(rank==0){
-				if(readoutlets(outletshapefile,hSRSraster, &numOutlets, x, y,ids) !=0){
+				if(readoutlets(outletsds,lyrname,uselayername,lyrno,hSRSraster, &numOutlets, x, y,ids) !=0){
 					printf("Exiting \n");
 					MPI_Abort(MCW,5);
 				}else {
@@ -1120,7 +1119,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 
 			//  Open shapefile 
 			//need spatial refeence information which is stored in the tiffIO object
-			createStreamNetShapefile(streamnetshp,hSRSraster); // need raster spatail information for creating spatial reference in the shapefile
+			createStreamNetShapefile(streamnetsrc,streamnetlyr,hSRSraster); // need raster spatail information for creating spatial reference in the shapefile
 			long ndots=100/size+4;  // number of dots to print per process
 			long nextdot=0;
 			long dotinc=myNumLinks/ndots;

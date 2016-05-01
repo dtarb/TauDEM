@@ -1,215 +1,219 @@
 
-D:\Scratch\TestSuite>cd D:\Scratch\TestSuite 
+D:\Scratch\Input>Rem cd D:\Scratch\TestSuite\Input 
 
-D:\Scratch\TestSuite>Set TDIR=D:\Dropbox\Projects\TauDEM\Programming\TauDEM5GDAL\Taudem5PCVS2010\x64\Release 
+D:\Scratch\Input>Rem The 'TDIR' needs to be reset to the directory where the TauDEM executables exist on your machine 
 
-D:\Scratch\TestSuite>set MDIR=C:\Program Files\Microsoft HPC Pack 2012\Bin\ 
+D:\Scratch\Input>Set TDIR=D:\Dropbox\Projects\TauDEM\Taudemdev\Taudem5PCVS2010\x64\Release 
 
-D:\Scratch\TestSuite>set GDIR=C:\Program Files\GDAL\ 
+D:\Scratch\Input>set MDIR=C:\Program Files\Microsoft HPC Pack 2012\Bin\ 
 
-D:\Scratch\TestSuite>set path=C:\Program Files\Microsoft HPC Pack 2012\Bin\;D:\Dropbox\Projects\TauDEM\Programming\TauDEM5GDAL\Taudem5PCVS2010\x64\Release;C:\Program Files\GDAL\ 
+D:\Scratch\Input>set GDIR=C:\Program Files\GDAL\ 
 
-D:\Scratch\TestSuite>Rem  Basic grid analysis 
+D:\Scratch\Input>set path=C:\Program Files\Microsoft HPC Pack 2012\Bin\;D:\Dropbox\Projects\TauDEM\Taudemdev\Taudem5PCVS2010\x64\Release;C:\Program Files\GDAL\ 
 
-D:\Scratch\TestSuite>mpiexec -np 3 PitRemove logan.tif 
-PitRemove version 5.3
-Input file has projected coordinate system.
+D:\Scratch\Input>Rem  Basic grid analysis 
+
+D:\Scratch\Input>cd Base 
+
+D:\Scratch\Input\Base>mpiexec -np 3 PitRemove logan.tif 
+PitRemove version 5.3.3
+Input file logan.tif has projected coordinate system.
 Processes: 3
-Header read time: 0.050794
-Data read time: 0.003766
-Compute time: 0.247678
-Write time: 0.090935
-Total time: 0.393173
+Header read time: 0.006964
+Data read time: 0.003639
+Compute time: 0.282273
+Write time: 0.132753
+Total time: 0.425630
 
-D:\Scratch\TestSuite>mpiexec -np 3 PitRemove -z logan.tif -fel loganfel4.tif -4way 
-PitRemove version 5.3
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -np 3 PitRemove -z logan.tif -fel loganfel4.tiff -4way 
+PitRemove version 5.3.3
+Input file logan.tif has projected coordinate system.
 Processes: 3
-Header read time: 0.008250
-Data read time: 0.003437
-Compute time: 0.274977
-Write time: 0.023638
-Total time: 0.310301
+Header read time: 0.008791
+Data read time: 0.004162
+Compute time: 0.262034
+Write time: 0.017382
+Total time: 0.292370
 
-D:\Scratch\TestSuite>mpiexec -np 3 PitRemove -z logan.tif -fel loganfeldm.tif -depmask logpitmask.tif 
-PitRemove version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -np 3 PitRemove -z logan.tif -fel loganfeldm.tif -depmask logpitmask.tif 
+PitRemove version 5.3.3
+Input file logan.tif has projected coordinate system.
+Input file logpitmask.tif has projected coordinate system.
 Processes: 3
-Header read time: 0.009898
-Data read time: 0.005206
-Compute time: 0.264079
-Write time: 0.019730
-Total time: 0.298912
+Header read time: 0.010141
+Data read time: 0.008784
+Compute time: 0.295890
+Write time: 0.089208
+Total time: 0.404023
 
-D:\Scratch\TestSuite>mpiexec -np 3 PitRemove -z logan.tif -fel loganfeldm4.tif -depmask logpitmask.tif -4way 
-PitRemove version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -np 3 PitRemove -z logan.tif -fel loganfeldm4.tif -depmask logpitmask.tif -4way 
+PitRemove version 5.3.3
+Input file logan.tif has projected coordinate system.
+Input file logpitmask.tif has projected coordinate system.
 Processes: 3
-Header read time: 0.009030
-Data read time: 0.005302
-Compute time: 0.256079
-Write time: 0.020329
-Total time: 0.290740
+Header read time: 0.008230
+Data read time: 0.005638
+Compute time: 0.235702
+Write time: 0.100713
+Total time: 0.350282
 
-D:\Scratch\TestSuite>mpiexec -n 5 D8Flowdir -p loganp.tif -sd8 logansd8.tif -fel loganfel.tif 
-D8FlowDir version 5.3
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 5 D8Flowdir -p loganp.tif -sd8 logansd8.tif -fel loganfel.tif 
+D8FlowDir version 5.3.3
+Input file loganfel.tif has projected coordinate system.
 Processors: 5
-Header read time: 0.005556
-Data read time: 0.005416
-Compute Slope time: 0.164115
-Write Slope time: 0.038202
-Resolve Flat time: 0.578918
-Write Flat time: 0.016280
-Total time: 0.808487
+Header read time: 0.004325
+Data read time: 0.028218
+Compute Slope time: 0.143313
+Write Slope time: 0.081171
+Resolve Flat time: 0.640193
+Write Flat time: 0.042851
+Total time: 0.940072
 
-D:\Scratch\TestSuite>mpiexec -n 4 DinfFlowdir -ang loganang.tif -slp loganslp.tif -fel loganfel.tif 
-DinfFlowDir version 5.3
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 4 DinfFlowdir -ang loganang.tif -slp loganslp.tif -fel loganfel.tif 
+DinfFlowDir version 5.3.3
+Input file loganfel.tif has projected coordinate system.
 Processors: 4
-Header read time: 0.006565
-Data read time: 0.006830
-Compute Slope time: 0.456193
-Write Slope time: 0.016576
-Resolve Flat time: 0.472917
-Write Flat time: 0.038141
-Total time: 0.997221
+Header read time: 0.008982
+Data read time: 0.022028
+Compute Slope time: 0.415856
+Write Slope time: 0.098203
+Resolve Flat time: 0.427710
+Write Flat time: 0.129917
+Total time: 1.102697
 
-D:\Scratch\TestSuite>mpiexec -n 6 D8Flowdir -p loganpnf.tif -sd8 logansd8nf.tif -fel logan.tif 
-D8FlowDir version 5.3
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 6 D8Flowdir -p loganpnf.tif -sd8 logansd8nf.tif -fel logan.tif 
+D8FlowDir version 5.3.3
+Input file logan.tif has projected coordinate system.
 Processors: 6
-Header read time: 0.004983
-Data read time: 0.008629
-Compute Slope time: 0.159276
-Write Slope time: 0.023083
-Resolve Flat time: 0.129021
-Write Flat time: 0.016859
-Total time: 0.341851
+Header read time: 0.004810
+Data read time: 0.033334
+Compute Slope time: 0.104612
+Write Slope time: 0.130476
+Resolve Flat time: 0.175121
+Write Flat time: 0.041704
+Total time: 0.490057
 
-D:\Scratch\TestSuite>mpiexec -n 3 DinfFlowdir -ang loganangnf.tif -slp loganslpnf.tif -fel logan.tif 
-DinfFlowDir version 5.3
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 3 DinfFlowdir -ang loganangnf.tif -slp loganslpnf.tif -fel logan.tif 
+DinfFlowDir version 5.3.3
+Input file logan.tif has projected coordinate system.
 Processors: 3
-Header read time: 0.009134
-Data read time: 0.006904
-Compute Slope time: 0.493084
-Write Slope time: 0.018774
-Resolve Flat time: 0.085139
-Write Flat time: 0.016791
-Total time: 0.629825
+Header read time: 0.008243
+Data read time: 0.006291
+Compute Slope time: 0.511029
+Write Slope time: 0.081725
+Resolve Flat time: 0.117917
+Write Flat time: 0.212880
+Total time: 0.938084
 
-D:\Scratch\TestSuite>mpiexec -np 4 AreaD8 logan.tif 
-AreaD8 version 5.3
-Input file has projected coordinate system.
-Size: 4
-Read time: 0.007760
-Compute time: 0.274878
-Write time: 0.156890
-Total time: 0.439528
+D:\Scratch\Input\Base>mpiexec -np 4 AreaD8 logan.tif 
+AreaD8 version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Number of Processes: 4
+Read time: 0.010224
+Compute time: 0.221687
+Write time: 0.042159
+Total time: 0.274070
 
-D:\Scratch\TestSuite>mpiexec -np 12 AreaDinf logan.tif 
-AreaDinf version 5.3
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -np 12 AreaDinf logan.tif 
+AreaDinf version 5.3.3
+Input file loganang.tif has projected coordinate system.
 Processors: 12
-Read time: 0.013123
-Compute time: 0.973328
-Write time: 0.029817
-Total time: 1.016268
+Read time: 0.034111
+Compute time: 0.925128
+Write time: 0.103633
+Total time: 1.062872
 
-D:\Scratch\TestSuite>mpiexec -np 4 AreaD8 -p loganpnf.tif -ad8 loganad8nf.tif 
-AreaD8 version 5.3
-Input file has projected coordinate system.
-Size: 4
-Read time: 0.007066
-Compute time: 0.247384
-Write time: 0.013467
-Total time: 0.267917
+D:\Scratch\Input\Base>mpiexec -np 4 AreaD8 -p loganpnf.tif -ad8 loganad8nf.tif 
+AreaD8 version 5.3.3
+Input file loganpnf.tif has projected coordinate system.
+Number of Processes: 4
+Read time: 0.010868
+Compute time: 0.194806
+Write time: 0.037601
+Total time: 0.243275
 
-D:\Scratch\TestSuite>mpiexec -np 12 AreaDinf -ang loganangnf.tif -sca loganscanf.tif 
-AreaDinf version 5.3
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -np 12 AreaDinf -ang loganangnf.tif -sca loganscanf.tif 
+AreaDinf version 5.3.3
+Input file loganangnf.tif has projected coordinate system.
 Processors: 12
-Read time: 0.014967
-Compute time: 0.996886
-Write time: 0.041818
-Total time: 1.053670
+Read time: 0.026528
+Compute time: 0.961758
+Write time: 0.143011
+Total time: 1.131297
 
-D:\Scratch\TestSuite>mpiexec -n 7 aread8 -p loganp.tif -o outlet.shp -ad8 loganad8o.tif 
-AreaD8 version 5.3
-Input file has projected coordinate system.
-outlet Size: 7
-Read time: 0.027027
-Compute time: 0.218976
-Write time: 0.057991
-Total time: 0.303994
+D:\Scratch\Input\Base>mpiexec -n 7 aread8 -p loganp.tif -o outlet.shp -ad8 loganad8o.tif 
+AreaD8 version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Number of Processes: 7
+Read time: 0.016010
+Compute time: 0.173961
+Write time: 0.037328
+Total time: 0.227299
 
-D:\Scratch\TestSuite>mpiexec -n 1 areadinf -ang loganang.tif -o outlet.shp -sca loganscao.tif 
-AreaDinf version 5.3
-Input file has projected coordinate system.
-outlet Processors: 1
-Read time: 0.027631
-Compute time: 0.939060
-Write time: 0.012692
-Total time: 0.979383
+D:\Scratch\Input\Base>mpiexec -n 1 areadinf -ang loganang.tif -o outlet.shp -sca loganscao.tif 
+AreaDinf version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Processors: 1
+Read time: 0.076449
+Compute time: 0.886965
+Write time: 0.063780
+Total time: 1.027194
 
-D:\Scratch\TestSuite>mpiexec -n 5 Gridnet -p loganp.tif -plen loganplen.tif -tlen logantlen.tif -gord logangord.tif  
-GridNet version 5.3
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 5 Gridnet -p loganp.tif -plen loganplen.tif -tlen logantlen.tif -gord logangord.tif  
+GridNet version 5.3.3
+Input file loganp.tif has projected coordinate system.
 Processors: 5
-Read time: 0.008787
-Compute time: 0.248136
-Write time: 0.116447
-Total time: 0.373371
+Read time: 0.012232
+Compute time: 0.240360
+Write time: 0.206361
+Total time: 0.458953
 
-D:\Scratch\TestSuite>mpiexec -n 5 Gridnet -p loganp.tif -plen loganplen1.tif -tlen logantlen1.tif -gord logangord1.tif -mask loganad8.tif -thresh 100  
-GridNet version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 5 Gridnet -p loganp.tif -plen loganplen1.tif -tlen logantlen1.tif -gord logangord1.tif -mask loganad8.tif -thresh 100  
+GridNet version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
 Processors: 5
-Read time: 0.014148
-Compute time: 0.155329
-Write time: 0.044522
-Total time: 0.213999
+Read time: 0.030561
+Compute time: 0.157189
+Write time: 0.128912
+Total time: 0.316663
 
-D:\Scratch\TestSuite>mpiexec -n 7 Gridnet -p loganp.tif -plen loganplen2.tif -tlen logantlen2.tif -gord logangord2.tif -o outlet.shp  
-GridNet version 5.3
-Input file has projected coordinate system.
-outlet Processors: 7
-Read time: 0.015107
-Compute time: 0.238630
-Write time: 0.052230
-Total time: 0.305967
-
-D:\Scratch\TestSuite>Rem stream network peuker douglas 
-
-D:\Scratch\TestSuite>mpiexec -np 7 PeukerDouglas -fel loganfel.tif -ss loganss.tif 
-PeukerDouglas version 5.3
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 7 Gridnet -p loganp.tif -plen loganplen2.tif -tlen logantlen2.tif -gord logangord2.tif -o outlet.shp  
+GridNet version 5.3.3
+Input file loganp.tif has projected coordinate system.
 Processors: 7
-Read time: 0.023088
-Compute time: 0.088475
-Write time: 0.253019
-Total time: 0.364582
+Read time: 0.020105
+Compute time: 0.207123
+Write time: 0.128729
+Total time: 0.355957
 
-D:\Scratch\TestSuite>mpiexec -n 4 Aread8 -p loganp.tif -o outlet.shp -ad8 loganssa.tif -wg loganss.tif 
-AreaD8 version 5.3
-Input file has projected coordinate system.
-outlet Input file has projected coordinate system.
-Size: 4
-Read time: 0.020485
-Compute time: 0.161603
-Write time: 0.013548
-Total time: 0.195636
+D:\Scratch\Input\Base>Rem stream network peuker douglas 
 
-D:\Scratch\TestSuite>mpiexec -n 4 Dropanalysis -p loganp.tif -fel loganfel.tif -ad8 loganad8.tif -ssa loganssa.tif -drp logandrp.txt -o outlet.shp -par 5 500 10 0  
-DropAnalysis version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-outlet Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -np 7 PeukerDouglas -fel loganfel.tif -ss loganss.tif 
+PeukerDouglas version 5.3.3
+Input file loganfel.tif has projected coordinate system.
+Processors: 7
+Read time: 0.026667
+Compute time: 0.086823
+Write time: 0.044459
+Total time: 0.157948
+
+D:\Scratch\Input\Base>mpiexec -n 4 Aread8 -p loganp.tif -o outlet.shp -ad8 loganssa.tif -wg loganss.tif 
+AreaD8 version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Input file loganss.tif has projected coordinate system.
+Number of Processes: 4
+Read time: 0.024841
+Compute time: 0.160113
+Write time: 0.036515
+Total time: 0.221468
+
+D:\Scratch\Input\Base>mpiexec -n 4 Dropanalysis -p loganp.tif -fel loganfel.tif -ad8 loganad8.tif -ssa loganssa.tif -drp logandrp.txt -o outlet.shp -par 5 500 10 0  
+DropAnalysis version 5.3.3
+Input file loganssa.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
 Threshold DrainDen NoFirstOrd NoHighOrd MeanDFirstOrd MeanDHighOrd StdDevFirstOrd StdDevHighOrd Tval
 5.000000 0.002455 2394 729 68.691040 128.646576 77.710228 132.430191 -15.176923
 8.340503 0.001849 1239 371 88.713211 147.549271 99.124260 142.494278 -8.987083
@@ -223,54 +227,54 @@ Threshold DrainDen NoFirstOrd NoHighOrd MeanDFirstOrd MeanDHighOrd StdDevFirstOr
 500.000183 0.000306 32 4 209.430817 289.485138 151.132065 135.973572 -1.007311
 179.690720  Value for optimum that drop analysis selected - see output file for details.
 Processes: 4
-Read time: 0.040248
-Compute time: 1.110604
-Total time: 1.150852
+Read time: 0.082444
+Compute time: 0.978231
+Total time: 1.060675
 
-D:\Scratch\TestSuite>mpiexec -n 5 Threshold -ssa loganssa.tif -src logansrc.tif -thresh 180 
-Threshold version 5.3
-Input file has projected coordinate system.
-Compute time: 0.009526
+D:\Scratch\Input\Base>mpiexec -n 5 Threshold -ssa loganssa.tif -src logansrc.tif -thresh 180 
+Threshold version 5.3.3
+Input file loganssa.tif has projected coordinate system.
+Compute time: 0.007572
 
-D:\Scratch\TestSuite>mpiexec -n 5 Streamnet -fel loganfel.tif -p loganp.tif -ad8 loganad8.tif -src logansrc.tif -ord loganord3.tif -tree logantree.dat -coord logancoord.dat -net logannet.shp -w loganw.tif -o outlet.shp 
-StreamNet version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-outlet logannet Processors: 5
-Read time: 0.034861
-Length compute time: 0.011337
-Link compute time: 0.013478
-Link write time: 0.081667
-Watershed compute time: 0.071269
-Write time: 0.034921
-Total time: 0.247532
+D:\Scratch\Input\Base>mpiexec -n 5 Streamnet -fel loganfel.tif -p loganp.tif -ad8 loganad8.tif -src logansrc.tif -ord loganord3.tif -tree logantree.dat -coord logancoord.dat -net logannet.shp -w loganw.tif -o outlet.shp 
+StreamNet version 5.3.3
+Input file logansrc.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+logannet Processors: 5
+Read time: 0.075404
+Length compute time: 0.012267
+Link compute time: 0.011995
+Link write time: 0.120927
+Watershed compute time: 0.075913
+Write time: 0.071810
+Total time: 0.368316
 
-D:\Scratch\TestSuite>Rem stream network slope area 
+D:\Scratch\Input\Base>Rem stream network slope area 
 
-D:\Scratch\TestSuite>mpiexec -n 3 SlopeArea -slp loganslp.tif -sca logansca.tif -sa logansa.tif -par 2 1 
-SlopeArea version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Compute time: 0.041298
+D:\Scratch\Input\Base>mpiexec -n 3 SlopeArea -slp loganslp.tif -sca logansca.tif -sa logansa.tif -par 2 1 
+SlopeArea version 5.3.3
+Input file loganslp.tif has projected coordinate system.
+Input file logansca.tif has projected coordinate system.
+Compute time: 0.038709
 
-D:\Scratch\TestSuite>mpiexec -n 8 D8FlowpathExtremeUp -p loganp.tif -sa logansa.tif -ssa loganssa1.tif -o outlet.shp 
-D8FlowPathExtremeUp version 5.3
-Input file has projected coordinate system.
-outlet Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 8 D8FlowpathExtremeUp -p loganp.tif -sa logansa.tif -ssa loganssa1.tif -o outlet.shp 
+D8FlowPathExtremeUp version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Input file logansa.tif has projected coordinate system.
 Processors: 8
-Read time: 0.020060
-Compute time: 0.159642
-Write time: 0.025274
-Total time: 0.204976
+Read time: 0.043134
+Compute time: 0.174682
+Write time: 0.078292
+Total time: 0.296108
 
-D:\Scratch\TestSuite>mpiexec -n 4 Dropanalysis -p loganp.tif -fel loganfel.tif -ad8 loganad8.tif -ssa loganssa1.tif -drp logandrp1.txt -o outlet.shp -par 5000 50000 10 1  
-DropAnalysis version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-outlet Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 4 Dropanalysis -p loganp.tif -fel loganfel.tif -ad8 loganad8.tif -ssa loganssa1.tif -drp logandrp1.txt -o outlet.shp -par 5000 50000 10 1  
+DropAnalysis version 5.3.3
+Input file loganssa1.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
 Threshold DrainDen NoFirstOrd NoHighOrd MeanDFirstOrd MeanDHighOrd StdDevFirstOrd StdDevHighOrd Tval
 5000.000000 0.000443 222 37 71.885040 236.852875 101.957512 171.946503 -8.122914
 10000.000000 0.000306 88 18 87.088974 237.350967 124.312805 187.473068 -4.250803
@@ -284,599 +288,599 @@ Threshold DrainDen NoFirstOrd NoHighOrd MeanDFirstOrd MeanDHighOrd StdDevFirstOr
 50000.000000 0.000137 11 0 191.148209  -  263.009766  -   - 
 15000.000000  Value for optimum that drop analysis selected - see output file for details.
 Processes: 4
-Read time: 0.043235
-Compute time: 1.126327
-Total time: 1.169562
+Read time: 0.093706
+Compute time: 0.928874
+Total time: 1.022580
 
-D:\Scratch\TestSuite>mpiexec -n 5 Threshold -ssa loganssa1.tif -src logansrc1.tif -thresh 15000 
-Threshold version 5.3
-Input file has projected coordinate system.
-Compute time: 0.008842
+D:\Scratch\Input\Base>mpiexec -n 5 Threshold -ssa loganssa1.tif -src logansrc1.tif -thresh 15000 
+Threshold version 5.3.3
+Input file loganssa1.tif has projected coordinate system.
+Compute time: 0.009622
 
-D:\Scratch\TestSuite>mpiexec -n 8 Streamnet -fel loganfel.tif -p loganp.tif -ad8 loganad8.tif -src logansrc1.tif -ord loganord5.tif -tree logantree1.dat -coord logancoord1.dat -net logannet1.shp -w loganw1.tif -o outlet.shp -sw 
-StreamNet version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-outlet logannet1 Processors: 8
-Read time: 0.036195
-Length compute time: 0.010746
-Link compute time: 0.076261
-Link write time: 0.097182
-Watershed compute time: 0.097797
-Write time: 0.035077
-Total time: 0.353257
+D:\Scratch\Input\Base>mpiexec -n 8 Streamnet -fel loganfel.tif -p loganp.tif -ad8 loganad8.tif -src logansrc1.tif -ord loganord5.tif -tree logantree1.dat -coord logancoord1.dat -net logannet1.shp -w loganw1.tif -o outlet.shp -sw 
+StreamNet version 5.3.3
+Input file logansrc1.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+logannet1 Processors: 8
+Read time: 0.069370
+Length compute time: 0.012042
+Link compute time: 0.046941
+Link write time: 0.114016
+Watershed compute time: 0.109339
+Write time: 0.080862
+Total time: 0.432570
 
-D:\Scratch\TestSuite>mpiexec -n 3 LengthArea -plen loganplen.tif -ad8 loganad8.tif -ss loganlass.tif -par 0.03 1.3 
-LengthArea version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Compute time: 0.028854
+D:\Scratch\Input\Base>mpiexec -n 3 LengthArea -plen loganplen.tif -ad8 loganad8.tif -ss loganlass.tif -par 0.03 1.3 
+LengthArea version 5.3.3
+Input file loganplen.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
+Compute time: 0.034192
 
-D:\Scratch\TestSuite>Rem Specialized grid analysis 
+D:\Scratch\Input\Base>Rem Specialized grid analysis 
 
-D:\Scratch\TestSuite>mpiexec -n 3 SlopeAreaRatio -slp loganslp.tif -sca logansca.tif -sar logansar.tif 
-SlopeAreaRatio version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Compute time: 0.020150
+D:\Scratch\Input\Base>mpiexec -n 3 SlopeAreaRatio -slp loganslp.tif -sca logansca.tif -sar logansar.tiff 
+SlopeAreaRatio version 5.3.3
+Input file loganslp.tif has projected coordinate system.
+Input file logansca.tif has projected coordinate system.
+Compute time: 0.021478
 
-D:\Scratch\TestSuite>mpiexec -np 7 D8HDisttoStrm -p loganp.tif -src loganad8.tif -dist logandist1.tif -thresh 200  
-D8HDistToStrm version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -np 7 D8HDisttoStrm -p loganp.tif -src loganad8.tif -dist logandist1.tif -thresh 200  
+D8HDistToStrm version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
 Processors: 7
-Read time: 0.017975
-Compute time: 0.154266
-Write time: 0.210786
-Total time: 0.383026
+Read time: 0.030792
+Compute time: 0.123969
+Write time: 0.087194
+Total time: 0.241955
 
-D:\Scratch\TestSuite>mpiexec -np 5 D8HDisttoStrm -p loganp.tif -src logansrc.tif -dist logandist.tif  
-D8HDistToStrm version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -np 5 D8HDisttoStrm -p loganp.tif -src logansrc.tif -dist logandist.tif  
+D8HDistToStrm version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Input file logansrc.tif has projected coordinate system.
 Processors: 5
-Read time: 0.013431
-Compute time: 0.069468
-Write time: 0.019434
-Total time: 0.102333
+Read time: 0.022534
+Compute time: 0.063040
+Write time: 0.066882
+Total time: 0.152456
 
-D:\Scratch\TestSuite>Rem downslope influence 
+D:\Scratch\Input\Base>Rem downslope influence 
 
-D:\Scratch\TestSuite>mpiexec -np 1 AreaDinf -ang loganang.tif -wg logandg.tif -sca logandi.tif 
-AreaDinf version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -np 1 AreaDinf -ang loganang.tif -wg logandg.tif -sca logandi.tif 
+AreaDinf version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file logandg.tif has projected coordinate system.
 Processors: 1
-Read time: 0.040098
-Compute time: 2.149720
-Write time: 0.070624
-Total time: 2.260442
+Read time: 0.088113
+Compute time: 2.126125
+Write time: 0.074086
+Total time: 2.288324
 
-D:\Scratch\TestSuite>mpiexec -n 2 dinfupdependence -ang loganang.tif -dg logandg.tif -dep logandep.tif 
-DinfUpDependence version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 2 dinfupdependence -ang loganang.tif -dg logandg.tif -dep logandep.tif 
+DinfUpDependence version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file logandg.tif has projected coordinate system.
 Processors: 2
-Read time: 0.022415
-Compute time: 1.298971
-Write time: 0.108382
-Total time: 1.429769
+Read time: 0.052982
+Compute time: 1.325668
+Write time: 0.042966
+Total time: 1.421615
 
-D:\Scratch\TestSuite>mpiexec -n 7 dinfdecayaccum -ang loganang.tif -dm logandm08.tif -dsca logandsca.tif  
-DinfDecayAccum version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 7 dinfdecayaccum -ang loganang.tif -dm logandm08.tif -dsca logandsca.tif  
+DinfDecayAccum version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file logandm08.tif has projected coordinate system.
 Processors: 7
-Read time: 0.015773
-Compute time: 1.032444
-Write time: 0.021987
-Total time: 1.070205
+Read time: 0.030142
+Compute time: 0.970821
+Write time: 0.099832
+Total time: 1.100796
 
-D:\Scratch\TestSuite>mpiexec -n 3 dinfConcLimAccum -ang loganang.tif -dm logandm08.tif -dg logandg.tif -ctpt loganctpt.tif -q logansca.tif  
-DinfConcLimAccum version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 3 dinfConcLimAccum -ang loganang.tif -dm logandm08.tif -dg logandg.tif -ctpt loganctpt.tif -q logansca.tif  
+DinfConcLimAccum version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file logandm08.tif has projected coordinate system.
+Input file logandg.tif has projected coordinate system.
+Input file logansca.tif has projected coordinate system.
 Processors: 3
-Read time: 0.031954
-Compute time: 1.152926
-Write time: 0.081004
-Total time: 1.265884
+Read time: 0.074553
+Compute time: 1.048750
+Write time: 0.046069
+Total time: 1.169372
 
-D:\Scratch\TestSuite>mpiexec -n 5 dinfConcLimAccum -ang loganang.tif -dm logandm08.tif -dg logandg.tif -ctpt loganctpto.tif -q logansca.tif  -o outlet.shp -csol 2.4 
-DinfConcLimAccum version 5.3
-Input file has projected coordinate system.
-outlet Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 5 dinfConcLimAccum -ang loganang.tif -dm logandm08.tif -dg logandg.tif -ctpt loganctpto.tif -q logansca.tif  -o outlet.shp -csol 2.4 
+DinfConcLimAccum version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file logandm08.tif has projected coordinate system.
+Input file logandg.tif has projected coordinate system.
+Input file logansca.tif has projected coordinate system.
 Processors: 5
-Read time: 0.034836
-Compute time: 0.617813
-Write time: 0.022003
-Total time: 0.674651
+Read time: 0.084004
+Compute time: 0.586755
+Write time: 0.134777
+Total time: 0.805536
 
-D:\Scratch\TestSuite>Rem Trans lim accum 
+D:\Scratch\Input\Base>Rem Trans lim accum 
 
-D:\Scratch\TestSuite>mpiexec -n 7 dinfTransLimAccum -ang loganang.tif -tsup logantsup.tif -tc logantc.tif -tla logantla.tif -tdep logantdep.tif 
-DinfTransLimAccum version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 7 dinfTransLimAccum -ang loganang.tif -tsup logantsup.tif -tc logantc.tif -tla logantla.tif -tdep logantdep.tif 
+DinfTransLimAccum version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file logantsup.tif has projected coordinate system.
+Input file logantc.tif has projected coordinate system.
 Processors: 7
-Read time: 0.019914
-Compute time: 1.018583
-Write time: 0.056087
-Total time: 1.094583
+Read time: 0.026883
+Compute time: 0.993806
+Write time: 0.126994
+Total time: 1.147684
 
-D:\Scratch\TestSuite>mpiexec -n 6 dinfTransLimAccum -ang loganang.tif -tsup logantsup.tif -tc logantc.tif -tla logantla1.tif -tdep logantdep1.tif -o outlet.shp -cs logandg.tif -ctpt loganctpt1.tif  
-DinfTransLimAccum version 5.3
-Input file has projected coordinate system.
-outlet Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 6 dinfTransLimAccum -ang loganang.tif -tsup logantsup.tif -tc logantc.tif -tla logantla1.tif -tdep logantdep1.tif -o outlet.shp -cs logandg.tif -ctpt loganctpt1.tif  
+DinfTransLimAccum version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file logantsup.tif has projected coordinate system.
+Input file logantc.tif has projected coordinate system.
+Input file logandg.tif has projected coordinate system.
 Processors: 6
-Read time: 0.025232
-Compute time: 0.656421
-Write time: 0.054825
-Total time: 0.736477
+Read time: 0.036612
+Compute time: 0.602955
+Write time: 0.221439
+Total time: 0.861005
 
-D:\Scratch\TestSuite>rem REVERSE ACCUMULATION 
+D:\Scratch\Input\Base>rem REVERSE ACCUMULATION 
 
-D:\Scratch\TestSuite>mpiexec -n 4 dinfRevAccum -ang loganang.tif -wg logandg.tif -racc loganracc.tif -dmax loganrdmax.tif 
-DinfRevAccum version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 4 dinfRevAccum -ang loganang.tif -wg logandg.tif -racc loganracc.tif -dmax loganrdmax.tif 
+DinfRevAccum version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file logandg.tif has projected coordinate system.
 Processors: 4
-Read time: 0.013035
-Compute time: 1.258332
-Write time: 0.109101
-Total time: 1.380468
+Read time: 0.032238
+Compute time: 2.665827
+Write time: 0.123883
+Total time: 2.821948
 
-D:\Scratch\TestSuite>rem MOVEOUTLETS 
+D:\Scratch\Input\Base>rem MOVEOUTLETS 
 
-D:\Scratch\TestSuite>mpiexec -n 5 Threshold -ssa loganad8.tif -src logansrc2.tif -thresh 200 
-Threshold version 5.3
-Input file has projected coordinate system.
-Compute time: 0.010387
+D:\Scratch\Input\Base>mpiexec -n 5 Threshold -ssa loganad8.tif -src logansrc2.tif -thresh 200 
+Threshold version 5.3.3
+Input file loganad8.tif has projected coordinate system.
+Compute time: 0.015586
 
-D:\Scratch\TestSuite>mpiexec -np 3 MoveOutletstoStreams -p loganp.tif -src logansrc.tif -o OutletstoMove.shp -om Outletsmoved.shp -md 20  
-MoveOutletsToStreams version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-OutletstoMove Outletsmoved Total time: 0.037307
+D:\Scratch\Input\Base>mpiexec -np 3 MoveOutletstoStreams -p loganp.tif -src logansrc.tif -o OutletstoMove.shp -om Outletsmoved.shp -md 20  
+MoveOutletsToStreams version 5.3.3
+Input file logansrc.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Outletsmoved Total time: 0.073527
 
-D:\Scratch\TestSuite>rem DISTDOWN 
+D:\Scratch\Input\Base>rem DISTDOWN 
 
-D:\Scratch\TestSuite>mpiexec -n 1 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddhave.tif 
-DinfDistDown -h version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 1 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddhave.tif 
+DinfDistDown -h version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file logansrc.tif has projected coordinate system.
 Processors: 1
-Read time: 0.034666
-Compute time: 1.949373
-Write time: 0.086756
-Total time: 2.070795
+Read time: 0.098609
+Compute time: 1.988494
+Write time: 0.084434
+Total time: 2.171537
 
-D:\Scratch\TestSuite>mpiexec -n 2 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddhmin.tif -m min h 
-DinfDistDown -h version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 2 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddhmin.tif -m min h 
+DinfDistDown -h version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file logansrc.tif has projected coordinate system.
 Processors: 2
-Read time: 0.029454
-Compute time: 1.168572
-Write time: 0.017445
-Total time: 1.215471
+Read time: 0.060713
+Compute time: 1.410289
+Write time: 0.073299
+Total time: 1.544302
 
-D:\Scratch\TestSuite>mpiexec -n 3 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddhmax.tif -m max h 
-DinfDistDown -h version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 3 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddhmax.tif -m max h 
+DinfDistDown -h version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file logansrc.tif has projected coordinate system.
 Processors: 3
-Read time: 0.016044
-Compute time: 0.958347
-Write time: 0.214829
-Total time: 1.189219
+Read time: 0.050070
+Compute time: 1.257677
+Write time: 0.071994
+Total time: 1.379741
 
-D:\Scratch\TestSuite>mpiexec -n 4 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddvave.tif -m ave v 
-DinfDistDown -v version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 4 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddvave.tif -m ave v 
+DinfDistDown -v version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+Input file logansrc.tif has projected coordinate system.
 Processors: 4
-Read time: 0.024970
-Compute time: 0.938614
-Write time: 0.020613
-Total time: 0.984197
+Read time: 0.078846
+Compute time: 1.057507
+Write time: 0.080676
+Total time: 1.217030
 
-D:\Scratch\TestSuite>mpiexec -n 5 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddvmin.tif -m min v 
-DinfDistDown -v version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 5 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddvmin.tif -m min v 
+DinfDistDown -v version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+Input file logansrc.tif has projected coordinate system.
 Processors: 5
-Read time: 0.021236
-Compute time: 0.979750
-Write time: 0.024303
-Total time: 1.025288
+Read time: 0.072374
+Compute time: 1.145601
+Write time: 0.091658
+Total time: 1.309633
 
-D:\Scratch\TestSuite>mpiexec -n 6 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddvmax.tif -m max v 
-DinfDistDown -v version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 6 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddvmax.tif -m max v 
+DinfDistDown -v version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+Input file logansrc.tif has projected coordinate system.
 Processors: 6
-Read time: 0.021786
-Compute time: 0.964965
-Write time: 0.030381
-Total time: 1.017131
+Read time: 0.075391
+Compute time: 1.093012
+Write time: 0.071737
+Total time: 1.240140
 
-D:\Scratch\TestSuite>mpiexec -n 7 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddsave.tif -m ave s 
-DinfDistDown -s version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 7 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddsave.tif -m ave s 
+DinfDistDown -s version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+Input file logansrc.tif has projected coordinate system.
 Processors: 7
-Read time: 0.024010
-Compute time: 1.023144
-Write time: 0.092185
-Total time: 1.139339
+Read time: 0.055516
+Compute time: 1.027130
+Write time: 0.077965
+Total time: 1.160611
 
-D:\Scratch\TestSuite>mpiexec -n 8 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddsmin.tif -m min s 
-DinfDistDown -s version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 8 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddsmin.tif -m min s 
+DinfDistDown -s version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+Input file logansrc.tif has projected coordinate system.
 Processors: 8
-Read time: 0.022160
-Compute time: 0.990157
-Write time: 0.055234
-Total time: 1.067551
+Read time: 0.066105
+Compute time: 1.199880
+Write time: 0.094538
+Total time: 1.360523
 
-D:\Scratch\TestSuite>mpiexec -n 1 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddsmax.tif -m max s 
-DinfDistDown -s version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 1 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddsmax.tif -m max s 
+DinfDistDown -s version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+Input file logansrc.tif has projected coordinate system.
 Processors: 1
-Read time: 0.055632
-Compute time: 1.999375
-Write time: 0.021048
-Total time: 2.076054
+Read time: 0.173755
+Compute time: 2.304545
+Write time: 0.085288
+Total time: 2.563588
 
-D:\Scratch\TestSuite>mpiexec -n 2 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddpave.tif -m ave p 
-DinfDistDown -p version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 2 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddpave.tif -m ave p 
+DinfDistDown -p version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+Input file logansrc.tif has projected coordinate system.
 Processors: 2
-Read time: 0.030978
-Compute time: 1.122952
-Write time: 0.017969
-Total time: 1.171898
+Read time: 0.106502
+Compute time: 2.016439
+Write time: 0.093225
+Total time: 2.216167
 
-D:\Scratch\TestSuite>mpiexec -n 3 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddpmin.tif -m min p 
-DinfDistDown -p version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 3 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddpmin.tif -m min p 
+DinfDistDown -p version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+Input file logansrc.tif has projected coordinate system.
 Processors: 3
-Read time: 0.025945
-Compute time: 1.013789
-Write time: 0.068774
-Total time: 1.108508
+Read time: 0.066999
+Compute time: 0.984549
+Write time: 0.066081
+Total time: 1.117629
 
-D:\Scratch\TestSuite>mpiexec -n 4 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddpmax.tif -m max p 
-DinfDistDown -p version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 4 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddpmax.tif -m max p 
+DinfDistDown -p version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+Input file logansrc.tif has projected coordinate system.
 Processors: 4
-Read time: 0.024283
-Compute time: 0.930149
-Write time: 0.020900
-Total time: 0.975331
+Read time: 0.065464
+Compute time: 0.915468
+Write time: 0.071033
+Total time: 1.051966
 
-D:\Scratch\TestSuite>mpiexec -n 2 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddvavenc.tif -m ave v -nc 
-DinfDistDown -v version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 2 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddvavenc.tif -m ave v -nc 
+DinfDistDown -v version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+Input file logansrc.tif has projected coordinate system.
 Processors: 2
-Read time: 0.036008
-Compute time: 1.265217
-Write time: 0.067042
-Total time: 1.368267
+Read time: 0.087533
+Compute time: 1.217443
+Write time: 0.144838
+Total time: 1.449814
 
-D:\Scratch\TestSuite>mpiexec -n 3 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddhminnc.tif -m min h -nc 
-DinfDistDown -h version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 3 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddhminnc.tif -m min h -nc 
+DinfDistDown -h version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file logansrc.tif has projected coordinate system.
 Processors: 3
-Read time: 0.019284
-Compute time: 1.288213
-Write time: 0.038810
-Total time: 1.346308
+Read time: 0.042482
+Compute time: 0.992904
+Write time: 0.063177
+Total time: 1.098563
 
-D:\Scratch\TestSuite>mpiexec -n 4 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddpmaxnc.tif -m max p -nc 
-DinfDistDown -p version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 4 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddpmaxnc.tif -m max p -nc 
+DinfDistDown -p version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+Input file logansrc.tif has projected coordinate system.
 Processors: 4
-Read time: 0.047368
-Compute time: 1.433184
-Write time: 0.021177
-Total time: 1.501729
+Read time: 0.065460
+Compute time: 0.926227
+Write time: 0.077236
+Total time: 1.068923
 
-D:\Scratch\TestSuite>mpiexec -n 4 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddsmaxnc.tif -m max s -nc 
-DinfDistDown -s version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 4 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddsmaxnc.tif -m max s -nc 
+DinfDistDown -s version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+Input file logansrc.tif has projected coordinate system.
 Processors: 4
-Read time: 0.023191
-Compute time: 1.109015
-Write time: 0.037795
-Total time: 1.170001
+Read time: 0.077279
+Compute time: 0.958254
+Write time: 0.068502
+Total time: 1.104035
 
-D:\Scratch\TestSuite>mpiexec -n 4 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddsmaxwg.tif -m max s -wg logandwg.tif 
-DinfDistDown -s version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 4 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddsmaxwg.tif -m max s -wg logandwg.tif 
+DinfDistDown -s version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+Input file logandwg.tif has projected coordinate system.
+Input file logansrc.tif has projected coordinate system.
 Processors: 4
-Read time: 0.032954
-Compute time: 1.123871
-Write time: 0.076734
-Total time: 1.233560
+Read time: 0.070761
+Compute time: 0.896422
+Write time: 0.165380
+Total time: 1.132563
 
-D:\Scratch\TestSuite>mpiexec -n 4 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddhavewg.tif -m ave h -wg logandwg.tif 
-DinfDistDown -h version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 4 dinfdistdown -ang loganang.tif -fel loganfel.tif -src logansrc.tif -dd loganddhavewg.tif -m ave h -wg logandwg.tif 
+DinfDistDown -h version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file logandwg.tif has projected coordinate system.
+Input file logansrc.tif has projected coordinate system.
 Processors: 4
-Read time: 0.031281
-Compute time: 0.989746
-Write time: 0.040088
-Total time: 1.061115
+Read time: 0.046455
+Compute time: 0.880846
+Write time: 0.068352
+Total time: 0.995653
 
-D:\Scratch\TestSuite>rem DISTANCE UP 
+D:\Scratch\Input\Base>rem DISTANCE UP 
 
-D:\Scratch\TestSuite>mpiexec -n 1 dinfdistup -ang loganang.tif -fel loganfel.tif -du loganduhave.tif 
-DinfDistUp -h version 5.3
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 1 dinfdistup -ang loganang.tif -fel loganfel.tif -du loganduhave.tif 
+DinfDistUp -h version 5.3.3
+Input file loganang.tif has projected coordinate system.
 Processors: 1
-Read time: 0.030051
-Compute time: 2.150737
-Write time: 0.015374
-Total time: 2.196162
+Read time: 0.074056
+Compute time: 2.032445
+Write time: 0.101152
+Total time: 2.207653
 
-D:\Scratch\TestSuite>mpiexec -n 2 dinfdistup -ang loganang.tif -fel loganfel.tif -du loganduhmin.tif -m min h -thresh 0.5 
-DinfDistUp -h version 5.3
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 2 dinfdistup -ang loganang.tif -fel loganfel.tif -du loganduhmin.tif -m min h -thresh 0.5 
+DinfDistUp -h version 5.3.3
+Input file loganang.tif has projected coordinate system.
 Processors: 2
-Read time: 0.015431
-Compute time: 1.201047
-Write time: 0.017475
-Total time: 1.233952
+Read time: 0.045531
+Compute time: 1.108754
+Write time: 0.065048
+Total time: 1.219333
 
-D:\Scratch\TestSuite>mpiexec -n 3 dinfdistup -ang loganang.tif -fel loganfel.tif -du loganduhmax.tif -m max h -thresh 0.8 
-DinfDistUp -h version 5.3
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 3 dinfdistup -ang loganang.tif -fel loganfel.tif -du loganduhmax.tif -m max h -thresh 0.8 
+DinfDistUp -h version 5.3.3
+Input file loganang.tif has projected coordinate system.
 Processors: 3
-Read time: 0.011331
-Compute time: 1.024169
-Write time: 0.065407
-Total time: 1.100906
+Read time: 0.033981
+Compute time: 0.987977
+Write time: 0.119654
+Total time: 1.141612
 
-D:\Scratch\TestSuite>mpiexec -n 4 dinfdistup -ang loganang.tif -fel loganfel.tif -du loganduvave.tif -m ave v 
-DinfDistUp -v version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 4 dinfdistup -ang loganang.tif -fel loganfel.tif -du loganduvave.tif -m ave v 
+DinfDistUp -v version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
 Processors: 4
-Read time: 0.015830
-Compute time: 0.976053
-Write time: 0.022996
-Total time: 1.014880
+Read time: 0.054499
+Compute time: 0.947114
+Write time: 0.097784
+Total time: 1.099396
 
-D:\Scratch\TestSuite>mpiexec -n 5 dinfdistup -ang loganang.tif -fel loganfel.tif -du loganduvmin.tif -m min v 
-DinfDistUp -v version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 5 dinfdistup -ang loganang.tif -fel loganfel.tif -du loganduvmin.tif -m min v 
+DinfDistUp -v version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
 Processors: 5
-Read time: 0.017282
-Compute time: 1.057516
-Write time: 0.016585
-Total time: 1.091383
+Read time: 0.053694
+Compute time: 0.993349
+Write time: 0.142433
+Total time: 1.189477
 
-D:\Scratch\TestSuite>mpiexec -n 6 dinfdistup -ang loganang.tif -fel loganfel.tif -du loganduvmax.tif -m max v 
-DinfDistUp -v version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 6 dinfdistup -ang loganang.tif -fel loganfel.tif -du loganduvmax.tif -m max v 
+DinfDistUp -v version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
 Processors: 6
-Read time: 0.016283
-Compute time: 1.058286
-Write time: 0.024519
-Total time: 1.099087
+Read time: 0.054843
+Compute time: 0.926237
+Write time: 0.099356
+Total time: 1.080436
 
-D:\Scratch\TestSuite>mpiexec -n 7 dinfdistup -ang loganang.tif -fel loganfel.tif -du logandusave.tif -m ave s -thresh 0.9 
-DinfDistUp -s version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 7 dinfdistup -ang loganang.tif -fel loganfel.tif -du logandusave.tif -m ave s -thresh 0.9 
+DinfDistUp -s version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
 Processors: 7
-Read time: 0.019880
-Compute time: 0.972955
-Write time: 0.062192
-Total time: 1.055027
+Read time: 0.052049
+Compute time: 0.968242
+Write time: 0.161097
+Total time: 1.181388
 
-D:\Scratch\TestSuite>mpiexec -n 8 dinfdistup -ang loganang.tif -fel loganfel.tif -du logandusmin.tif -m min s 
-DinfDistUp -s version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 8 dinfdistup -ang loganang.tif -fel loganfel.tif -du logandusmin.tif -m min s 
+DinfDistUp -s version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
 Processors: 8
-Read time: 0.015071
-Compute time: 1.065986
-Write time: 0.029664
-Total time: 1.110721
+Read time: 0.047381
+Compute time: 0.960407
+Write time: 0.112864
+Total time: 1.120651
 
-D:\Scratch\TestSuite>mpiexec -n 1 dinfdistup -ang loganang.tif -fel loganfel.tif -du logandusmax.tif -m max s 
-DinfDistUp -s version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 1 dinfdistup -ang loganang.tif -fel loganfel.tif -du logandusmax.tif -m max s 
+DinfDistUp -s version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
 Processors: 1
-Read time: 0.052340
-Compute time: 2.218819
-Write time: 0.012794
-Total time: 2.283953
+Read time: 0.134147
+Compute time: 2.139700
+Write time: 0.103549
+Total time: 2.377397
 
-D:\Scratch\TestSuite>mpiexec -n 2 dinfdistup -ang loganang.tif -fel loganfel.tif -du logandupave.tif -m ave p 
-DinfDistUp -p version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 2 dinfdistup -ang loganang.tif -fel loganfel.tif -du logandupave.tif -m ave p 
+DinfDistUp -p version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
 Processors: 2
-Read time: 0.026085
-Compute time: 1.264357
-Write time: 0.017043
-Total time: 1.307485
+Read time: 0.074856
+Compute time: 1.250956
+Write time: 0.126920
+Total time: 1.452732
 
-D:\Scratch\TestSuite>mpiexec -n 3 dinfdistup -ang loganang.tif -fel loganfel.tif -du logandupmin.tif -m min p 
-DinfDistUp -p version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 3 dinfdistup -ang loganang.tif -fel loganfel.tif -du logandupmin.tif -m min p 
+DinfDistUp -p version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
 Processors: 3
-Read time: 0.023185
-Compute time: 1.085814
-Write time: 0.040258
-Total time: 1.149257
+Read time: 0.058471
+Compute time: 1.077891
+Write time: 0.183987
+Total time: 1.320349
 
-D:\Scratch\TestSuite>mpiexec -n 4 dinfdistup -ang loganang.tif -fel loganfel.tif -du logandupmax.tif -m max p 
-DinfDistUp -p version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 4 dinfdistup -ang loganang.tif -fel loganfel.tif -du logandupmax.tif -m max p 
+DinfDistUp -p version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
 Processors: 4
-Read time: 0.022111
-Compute time: 1.358391
-Write time: 0.023891
-Total time: 1.404393
+Read time: 0.059846
+Compute time: 0.976383
+Write time: 0.099363
+Total time: 1.135591
 
-D:\Scratch\TestSuite>mpiexec -n 2 dinfdistup -ang loganang.tif -fel loganfel.tif -du loganduvavenc.tif -m ave v -nc 
-DinfDistUp -v version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 2 dinfdistup -ang loganang.tif -fel loganfel.tif -du loganduvavenc.tif -m ave v -nc 
+DinfDistUp -v version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
 Processors: 2
-Read time: 0.032521
-Compute time: 1.252520
-Write time: 0.019633
-Total time: 1.304674
+Read time: 0.083394
+Compute time: 1.214625
+Write time: 0.097986
+Total time: 1.396006
 
-D:\Scratch\TestSuite>mpiexec -n 3 dinfdistup -ang loganang.tif -fel loganfel.tif -du loganduhminnc.tif -m min h -nc 
-DinfDistUp -h version 5.3
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 3 dinfdistup -ang loganang.tif -fel loganfel.tif -du loganduhminnc.tif -m min h -nc 
+DinfDistUp -h version 5.3.3
+Input file loganang.tif has projected coordinate system.
 Processors: 3
-Read time: 0.011943
-Compute time: 1.015360
-Write time: 0.020966
-Total time: 1.048268
+Read time: 0.034208
+Compute time: 1.017856
+Write time: 0.079489
+Total time: 1.131552
 
-D:\Scratch\TestSuite>mpiexec -n 4 dinfdistup -ang loganang.tif -fel loganfel.tif -du logandupmaxnc.tif -m max p -nc 
-DinfDistUp -p version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 4 dinfdistup -ang loganang.tif -fel loganfel.tif -du logandupmaxnc.tif -m max p -nc 
+DinfDistUp -p version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
 Processors: 4
-Read time: 0.021195
-Compute time: 0.998795
-Write time: 0.089898
-Total time: 1.109888
+Read time: 0.059205
+Compute time: 1.023876
+Write time: 0.123087
+Total time: 1.206168
 
-D:\Scratch\TestSuite>mpiexec -n 4 dinfdistup -ang loganang.tif -fel loganfel.tif -du logandusmaxnc.tif -m max s -nc 
-DinfDistUp -s version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 4 dinfdistup -ang loganang.tif -fel loganfel.tif -du logandusmaxnc.tif -m max s -nc 
+DinfDistUp -s version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
 Processors: 4
-Read time: 0.015657
-Compute time: 0.980310
-Write time: 0.021124
-Total time: 1.017090
+Read time: 0.057605
+Compute time: 0.952924
+Write time: 0.098898
+Total time: 1.109426
 
-D:\Scratch\TestSuite>rem AVALANCHE 
+D:\Scratch\Input\Base>rem AVALANCHE 
 
-D:\Scratch\TestSuite>mpiexec -n 2 DinfAvalanche -ang loganang.tif -fel loganfel.tif -ass loganass.tif -rz loganrz.tif -dfs logandfs.tif 
-DinfAvalanche version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 2 DinfAvalanche -ang loganang.tif -fel loganfel.tif -ass loganass.tif -rz loganrz.tif -dfs logandfs.tif 
+DinfAvalanche version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+Input file loganass.tif has projected coordinate system.
 Processors: 2
-Read time: 0.031304
-Compute time: 1.358546
-Write time: 0.031309
-Total time: 1.421159
+Read time: 0.089927
+Compute time: 1.385414
+Write time: 0.078287
+Total time: 1.553628
 
-D:\Scratch\TestSuite>mpiexec -n 3 DinfAvalanche -ang loganang.tif -fel loganfel.tif -ass loganass.tif -rz loganrz1.tif -dfs logandfs1.tif -thresh 0.1 -alpha 10 
-DinfAvalanche version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 3 DinfAvalanche -ang loganang.tif -fel loganfel.tif -ass loganass.tif -rz loganrz1.tif -dfs logandfs1.tif -thresh 0.1 -alpha 10 
+DinfAvalanche version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+Input file loganass.tif has projected coordinate system.
 Processors: 3
-Read time: 0.027634
-Compute time: 1.122422
-Write time: 0.120839
-Total time: 1.270896
+Read time: 0.066750
+Compute time: 1.071287
+Write time: 0.096147
+Total time: 1.234184
 
-D:\Scratch\TestSuite>mpiexec -n 4 DinfAvalanche -ang loganang.tif -fel loganfel.tif -ass loganass.tif -rz loganrz2.tif -dfs logandfs2.tif -direct -thresh 0.01 -alpha 5 
-DinfAvalanche version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 4 DinfAvalanche -ang loganang.tif -fel loganfel.tif -ass loganass.tif -rz loganrz2.tif -dfs logandfs2.tif -direct -thresh 0.01 -alpha 5 
+DinfAvalanche version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+Input file loganass.tif has projected coordinate system.
 Processors: 4
-Read time: 0.027876
-Compute time: 1.059186
-Write time: 0.036794
-Total time: 1.123856
+Read time: 0.067166
+Compute time: 0.947998
+Write time: 0.090589
+Total time: 1.105753
 
-D:\Scratch\TestSuite>rem SLOPEAVEDOWN 
+D:\Scratch\Input\Base>rem SLOPEAVEDOWN 
 
-D:\Scratch\TestSuite>mpiexec -n 3 slopeavedown -p loganp.tif -fel loganfel.tif -slpd loganslpd.tif 
-SlopeAveDown version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 3 slopeavedown -p loganp.tif -fel loganfel.tif -slpd loganslpd.tif 
+SlopeAveDown version 5.3.3
+Input file loganfel.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
 Processors: 3
-Read time: 0.018041
-Compute time: 0.453556
-Write time: 0.056826
-Total time: 0.528424
+Read time: 0.041547
+Compute time: 0.404968
+Write time: 0.096974
+Total time: 0.543489
 
-D:\Scratch\TestSuite>mpiexec -n 3 slopeavedown -p loganp.tif -fel loganfel.tif -slpd loganslpd1.tif -dn 1000 
-SlopeAveDown version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 3 slopeavedown -p loganp.tif -fel loganfel.tif -slpd loganslpd1.tif -dn 1000 
+SlopeAveDown version 5.3.3
+Input file loganfel.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
 Processors: 3
-Read time: 0.020080
-Compute time: 6.857341
-Write time: 0.019985
-Total time: 6.897406
+Read time: 0.040732
+Compute time: 6.308686
+Write time: 0.095225
+Total time: 6.444643
 
-D:\Scratch\TestSuite>rem test case for tiffio partitions within a stripe 
+D:\Scratch\Input\Base>rem test case for tiffio partitions within a stripe 
 
-D:\Scratch\TestSuite>mpiexec -n 6 areadinf -ang topo3fel1ang.tif -sca topo3fel1sca.tif  
-AreaDinf version 5.3
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 6 areadinf -ang topo3fel1ang.tif -sca topo3fel1sca.tif  
+AreaDinf version 5.3.3
+Input file topo3fel1ang.tif has projected coordinate system.
 Processors: 6
-Read time: 0.018824
-Compute time: 0.345998
-Write time: 0.024922
-Total time: 0.389744
+Read time: 0.014019
+Compute time: 0.337000
+Write time: 0.059169
+Total time: 0.410187
 
-D:\Scratch\TestSuite>rem test case for double precision file 
+D:\Scratch\Input\Base>rem test case for double precision file 
 
-D:\Scratch\TestSuite>mpiexec -n 4 areadinf -ang demDoubleang.tif -sca demDoublesca.tif -wg demDoublewgt.tif 
-AreaDinf version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 4 areadinf -ang demDoubleang.tif -sca demDoublesca.tif -wg demDoublewgt.tif 
+AreaDinf version 5.3.3
+Input file demDoubleang.tif has projected coordinate system.
+Input file demDoublewgt.tif has projected coordinate system.
 Warning! Left edge does not match exactly:
  180482.919500 in file demDoubleang.tif
  180482.919500 in file demDoublewgt.tif
@@ -884,275 +888,281 @@ Warning! Top edge does not match exactly:
  533779.567800 in file demDoubleang.tif
  533779.567800 in file demDoublewgt.tif
 Processors: 4
-Read time: 0.029252
-Compute time: 1.338917
-Write time: 0.029461
-Total time: 1.397630
+Read time: 0.028793
+Compute time: 1.552421
+Write time: 0.124119
+Total time: 1.705334
 
-D:\Scratch\TestSuite>rem gagewatershed test 
+D:\Scratch\Input\Base>rem gagewatershed test 
 
-D:\Scratch\TestSuite>mpiexec -n 7 gagewatershed -p loganp.tif -o Outletsmoved.shp -gw logangw.tif -id gwid.txt 
-Gage Watershed version 5.3
-Input file has projected coordinate system.
-Outletsmoved Size: 7
-Read time: 0.014776
-Compute time: 0.074327
-Write time: 0.055350
-Total time: 0.144452
+D:\Scratch\Input\Base>mpiexec -n 7 gagewatershed -p loganp.tif -o Outletsmoved.shp -gw logangw.tif -id gwid.txt 
+Gage Watershed version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Size: 7
+Read time: 0.019510
+Compute time: 0.079100
+Write time: 0.095441
+Total time: 0.194051
 
-D:\Scratch\TestSuite>rem Connect down 
+D:\Scratch\Input\Base>rem Connect down 
 
-D:\Scratch\TestSuite>mpiexec -n 8 ConnectDown -p loganp.tif -ad8 loganad8.tif -w logangw.tif -o loganOutlets.shp -od loganOutlets_Moved.shp -d 1 
-ConnectDown version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-loganOutlets loganOutlets_Moved Total time: 0.043097
+D:\Scratch\Input\Base>mpiexec -n 8 ConnectDown -p loganp.tif -ad8 loganad8.tif -w logangw.tif -o loganOutlets.shp -od loganOutlets_Moved.shp -d 1 
+ConnectDown version 5.3.3
+Input file logangw.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
+loganOutlets loganOutlets_Moved Total time: 0.090858
 
-D:\Scratch\TestSuite>cd fts 
+D:\Scratch\Input\Base>cd .. 
 
-D:\Scratch\TestSuite\fts>rem tests on ft steward data with stream buffer 
+D:\Scratch\Input>cd fts 
 
-D:\Scratch\TestSuite\fts>mpiexec -n 3 pitremove fs_small.tif 
-PitRemove version 5.3
-Input file has projected coordinate system.
+D:\Scratch\Input\fts>rem tests on ft steward data with stream buffer 
+
+D:\Scratch\Input\fts>mpiexec -n 3 pitremove fs_small.tif 
+PitRemove version 5.3.3
+Input file fs_small.tif has projected coordinate system.
 Processes: 3
-Header read time: 0.007750
-Data read time: 0.004859
-Compute time: 0.252299
-Write time: 0.016879
-Total time: 0.281787
+Header read time: 0.004483
+Data read time: 0.004544
+Compute time: 0.242030
+Write time: 0.071771
+Total time: 0.322827
 
-D:\Scratch\TestSuite\fts>mpiexec -n 4 dinfflowdir fs_small.tif 
-DinfFlowDir version 5.3
-Input file has projected coordinate system.
+D:\Scratch\Input\fts>mpiexec -n 4 dinfflowdir fs_small.tif 
+DinfFlowDir version 5.3.3
+Input file fs_smallfel.tif has projected coordinate system.
 Processors: 4
-Header read time: 0.004565
-Data read time: 0.003903
-Compute Slope time: 0.329849
-Write Slope time: 0.020061
-Resolve Flat time: 5.094035
-Write Flat time: 0.064017
-Total time: 5.516429
+Header read time: 0.006164
+Data read time: 0.022695
+Compute Slope time: 0.324776
+Write Slope time: 0.083527
+Resolve Flat time: 4.973745
+Write Flat time: 0.086718
+Total time: 5.497626
 
-D:\Scratch\TestSuite\fts>mpiexec -n 4 d8flowdir fs_small.tif 
-D8FlowDir version 5.3
-Input file has projected coordinate system.
+D:\Scratch\Input\fts>mpiexec -n 4 d8flowdir fs_small.tif 
+D8FlowDir version 5.3.3
+Input file fs_smallfel.tif has projected coordinate system.
 Processors: 4
-Header read time: 0.003856
-Data read time: 0.008226
-Compute Slope time: 0.114560
-Write Slope time: 0.016431
-Resolve Flat time: 4.768263
-Write Flat time: 0.065045
-Total time: 4.976381
+Header read time: 0.006476
+Data read time: 0.023149
+Compute Slope time: 0.128428
+Write Slope time: 0.081898
+Resolve Flat time: 5.021581
+Write Flat time: 0.035175
+Total time: 5.296708
 
-D:\Scratch\TestSuite\fts>mpiexec -n 1 aread8 fs_small.tif 
-AreaD8 version 5.3
-Input file has projected coordinate system.
-Size: 1
-Read time: 0.010147
-Compute time: 0.354851
-Write time: 0.012239
-Total time: 0.377237
+D:\Scratch\Input\fts>mpiexec -n 1 aread8 fs_small.tif 
+AreaD8 version 5.3.3
+Input file fs_smallp.tif has projected coordinate system.
+Number of Processes: 1
+Read time: 0.020560
+Compute time: 0.342497
+Write time: 0.046863
+Total time: 0.409921
 
-D:\Scratch\TestSuite\fts>mpiexec -n 2 threshold -ssa fs_smallad8.tif -src fs_smallsrc.tif -thresh 500 
-Threshold version 5.3
-Input file has projected coordinate system.
-Compute time: 0.009205
+D:\Scratch\Input\fts>mpiexec -n 2 threshold -ssa fs_smallad8.tif -src fs_smallsrc.tif -thresh 500 
+Threshold version 5.3.3
+Input file fs_smallad8.tif has projected coordinate system.
+Compute time: 0.010221
 
-D:\Scratch\TestSuite\fts>mpiexec -n 5 dinfdistdown -ang fs_smallang.tif -fel fs_smallfel.tif -src fs_smallsrc.tif -dd fs_smallddhavewg.tif -m ave h -wg streambuffreclass2.tif 
-DinfDistDown -h version 5.3
-Input file has projected coordinate system.
-Input file has projected coordinate system.
-Input file has projected coordinate system.
+D:\Scratch\Input\fts>mpiexec -n 5 dinfdistdown -ang fs_smallang.tif -fel fs_smallfel.tif -src fs_smallsrc.tif -dd fs_smallddhavewg.tif -m ave h -wg streambuffreclass2.tif 
+DinfDistDown -h version 5.3.3
+Input file fs_smallang.tif has projected coordinate system.
+Input file streambuffreclass2.tif has projected coordinate system.
+Input file fs_smallsrc.tif has projected coordinate system.
 Processors: 5
-Read time: 0.021089
-Compute time: 0.882409
-Write time: 0.016792
-Total time: 0.920289
+Read time: 0.029724
+Compute time: 0.806449
+Write time: 0.045535
+Total time: 0.881708
 
-D:\Scratch\TestSuite\fts>cd .. 
+D:\Scratch\Input\fts>cd .. 
 
-D:\Scratch\TestSuite>rem test with compressed 16 bit unsigned integer that a user had trouble with 
+D:\Scratch\Input>cd Base 
 
-D:\Scratch\TestSuite>mpiexec -n 8 pitremove MED_01_01.tif 
-PitRemove version 5.3
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>rem test with compressed 16 bit unsigned integer that a user had trouble with 
+
+D:\Scratch\Input\Base>mpiexec -n 8 pitremove MED_01_01.tif 
+PitRemove version 5.3.3
+Input file MED_01_01.tif has projected coordinate system.
 Processes: 8
-Header read time: 0.008504
-Data read time: 0.002453
-Compute time: 0.125085
-Write time: 0.018476
-Total time: 0.154518
+Header read time: 0.009288
+Data read time: 0.001549
+Compute time: 0.106925
+Write time: 0.030048
+Total time: 0.147810
 
-D:\Scratch\TestSuite>rem
+D:\Scratch\Input\Base>rem test with VRT format 
 
-D:\Scratch\TestSuite>mpiexec -n 8 pitremove -z LoganVRT\output.vrt -fel loganvrtfel.tif 
-PitRemove version 5.3
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 8 pitremove -z LoganVRT\output.vrt -fel loganvrtfel.tif 
+PitRemove version 5.3.3
+Input file LoganVRT\output.vrt has projected coordinate system.
 Processes: 8
-Header read time: 0.004881
-Data read time: 0.000813
-Compute time: 0.043694
-Write time: 0.026410
-Total time: 0.075798
+Header read time: 0.005872
+Data read time: 0.000843
+Compute time: 0.044351
+Write time: 0.026094
+Total time: 0.077160
 
-D:\Scratch\TestSuite>rem test with img file format 
+D:\Scratch\Input\Base>rem test with img file format 
 
-D:\Scratch\TestSuite>mpiexec -n 8 pitremove -z loganIMG\logan.img -fel loganimgfel.tif 
-PitRemove version 5.3
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 8 pitremove -z loganIMG\logan.img -fel loganimgfel.tif 
+PitRemove version 5.3.3
+Input file loganIMG\logan.img has projected coordinate system.
 Processes: 8
-Header read time: 0.115715
-Data read time: 0.005186
-Compute time: 0.310982
-Write time: 0.058370
-Total time: 0.490253
+Header read time: 0.099549
+Data read time: 0.008402
+Compute time: 0.277722
+Write time: 0.104585
+Total time: 0.490258
 
-D:\Scratch\TestSuite>rem test with ESRIGRID file format 
+D:\Scratch\Input\Base>rem test with ESRIGRID file format 
 
-D:\Scratch\TestSuite>mpiexec -n 8 pitremove -z loganESRIGRID\logan -fel loganesrigridfel.tif 
-PitRemove version 5.3
-Input file has projected coordinate system.
+D:\Scratch\Input\Base>mpiexec -n 8 pitremove -z loganESRIGRID\logan -fel loganesrigridfel.tif 
+PitRemove version 5.3.3
+Input file loganESRIGRID\logan has projected coordinate system.
 Processes: 8
-Header read time: 0.007140
-Data read time: 0.005862
-Compute time: 0.325392
-Write time: 0.030492
-Total time: 0.368886
+Header read time: 0.006174
+Data read time: 0.006225
+Compute time: 0.303676
+Write time: 0.099222
+Total time: 0.415298
 
-D:\Scratch\TestSuite>rem  Geographic tests 
+D:\Scratch\Input\Base>cd .. 
 
-D:\Scratch\TestSuite>cd Geographic 
+D:\Scratch\Input>rem  Geographic tests 
 
-D:\Scratch\TestSuite\Geographic>Rem  Basic grid analysis 
+D:\Scratch\Input>cd Geographic 
 
-D:\Scratch\TestSuite\Geographic>mpiexec -np 3 PitRemove enogeo.tif   
-PitRemove version 5.3
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>Rem  Basic grid analysis 
+
+D:\Scratch\Input\Geographic>mpiexec -np 3 PitRemove enogeo.tif   
+PitRemove version 5.3.3
+Input file enogeo.tif has geographic coordinate system.
 Processes: 3
-Header read time: 0.002987
-Data read time: 0.001511
-Compute time: 0.104088
-Write time: 0.027713
-Total time: 0.136299
+Header read time: 0.002966
+Data read time: 0.001136
+Compute time: 0.111297
+Write time: 0.057074
+Total time: 0.172473
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 5 D8Flowdir -p enogeop.tif -sd8 enogeosd8.tif -fel enogeofel.tif  
-D8FlowDir version 5.3
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 5 D8Flowdir -p enogeop.tif -sd8 enogeosd8.tif -fel enogeofel.tif  
+D8FlowDir version 5.3.3
+Input file enogeofel.tif has geographic coordinate system.
 Processors: 5
-Header read time: 0.003879
-Data read time: 0.006711
-Compute Slope time: 0.049161
-Write Slope time: 0.027808
-Resolve Flat time: 0.653809
-Write Flat time: 0.041222
-Total time: 0.782589
+Header read time: 0.003473
+Data read time: 0.010147
+Compute Slope time: 0.055155
+Write Slope time: 0.073451
+Resolve Flat time: 0.760980
+Write Flat time: 0.035725
+Total time: 0.938931
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 4 DinfFlowdir -ang enogeoang.tif -slp enogeoslp.tif -fel enogeofel.tif 
-DinfFlowDir version 5.3
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 4 DinfFlowdir -ang enogeoang.tif -slp enogeoslp.tif -fel enogeofel.tif 
+DinfFlowDir version 5.3.3
+Input file enogeofel.tif has geographic coordinate system.
 Processors: 4
-Header read time: 0.003562
-Data read time: 0.002839
-Compute Slope time: 0.165201
-Write Slope time: 0.022142
-Resolve Flat time: 0.463025
-Write Flat time: 0.022555
-Total time: 0.679324
+Header read time: 0.003451
+Data read time: 0.009393
+Compute Slope time: 0.160466
+Write Slope time: 0.057904
+Resolve Flat time: 0.481711
+Write Flat time: 0.053680
+Total time: 0.766605
 
-D:\Scratch\TestSuite\Geographic>mpiexec -np 4 AreaD8 enogeo.tif 
-AreaD8 version 5.3
-Input file has geographic coordinate system.
-Size: 4
-Read time: 0.005344
-Compute time: 0.091892
-Write time: 0.021086
-Total time: 0.118323
+D:\Scratch\Input\Geographic>mpiexec -np 4 AreaD8 enogeo.tif 
+AreaD8 version 5.3.3
+Input file enogeop.tif has geographic coordinate system.
+Number of Processes: 4
+Read time: 0.005903
+Compute time: 0.076009
+Write time: 0.033732
+Total time: 0.115643
 
-D:\Scratch\TestSuite\Geographic>mpiexec -np 12 AreaDinf enogeo.tif 
-AreaDinf version 5.3
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -np 12 AreaDinf enogeo.tif 
+AreaDinf version 5.3.3
+Input file enogeoang.tif has geographic coordinate system.
 Processors: 12
-Read time: 0.014718
-Compute time: 0.418464
-Write time: 0.036111
-Total time: 0.469294
+Read time: 0.012334
+Compute time: 0.421205
+Write time: 0.100141
+Total time: 0.533680
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 7 aread8 -p enogeop.tif -o Outlets.shp -ad8 enogeoad8o.tif 
-AreaD8 version 5.3
-Input file has geographic coordinate system.
-Outlets Size: 7
-Read time: 0.012393
-Compute time: 0.055218
-Write time: 0.016967
-Total time: 0.084578
+D:\Scratch\Input\Geographic>mpiexec -n 7 aread8 -p enogeop.tif -o Outlets.shp -ad8 enogeoad8o.tif 
+AreaD8 version 5.3.3
+Input file enogeop.tif has geographic coordinate system.
+Number of Processes: 7
+Read time: 0.012822
+Compute time: 0.037928
+Write time: 0.026327
+Total time: 0.077077
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 1 areadinf -ang enogeoang.tif -o Outlets.shp -sca enogeoscao.tif 
-AreaDinf version 5.3
-Input file has geographic coordinate system.
-Outlets Processors: 1
-Read time: 0.016303
-Compute time: 0.237768
-Write time: 0.018306
-Total time: 0.272378
+D:\Scratch\Input\Geographic>mpiexec -n 1 areadinf -ang enogeoang.tif -o Outlets.shp -sca enogeoscao.tif 
+AreaDinf version 5.3.3
+Input file enogeoang.tif has geographic coordinate system.
+Processors: 1
+Read time: 0.032436
+Compute time: 0.204329
+Write time: 0.032663
+Total time: 0.269429
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 5 Gridnet -p enogeop.tif -plen enogeoplen.tif -tlen enogeotlen.tif -gord enogeogord.tif  
-GridNet version 5.3
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 5 Gridnet -p enogeop.tif -plen enogeoplen.tif -tlen enogeotlen.tif -gord enogeogord.tif  
+GridNet version 5.3.3
+Input file enogeop.tif has geographic coordinate system.
 Processors: 5
-Read time: 0.004605
-Compute time: 0.103927
-Write time: 0.059355
-Total time: 0.167887
+Read time: 0.005270
+Compute time: 0.102036
+Write time: 0.108365
+Total time: 0.215670
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 5 Gridnet -p enogeop.tif -plen enogeoplen1.tif -tlen enogeotlen1.tif -gord enogeogord1.tif -mask enogeoad8.tif -thresh 100  
-GridNet version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 5 Gridnet -p enogeop.tif -plen enogeoplen1.tif -tlen enogeotlen1.tif -gord enogeogord1.tif -mask enogeoad8.tif -thresh 100  
+GridNet version 5.3.3
+Input file enogeop.tif has geographic coordinate system.
+Input file enogeoad8.tif has geographic coordinate system.
 Processors: 5
-Read time: 0.009589
-Compute time: 0.078616
-Write time: 0.067434
-Total time: 0.155639
+Read time: 0.013700
+Compute time: 0.056933
+Write time: 0.100974
+Total time: 0.171607
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 7 Gridnet -p enogeop.tif -plen enogeoplen2.tif -tlen enogeotlen2.tif -gord enogeogord2.tif -o Outlets.shp  
-GridNet version 5.3
-Input file has geographic coordinate system.
-Outlets Processors: 7
-Read time: 0.012055
-Compute time: 0.050211
-Write time: 0.070484
-Total time: 0.132750
-
-D:\Scratch\TestSuite\Geographic>Rem stream network peuker douglas 
-
-D:\Scratch\TestSuite\Geographic>mpiexec -np 7 PeukerDouglas -fel enogeofel.tif -ss enogeoss.tif 
-PeukerDouglas version 5.3
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 7 Gridnet -p enogeop.tif -plen enogeoplen2.tif -tlen enogeotlen2.tif -gord enogeogord2.tif -o Outlets.shp  
+GridNet version 5.3.3
+Input file enogeop.tif has geographic coordinate system.
 Processors: 7
-Read time: 0.004536
-Compute time: 0.037024
-Write time: 0.039010
-Total time: 0.080569
+Read time: 0.013682
+Compute time: 0.050701
+Write time: 0.098701
+Total time: 0.163084
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 4 Aread8 -p enogeop.tif -o Outlets.shp -ad8 enogeossa.tif -wg enogeoss.tif 
-AreaD8 version 5.3
-Input file has geographic coordinate system.
-Outlets Input file has geographic coordinate system.
-Size: 4
-Read time: 0.012485
-Compute time: 0.065022
-Write time: 0.021974
-Total time: 0.099481
+D:\Scratch\Input\Geographic>Rem stream network peuker douglas 
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 4 Dropanalysis -p enogeop.tif -fel enogeofel.tif -ad8 enogeoad8.tif -ssa enogeossa.tif -drp enogeodrp.txt -o Outlets.shp -par 5 500 10 0  
-DropAnalysis version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
-Outlets Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -np 7 PeukerDouglas -fel enogeofel.tif -ss enogeoss.tiff 
+PeukerDouglas version 5.3.3
+Input file enogeofel.tif has geographic coordinate system.
+Processors: 7
+Read time: 0.012264
+Compute time: 0.033334
+Write time: 0.041367
+Total time: 0.086965
+
+D:\Scratch\Input\Geographic>mpiexec -n 4 Aread8 -p enogeop.tif -o Outlets.shp -ad8 enogeossa.tif -wg enogeoss.tiff 
+AreaD8 version 5.3.3
+Input file enogeop.tif has geographic coordinate system.
+Input file enogeoss.tiff has geographic coordinate system.
+Number of Processes: 4
+Read time: 0.017547
+Compute time: 0.055124
+Write time: 0.037473
+Total time: 0.110144
+
+D:\Scratch\Input\Geographic>mpiexec -n 4 Dropanalysis -p enogeop.tif -fel enogeofel.tif -ad8 enogeoad8.tif -ssa enogeossa.tif -drp enogeodrp.txt -o Outlets.shp -par 5 500 10 0  
+DropAnalysis version 5.3.3
+Input file enogeossa.tif has geographic coordinate system.
+Input file enogeop.tif has geographic coordinate system.
+Input file enogeoad8.tif has geographic coordinate system.
+Input file enogeofel.tif has geographic coordinate system.
 Threshold DrainDen NoFirstOrd NoHighOrd MeanDFirstOrd MeanDHighOrd StdDevFirstOrd StdDevHighOrd Tval
 5.000000 0.009187 701 211 2.604078 4.546069 2.486755 3.778498 -8.715838
 8.340503 0.007005 387 118 3.132877 5.514533 2.761441 3.881666 -7.404098
@@ -1166,54 +1176,54 @@ Threshold DrainDen NoFirstOrd NoHighOrd MeanDFirstOrd MeanDHighOrd StdDevFirstOr
 500.000183 0.001111 11 3 5.156597 7.280238 4.639002 2.721691 -0.744703
 107.721756  Value for optimum that drop analysis selected - see output file for details.
 Processes: 4
-Read time: 0.027284
-Compute time: 0.433958
-Total time: 0.461242
+Read time: 0.050009
+Compute time: 0.488944
+Total time: 0.538953
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 5 Threshold -ssa enogeossa.tif -src enogeosrc.tif -thresh 180 
-Threshold version 5.3
-Input file has geographic coordinate system.
-Compute time: 0.005261
+D:\Scratch\Input\Geographic>mpiexec -n 5 Threshold -ssa enogeossa.tif -src enogeosrc.tif -thresh 180 
+Threshold version 5.3.3
+Input file enogeossa.tif has geographic coordinate system.
+Compute time: 0.004411
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 5 Streamnet -fel enogeofel.tif -p enogeop.tif -ad8 enogeoad8.tif -src enogeosrc.tif -ord enogeoord3.tif -tree enogeotree.dat -coord enogeocoord.dat -net enogeonet.shp -w enogeow.tif -o Outlets.shp 
-StreamNet version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
-Outlets enogeonet Processors: 5
-Read time: 0.028553
-Length compute time: 0.010238
-Link compute time: 0.025736
-Link write time: 0.074556
-Watershed compute time: 0.097035
-Write time: 0.061280
-Total time: 0.297399
+D:\Scratch\Input\Geographic>mpiexec -n 5 Streamnet -fel enogeofel.tif -p enogeop.tif -ad8 enogeoad8.tif -src enogeosrc.tif -ord enogeoord3.tif -tree enogeotree.dat -coord enogeocoord.dat -net enogeonet.shp -w enogeow.tif -o Outlets.shp 
+StreamNet version 5.3.3
+Input file enogeosrc.tif has geographic coordinate system.
+Input file enogeop.tif has geographic coordinate system.
+Input file enogeoad8.tif has geographic coordinate system.
+Input file enogeofel.tif has geographic coordinate system.
+enogeonet Processors: 5
+Read time: 0.051392
+Length compute time: 0.011286
+Link compute time: 0.004198
+Link write time: 0.087111
+Watershed compute time: 0.034906
+Write time: 0.063618
+Total time: 0.252511
 
-D:\Scratch\TestSuite\Geographic>Rem stream network slope area 
+D:\Scratch\Input\Geographic>Rem stream network slope area 
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 3 SlopeArea -slp enogeoslp.tif -sca enogeosca.tif -sa enogeosa.tif -par 2 1 
-SlopeArea version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
-Compute time: 0.012974
+D:\Scratch\Input\Geographic>mpiexec -n 3 SlopeArea -slp enogeoslp.tif -sca enogeosca.tif -sa enogeosa.tif -par 2 1 
+SlopeArea version 5.3.3
+Input file enogeoslp.tif has geographic coordinate system.
+Input file enogeosca.tif has geographic coordinate system.
+Compute time: 0.014734
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 8 D8FlowpathExtremeUp -p enogeop.tif -sa enogeosa.tif -ssa enogeossa1.tif -o Outlets.shp 
-D8FlowPathExtremeUp version 5.3
-Input file has geographic coordinate system.
-Outlets Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 8 D8FlowpathExtremeUp -p enogeop.tif -sa enogeosa.tif -ssa enogeossa1.tif -o Outlets.shp 
+D8FlowPathExtremeUp version 5.3.3
+Input file enogeop.tif has geographic coordinate system.
+Input file enogeosa.tif has geographic coordinate system.
 Processors: 8
-Read time: 0.014555
-Compute time: 0.064886
-Write time: 0.034705
-Total time: 0.114146
+Read time: 0.020059
+Compute time: 0.047114
+Write time: 0.051258
+Total time: 0.118432
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 4 Dropanalysis -p enogeop.tif -fel enogeofel.tif -ad8 enogeoad8.tif -ssa enogeossa1.tif -drp enogeodrp1.txt -o Outlets.shp -par 10 2000 10 1  
-DropAnalysis version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
-Outlets Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 4 Dropanalysis -p enogeop.tif -fel enogeofel.tif -ad8 enogeoad8.tif -ssa enogeossa1.tif -drp enogeodrp1.txt -o Outlets.shp -par 10 2000 10 1  
+DropAnalysis version 5.3.3
+Input file enogeossa1.tif has geographic coordinate system.
+Input file enogeop.tif has geographic coordinate system.
+Input file enogeoad8.tif has geographic coordinate system.
+Input file enogeofel.tif has geographic coordinate system.
 Threshold DrainDen NoFirstOrd NoHighOrd MeanDFirstOrd MeanDHighOrd StdDevFirstOrd StdDevHighOrd Tval
 10.000000 0.003140 136 41 3.406505 5.441145 3.123179 3.952331 -3.428426
 231.111115 0.001140 11 2 9.586984 8.389229 4.248148 2.303134 0.379152
@@ -1227,319 +1237,1296 @@ Threshold DrainDen NoFirstOrd NoHighOrd MeanDFirstOrd MeanDHighOrd StdDevFirstOr
 2000.000000 0.000512 2 0 15.115761  -  11.126370  -   - 
 231.111115  Value for optimum that drop analysis selected - see output file for details.
 Processes: 4
-Read time: 0.026781
-Compute time: 0.430755
-Total time: 0.457536
+Read time: 0.039064
+Compute time: 0.379519
+Total time: 0.418583
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 5 Threshold -ssa enogeossa1.tif -src enogeosrc1.tif -thresh 32 
-Threshold version 5.3
-Input file has geographic coordinate system.
-Compute time: 0.005268
+D:\Scratch\Input\Geographic>mpiexec -n 5 Threshold -ssa enogeossa1.tif -src enogeosrc1.tif -thresh 32 
+Threshold version 5.3.3
+Input file enogeossa1.tif has geographic coordinate system.
+Compute time: 0.004319
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 8 Streamnet -fel enogeofel.tif -p enogeop.tif -ad8 enogeoad8.tif -src enogeosrc1.tif -ord enogeoord5.tif -tree enogeotree1.dat -coord enogeocoord1.dat -net enogeonet1.shp -w enogeow1.tif -o Outlets.shp -sw 
-StreamNet version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
-Outlets enogeonet1 Processors: 8
-Read time: 0.034448
-Length compute time: 0.009148
-Link compute time: 0.066754
-Link write time: 0.078102
-Watershed compute time: 0.076927
-Write time: 0.052776
-Total time: 0.318154
+D:\Scratch\Input\Geographic>mpiexec -n 8 Streamnet -fel enogeofel.tif -p enogeop.tif -ad8 enogeoad8.tif -src enogeosrc1.tif -ord enogeoord5.tif -tree enogeotree1.dat -coord enogeocoord1.dat -net enogeonet1.shp -w enogeow1.tif -o Outlets.shp -sw 
+StreamNet version 5.3.3
+Input file enogeosrc1.tif has geographic coordinate system.
+Input file enogeop.tif has geographic coordinate system.
+Input file enogeoad8.tif has geographic coordinate system.
+Input file enogeofel.tif has geographic coordinate system.
+enogeonet1 Processors: 8
+Read time: 0.041300
+Length compute time: 0.005121
+Link compute time: 0.031076
+Link write time: 0.059637
+Watershed compute time: 0.049478
+Write time: 0.080223
+Total time: 0.266835
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 3 LengthArea -plen enogeoplen.tif -ad8 enogeoad8.tif -ss enogeolass.tif -par 0.03 1.3 
-LengthArea version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
-Compute time: 0.011325
+D:\Scratch\Input\Geographic>mpiexec -n 3 LengthArea -plen enogeoplen.tif -ad8 enogeoad8.tif -ss enogeolass.tif -par 0.03 1.3 
+LengthArea version 5.3.3
+Input file enogeoplen.tif has geographic coordinate system.
+Input file enogeoad8.tif has geographic coordinate system.
+Compute time: 0.011958
 
-D:\Scratch\TestSuite\Geographic>Rem Specialized grid analysis 
+D:\Scratch\Input\Geographic>Rem Specialized grid analysis 
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 3 SlopeAreaRatio -slp enogeoslp.tif -sca enogeosca.tif -sar enogeosar.tif 
-SlopeAreaRatio version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
-Compute time: 0.009476
+D:\Scratch\Input\Geographic>mpiexec -n 3 SlopeAreaRatio -slp enogeoslp.tif -sca enogeosca.tif -sar enogeosar.tif 
+SlopeAreaRatio version 5.3.3
+Input file enogeoslp.tif has geographic coordinate system.
+Input file enogeosca.tif has geographic coordinate system.
+Compute time: 0.008544
 
-D:\Scratch\TestSuite\Geographic>mpiexec -np 7 D8HDisttoStrm -p enogeop.tif -src enogeoad8.tif -dist enogeodist1.tif -thresh 200  
-D8HDistToStrm version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -np 7 D8HDisttoStrm -p enogeop.tif -src enogeoad8.tif -dist enogeodist1.tif -thresh 200  
+D8HDistToStrm version 5.3.3
+Input file enogeop.tif has geographic coordinate system.
+Input file enogeoad8.tif has geographic coordinate system.
 Processors: 7
-Read time: 0.012396
-Compute time: 0.042766
-Write time: 0.041548
-Total time: 0.096710
+Read time: 0.018410
+Compute time: 0.036113
+Write time: 0.060168
+Total time: 0.114691
 
-D:\Scratch\TestSuite\Geographic>mpiexec -np 5 D8HDisttoStrm -p enogeop.tif -src enogeosrc.tif -dist enogeodist.tif  
-D8HDistToStrm version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -np 5 D8HDisttoStrm -p enogeop.tif -src enogeosrc.tif -dist enogeodist.tif  
+D8HDistToStrm version 5.3.3
+Input file enogeop.tif has geographic coordinate system.
+Input file enogeosrc.tif has geographic coordinate system.
 Processors: 5
-Read time: 0.011951
-Compute time: 0.023938
-Write time: 0.031305
-Total time: 0.067194
+Read time: 0.012040
+Compute time: 0.015534
+Write time: 0.048271
+Total time: 0.075846
 
-D:\Scratch\TestSuite\Geographic>rem MOVEOUTLETS 
+D:\Scratch\Input\Geographic>rem MOVEOUTLETS 
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 5 Threshold -ssa enogeoad8.tif -src enogeosrc2.tif -thresh 200 
-Threshold version 5.3
-Input file has geographic coordinate system.
-Compute time: 0.005926
+D:\Scratch\Input\Geographic>mpiexec -n 5 Threshold -ssa enogeoad8.tif -src enogeosrc2.tif -thresh 200 
+Threshold version 5.3.3
+Input file enogeoad8.tif has geographic coordinate system.
+Compute time: 0.005949
 
-D:\Scratch\TestSuite\Geographic>mpiexec -np 3 MoveOutletstoStreams -p enogeop.tif -src enogeosrc.tif -o Outlets.shp -om Outletsmoved.shp -md 20  
-MoveOutletsToStreams version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
-Outlets Outletsmoved Total time: 0.020725
+D:\Scratch\Input\Geographic>mpiexec -np 3 MoveOutletstoStreams -p enogeop.tif -src enogeosrc.tif -o Outlets.shp -om Outletsmoved.shp -md 20  
+MoveOutletsToStreams version 5.3.3
+Input file enogeosrc.tif has geographic coordinate system.
+Input file enogeop.tif has geographic coordinate system.
+Outletsmoved Total time: 0.107724
 
-D:\Scratch\TestSuite\Geographic>rem DISTDOWN 
+D:\Scratch\Input\Geographic>rem DISTDOWN 
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 1 dinfdistdown -ang enogeoang.tif -fel enogeofel.tif -src enogeosrc.tif -dd enogeoddhave.tif 
-DinfDistDown -h version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 1 dinfdistdown -ang enogeoang.tif -fel enogeofel.tif -src enogeosrc.tif -dd enogeoddhave.tif 
+DinfDistDown -h version 5.3.3
+Input file enogeoang.tif has geographic coordinate system.
+Input file enogeosrc.tif has geographic coordinate system.
 Processors: 1
-Read time: 0.012415
-Compute time: 0.774484
-Write time: 0.028123
-Total time: 0.815021
+Read time: 0.033836
+Compute time: 0.747184
+Write time: 0.039300
+Total time: 0.820320
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 2 dinfdistdown -ang enogeoang.tif -fel enogeofel.tif -src enogeosrc.tif -dd enogeoddhmin.tif -m min h 
-DinfDistDown -h version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 2 dinfdistdown -ang enogeoang.tif -fel enogeofel.tif -src enogeosrc.tif -dd enogeoddhmin.tif -m min h 
+DinfDistDown -h version 5.3.3
+Input file enogeoang.tif has geographic coordinate system.
+Input file enogeosrc.tif has geographic coordinate system.
 Processors: 2
-Read time: 0.007794
-Compute time: 0.462398
-Write time: 0.024130
-Total time: 0.494322
+Read time: 0.018772
+Compute time: 0.423687
+Write time: 0.042089
+Total time: 0.484548
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 3 dinfdistdown -ang enogeoang.tif -fel enogeofel.tif -src enogeosrc.tif -dd enogeoddhmax.tif -m max h 
-DinfDistDown -h version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 3 dinfdistdown -ang enogeoang.tif -fel enogeofel.tif -src enogeosrc.tif -dd enogeoddhmax.tif -m max h 
+DinfDistDown -h version 5.3.3
+Input file enogeoang.tif has geographic coordinate system.
+Input file enogeosrc.tif has geographic coordinate system.
 Processors: 3
-Read time: 0.007821
-Compute time: 0.418142
-Write time: 0.026288
-Total time: 0.452251
+Read time: 0.016997
+Compute time: 0.383258
+Write time: 0.048666
+Total time: 0.448921
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 4 dinfdistdown -ang enogeoang.tif -fel enogeofel.tif -src enogeosrc.tif -dd enogeoddvave.tif -m ave v 
-DinfDistDown -v version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 4 dinfdistdown -ang enogeoang.tif -fel enogeofel.tif -src enogeosrc.tif -dd enogeoddvave.tif -m ave v 
+DinfDistDown -v version 5.3.3
+Input file enogeoang.tif has geographic coordinate system.
+Input file enogeofel.tif has geographic coordinate system.
+Input file enogeosrc.tif has geographic coordinate system.
 Processors: 4
-Read time: 0.015023
-Compute time: 0.472622
-Write time: 0.034419
-Total time: 0.522064
+Read time: 0.026918
+Compute time: 0.398847
+Write time: 0.057710
+Total time: 0.483475
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 5 dinfdistdown -ang enogeoang.tif -fel enogeofel.tif -src enogeosrc.tif -dd enogeoddvmin.tif -m min v 
-DinfDistDown -v version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 5 dinfdistdown -ang enogeoang.tif -fel enogeofel.tif -src enogeosrc.tif -dd enogeoddvmin.tif -m min v 
+DinfDistDown -v version 5.3.3
+Input file enogeoang.tif has geographic coordinate system.
+Input file enogeofel.tif has geographic coordinate system.
+Input file enogeosrc.tif has geographic coordinate system.
 Processors: 5
-Read time: 0.013909
-Compute time: 0.428113
-Write time: 0.030371
-Total time: 0.472393
+Read time: 0.027764
+Compute time: 0.420531
+Write time: 0.051529
+Total time: 0.499823
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 6 dinfdistdown -ang enogeoang.tif -fel enogeofel.tif -src enogeosrc.tif -dd enogeoddvmax.tif -m max v 
-DinfDistDown -v version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 6 dinfdistdown -ang enogeoang.tif -fel enogeofel.tif -src enogeosrc.tif -dd enogeoddvmax.tif -m max v 
+DinfDistDown -v version 5.3.3
+Input file enogeoang.tif has geographic coordinate system.
+Input file enogeofel.tif has geographic coordinate system.
+Input file enogeosrc.tif has geographic coordinate system.
 Processors: 6
-Read time: 0.014585
-Compute time: 0.632263
-Write time: 0.049387
-Total time: 0.696236
+Read time: 0.029045
+Compute time: 0.410812
+Write time: 0.049042
+Total time: 0.488899
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 7 dinfdistdown -ang enogeoang.tif -fel enogeofel.tif -src enogeosrc.tif -dd enogeoddsave.tif -m ave s 
-DinfDistDown -s version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 7 dinfdistdown -ang enogeoang.tif -fel enogeofel.tif -src enogeosrc.tif -dd enogeoddsave.tif -m ave s 
+DinfDistDown -s version 5.3.3
+Input file enogeoang.tif has geographic coordinate system.
+Input file enogeofel.tif has geographic coordinate system.
+Input file enogeosrc.tif has geographic coordinate system.
 Processors: 7
-Read time: 0.017111
-Compute time: 0.421366
-Write time: 0.032289
-Total time: 0.470766
+Read time: 0.029707
+Compute time: 0.397120
+Write time: 0.051497
+Total time: 0.478324
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 8 dinfdistdown -ang enogeoang.tif -fel enogeofel.tif -src enogeosrc.tif -dd enogeoddsmin.tif -m min s 
-DinfDistDown -s version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 8 dinfdistdown -ang enogeoang.tif -fel enogeofel.tif -src enogeosrc.tif -dd enogeoddsmin.tif -m min s 
+DinfDistDown -s version 5.3.3
+Input file enogeoang.tif has geographic coordinate system.
+Input file enogeofel.tif has geographic coordinate system.
+Input file enogeosrc.tif has geographic coordinate system.
 Processors: 8
-Read time: 0.026113
-Compute time: 0.453707
-Write time: 0.034258
-Total time: 0.514078
+Read time: 0.032695
+Compute time: 0.397147
+Write time: 0.058702
+Total time: 0.488543
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 1 dinfdistdown -ang enogeoang.tif -fel enogeofel.tif -src enogeosrc.tif -dd enogeoddsmax.tif -m max s 
-DinfDistDown -s version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 1 dinfdistdown -ang enogeoang.tif -fel enogeofel.tif -src enogeosrc.tif -dd enogeoddsmax.tif -m max s 
+DinfDistDown -s version 5.3.3
+Input file enogeoang.tif has geographic coordinate system.
+Input file enogeofel.tif has geographic coordinate system.
+Input file enogeosrc.tif has geographic coordinate system.
 Processors: 1
-Read time: 0.019896
-Compute time: 0.896527
-Write time: 0.033520
-Total time: 0.949943
+Read time: 0.060464
+Compute time: 0.941957
+Write time: 0.045017
+Total time: 1.047438
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 2 dinfdistdown -ang enogeoang.tif -fel enogeofel.tif -src enogeosrc.tif -dd enogeoddpave.tif -m ave p 
-DinfDistDown -p version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 2 dinfdistdown -ang enogeoang.tif -fel enogeofel.tif -src enogeosrc.tif -dd enogeoddpave.tif -m ave p 
+DinfDistDown -p version 5.3.3
+Input file enogeoang.tif has geographic coordinate system.
+Input file enogeofel.tif has geographic coordinate system.
+Input file enogeosrc.tif has geographic coordinate system.
 Processors: 2
-Read time: 0.016068
-Compute time: 0.568048
-Write time: 0.028011
-Total time: 0.612126
+Read time: 0.040159
+Compute time: 0.488165
+Write time: 0.040940
+Total time: 0.569264
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 3 dinfdistdown -ang enogeoang.tif -fel enogeofel.tif -src enogeosrc.tif -dd enogeoddpmin.tif -m min p 
-DinfDistDown -p version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 3 dinfdistdown -ang enogeoang.tif -fel enogeofel.tif -src enogeosrc.tif -dd enogeoddpmin.tif -m min p 
+DinfDistDown -p version 5.3.3
+Input file enogeoang.tif has geographic coordinate system.
+Input file enogeofel.tif has geographic coordinate system.
+Input file enogeosrc.tif has geographic coordinate system.
 Processors: 3
-Read time: 0.012048
-Compute time: 0.477895
-Write time: 0.026760
-Total time: 0.516703
+Read time: 0.030388
+Compute time: 0.400853
+Write time: 0.043608
+Total time: 0.474849
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 4 dinfdistdown -ang enogeoang.tif -fel enogeofel.tif -src enogeosrc.tif -dd enogeoddpmax.tif -m max p 
-DinfDistDown -p version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 4 dinfdistdown -ang enogeoang.tif -fel enogeofel.tif -src enogeosrc.tif -dd enogeoddpmax.tif -m max p 
+DinfDistDown -p version 5.3.3
+Input file enogeoang.tif has geographic coordinate system.
+Input file enogeofel.tif has geographic coordinate system.
+Input file enogeosrc.tif has geographic coordinate system.
 Processors: 4
-Read time: 0.014865
-Compute time: 0.441473
-Write time: 0.028646
-Total time: 0.484985
+Read time: 0.029120
+Compute time: 0.396631
+Write time: 0.070443
+Total time: 0.496193
 
-D:\Scratch\TestSuite\Geographic>rem DISTANCE UP 
+D:\Scratch\Input\Geographic>rem DISTANCE UP 
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 1 dinfdistup -ang enogeoang.tif -fel enogeofel.tif -du enogeoduhave.tif 
-DinfDistUp -h version 5.3
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 1 dinfdistup -ang enogeoang.tif -fel enogeofel.tif -du enogeoduhave.tif 
+DinfDistUp -h version 5.3.3
+Input file enogeoang.tif has geographic coordinate system.
 Processors: 1
-Read time: 0.011368
-Compute time: 0.913697
-Write time: 0.068228
-Total time: 0.993293
+Read time: 0.027319
+Compute time: 0.811754
+Write time: 0.060026
+Total time: 0.899099
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 2 dinfdistup -ang enogeoang.tif -fel enogeofel.tif -du enogeoduhmin.tif -m min h -thresh 0.5 
-DinfDistUp -h version 5.3
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 2 dinfdistup -ang enogeoang.tif -fel enogeofel.tif -du enogeoduhmin.tif -m min h -thresh 0.5 
+DinfDistUp -h version 5.3.3
+Input file enogeoang.tif has geographic coordinate system.
 Processors: 2
-Read time: 0.006213
-Compute time: 0.632876
-Write time: 0.026341
-Total time: 0.665431
+Read time: 0.015001
+Compute time: 0.473838
+Write time: 0.047279
+Total time: 0.536118
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 6 dinfdistup -ang enogeoang.tif -fel enogeofel.tif -du enogeoduvmax.tif -m max v 
-DinfDistUp -v version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 6 dinfdistup -ang enogeoang.tif -fel enogeofel.tif -du enogeoduvmax.tif -m max v 
+DinfDistUp -v version 5.3.3
+Input file enogeoang.tif has geographic coordinate system.
+Input file enogeofel.tif has geographic coordinate system.
 Processors: 6
-Read time: 0.014878
-Compute time: 0.524879
-Write time: 0.040080
-Total time: 0.579836
+Read time: 0.024005
+Compute time: 0.381933
+Write time: 0.061543
+Total time: 0.467481
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 7 dinfdistup -ang enogeoang.tif -fel enogeofel.tif -du enogeodusave.tif -m ave s -thresh 0.9 
-DinfDistUp -s version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 7 dinfdistup -ang enogeoang.tif -fel enogeofel.tif -du enogeodusave.tif -m ave s -thresh 0.9 
+DinfDistUp -s version 5.3.3
+Input file enogeoang.tif has geographic coordinate system.
+Input file enogeofel.tif has geographic coordinate system.
 Processors: 7
-Read time: 0.020779
-Compute time: 0.512497
-Write time: 0.040959
-Total time: 0.574235
+Read time: 0.025196
+Compute time: 0.359257
+Write time: 0.055714
+Total time: 0.440167
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 8 dinfdistup -ang enogeoang.tif -fel enogeofel.tif -du enogeodusmin.tif -m min s 
-DinfDistUp -s version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 8 dinfdistup -ang enogeoang.tif -fel enogeofel.tif -du enogeodusmin.tif -m min s 
+DinfDistUp -s version 5.3.3
+Input file enogeoang.tif has geographic coordinate system.
+Input file enogeofel.tif has geographic coordinate system.
 Processors: 8
-Read time: 0.014963
-Compute time: 0.477113
-Write time: 0.063744
-Total time: 0.555820
+Read time: 0.027651
+Compute time: 0.467121
+Write time: 0.072884
+Total time: 0.567656
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 1 dinfdistup -ang enogeoang.tif -fel enogeofel.tif -du enogeodusmax.tif -m max s 
-DinfDistUp -s version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 1 dinfdistup -ang enogeoang.tif -fel enogeofel.tif -du enogeodusmax.tif -m max s 
+DinfDistUp -s version 5.3.3
+Input file enogeoang.tif has geographic coordinate system.
+Input file enogeofel.tif has geographic coordinate system.
 Processors: 1
-Read time: 0.028186
-Compute time: 1.016096
-Write time: 0.021788
-Total time: 1.066070
+Read time: 0.059519
+Compute time: 0.948938
+Write time: 0.056687
+Total time: 1.065144
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 2 dinfdistup -ang enogeoang.tif -fel enogeofel.tif -du enogeodupave.tif -m ave p 
-DinfDistUp -p version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 2 dinfdistup -ang enogeoang.tif -fel enogeofel.tif -du enogeodupave.tif -m ave p 
+DinfDistUp -p version 5.3.3
+Input file enogeoang.tif has geographic coordinate system.
+Input file enogeofel.tif has geographic coordinate system.
 Processors: 2
-Read time: 0.016627
-Compute time: 0.665607
-Write time: 0.034408
-Total time: 0.716641
+Read time: 0.028983
+Compute time: 0.493720
+Write time: 0.055349
+Total time: 0.578052
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 3 dinfdistup -ang enogeoang.tif -fel enogeofel.tif -du enogeodupmin.tif -m min p 
-DinfDistUp -p version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 3 dinfdistup -ang enogeoang.tif -fel enogeofel.tif -du enogeodupmin.tif -m min p 
+DinfDistUp -p version 5.3.3
+Input file enogeoang.tif has geographic coordinate system.
+Input file enogeofel.tif has geographic coordinate system.
 Processors: 3
-Read time: 0.013053
-Compute time: 0.487494
-Write time: 0.025314
-Total time: 0.525861
+Read time: 0.026108
+Compute time: 0.427996
+Write time: 0.184304
+Total time: 0.638408
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 4 dinfdistup -ang enogeoang.tif -fel enogeofel.tif -du enogeodupmax.tif -m max p 
-DinfDistUp -p version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 4 dinfdistup -ang enogeoang.tif -fel enogeofel.tif -du enogeodupmax.tif -m max p 
+DinfDistUp -p version 5.3.3
+Input file enogeoang.tif has geographic coordinate system.
+Input file enogeofel.tif has geographic coordinate system.
 Processors: 4
-Read time: 0.011294
-Compute time: 0.455565
-Write time: 0.090334
-Total time: 0.557193
+Read time: 0.025523
+Compute time: 0.398668
+Write time: 0.061838
+Total time: 0.486029
 
-D:\Scratch\TestSuite\Geographic>rem SLOPEAVEDOWN 
+D:\Scratch\Input\Geographic>rem SLOPEAVEDOWN 
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 3 slopeavedown -p enogeop.tif -fel enogeofel.tif -slpd enogeoslpd.tif 
-SlopeAveDown version 5.3
-Input file has geographic coordinate system.
-Input file has geographic coordinate system.
+D:\Scratch\Input\Geographic>mpiexec -n 3 slopeavedown -p enogeop.tif -fel enogeofel.tif -slpd enogeoslpd.tif 
+SlopeAveDown version 5.3.3
+Input file enogeofel.tif has geographic coordinate system.
+Input file enogeop.tif has geographic coordinate system.
 Processors: 3
-Read time: 0.011161
-Compute time: 0.470709
-Write time: 0.025841
-Total time: 0.507711
+Read time: 0.019816
+Compute time: 0.449200
+Write time: 0.057523
+Total time: 0.526539
 
-D:\Scratch\TestSuite\Geographic>rem gagewatershed test 
+D:\Scratch\Input\Geographic>rem gagewatershed test 
 
-D:\Scratch\TestSuite\Geographic>mpiexec -n 7 gagewatershed -p enogeop.tif -o Outletsmoved.shp -gw enogeogw.tif -id gwid.txt 
-Gage Watershed version 5.3
-Input file has geographic coordinate system.
-Outletsmoved Size: 7
-Read time: 0.013913
-Compute time: 0.021200
-Write time: 0.016149
-Total time: 0.051261
+D:\Scratch\Input\Geographic>mpiexec -n 7 gagewatershed -p enogeop.tif -o Outletsmoved.shp -gw enogeogw.tif -id gwid.txt 
+Gage Watershed version 5.3.3
+Input file enogeop.tif has geographic coordinate system.
+Size: 7
+Read time: 0.014601
+Compute time: 0.025356
+Write time: 0.026428
+Total time: 0.066385
 
-D:\Scratch\TestSuite\Geographic>cd .. 
+D:\Scratch\Input\Geographic>cd .. 
+
+D:\Scratch\Input>cd gridtypes 
+
+D:\Scratch\Input\gridtypes>Rem  Testing different file extensions 
+
+D:\Scratch\Input\gridtypes>mpiexec -np 3 PitRemove logan.tif 
+PitRemove version 5.3.3
+Input file logan.tif has projected coordinate system.
+Processes: 3
+Header read time: 0.007079
+Data read time: 0.003346
+Compute time: 0.254945
+Write time: 0.088638
+Total time: 0.354007
+
+D:\Scratch\Input\gridtypes>mpiexec -np 3 PitRemove -z logan.tif -fel loganfelim.img 
+PitRemove version 5.3.3
+Input file logan.tif has projected coordinate system.
+Processes: 3
+Header read time: 0.008088
+Data read time: 0.003538
+Compute time: 0.236782
+Write time: 0.104076
+Total time: 0.352484
+
+D:\Scratch\Input\gridtypes>mpiexec -np 3 PitRemove -z logan.tif -fel loganfelsd.sdat 
+PitRemove version 5.3.3
+Input file logan.tif has projected coordinate system.
+Processes: 3
+Header read time: 0.008096
+Data read time: 0.003437
+Compute time: 0.254845
+Write time: 0.125131
+Total time: 0.391509
+
+D:\Scratch\Input\gridtypes>mpiexec -np 3 PitRemove -z logan.tif -fel loganfel.bil 
+PitRemove version 5.3.3
+Input file logan.tif has projected coordinate system.
+Processes: 3
+Header read time: 0.004881
+Data read time: 0.004476
+Compute time: 0.259173
+Write time: 0.156913
+Total time: 0.425443
+
+D:\Scratch\Input\gridtypes>mpiexec -np 3 PitRemove -z logan.tif -fel loganfel1.bin 
+PitRemove version 5.3.3
+Input file logan.tif has projected coordinate system.
+Processes: 3
+Header read time: 0.005964
+Data read time: 0.005057
+Compute time: 0.246187
+Write time: 0.194459
+Total time: 0.451666
+
+D:\Scratch\Input\gridtypes>mpiexec -np 3 PitRemove -z logan.tif -fel loganfel.bil 
+PitRemove version 5.3.3
+Input file logan.tif has projected coordinate system.
+Processes: 3
+Header read time: 0.008203
+Data read time: 0.004293
+Compute time: 0.244492
+Write time: 0.077309
+Total time: 0.334297
+
+D:\Scratch\Input\gridtypes>mpiexec -np 3 D8Flowdir -fel loganfel1.bin -p bilp.bil -sd8 binsd8.bin 
+D8FlowDir version 5.3.3
+Input file loganfel1.bin has projected coordinate system.
+Processors: 3
+Header read time: 0.014645
+Data read time: 0.006779
+Compute Slope time: 0.166732
+Write Slope time: 0.140034
+Resolve Flat time: 0.513012
+Write Flat time: 0.032011
+Total time: 0.873212
+
+D:\Scratch\Input\gridtypes>mpiexec -n 5 aread8 -p bilp.bil -ad8 loganad8.img 
+AreaD8 version 5.3.3
+Input file bilp.bil has projected coordinate system.
+Number of Processes: 5
+Read time: 0.025569
+Compute time: 0.208865
+Write time: 0.039599
+Total time: 0.274033
+
+D:\Scratch\Input\gridtypes>mpiexec -n 2 dinfflowdir -fel loganfel.bil -ang ang.ang -slp slp.slp 
+DinfFlowDir version 5.3.3
+Input file loganfel.bil has projected coordinate system.
+Processors: 2
+Header read time: 0.014478
+Data read time: 0.008856
+Compute Slope time: 0.586293
+Write Slope time: 0.091022
+Resolve Flat time: 0.499407
+Write Flat time: 0.093259
+Total time: 1.293315
+
+D:\Scratch\Input\gridtypes>mpiexec -np 3 PitRemove -z logan.tif -fel loganfel2.lg 
+PitRemove version 5.3.3
+Input file logan.tif has projected coordinate system.
+Processes: 3
+Header read time: 0.007274
+Data read time: 0.003336
+Compute time: 0.252813
+Write time: 0.114442
+Total time: 0.377865
+
+D:\Scratch\Input\gridtypes>mpiexec -np 3 PitRemove -z logan.tif -fel loganfel3 
+PitRemove version 5.3.3
+Input file logan.tif has projected coordinate system.
+Processes: 3
+Header read time: 0.007555
+Data read time: 0.003226
+Compute time: 0.241664
+Write time: 0.089518
+Total time: 0.341963
+
+D:\Scratch\Input\gridtypes>cd .. 
+
+D:\Scratch\Input>cd sinmapsi 
+
+D:\Scratch\Input\sinmapsi>Rem Testing SinmapSI 
+
+D:\Scratch\Input\sinmapsi>mpiexec -n 1 SinmapSI -slp dmslp.tif -sca dmsca.tif -calpar dmcalp.txt -cal dmcal.tif -si dmsi.tif -sat dmsat.tif -par 0.0009 0.00135 9.81 1000 
+SinmapSI version 5.3.3
+Input file dmslp.tif has projected coordinate system.
+Input file dmsca.tif has projected coordinate system.
+Input file dmcal.tif has projected coordinate system.
+Compute time: 0.644008
+File write time: 0.365162
+
+D:\Scratch\Input\sinmapsi>Rem Testing with Sinmap manual example 
+
+D:\Scratch\Input\sinmapsi>mpiexec -n 4 pitremove dem 
+PitRemove version 5.3.3
+Input file dem has projected coordinate system.
+Processes: 4
+Header read time: 0.002604
+Data read time: 0.000789
+Compute time: 0.017463
+Write time: 0.025994
+Total time: 0.046850
+
+D:\Scratch\Input\sinmapsi>mpiexec -n 4 dinfflowdir -fel demfel.tif -slp demslp.tif -ang demang.tif 
+DinfFlowDir version 5.3.3
+Input file demfel.tif has projected coordinate system.
+Processors: 4
+Header read time: 0.002922
+Data read time: 0.002686
+Compute Slope time: 0.026180
+Write Slope time: 0.015380
+Resolve Flat time: 0.041503
+Write Flat time: 0.018227
+Total time: 0.106897
+
+D:\Scratch\Input\sinmapsi>mpiexec -n 2 areadinf -ang demang.tif -sca demsca.tif 
+AreaDinf version 5.3.3
+Input file demang.tif has projected coordinate system.
+Processors: 2
+Read time: 0.005032
+Compute time: 0.078523
+Write time: 0.013731
+Total time: 0.097286
+
+D:\Scratch\Input\sinmapsi>mpiexec -n 3 SinmapSI -slp demslp.tif -sca demsca.tif -cal demreg12.tif -calpar dempar12.csv -si demsi1.tif -sat demsat1.tif -par 0.0009 0.00135 9.81 1000 
+SinmapSI version 5.3.3
+Input file demslp.tif has projected coordinate system.
+Input file demsca.tif has projected coordinate system.
+Input file demreg12.tif has projected coordinate system.
+Compute time: 0.022219
+File write time: 0.040753
+
+D:\Scratch\Input\sinmapsi>mpiexec -n 3 SinmapSI -slp demslp.tif -sca demsca.tif -cal demregsh.tif -calpar demparsh.dat -si demsi2.tif -sat demsat2.tif -par 0.0009 0.00135 9.81 1000 
+SinmapSI version 5.3.3
+Input file demslp.tif has projected coordinate system.
+Input file demsca.tif has projected coordinate system.
+Input file demregsh.tif has projected coordinate system.
+Compute time: 0.014318
+File write time: 0.025005
+
+D:\Scratch\Input\sinmapsi>cd .. 
+
+D:\Scratch\Input>Rem Testing of OGR starts here  
+
+D:\Scratch\Input>cd AreaD8_data 
+
+D:\Scratch\Input\AreaD8_data>mpiexec -n 7 aread8 -p loganp.tif -o Loganoutlet.shp -ad8 loganad8_1.tif 
+AreaD8 version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Number of Processes: 7
+Read time: 0.013842
+Compute time: 0.138392
+Write time: 0.032419
+Total time: 0.184654
+
+D:\Scratch\Input\AreaD8_data>test using sqlite file 
+
+D:\Scratch\Input\AreaD8_data>mpiexec -n 3 aread8 -p loganp.tif -o LoganSample.sqlite -lyrname LoganOutlet -ad8 loganad8_3.tif 
+AreaD8 version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Number of Processes: 3
+Read time: 0.014294
+Compute time: 0.129354
+Write time: 0.038530
+Total time: 0.182178
+
+D:\Scratch\Input\AreaD8_data>test using json file 
+
+D:\Scratch\Input\AreaD8_data>mpiexec -n 4 aread8 -p loganp.tif -o LoganOutlet.json -ad8 loganad8_4.tif 
+AreaD8 version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Warning: Spatial References of Outlet shapefile and Raster data are different.
+Number of Processes: 4
+Read time: 0.006139
+Compute time: 0.118006
+Write time: 0.033101
+Total time: 0.157246
+
+D:\Scratch\Input\AreaD8_data>mpiexec -n 6 aread8 -p loganp.tif -o LoganOutlet.json -lyrname OGRGeoJson -ad8 loganad8_5.tif 
+AreaD8 version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Warning: Spatial References of Outlet shapefile and Raster data are different.
+Number of Processes: 6
+Read time: 0.006753
+Compute time: 0.108848
+Write time: 0.031504
+Total time: 0.147106
+
+D:\Scratch\Input\AreaD8_data>test using geodatabase file 
+
+D:\Scratch\Input\AreaD8_data>mpiexec -n 7 aread8 -p loganp.tif -o Logan.gdb -ad8 loganad8_6.tif 
+AreaD8 version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Number of Processes: 7
+Read time: 0.022807
+Compute time: 0.143877
+Write time: 0.033493
+Total time: 0.200178
+
+D:\Scratch\Input\AreaD8_data>mpiexec -n 5 aread8 -p loganp.tif -o Logan.gdb -lyrname Outlet -ad8 loganad8_7.tif 
+AreaD8 version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Number of Processes: 5
+Read time: 0.022836
+Compute time: 0.120000
+Write time: 0.032839
+Total time: 0.175675
+
+D:\Scratch\Input\AreaD8_data>mpiexec -n 2 aread8 -p loganp.tif -o Logan.gdb -lyrno 0 -ad8 loganad8_8.tif 
+AreaD8 version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Number of Processes: 2
+Read time: 0.026478
+Compute time: 0.134250
+Write time: 0.039248
+Total time: 0.199976
+
+D:\Scratch\Input\AreaD8_data>cd ../AreaDinf 
+
+D:\Scratch\Input\AreaDinf>Rem   
+
+D:\Scratch\Input\AreaDinf>mpiexec -n 7 areadinf -ang loganang.tif -o Loganoutlet.shp -sca logansca_1.tif 
+AreaDinf version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Processors: 7
+Read time: 0.032945
+Compute time: 0.607716
+Write time: 0.071204
+Total time: 0.711865
+
+D:\Scratch\Input\AreaDinf>test using sqlite file 
+
+D:\Scratch\Input\AreaDinf>mpiexec -n 1 areadinf -ang loganang.tif -o LoganSample.sqlite -lyrno 1 -sca logansca_2.tif 
+AreaDinf version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Processors: 1
+Read time: 0.081135
+Compute time: 0.826638
+Write time: 0.167330
+Total time: 1.075103
+
+D:\Scratch\Input\AreaDinf>mpiexec -n 3 areadinf -ang loganang.tif -o LoganSample.sqlite -lyrname LoganOutlet -sca logansca_3.tif 
+AreaDinf version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Processors: 3
+Read time: 0.042552
+Compute time: 0.559102
+Write time: 0.065157
+Total time: 0.666811
+
+D:\Scratch\Input\AreaDinf>mpiexec -n 5 areadinf -ang loganang.tif -o LoganSample.sqlite -lyrno 1 -sca logansca_4.tif 
+AreaDinf version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Processors: 5
+Read time: 0.036456
+Compute time: 0.535850
+Write time: 0.070214
+Total time: 0.642520
+
+D:\Scratch\Input\AreaDinf>test using json file 
+
+D:\Scratch\Input\AreaDinf>mpiexec -n 3 areadinf -ang loganang.tif -o LoganOutlet.json -sca logansca_5.tif 
+AreaDinf version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Warning: Spatial References of Outlet shapefile and Raster data are different.
+Processors: 3
+Read time: 0.034638
+Compute time: 0.598055
+Write time: 0.064262
+Total time: 0.696955
+
+D:\Scratch\Input\AreaDinf>mpiexec -n 5 areadinf -ang loganang.tif -o LoganOutlet.json -lyrname OGRGeoJson -sca logansca_6.tif 
+AreaDinf version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Warning: Spatial References of Outlet shapefile and Raster data are different.
+Processors: 5
+Read time: 0.036685
+Compute time: 0.512547
+Write time: 0.175247
+Total time: 0.724480
+
+D:\Scratch\Input\AreaDinf>test using geodatabase file 
+
+D:\Scratch\Input\AreaDinf>mpiexec -n 5 areadinf -ang loganang.tif -o Logan.gdb -sca logansca_7.tif 
+AreaDinf version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Processors: 5
+Read time: 0.043049
+Compute time: 0.545283
+Write time: 0.071186
+Total time: 0.659517
+
+D:\Scratch\Input\AreaDinf>mpiexec -n 3 areadinf -ang loganang.tif -o Logan.gdb -lyrname Outlet -sca logansca_8.tif 
+AreaDinf version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Processors: 3
+Read time: 0.047687
+Compute time: 0.543293
+Write time: 0.065056
+Total time: 0.656036
+
+D:\Scratch\Input\AreaDinf>mpiexec -n 6 areadinf -ang loganang.tif -o Logan.gdb -lyrno 0 -sca logansca_9.tif 
+AreaDinf version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Processors: 6
+Read time: 0.044257
+Compute time: 0.511072
+Write time: 0.069629
+Total time: 0.624958
+
+D:\Scratch\Input\AreaDinf>cd ../Gridnet 
+
+D:\Scratch\Input\Gridnet>mpiexec -n 7 Gridnet -p loganp.tif -plen loganplen1.tif -tlen logantlen1.tif -gord logangord1.tif -o Loganoutlet.shp  
+GridNet version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Processors: 7
+Read time: 0.018546
+Compute time: 0.206938
+Write time: 0.179677
+Total time: 0.405161
+
+D:\Scratch\Input\Gridnet>mpiexec -n 6 Gridnet -p loganp.tif -plen loganplen3.tif -tlen logantlen3.tif -gord logangord3.tif -o LoganSample.sqlite -lyrname LoganOutlet 
+GridNet version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Processors: 6
+Read time: 0.019036
+Compute time: 0.225524
+Write time: 0.223012
+Total time: 0.467571
+
+D:\Scratch\Input\Gridnet>mpiexec -n 3 Gridnet -p loganp.tif -plen loganplen4.tif -tlen logantlen4.tif -gord logangord4.tif -o LoganSample.sqlite -lyrno 1 
+GridNet version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Processors: 3
+Read time: 0.025715
+Compute time: 0.208159
+Write time: 0.128425
+Total time: 0.362299
+
+D:\Scratch\Input\Gridnet>mpiexec -n 3 Gridnet -p loganp.tif -plen loganplen5.tif -tlen logantlen5.tif -gord logangord5.tif -o LoganOutlet.json 
+GridNet version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Warning: Spatial References of Outlet shapefile and Raster data are different.
+Processors: 3
+Read time: 0.012916
+Compute time: 0.177137
+Write time: 0.122671
+Total time: 0.312724
+
+D:\Scratch\Input\Gridnet>mpiexec -n 7 Gridnet -p loganp.tif -plen loganplen6.tif -tlen logantlen6.tif -gord logangord6.tif -o LoganOutlet.json -lyrname OGRGeoJson  
+GridNet version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Warning: Spatial References of Outlet shapefile and Raster data are different.
+Processors: 7
+Read time: 0.011646
+Compute time: 0.221309
+Write time: 0.132700
+Total time: 0.365655
+
+D:\Scratch\Input\Gridnet>mpiexec -n 1 Gridnet -p loganp.tif -plen loganplen7.tif -tlen logantlen7.tif -gord logangord7.tif -o Logan.gdb 
+GridNet version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Processors: 1
+Read time: 0.038882
+Compute time: 0.279008
+Write time: 0.130784
+Total time: 0.448674
+
+D:\Scratch\Input\Gridnet>mpiexec -n 3 Gridnet -p loganp.tif -plen loganplen8.tif -tlen logantlen8.tif -gord logangord8.tif -o Logan.gdb -lyrname Outlet 
+GridNet version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Processors: 3
+Read time: 0.026103
+Compute time: 0.171202
+Write time: 0.125696
+Total time: 0.323000
+
+D:\Scratch\Input\Gridnet>mpiexec -n 2 Gridnet -p loganp.tif -plen loganplen9.tif -tlen logantlen9.tif -gord logangord9.tif -o Logan.gdb -lyrno 0 
+GridNet version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Processors: 2
+Read time: 0.027929
+Compute time: 0.184972
+Write time: 0.161163
+Total time: 0.374063
+
+D:\Scratch\Input\Gridnet>Rem stream network peuker douglas 
+
+D:\Scratch\Input\Gridnet>cd ../peukerDouglas 
+
+D:\Scratch\Input\peukerDouglas>mpiexec -n 1 Dropanalysis -p loganp.tif -fel loganfel.tif -ad8 loganad8.tif -ssa loganssa.tif -drp logandrp1.txt -o Loganoutlet.shp -par 5 500 10 0  
+DropAnalysis version 5.3.3
+Input file loganssa.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+Threshold DrainDen NoFirstOrd NoHighOrd MeanDFirstOrd MeanDHighOrd StdDevFirstOrd StdDevHighOrd Tval
+5.000000 0.002600 2394 729 68.691093 128.646606 77.710190 132.430115 -15.176925
+8.340503 0.001958 1239 371 88.713196 147.549332 99.124298 142.494202 -8.987095
+13.912798 0.001622 824 245 100.623047 162.180084 104.181503 153.861115 -7.204886
+23.207947 0.001291 481 144 117.487785 188.351089 109.078796 165.318756 -6.003522
+38.713192 0.001047 308 99 118.610924 213.769348 107.467682 171.588242 -6.536287
+64.577499 0.000828 197 72 117.083649 215.004440 125.489609 166.168930 -5.171746
+107.721756 0.000667 112 38 160.808380 239.083878 153.113815 162.634750 -2.680493
+179.690720 0.000553 77 19 195.285370 269.439911 165.066849 156.966827 -1.770036
+299.742218 0.000437 52 14 200.697662 255.433441 136.855179 168.146484 -1.264493
+500.000183 0.000324 32 4 209.430817 289.485138 151.132065 135.973572 -1.007311
+179.690720  Value for optimum that drop analysis selected - see output file for details.
+Processes: 1
+Read time: 0.172327
+Compute time: 2.002377
+Total time: 2.174703
+
+D:\Scratch\Input\peukerDouglas>mpiexec -n 5 Dropanalysis -p loganp.tif -fel loganfel.tif -ad8 loganad8.tif -ssa loganssa.tif -drp logandrp3.txt -o LoganSample.sqlite -lyrname LoganOutlet -par 5 500 10 0  
+DropAnalysis version 5.3.3
+Input file loganssa.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+Threshold DrainDen NoFirstOrd NoHighOrd MeanDFirstOrd MeanDHighOrd StdDevFirstOrd StdDevHighOrd Tval
+5.000000 0.002600 2394 729 68.691048 128.646576 77.710228 132.430161 -15.176923
+8.340503 0.001958 1239 371 88.713203 147.549271 99.124283 142.494278 -8.987082
+13.912798 0.001622 824 245 100.623062 162.180069 104.181480 153.861160 -7.204882
+23.207947 0.001291 481 144 117.487785 188.351089 109.078819 165.318787 -6.003521
+38.713192 0.001047 308 99 118.610893 213.769379 107.467735 171.588226 -6.536290
+64.577499 0.000828 197 72 117.083679 215.004456 125.489609 166.168900 -5.171746
+107.721756 0.000667 112 38 160.808426 239.083878 153.113770 162.634735 -2.680492
+179.690720 0.000553 77 19 195.285385 269.439941 165.066849 156.966751 -1.770037
+299.742218 0.000437 52 14 200.697647 255.433456 136.855225 168.146454 -1.264493
+500.000183 0.000324 32 4 209.430817 289.485138 151.132065 135.973572 -1.007311
+179.690720  Value for optimum that drop analysis selected - see output file for details.
+Processes: 5
+Read time: 0.074219
+Compute time: 1.488065
+Total time: 1.562284
+
+D:\Scratch\Input\peukerDouglas>mpiexec -n 2 Dropanalysis -p loganp.tif -fel loganfel.tif -ad8 loganad8.tif -ssa loganssa.tif -drp logandrp4.txt -o LoganSample.sqlite -lyrno 1 -par 5 500 10 0  
+DropAnalysis version 5.3.3
+Input file loganssa.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+Threshold DrainDen NoFirstOrd NoHighOrd MeanDFirstOrd MeanDHighOrd StdDevFirstOrd StdDevHighOrd Tval
+5.000000 0.002600 2394 729 68.691010 128.646576 77.710274 132.430161 -15.176928
+8.340503 0.001958 1239 371 88.713181 147.549316 99.124306 142.494217 -8.987093
+13.912798 0.001622 824 245 100.623047 162.180084 104.181519 153.861176 -7.204884
+23.207947 0.001291 481 144 117.487740 188.351089 109.078842 165.318787 -6.003524
+38.713192 0.001047 308 99 118.610893 213.769379 107.467735 171.588226 -6.536290
+64.577499 0.000828 197 72 117.083679 215.004456 125.489609 166.168884 -5.171746
+107.721756 0.000667 112 38 160.808426 239.083878 153.113770 162.634705 -2.680492
+179.690720 0.000553 77 19 195.285400 269.439911 165.066818 156.966827 -1.770036
+299.742218 0.000437 52 14 200.697647 255.433456 136.855240 168.146454 -1.264493
+500.000183 0.000324 32 4 209.430817 289.485138 151.132065 135.973572 -1.007311
+179.690720  Value for optimum that drop analysis selected - see output file for details.
+Processes: 2
+Read time: 0.162793
+Compute time: 1.930419
+Total time: 2.093212
+
+D:\Scratch\Input\peukerDouglas>mpiexec -n 5 Dropanalysis -p loganp.tif -fel loganfel.tif -ad8 loganad8.tif -ssa loganssa.tif -drp logandrp5.txt -o LoganOutlet.json -par 5 500 10 0  
+DropAnalysis version 5.3.3
+Input file loganssa.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
+Warning: Spatial References of Outlet shapefile and Raster data are different.
+Input file loganfel.tif has projected coordinate system.
+Threshold DrainDen NoFirstOrd NoHighOrd MeanDFirstOrd MeanDHighOrd StdDevFirstOrd StdDevHighOrd Tval
+5.000000 0.002600 2394 729 68.691048 128.646576 77.710228 132.430161 -15.176923
+8.340503 0.001958 1239 371 88.713203 147.549271 99.124283 142.494278 -8.987082
+13.912798 0.001622 824 245 100.623062 162.180069 104.181480 153.861160 -7.204882
+23.207947 0.001291 481 144 117.487785 188.351089 109.078819 165.318787 -6.003521
+38.713192 0.001047 308 99 118.610893 213.769379 107.467735 171.588226 -6.536290
+64.577499 0.000828 197 72 117.083679 215.004456 125.489609 166.168900 -5.171746
+107.721756 0.000667 112 38 160.808426 239.083878 153.113770 162.634735 -2.680492
+179.690720 0.000553 77 19 195.285385 269.439941 165.066849 156.966751 -1.770037
+299.742218 0.000437 52 14 200.697647 255.433456 136.855225 168.146454 -1.264493
+500.000183 0.000324 32 4 209.430817 289.485138 151.132065 135.973572 -1.007311
+179.690720  Value for optimum that drop analysis selected - see output file for details.
+Processes: 5
+Read time: 0.083197
+Compute time: 1.438783
+Total time: 1.521979
+
+D:\Scratch\Input\peukerDouglas>mpiexec -n 4 Dropanalysis -p loganp.tif -fel loganfel.tif -ad8 loganad8.tif -ssa loganssa.tif -drp logandrp6.txt -o LoganOutlet.json -lyrname OGRGeoJson  -par 5 500 10 0  
+DropAnalysis version 5.3.3
+Input file loganssa.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
+Warning: Spatial References of Outlet shapefile and Raster data are different.
+Input file loganfel.tif has projected coordinate system.
+Threshold DrainDen NoFirstOrd NoHighOrd MeanDFirstOrd MeanDHighOrd StdDevFirstOrd StdDevHighOrd Tval
+5.000000 0.002600 2394 729 68.691040 128.646576 77.710228 132.430191 -15.176923
+8.340503 0.001958 1239 371 88.713211 147.549271 99.124260 142.494278 -8.987083
+13.912798 0.001622 824 245 100.623047 162.180069 104.181503 153.861176 -7.204883
+23.207947 0.001291 481 144 117.487762 188.351105 109.078842 165.318756 -6.003524
+38.713192 0.001047 308 99 118.610893 213.769379 107.467743 171.588211 -6.536290
+64.577499 0.000828 197 72 117.083679 215.004456 125.489594 166.168900 -5.171746
+107.721756 0.000667 112 38 160.808426 239.083878 153.113770 162.634705 -2.680492
+179.690720 0.000553 77 19 195.285385 269.439911 165.066833 156.966827 -1.770036
+299.742218 0.000437 52 14 200.697662 255.433441 136.855209 168.146484 -1.264493
+500.000183 0.000324 32 4 209.430817 289.485138 151.132065 135.973572 -1.007311
+179.690720  Value for optimum that drop analysis selected - see output file for details.
+Processes: 4
+Read time: 0.092232
+Compute time: 1.499328
+Total time: 1.591560
+
+D:\Scratch\Input\peukerDouglas>mpiexec -n 3 Dropanalysis -p loganp.tif -fel loganfel.tif -ad8 loganad8.tif -ssa loganssa.tif -drp logandrp7.txt -o Logan.gdb -par 5 500 10 0  
+DropAnalysis version 5.3.3
+Input file loganssa.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+Threshold DrainDen NoFirstOrd NoHighOrd MeanDFirstOrd MeanDHighOrd StdDevFirstOrd StdDevHighOrd Tval
+5.000000 0.002600 2394 729 68.691048 128.646606 77.710243 132.430130 -15.176930
+8.340503 0.001958 1239 371 88.713226 147.549271 99.124260 142.494293 -8.987081
+13.912798 0.001622 824 245 100.623047 162.180069 104.181526 153.861191 -7.204881
+23.207947 0.001291 481 144 117.487747 188.351105 109.078865 165.318756 -6.003524
+38.713192 0.001047 308 99 118.610886 213.769379 107.467743 171.588211 -6.536291
+64.577499 0.000828 197 72 117.083679 215.004456 125.489616 166.168900 -5.171746
+107.721756 0.000667 112 38 160.808426 239.083878 153.113770 162.634735 -2.680492
+179.690720 0.000553 77 19 195.285355 269.439911 165.066879 156.966782 -1.770036
+299.742218 0.000437 52 14 200.697647 255.433456 136.855225 168.146454 -1.264493
+500.000183 0.000324 32 4 209.430801 289.485138 151.132095 135.973572 -1.007311
+179.690720  Value for optimum that drop analysis selected - see output file for details.
+Processes: 3
+Read time: 0.104800
+Compute time: 1.756896
+Total time: 1.861696
+
+D:\Scratch\Input\peukerDouglas>mpiexec -n 5 Dropanalysis -p loganp.tif -fel loganfel.tif -ad8 loganad8.tif -ssa loganssa.tif -drp logandrp8.txt -o Logan.gdb -lyrname Outlet -par 5 500 10 0  
+DropAnalysis version 5.3.3
+Input file loganssa.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+Threshold DrainDen NoFirstOrd NoHighOrd MeanDFirstOrd MeanDHighOrd StdDevFirstOrd StdDevHighOrd Tval
+5.000000 0.002600 2394 729 68.691048 128.646576 77.710228 132.430161 -15.176923
+8.340503 0.001958 1239 371 88.713203 147.549271 99.124283 142.494278 -8.987082
+13.912798 0.001622 824 245 100.623062 162.180069 104.181480 153.861160 -7.204882
+23.207947 0.001291 481 144 117.487785 188.351089 109.078819 165.318787 -6.003521
+38.713192 0.001047 308 99 118.610893 213.769379 107.467735 171.588226 -6.536290
+64.577499 0.000828 197 72 117.083679 215.004456 125.489609 166.168900 -5.171746
+107.721756 0.000667 112 38 160.808426 239.083878 153.113770 162.634735 -2.680492
+179.690720 0.000553 77 19 195.285385 269.439941 165.066849 156.966751 -1.770037
+299.742218 0.000437 52 14 200.697647 255.433456 136.855225 168.146454 -1.264493
+500.000183 0.000324 32 4 209.430817 289.485138 151.132065 135.973572 -1.007311
+179.690720  Value for optimum that drop analysis selected - see output file for details.
+Processes: 5
+Read time: 0.132356
+Compute time: 2.658053
+Total time: 2.790408
+
+D:\Scratch\Input\peukerDouglas>mpiexec -n 6 Dropanalysis -p loganp.tif -fel loganfel.tif -ad8 loganad8.tif -ssa loganssa.tif -drp logandrp9.txt -o Logan.gdb -lyrno 0 -par 5 500 10 0  
+DropAnalysis version 5.3.3
+Input file loganssa.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+Threshold DrainDen NoFirstOrd NoHighOrd MeanDFirstOrd MeanDHighOrd StdDevFirstOrd StdDevHighOrd Tval
+5.000000 0.002600 2394 729 68.691040 128.646591 77.710251 132.430145 -15.176927
+8.340503 0.001958 1239 371 88.713211 147.549271 99.124260 142.494278 -8.987083
+13.912798 0.001622 824 245 100.623055 162.180069 104.181496 153.861176 -7.204882
+23.207947 0.001291 481 144 117.487785 188.351105 109.078819 165.318756 -6.003522
+38.713192 0.001047 308 99 118.610870 213.769379 107.467758 171.588211 -6.536291
+64.577499 0.000828 197 72 117.083679 215.004456 125.489594 166.168900 -5.171746
+107.721756 0.000667 112 38 160.808426 239.083878 153.113770 162.634750 -2.680492
+179.690720 0.000553 77 19 195.285385 269.439911 165.066833 156.966827 -1.770036
+299.742218 0.000437 52 14 200.697647 255.433456 136.855225 168.146454 -1.264493
+500.000183 0.000324 32 4 209.430801 289.485138 151.132095 135.973572 -1.007311
+179.690720  Value for optimum that drop analysis selected - see output file for details.
+Processes: 6
+Read time: 0.120209
+Compute time: 1.553184
+Total time: 1.673393
+
+D:\Scratch\Input\peukerDouglas>cd ../streamnet_data 
+
+D:\Scratch\Input\streamnet_data>mpiexec -n 5 Streamnet -fel loganfel.tif -p loganp.tif -ad8 loganad8.tif -src logansrc.tif -ord loganord3.tif -tree logantree.dat -coord logancoord.dat -net logannet1.shp -w loganw.tif -o Loganoutlet.shp 
+StreamNet version 5.3.3
+Input file logansrc.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+logannet1 Processors: 5
+Read time: 0.067351
+Length compute time: 0.020424
+Link compute time: 0.013071
+Link write time: 0.076700
+Watershed compute time: 0.077977
+Write time: 0.079037
+Total time: 0.334561
+
+D:\Scratch\Input\streamnet_data>mpiexec -n 3 Streamnet -fel loganfel.tif -p loganp.tif -ad8 loganad8.tif -src logansrc.tif -ord loganord3.tif -tree logantree.dat -coord logancoord.dat -net LoganSample.sqlite -netlyr Mynetwork.shp -w loganw.tif -o LoganSample.sqlite -lyrname LoganOutlet 
+StreamNet version 5.3.3
+Input file logansrc.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+Processors: 3
+Read time: 0.080772
+Length compute time: 0.011830
+Link compute time: 0.012464
+Link write time: 1.304873
+Watershed compute time: 0.070301
+Write time: 0.077425
+Total time: 1.557665
+
+D:\Scratch\Input\streamnet_data>mpiexec -n 7 Streamnet -fel loganfel.tif -p loganp.tif -ad8 loganad8.tif -src logansrc.tif -ord loganord3.tif -tree logantree.dat -coord logancoord.dat -net logannet3.kml -netlyr logannet3 -w loganw.tif -o Logan.gdb -lyrname Outlet 
+StreamNet version 5.3.3
+Input file logansrc.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+Processors: 7
+Read time: 0.074352
+Length compute time: 0.015532
+Link compute time: 0.057466
+Link write time: 0.159422
+Watershed compute time: 0.095088
+Write time: 0.078010
+Total time: 0.479871
+
+D:\Scratch\Input\streamnet_data>mpiexec -n 7 Streamnet -fel loganfel.tif -p loganp.tif -ad8 loganad8.tif -src logansrc.tif -ord loganord3.tif -tree logantree.dat -coord logancoord.dat -net logannet3.json -netlyr logannet3 -w loganw.tif -o Logan.gdb -lyrno 0 
+StreamNet version 5.3.3
+Input file logansrc.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+Processors: 7
+Read time: 0.081190
+Length compute time: 0.013134
+Link compute time: 0.043931
+Link write time: 0.129171
+Watershed compute time: 0.081199
+Write time: 0.076564
+Total time: 0.425190
+
+D:\Scratch\Input\streamnet_data>mpiexec -n 5 Streamnet -fel loganfel.tif -p loganp.tif -ad8 loganad8.tif -src logansrc.tif -ord loganord3.tif -tree logantree.dat -coord logancoord.dat -net logannet4.json -netlyr logannet4 -w loganw.tif -o LoganOutlet.json -lyrno 0 
+StreamNet version 5.3.3
+Input file logansrc.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
+Input file loganfel.tif has projected coordinate system.
+Warning: Spatial References of Outlet shapefile and Raster data are different.
+Processors: 5
+Read time: 0.062319
+Length compute time: 0.011440
+Link compute time: 0.012631
+Link write time: 0.116499
+Watershed compute time: 0.070640
+Write time: 0.076603
+Total time: 0.350132
+
+D:\Scratch\Input\streamnet_data>Rem stream network slope area 
+
+D:\Scratch\Input\streamnet_data>cd ../D8flowextreme 
+
+D:\Scratch\Input\D8flowextreme>mpiexec -n 3 D8FlowpathExtremeUp -p loganp.tif -sa logansa.tif -ssa loganssa1.tif -o Loganoutlet.shp 
+D8FlowPathExtremeUp version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Input file logansa.tif has projected coordinate system.
+Processors: 3
+Read time: 0.044946
+Compute time: 0.132599
+Write time: 0.109351
+Total time: 0.286896
+
+D:\Scratch\Input\D8flowextreme>mpiexec -n 5 D8FlowpathExtremeUp -p loganp.tif -sa logansa.tif -ssa loganssa2.tif -o LoganSample.sqlite -lyrname Loganoutlet 
+D8FlowPathExtremeUp version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Input file logansa.tif has projected coordinate system.
+Processors: 5
+Read time: 0.042955
+Compute time: 0.129877
+Write time: 0.069604
+Total time: 0.242436
+
+D:\Scratch\Input\D8flowextreme>mpiexec -n 7 D8FlowpathExtremeUp -p loganp.tif -sa logansa.tif -ssa loganssa3.tif -o LoganSample.sqlite -lyrno 1 
+D8FlowPathExtremeUp version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Input file logansa.tif has projected coordinate system.
+Processors: 7
+Read time: 0.039186
+Compute time: 0.166471
+Write time: 0.079251
+Total time: 0.284907
+
+D:\Scratch\Input\D8flowextreme>mpiexec -n 1 D8FlowpathExtremeUp -p loganp.tif -sa logansa.tif -ssa loganssa4.tif -o Logan.gdb  
+D8FlowPathExtremeUp version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Input file logansa.tif has projected coordinate system.
+Processors: 1
+Read time: 0.106947
+Compute time: 0.210949
+Write time: 0.063223
+Total time: 0.381118
+
+D:\Scratch\Input\D8flowextreme>mpiexec -n 8 D8FlowpathExtremeUp -p loganp.tif -sa logansa.tif -ssa loganssa5.tif -o Logan.gdb -lyrno 0 
+D8FlowPathExtremeUp version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Input file logansa.tif has projected coordinate system.
+Processors: 8
+Read time: 0.050099
+Compute time: 0.150209
+Write time: 0.083848
+Total time: 0.284156
+
+D:\Scratch\Input\D8flowextreme>Rem downslope influence 
+
+D:\Scratch\Input\D8flowextreme>cd ../DinfConcLimAccum 
+
+D:\Scratch\Input\DinfConcLimAccum>mpiexec -n 1 dinfConcLimAccum -ang loganang.tif -dm logandm08.tif -dg logandg.tif -ctpt loganctpto1.img -q logansca.tif -o Loganoutlet.shp -csol 2.4 
+DinfConcLimAccum version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file logandm08.tif has projected coordinate system.
+Input file logandg.tif has projected coordinate system.
+Input file logansca.tif has projected coordinate system.
+Processors: 1
+Read time: 0.180101
+Compute time: 0.884188
+Write time: 0.110805
+Total time: 1.175094
+
+D:\Scratch\Input\DinfConcLimAccum>mpiexec -n 5 dinfConcLimAccum -ang loganang.tif -dm logandm08.tif -dg logandg.tif -ctpt loganctpto2.tif -q logansca.tif -o LoganSample.sqlite -lyrname Loganoutlet -csol 2.4 
+DinfConcLimAccum version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file logandm08.tif has projected coordinate system.
+Input file logandg.tif has projected coordinate system.
+Input file logansca.tif has projected coordinate system.
+Processors: 5
+Read time: 0.075076
+Compute time: 0.552560
+Write time: 0.050090
+Total time: 0.677727
+
+D:\Scratch\Input\DinfConcLimAccum>mpiexec -n 7 dinfConcLimAccum -ang loganang.tif -dm logandm08.tif -dg logandg.tif -ctpt loganctpto4.tif -q logansca.tif -o Logan.gdb -csol 2.4 
+DinfConcLimAccum version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file logandm08.tif has projected coordinate system.
+Input file logandg.tif has projected coordinate system.
+Input file logansca.tif has projected coordinate system.
+Processors: 7
+Read time: 0.074314
+Compute time: 0.612671
+Write time: 0.055044
+Total time: 0.742030
+
+D:\Scratch\Input\DinfConcLimAccum>mpiexec -n 8 dinfConcLimAccum -ang loganang.tif -dm logandm08.tif -dg logandg.tif -ctpt loganctpto5.tif -q logansca.tif -o Logan.gdb -lyrno 0 -csol 2.4 
+DinfConcLimAccum version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file logandm08.tif has projected coordinate system.
+Input file logandg.tif has projected coordinate system.
+Input file logansca.tif has projected coordinate system.
+Processors: 8
+Read time: 0.073601
+Compute time: 0.562922
+Write time: 0.062954
+Total time: 0.699477
+
+D:\Scratch\Input\DinfConcLimAccum>Rem Trans lim accum 
+
+D:\Scratch\Input\DinfConcLimAccum>cd ../DinfTransLimAcc 
+
+D:\Scratch\Input\DinfTransLimAcc>mpiexec -n 2 dinfTransLimAccum -ang loganang.tif -tsup logantsup.tif -tc logantc.tif -tla logantla1.img -tdep logantdep1.tif -o Loganoutlet.shp -cs logandg.tif -ctpt loganctpt1.tif  
+DinfTransLimAccum version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file logantsup.tif has projected coordinate system.
+Input file logantc.tif has projected coordinate system.
+Input file logandg.tif has projected coordinate system.
+Processors: 2
+Read time: 0.067322
+Compute time: 0.649970
+Write time: 0.201919
+Total time: 0.919211
+
+D:\Scratch\Input\DinfTransLimAcc>mpiexec -n 6 dinfTransLimAccum -ang loganang.tif -tsup logantsup.tif -tc logantc.tif -tla logantla2.tif -tdep logantdep2.tif -o LoganSample.sqlite -lyrname Loganoutlet  -cs logandg.tif -ctpt loganctpt2.tif  
+DinfTransLimAccum version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file logantsup.tif has projected coordinate system.
+Input file logantc.tif has projected coordinate system.
+Input file logandg.tif has projected coordinate system.
+Processors: 6
+Read time: 0.036910
+Compute time: 0.593413
+Write time: 0.139203
+Total time: 0.769526
+
+D:\Scratch\Input\DinfTransLimAcc>mpiexec -n 5 dinfTransLimAccum -ang loganang.tif -tsup logantsup.tif -tc logantc.tif -tla logantla4.tif -tdep logantdep4.tif -o Logan.gdb  -cs logandg.tif -ctpt loganctpt4.tif  
+DinfTransLimAccum version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Input file logantsup.tif has projected coordinate system.
+Input file logantc.tif has projected coordinate system.
+Input file logandg.tif has projected coordinate system.
+Processors: 5
+Read time: 0.041541
+Compute time: 0.556233
+Write time: 0.150340
+Total time: 0.748114
+
+D:\Scratch\Input\DinfTransLimAcc>mpiexec -n 7 dinfTransLimAccum -ang loganang.tif -tsup logantsup.tif -tc logantc.tif -tla logantla5.tif -tdep logantdep5.tif -o Loganoutlet.json -cs logandg.tif -ctpt loganctpt5.tif  
+DinfTransLimAccum version 5.3.3
+Input file loganang.tif has projected coordinate system.
+Warning: Spatial References of Outlet shapefile and Raster data are different.
+Input file logantsup.tif has projected coordinate system.
+Input file logantc.tif has projected coordinate system.
+Input file logandg.tif has projected coordinate system.
+Processors: 7
+Read time: 0.040000
+Compute time: 0.639531
+Write time: 0.145169
+Total time: 0.824700
+
+D:\Scratch\Input\DinfTransLimAcc>rem MOVEOUTLETS 
+
+D:\Scratch\Input\DinfTransLimAcc>cd ../MovedOutletstoStream_data 
+
+D:\Scratch\Input\MovedOutletstoStream_data>mpiexec -np 1 MoveOutletstoStreams -p loganp.tif -src logansrc.tif -o OutletstoMove.shp -om Outletsmoved.shp -md 20  
+MoveOutletsToStreams version 5.3.3
+Input file logansrc.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Outletsmoved Total time: 0.108132
+
+D:\Scratch\Input\MovedOutletstoStream_data>mpiexec -np 3 MoveOutletstoStreams -p loganp.tif -src logansrc.tif -o OutletstoMove.json -om Outletsmoved.kml -md 20  
+MoveOutletsToStreams version 5.3.3
+Input file logansrc.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Outletsmoved Total time: 0.015550
+
+D:\Scratch\Input\MovedOutletstoStream_data>mpiexec -np 4 MoveOutletstoStreams -p loganp.tif -src logansrc.tif -o LoganSample.sqlite -lyrno 2 -om Outletsmoved5.kml -md 20  
+MoveOutletsToStreams version 5.3.3
+Input file logansrc.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Outletsmoved5 Total time: 0.021929
+
+D:\Scratch\Input\MovedOutletstoStream_data>mpiexec -np 7 MoveOutletstoStreams -p loganp.tif -src logansrc.tif -o Logan.gdb -lyrno 0 -om Outletsmove.json -md 20  
+MoveOutletsToStreams version 5.3.3
+Input file logansrc.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Outletsmove Total time: 0.069040
+
+D:\Scratch\Input\MovedOutletstoStream_data>rem gagewatershed test 
+
+D:\Scratch\Input\MovedOutletstoStream_data>cd ../GageWatershed 
+
+D:\Scratch\Input\GageWatershed>mpiexec -n 1 gagewatershed -p loganp.tif -o LoganOutlet.shp -gw logangw1.tif -id gwid1.txt 
+Gage Watershed version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Size: 1
+Read time: 0.018562
+Compute time: 0.078481
+Write time: 0.041146
+Total time: 0.138190
+
+D:\Scratch\Input\GageWatershed>mpiexec -n 3 gagewatershed -p loganp.tif -o Logan.gdb -gw logangw3.tif -id gwid3.txt 
+Gage Watershed version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Size: 3
+Read time: 0.027990
+Compute time: 0.086111
+Write time: 0.040456
+Total time: 0.154557
+
+D:\Scratch\Input\GageWatershed>mpiexec -n 5 gagewatershed -p loganp.tif -o Logan.gdb -lyrno 0 -gw logangw3.tif -id gwid3.txt 
+Gage Watershed version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Size: 5
+Read time: 0.026287
+Compute time: 0.082501
+Write time: 0.034315
+Total time: 0.143102
+
+D:\Scratch\Input\GageWatershed>mpiexec -n 7 gagewatershed -p loganp.tif -o loganoutlet.json -gw logangw4.tif -id gwid4.txt 
+Gage Watershed version 5.3.3
+Input file loganp.tif has projected coordinate system.
+Warning: Spatial References of Outlet shapefile and Raster data are different.
+Size: 7
+Read time: 0.012639
+Compute time: 0.106528
+Write time: 0.038901
+Total time: 0.158068
+
+D:\Scratch\Input\GageWatershed>rem Connect down 
+
+D:\Scratch\Input\GageWatershed>cd ../ConnectDown 
+
+D:\Scratch\Input\ConnectDown>mpiexec -n 1 ConnectDown -p loganp.tif -ad8 loganad8.tif -w logangw.tif -o loganOutlets1.shp -od loganOutlets_Moved1.shp -d 1 
+ConnectDown version 5.3.3
+Input file logangw.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
+loganOutlets1 loganOutlets_Moved1 Total time: 0.184613
+
+D:\Scratch\Input\ConnectDown>mpiexec -n 3 ConnectDown -p loganp.tif -ad8 loganad8.tif -w logangw.tif -o loganOutlets2.shp -olyr loganOutlets2  -od loganOutlets_Moved2.shp -odlyr loganOutlets2 -d 1 
+ConnectDown version 5.3.3
+Input file logangw.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
+Total time: 0.104369
+
+D:\Scratch\Input\ConnectDown>mpiexec -n 5 ConnectDown -p loganp.tif -ad8 loganad8.tif -w logangw.tif -o loganSample.sqlite -olyr myoutlet1  -od loganSample.sqlite -odlyr myoutlet2 -d 1 
+ConnectDown version 5.3.3
+Input file logangw.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
+Total time: 0.114125
+
+D:\Scratch\Input\ConnectDown>mpiexec -n 7 ConnectDown -p loganp.tif -ad8 loganad8.tif -w logangw.tif -o loganOutlets2.kml -od loganOutlets_Moved2.kml -d 1 
+ConnectDown version 5.3.3
+Input file logangw.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
+loganOutlets2 loganOutlets_Moved2 Total time: 0.071896
+
+D:\Scratch\Input\ConnectDown>mpiexec -n 1 ConnectDown -p loganp.tif -ad8 loganad8.tif -w logangw.tif -o loganOutlets3.kml -olyr loganOutlets3 -od loganOutlets_Moved3.kml -odlyr loganOutlets_Moved3 -d 1 
+ConnectDown version 5.3.3
+Input file logangw.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
+Total time: 0.183581
+
+D:\Scratch\Input\ConnectDown>mpiexec -n 3 ConnectDown -p loganp.tif -ad8 loganad8.tif -w logangw.tif -o loganOutlets4.json -od loganOutlets_Moved2.json -d 1 
+ConnectDown version 5.3.3
+Input file logangw.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
+loganOutlets4 loganOutlets_Moved2 Total time: 0.078931
+
+D:\Scratch\Input\ConnectDown>mpiexec -n 8 ConnectDown -p loganp.tif -ad8 loganad8.tif -w logangw.tif -o loganOutlets3.kml -olyr loganOutlets3 -od loganOutlets_Moved3.kml -odlyr loganOutlets_Moved3 -d 1 
+ConnectDown version 5.3.3
+Input file logangw.tif has projected coordinate system.
+Input file loganp.tif has projected coordinate system.
+Input file loganad8.tif has projected coordinate system.
+Total time: 0.061295
+
+D:\Scratch\Input\ConnectDown>cd .. 

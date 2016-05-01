@@ -1,0 +1,3 @@
+<?xml version="1.0"?>
+<!--<!DOCTYPE metadata SYSTEM "http://www.esri.com/metadata/esriprof80.dtd">-->
+<metadata xml:lang="en"><Esri><MetaID>{C4424DCA-CFF0-4CED-A5E4-D7B8C3E78ADA}</MetaID><CreaDate>20160205</CreaDate><CreaTime>11403600</CreaTime><SyncOnce>TRUE</SyncOnce><DataProperties><lineage><Process Name="ASCIIToRaster_1" ToolSource="C:\Program Files\ArcGIS\ArcToolbox\Toolboxes\Conversion Tools.tbx\ASCIIToRaster" Date="20160205" Time="114036">ASCIIToRaster C:\SinmapExample\sample.asc C:\SinmapExample\dem FLOAT</Process></lineage></DataProperties></Esri></metadata>

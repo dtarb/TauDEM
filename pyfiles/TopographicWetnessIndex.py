@@ -1,10 +1,10 @@
 # Script Name: SlopeOverAreaRatio
-# 
+#
 # Created By:  David Tarboton
 # Date:        9/22/11
 
 # Import ArcPy site-package and os modules
-import arcpy 
+import arcpy
 import os
 import subprocess
 
@@ -19,17 +19,17 @@ inlyr2 = arcpy.GetParameterAsText(1)
 desc = arcpy.Describe(inlyr2)
 slp=str(desc.catalogPath)
 #arcpy.AddMessage("\nInput Secific Catchment Area Grid: "+sca)
-arcpy.AddMessage("\nInput Slope Grid: "+slp)
+arcpy.AddMessage("Input Slope Grid: "+slp)
 
 # Input Number of Processes
 inputProc=arcpy.GetParameterAsText(2)
-arcpy.AddMessage("\nInput Number of Processes: "+inputProc)
+arcpy.AddMessage("Number of Processes: "+inputProc)
 
 # Outputs
 twi = arcpy.GetParameterAsText(3)
-arcpy.AddMessage("\nOutput Topographic Wetness Index Grid: "+twi)
+arcpy.AddMessage("Output Topographic Wetness Index Grid: "+twi)
 
-# Construct command 
+# Construct command
 cmd = 'mpiexec -n ' + inputProc + ' TWI -sca ' + '"' + sca + '"' + ' -slp ' + '"' + slp + '"' + ' -twi ' + '"' + twi + '"'
 arcpy.AddMessage("\nCommand Line: "+cmd)
 
@@ -38,10 +38,12 @@ os.system(cmd)
 
 # Capture the contents of shell command and print it to the arcgis dialog box
 process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-arcpy.AddMessage('\nProcess started:\n')
+#arcpy.AddMessage('\nProcess started:\n')
+message="\n"
 for line in process.stdout.readlines():
-    arcpy.AddMessage(line)
+    message=message+line
+arcpy.AddMessage(message)
 
 # Calculate statistics on the output so that it displays properly
-arcpy.AddMessage('Executing: Calculate Statistics\n')
+arcpy.AddMessage('Calculate Statistics\n')
 arcpy.CalculateStatistics_management(twi)
