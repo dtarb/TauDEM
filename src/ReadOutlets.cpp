@@ -38,15 +38,12 @@ email:  dtarb@usu.edu
 
 //  This software is distributed from http://hydrology.usu.edu/taudem/
 
-// 1/25/14.  Modified to use shapelib by Chris George
+// 5/2/16.  Modified to use OGR by Nazmus Sazib
 
 #include <stdio.h>
 #include <string.h>
 #include "commonLib.h"
 #include "ogr_api.h"
-
-
-
 
 int readoutlets(char *outletsds,char *lyrname, int uselayername,int outletslyr,OGRSpatialReferenceH hSRSRaster,int *noutlets, double*& x, double*& y,int*& id)
 
@@ -60,10 +57,10 @@ int readoutlets(char *outletsds,char *lyrname, int uselayername,int outletslyr,O
 	OGRFeatureH     hFeature1;
 	OGRGeometryH    geometry, line;
 	OGRSpatialReferenceH hRSOutlet;
-	// regiser all ogr driver related to OGR
+	// register all ogr driver related to OGR
 	OGRRegisterAll(); 
-	// open data soruce
 
+	// open data source
 	hDS1 = OGROpen(outletsds, FALSE, NULL );
 	if( hDS1 == NULL )
 	{
@@ -79,13 +76,17 @@ int readoutlets(char *outletsds,char *lyrname, int uselayername,int outletslyr,O
 	if(hLayer1 == NULL)getlayerfail(hDS1,outletsds,outletslyr);
 	OGRwkbGeometryType gtype;
 	gtype=OGR_L_GetGeomType(hLayer1);
+
+	// Test that the type is a point
 	if(gtype != wkbPoint)getlayerfail(hDS1,outletsds,outletslyr);
-    //OGR_L_ResetReading(hLayer1);
+
 	const char* RasterProjectionName;
 	const char* sprs;
 	const char* sprso;
 	const char* OutletProjectionName;
 	int pj_raster,pj_outlet;
+
+	// Spatial reference of outlet
 	hRSOutlet = OGR_L_GetSpatialRef(hLayer1);
 	if(hSRSRaster!=NULL){
 	  pj_raster=OSRIsProjected(hSRSRaster); // find if projected or not
@@ -105,30 +106,30 @@ int readoutlets(char *outletsds,char *lyrname, int uselayername,int outletslyr,O
 			  
 			 int rc= strcmp(RasterProjectionName,OutletProjectionName); // compare string
 			 if(rc!=0){
-				printf( "Warning: Projection of Outlet shapefile and Raster data may be different.\n" );
+				printf( "Warning: Projection of Outlet feature and Raster data may be different.\n" );
 				printf("Projection of Raster datasource %s.\n",RasterProjectionName);
                 printf("Projection of Outlet feature %s.\n",OutletProjectionName);
 			}
 		}
     
 		else {
-			  printf( "Warning: Spatial References of Outlet shapefile and Raster data are different.\n" );
+			  printf( "Warning: Spatial References of Outlet feature and Raster data are different.\n" );
 			  printf("Projection of Raster datasource %s.\n",RasterProjectionName);
               printf("Projection of Outlet feature %s.\n",OutletProjectionName);
 		}
 	}
 	
 	else if(hSRSRaster==NULL && hRSOutlet!=NULL) {
-		      printf( "Warning: Spatial References of Raster is missing.\n" );
+		      printf( "Warning: Spatial Reference of Raster is missing.\n" );
               printf("Projection of Outlet feature %s.\n",OutletProjectionName);
 
 	}
 	else if(hSRSRaster!=NULL && hRSOutlet==NULL) {
-	          printf( "Warning: Spatial References of Outlet shapefile is missing.\n" );
+	          printf( "Warning: Spatial Reference of Outlet feature is missing.\n" );
 			  printf("Projection of Raster datasource %s.\n",RasterProjectionName);
 	}
 	else {
-	          printf( "Warning: Spatial References of Outlet shapefile and Raster data are missing.\n" );
+	          printf( "Warning: Spatial References of Outlet feature and Raster data are missing.\n" );
 	}
 
 
