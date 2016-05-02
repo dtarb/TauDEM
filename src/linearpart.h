@@ -46,7 +46,8 @@ email:  dtarb@usu.edu
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
-#include <stdint.h>
+#include <cstdint>
+#include <cinttypes>
 #include <cstring>
 #include <cmath>
 #include <exception>
