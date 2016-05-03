@@ -24,7 +24,7 @@
 ; TauDEMArcGIS/
 
 #define MyAppName "TauDEM"
-#define MyAppVersion "5.3.4"
+#define MyAppVersion "5.3.5"
 #define MyAppPublisher "Utah State University"
 #define MyAppURL "http://hydrology.usu.edu/taudem/taudem5/index.html"
 
@@ -136,14 +136,14 @@ begin
   begin
     UserPage := CreateInputQueryPage(wpWelcome,
       'The following programs will be installed', '',
-      'TauDEM version 5.3.4, GDAL 1.9.2 (Python 2.7), GDAL 111 (MSVC 2010) for 64 bit Winodws PC, Microsoft Visual C++ 2010 SP1 Redistributable Package (x86), ' +
+      'TauDEM version 5.3.5, GDAL 1.9.2 (Python 2.7), GDAL 111 (MSVC 2010) for 64 bit Winodws PC, Microsoft Visual C++ 2010 SP1 Redistributable Package (x86), ' +
       'Microsoft Visual C++ 2010 SP1 Redistributable Package (x64), Microsoft HPC Pack 2012 MS-MPI Redistributable Package'#13#13 +  notes_string);   
   end
   else
     begin
       UserPage := CreateInputQueryPage(wpWelcome,
       'The following programs will be installed', '',
-      'TauDEM version 5.3.4, GDAL 1.9.2 (Python 2.7), GDAL 111 (MSVC 2010) for 32 bit Windows PC, Microsoft Visual C++ 2010 SP1 Redistributable Package (x86), ' + 
+      'TauDEM version 5.3.5, GDAL 1.9.2 (Python 2.7), GDAL 111 (MSVC 2010) for 32 bit Windows PC, Microsoft Visual C++ 2010 SP1 Redistributable Package (x86), ' + 
       'Microsoft HPC Pack 2012 MS-MPI Redistributable Package'#13#13 +  notes_string);
     end
 end;
