@@ -224,7 +224,6 @@ int d8flowpathextremeup(char *pfile, char*safile, char *ssafile, int usemax, cha
             bool isBottomLeftAdded = false;
             bool isBottomRightAdded = false;
 
-            //If this created a cell with no contributing neighbors, put it on the queue
             for (i = 0; i < nx; i++) {
                 if (neighbor->getData(i, -1, tempShort) != 0 && neighbor->getData(i, 0, tempShort) == 0) {
                     temp.x = i;

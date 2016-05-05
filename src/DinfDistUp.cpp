@@ -599,18 +599,97 @@ int vrisetoridgegrd(char *angfile, char *felfile, char *rtrfile, int statmethod,
             dts->share();
             neighbor->addBorders();
 
-            //If this created a cell with no contributing neighbors, put it on the queue
+            //If this created a cell with no contributing neighbors, put it on the queue            
+            bool isTopLeftAdded = false;
+            bool isTopRightAdded = false;
+            bool isBottomLeftAdded = false;
+            bool isBottomRightAdded = false;
+
             for (i = 0; i < nx; i++) {
                 if (neighbor->getData(i, -1, tempShort) != 0 && neighbor->getData(i, 0, tempShort) == 0) {
                     temp.x = i;
                     temp.y = 0;
-                    que.push(temp);
+                    if (i == 0 && !isTopLeftAdded) {
+                        que.push(temp);
+                        isTopLeftAdded = true;
+                    } else if (i == nx - 1 && !isTopRightAdded) {
+                        que.push(temp);
+                        isTopRightAdded = true;
+                    } else if (i != 0 && i != nx - 1) {
+                        que.push(temp);
+                    }
+
                 }
                 if (neighbor->getData(i, ny, tempShort) != 0 && neighbor->getData(i, ny - 1, tempShort) == 0) {
                     temp.x = i;
                     temp.y = ny - 1;
-                    que.push(temp);
+                    if (i == 0 && !isBottomLeftAdded) {
+                        que.push(temp);
+                        isBottomLeftAdded = true;
+                    } else if (i == nx - 1 && !isBottomRightAdded) {
+                        que.push(temp);
+                        isBottomRightAdded = true;
+                    } else if (i != 0 && i != nx - 1) {
+                        que.push(temp);
+                    }
                 }
+            }
+
+            for (i = 0; i < ny; i++) {
+                if (neighbor->getData(-1, i, tempShort) != 0 && neighbor->getData(0, i, tempShort) == 0) {
+                    temp.x = 0;
+                    temp.y = i;
+                    if (i == 0 && !isTopLeftAdded) {
+                        que.push(temp);
+                        isTopLeftAdded = true;
+                    } else if (i == ny - 1 && !isBottomLeftAdded) {
+                        que.push(temp);
+                        isBottomLeftAdded = true;
+                    } else if (i != 0 && i != ny - 1) {
+                        que.push(temp);
+                    }
+                }
+                if (neighbor->getData(nx, i, tempShort) != 0 && neighbor->getData(nx - 1, i, tempShort) == 0) {
+                    temp.x = nx - 1;
+                    temp.y = i;
+                    if (i == 0 && !isTopRightAdded) {
+                        que.push(temp);
+                        isTopRightAdded = true;
+                    } else if (i == ny - 1 && !isBottomRightAdded) {
+                        que.push(temp);
+                        isBottomRightAdded = true;
+                    } else if (i != 0 && i != ny - 1) {
+                        que.push(temp);
+                    }
+                }
+            }
+
+            if (neighbor->getData(-1, -1, tempShort) != 0 && neighbor->getData(0, 0, tempShort) == 0 && !isTopLeftAdded) {
+                temp.x = 0;
+                temp.y = 0;
+                que.push(temp);
+                isTopLeftAdded = true;
+            }
+
+            if (neighbor->getData(nx, -1, tempShort) != 0 && neighbor->getData(nx - 1, 0, tempShort) == 0 && !isTopRightAdded) {
+                temp.x = nx - 1;
+                temp.y = 0;
+                que.push(temp);
+                isTopRightAdded = true;
+            }
+
+            if (neighbor->getData(-1, ny, tempShort) != 0 && neighbor->getData(0, ny - 1, tempShort) == 0 && !isBottomLeftAdded) {
+                temp.x = 0;
+                temp.y = ny - 1;
+                que.push(temp);
+                isBottomLeftAdded = true;
+            }
+
+            if (neighbor->getData(nx, ny, tempShort) != 0 && neighbor->getData(nx - 1, ny - 1, tempShort) == 0 && !isBottomRightAdded) {
+                temp.x = nx - 1;
+                temp.y = ny - 1;
+                que.push(temp);
+                isBottomRightAdded = true;
             }
 
             neighbor->clearBorders();
@@ -891,17 +970,96 @@ int pdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
             neighbor->addBorders();
 
             //If this created a cell with no contributing neighbors, put it on the queue
+            bool isTopLeftAdded = false;
+            bool isTopRightAdded = false;
+            bool isBottomLeftAdded = false;
+            bool isBottomRightAdded = false;
+
             for (i = 0; i < nx; i++) {
                 if (neighbor->getData(i, -1, tempShort) != 0 && neighbor->getData(i, 0, tempShort) == 0) {
                     temp.x = i;
                     temp.y = 0;
-                    que.push(temp);
+                    if (i == 0 && !isTopLeftAdded) {
+                        que.push(temp);
+                        isTopLeftAdded = true;
+                    } else if (i == nx - 1 && !isTopRightAdded) {
+                        que.push(temp);
+                        isTopRightAdded = true;
+                    } else if (i != 0 && i != nx - 1) {
+                        que.push(temp);
+                    }
+
                 }
                 if (neighbor->getData(i, ny, tempShort) != 0 && neighbor->getData(i, ny - 1, tempShort) == 0) {
                     temp.x = i;
                     temp.y = ny - 1;
-                    que.push(temp);
+                    if (i == 0 && !isBottomLeftAdded) {
+                        que.push(temp);
+                        isBottomLeftAdded = true;
+                    } else if (i == nx - 1 && !isBottomRightAdded) {
+                        que.push(temp);
+                        isBottomRightAdded = true;
+                    } else if (i != 0 && i != nx - 1) {
+                        que.push(temp);
+                    }
                 }
+            }
+
+            for (i = 0; i < ny; i++) {
+                if (neighbor->getData(-1, i, tempShort) != 0 && neighbor->getData(0, i, tempShort) == 0) {
+                    temp.x = 0;
+                    temp.y = i;
+                    if (i == 0 && !isTopLeftAdded) {
+                        que.push(temp);
+                        isTopLeftAdded = true;
+                    } else if (i == ny - 1 && !isBottomLeftAdded) {
+                        que.push(temp);
+                        isBottomLeftAdded = true;
+                    } else if (i != 0 && i != ny - 1) {
+                        que.push(temp);
+                    }
+                }
+                if (neighbor->getData(nx, i, tempShort) != 0 && neighbor->getData(nx - 1, i, tempShort) == 0) {
+                    temp.x = nx - 1;
+                    temp.y = i;
+                    if (i == 0 && !isTopRightAdded) {
+                        que.push(temp);
+                        isTopRightAdded = true;
+                    } else if (i == ny - 1 && !isBottomRightAdded) {
+                        que.push(temp);
+                        isBottomRightAdded = true;
+                    } else if (i != 0 && i != ny - 1) {
+                        que.push(temp);
+                    }
+                }
+            }
+
+            if (neighbor->getData(-1, -1, tempShort) != 0 && neighbor->getData(0, 0, tempShort) == 0 && !isTopLeftAdded) {
+                temp.x = 0;
+                temp.y = 0;
+                que.push(temp);
+                isTopLeftAdded = true;
+            }
+
+            if (neighbor->getData(nx, -1, tempShort) != 0 && neighbor->getData(nx - 1, 0, tempShort) == 0 && !isTopRightAdded) {
+                temp.x = nx - 1;
+                temp.y = 0;
+                que.push(temp);
+                isTopRightAdded = true;
+            }
+
+            if (neighbor->getData(-1, ny, tempShort) != 0 && neighbor->getData(0, ny - 1, tempShort) == 0 && !isBottomLeftAdded) {
+                temp.x = 0;
+                temp.y = ny - 1;
+                que.push(temp);
+                isBottomLeftAdded = true;
+            }
+
+            if (neighbor->getData(nx, ny, tempShort) != 0 && neighbor->getData(nx - 1, ny - 1, tempShort) == 0 && !isBottomRightAdded) {
+                temp.x = nx - 1;
+                temp.y = ny - 1;
+                que.push(temp);
+                isBottomRightAdded = true;
             }
 
             neighbor->clearBorders();
@@ -1181,17 +1339,96 @@ int sdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
             neighbor->addBorders();
 
             //If this created a cell with no contributing neighbors, put it on the queue
+            bool isTopLeftAdded = false;
+            bool isTopRightAdded = false;
+            bool isBottomLeftAdded = false;
+            bool isBottomRightAdded = false;
+
             for (i = 0; i < nx; i++) {
                 if (neighbor->getData(i, -1, tempShort) != 0 && neighbor->getData(i, 0, tempShort) == 0) {
                     temp.x = i;
                     temp.y = 0;
-                    que.push(temp);
+                    if (i == 0 && !isTopLeftAdded) {
+                        que.push(temp);
+                        isTopLeftAdded = true;
+                    } else if (i == nx - 1 && !isTopRightAdded) {
+                        que.push(temp);
+                        isTopRightAdded = true;
+                    } else if (i != 0 && i != nx - 1) {
+                        que.push(temp);
+                    }
+
                 }
                 if (neighbor->getData(i, ny, tempShort) != 0 && neighbor->getData(i, ny - 1, tempShort) == 0) {
                     temp.x = i;
                     temp.y = ny - 1;
-                    que.push(temp);
+                    if (i == 0 && !isBottomLeftAdded) {
+                        que.push(temp);
+                        isBottomLeftAdded = true;
+                    } else if (i == nx - 1 && !isBottomRightAdded) {
+                        que.push(temp);
+                        isBottomRightAdded = true;
+                    } else if (i != 0 && i != nx - 1) {
+                        que.push(temp);
+                    }
                 }
+            }
+
+            for (i = 0; i < ny; i++) {
+                if (neighbor->getData(-1, i, tempShort) != 0 && neighbor->getData(0, i, tempShort) == 0) {
+                    temp.x = 0;
+                    temp.y = i;
+                    if (i == 0 && !isTopLeftAdded) {
+                        que.push(temp);
+                        isTopLeftAdded = true;
+                    } else if (i == ny - 1 && !isBottomLeftAdded) {
+                        que.push(temp);
+                        isBottomLeftAdded = true;
+                    } else if (i != 0 && i != ny - 1) {
+                        que.push(temp);
+                    }
+                }
+                if (neighbor->getData(nx, i, tempShort) != 0 && neighbor->getData(nx - 1, i, tempShort) == 0) {
+                    temp.x = nx - 1;
+                    temp.y = i;
+                    if (i == 0 && !isTopRightAdded) {
+                        que.push(temp);
+                        isTopRightAdded = true;
+                    } else if (i == ny - 1 && !isBottomRightAdded) {
+                        que.push(temp);
+                        isBottomRightAdded = true;
+                    } else if (i != 0 && i != ny - 1) {
+                        que.push(temp);
+                    }
+                }
+            }
+
+            if (neighbor->getData(-1, -1, tempShort) != 0 && neighbor->getData(0, 0, tempShort) == 0 && !isTopLeftAdded) {
+                temp.x = 0;
+                temp.y = 0;
+                que.push(temp);
+                isTopLeftAdded = true;
+            }
+
+            if (neighbor->getData(nx, -1, tempShort) != 0 && neighbor->getData(nx - 1, 0, tempShort) == 0 && !isTopRightAdded) {
+                temp.x = nx - 1;
+                temp.y = 0;
+                que.push(temp);
+                isTopRightAdded = true;
+            }
+
+            if (neighbor->getData(-1, ny, tempShort) != 0 && neighbor->getData(0, ny - 1, tempShort) == 0 && !isBottomLeftAdded) {
+                temp.x = 0;
+                temp.y = ny - 1;
+                que.push(temp);
+                isBottomLeftAdded = true;
+            }
+
+            if (neighbor->getData(nx, ny, tempShort) != 0 && neighbor->getData(nx - 1, ny - 1, tempShort) == 0 && !isBottomRightAdded) {
+                temp.x = nx - 1;
+                temp.y = ny - 1;
+                que.push(temp);
+                isBottomRightAdded = true;
             }
 
             neighbor->clearBorders();
