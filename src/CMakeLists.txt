@@ -38,6 +38,7 @@ set (SLOPEAVEDOWN SlopeAveDown.cpp SlopeAveDownmn.cpp ${common_srcs})
 set (STREAMNET streamnetmn.cpp streamnet.cpp
      ${common_srcs} ${shape_srcs})
 set (THRESHOLD Threshold.cpp Thresholdmn.cpp ${common_srcs})
+set (GAGEWATERSHED gagewatershedmn.cpp gagewatershed.cpp ${common_srcs} ${shape_srcs})
 
 # MPI is required
 find_package(MPI REQUIRED)
@@ -74,6 +75,7 @@ add_executable (slopearearatio ${SLOPEAREARATIO})
 add_executable (slopeavedown ${SLOPEAVEDOWN})
 add_executable (streamnet ${STREAMNET})
 add_executable (threshold ${THRESHOLD})
+add_executable (gagewatershed ${GAGEWATERSHED})
 
 set (MY_TARGETS aread8 
                 areadinf
@@ -99,7 +101,8 @@ set (MY_TARGETS aread8
                 slopearearatio
                 slopeavedown
                 streamnet
-                threshold)
+                threshold
+		gagewatershed)
 
 foreach( c_target ${MY_TARGETS} )
     target_link_libraries(${c_target} ${MPI_LIBRARIES} ${GDAL_LIBRARY})
