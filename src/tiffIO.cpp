@@ -306,15 +306,25 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 
         char partition_filename[MAXLN];
         char partition_ext[10];
-        sprintf(partition_ext, "p%d.tiff", rank);
+        sprintf(partition_ext, "p%d.tif", rank);
         strcpy(partition_filename, filename);
         partition_filename[strlen(partition_filename) - 4] = '\0';
         strcat(partition_filename, partition_ext);
 
+        papszOptions = CSLSetNameValue(papszOptions, "COMPRESS", compression_meth[0]);
+
+        int cellbytes = 4;
+        if (datatype == SHORT_TYPE)cellbytes = 2;
+        double fileGB = (double) cellbytes * (double) numCols * (double) numRows / 1000000000.0; // This purposely neglects the lower significant digits to overvalue GB to allow space for header information in the file
+        if (fileGB > 4.0) {
+            // .tif files.  Need to explicity indicate BIGTIFF.  See http://www.gdal.org/frmt_gtiff.html.
+            papszOptions = CSLSetNameValue(papszOptions, "BIGTIFF", "YES");
+        }
+
         double adfGeoTransform[6];
         GDALGetGeoTransform(copyfh, adfGeoTransform);
 
-        fh = GDALCreate(hDriver, partition_filename, numCols, numRows, 1, eBDataType, NULL);
+        fh = GDALCreate(hDriver, partition_filename, numCols, numRows, 1, eBDataType, papszOptions);
         GDALSetProjection(fh, GDALGetProjectionRef(copyfh));
 
         adfGeoTransform[0] = adfGeoTransform[1] * xstart + xleftedge;
@@ -347,10 +357,10 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
                 strcpy(partition_filename, filename);
                 partition_filename[strlen(partition_filename) - 4] = '\0';
                 strcat(partition_filename, partition_ext);
-                
+
                 vrtcommand += " " + std::string(partition_filename);
             }
-            
+
             system(vrtcommand.c_str());
         }
     } else {
