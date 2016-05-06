@@ -58,9 +58,9 @@ protected:
     long nx, ny;
     long cx, cy;
     double dxA, dyA, *dxc, *dyc;
-    DecompType decompType;
-
 public:
+    
+    static DecompType decompType;
 
     tdpartition() {
     }
@@ -162,14 +162,6 @@ public:
         return 0;
     }
 
-    void setDecompType(DecompType type) {
-        decompType = type;
-    }
-
-    DecompType getDecompType() {
-        return decompType;
-    }
-
     virtual void savedxdyc(tiffIO &obj) {
     }
 
@@ -194,6 +186,7 @@ public:
     virtual void addToData(long, long, float) {
     }
 };
+
 #endif
 
 

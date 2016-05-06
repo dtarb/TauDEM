@@ -47,6 +47,8 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 #include "tardemlib.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 int main(int argc,char **argv)  
 {
    char plenfile[MAXLN],ad8file[MAXLN], ssfile[MAXLN];

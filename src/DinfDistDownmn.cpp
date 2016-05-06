@@ -47,6 +47,8 @@ email:  dtarb@usu.edu
 #include "tardemlib.h"
 #include "DinfDistDown.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 int main(int argc,char **argv)
 {
 char angfile[MAXLN],felfile[MAXLN],slpfile[MAXLN],wfile[MAXLN],dtsfile[MAXLN],srcfile[MAXLN];

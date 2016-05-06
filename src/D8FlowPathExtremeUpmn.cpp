@@ -52,6 +52,8 @@ email:  dtarb@usu.edu
 #include <stdlib.h>
 #include "commonLib.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 int d8flowpathextremeup(char *pfile, char*safile, char *ssafile, int usemax, char* datasrc,char* lyrname,int uselyrname,int lyrno,int useoutlets, int contcheck);
 
 int main(int argc,char **argv)  

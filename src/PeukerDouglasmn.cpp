@@ -48,6 +48,8 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 //#include "tardemlib.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 int peukerdouglas(char *felfile,char *ssfile,float *p);
 
 int main(int argc,char **argv)  

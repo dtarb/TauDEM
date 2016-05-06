@@ -45,6 +45,7 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 #include "d8.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
 
 int main(int argc,char **argv)
 {

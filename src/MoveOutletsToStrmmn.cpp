@@ -62,6 +62,8 @@ email:  dtarb@usu.edu
 //#include "shapelib/shapefil.h"
 #include "MoveOutletsToStrm.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 int main(int argc,char **argv)
 {
    char pfile[MAXLN],srcfile[MAXLN],outletsdatasrc[MAXLN],outletslayer[MAXLN],outletmoveddatasrc[MAXLN],outletmovedlayer[MAXLN]="";

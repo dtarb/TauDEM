@@ -45,6 +45,8 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 #include "tardemlib.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 int threshold(char *ssafile,char *srcfile,char *maskfile, float thresh, int usemask);
 
 int main(int argc,char **argv)  

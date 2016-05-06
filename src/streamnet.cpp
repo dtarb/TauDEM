@@ -68,6 +68,7 @@ OGRFieldDefnH hFieldDefn1;
 OGRFeatureH hFeature1;
 OGRGeometryH geometry, line;
 OGRSpatialReferenceH hSRSraster, hSRSshapefile;
+
 //void createStreamNetShapefile(char *streamnetshp)
 //{
 //	shp1 = SHPCreate(streamnetshp, SHPT_ARC);

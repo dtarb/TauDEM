@@ -46,6 +46,8 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 #include "DropAnalysis.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 int dropan(char *areafile, char *dirfile, char *elevfile, char *ssafile, char *dropfile,
                            char* datasrc,char* lyrname,int uselyrname,int lyrno, float threshmin, float threshmax, int nthresh, int steptype,
                            float *threshopt);

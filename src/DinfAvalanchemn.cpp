@@ -45,6 +45,8 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 #include "tardemlib.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 //-ang demang.tif -fel demfel.tif -ass demass.tif -rz demrz.tif -dfs demdfs.tif [-thresh 0.2] [-alpha 20] [-direct]
 
 int main(int argc,char **argv)

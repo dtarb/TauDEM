@@ -47,6 +47,8 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 #include "tardemlib.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 int main(int argc,char **argv)  
 {
    char slopefile[MAXLN], scaterrainfile[MAXLN], scarminroadfile[MAXLN], scarmaxroadfile[MAXLN], tergridfile[MAXLN], terparfile[MAXLN], satfile[MAXLN], sincombinedfile[MAXLN];
