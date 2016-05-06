@@ -125,8 +125,7 @@ void createStreamNetShapefile(char *streamnetsrc, char *streamnetlyr, OGRSpatial
             char *streamnetlayername;
             streamnetlayername = getLayername(streamnetsrc); // get layer name if the layer name is not provided
             hLayer1 = OGR_DS_CreateLayer(hDS1, streamnetlayername, hSRSraster, wkbLineString, NULL);
-        }
-        else {
+        } else {
             hLayer1 = OGR_DS_CreateLayer(hDS1, streamnetlyr, hSRSraster, wkbLineString, NULL);
         }// provide same spatial reference as raster in streamnetshp file
         if (hLayer1 == NULL) {
@@ -833,7 +832,7 @@ int netsetup(char *pfile, char *srcfile, char *ordfile, char *ad8file, char *ele
                     } else if (terminal) { // handle terminal that is not mandatory junction
                         appendPoint(u1, addPoint);
                     }
-                }                    //  Case for ongoing flow path with single inflow
+                }//  Case for ongoing flow path with single inflow
                 else if (k == 1) {
                     int32_t u1 = idGrid->getData(i + d1[inneighbors[0]], j + d2[inneighbors[0]], tempLong);
                     appendPoint(u1, addPoint);
@@ -860,7 +859,7 @@ int netsetup(char *pfile, char *srcfile, char *ordfile, char *ad8file, char *ele
                             //  TODO Here need to assign WSNO = -1
                         }
                     }
-                }                    // Case for multiple inflows
+                }// Case for multiple inflows
                 else if (k > 1) {
                     //	rank incoming flow paths from highest to lowest order and process in this order
                     //cout << "k>1 junction: "  << k << endl;
@@ -1053,20 +1052,98 @@ int netsetup(char *pfile, char *srcfile, char *ordfile, char *ad8file, char *ele
                 lengths->share();
                 contribs->addBorders();
 
-                for (i = 0; i < nx; i++) {//todo fix this to add passed to queue
-                    if (contribs->getData(i, 0, tempShort) == 0 && contribs->getData(i, -1, tempShort) != 0) //may receive flow from more than 1
-                    {
+                bool isTopLeftAdded = false;
+                bool isTopRightAdded = false;
+                bool isBottomLeftAdded = false;
+                bool isBottomRightAdded = false;
+
+                for (i = 0; i < nx; i++) {
+                    if (contribs->getData(i, -1, tempShort) != 0 && contribs->getData(i, 0, tempShort) == 0) {
                         t.x = i;
                         t.y = 0;
-                        que.push(t);
+                        if (i == 0 && !isTopLeftAdded) {
+                            que.push(t);
+                            isTopLeftAdded = true;
+                        } else if (i == nx - 1 && !isTopRightAdded) {
+                            que.push(t);
+                            isTopRightAdded = true;
+                        } else if (i != 0 && i != nx - 1) {
+                            que.push(t);
+                        }
+
                     }
-                    if (contribs->getData(i, ny - 1, tempShort) == 0 && contribs->getData(i, ny, tempShort) != 0)//only looks at one direction of flow, out of a partition && idGrid->isNodata(i,ny-1) && src->getData(i,ny-1,tempShort)==1
-                    {
+                    if (contribs->getData(i, ny, tempShort) != 0 && contribs->getData(i, ny - 1, tempShort) == 0) {
                         t.x = i;
                         t.y = ny - 1;
-                        que.push(t);
+                        if (i == 0 && !isBottomLeftAdded) {
+                            que.push(t);
+                            isBottomLeftAdded = true;
+                        } else if (i == nx - 1 && !isBottomRightAdded) {
+                            que.push(t);
+                            isBottomRightAdded = true;
+                        } else if (i != 0 && i != nx - 1) {
+                            que.push(t);
+                        }
                     }
                 }
+
+                for (i = 0; i < ny; i++) {
+                    if (contribs->getData(-1, i, tempShort) != 0 && contribs->getData(0, i, tempShort) == 0) {
+                        t.x = 0;
+                        t.y = i;
+                        if (i == 0 && !isTopLeftAdded) {
+                            que.push(t);
+                            isTopLeftAdded = true;
+                        } else if (i == ny - 1 && !isBottomLeftAdded) {
+                            que.push(t);
+                            isBottomLeftAdded = true;
+                        } else if (i != 0 && i != ny - 1) {
+                            que.push(t);
+                        }
+                    }
+                    if (contribs->getData(nx, i, tempShort) != 0 && contribs->getData(nx - 1, i, tempShort) == 0) {
+                        t.x = nx - 1;
+                        t.y = i;
+                        if (i == 0 && !isTopRightAdded) {
+                            que.push(t);
+                            isTopRightAdded = true;
+                        } else if (i == ny - 1 && !isBottomRightAdded) {
+                            que.push(t);
+                            isBottomRightAdded = true;
+                        } else if (i != 0 && i != ny - 1) {
+                            que.push(t);
+                        }
+                    }
+                }
+
+                if (contribs->getData(-1, -1, tempShort) != 0 && contribs->getData(0, 0, tempShort) == 0 && !isTopLeftAdded) {
+                    t.x = 0;
+                    t.y = 0;
+                    que.push(t);
+                    isTopLeftAdded = true;
+                }
+
+                if (contribs->getData(nx, -1, tempShort) != 0 && contribs->getData(nx - 1, 0, tempShort) == 0 && !isTopRightAdded) {
+                    t.x = nx - 1;
+                    t.y = 0;
+                    que.push(t);
+                    isTopRightAdded = true;
+                }
+
+                if (contribs->getData(-1, ny, tempShort) != 0 && contribs->getData(0, ny - 1, tempShort) == 0 && !isBottomLeftAdded) {
+                    t.x = 0;
+                    t.y = ny - 1;
+                    que.push(t);
+                    isBottomLeftAdded = true;
+                }
+
+                if (contribs->getData(nx, ny, tempShort) != 0 && contribs->getData(nx - 1, ny - 1, tempShort) == 0 && !isBottomRightAdded) {
+                    t.x = nx - 1;
+                    t.y = ny - 1;
+                    que.push(t);
+                    isBottomRightAdded = true;
+                }
+
                 finished = que.empty();
                 //MPI_Barrier(MCW);
                 int total = 0;
