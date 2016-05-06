@@ -45,6 +45,8 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 #include "flood.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 int main(int argc,char **argv)
 {
    char demfile[MAXLN],newfile[MAXLN],flowfile[MAXLN];

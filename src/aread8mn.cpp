@@ -46,6 +46,8 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 #include "aread8.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 int main(int argc,char **argv)
 {
    char pfile[MAXLN],afile[MAXLN],wfile[MAXLN],datasrc[MAXLN],lyrname[MAXLN];

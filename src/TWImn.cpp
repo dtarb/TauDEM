@@ -44,6 +44,9 @@ email:  dtarb@usu.edu
 #include <stdlib.h>
 #include "commonLib.h"
 #include "tardemlib.h"
+
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 int twigrid(char *slopefile,char *areafile,char *twifile);
 int main(int argc,char **argv)
 {

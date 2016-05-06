@@ -110,9 +110,6 @@ protected:
 public:
 
     linearpart() : tdpartition() {
-        // by default, it's row-wise data decomposition
-
-        setDecompType(DECOMP_BLOCK);
     }
 
     ~linearpart();

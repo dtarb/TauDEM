@@ -46,6 +46,8 @@ email:  dtarb@usu.edu
 #include <stdlib.h>
 #include "commonLib.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 int distgrid(char *pfile, char *srcfile, char *distfile, int thresh);
 
 int main(int argc,char **argv)
