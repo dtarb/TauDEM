@@ -353,7 +353,7 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
             std::string vrtcommand = std::string("gdalbuildvrt ") + filename;
 
             for (int i = 0; i < size; ++i) {
-                sprintf(partition_ext, "p%d.tiff", i);
+                sprintf(partition_ext, "p%d.tif", i);
                 strcpy(partition_filename, filename);
                 partition_filename[strlen(partition_filename) - 4] = '\0';
                 strcat(partition_filename, partition_ext);
