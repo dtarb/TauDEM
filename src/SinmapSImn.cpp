@@ -47,7 +47,7 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 #include "tardemlib.h"
 
-DecompType tdpartition::decompType = DECOMP_BLOCK;
+DecompType tdpartition::decompType = DECOMP_ROW;
 
 int main(int argc,char **argv)  
 {
