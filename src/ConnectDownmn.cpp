@@ -50,7 +50,7 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 #include "ConnectDown.h"
 
-DecompType tdpartition::decompType = DECOMP_BLOCK;
+DecompType tdpartition::decompType = DECOMP_ROW;
 
 int main(int argc,char **argv)
 {
@@ -105,7 +105,6 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-
 		else if(strcmp(argv[i],"-olyr")==0)
 		{
 			i++;
