@@ -141,17 +141,7 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-		 else if(strcmp(argv[i],"-swg")==0)
-		{
-			i++;
-			if(argc > i)
-			{
-				strcpy(swfile,argv[i]);
-				useswg=1;
-				i++;
-			}
-			else goto errexit;
-	 }
+	
 
 		else 
 		{
@@ -159,7 +149,7 @@ int main(int argc,char **argv)
 		}
 	}
 
-    if( (err=gagewatershed(pfile,swfile,wfile,datasrc,lyrname,uselyrname,lyrno,idfile,writeid,useswg,writeupid,upidfile)) != 0)
+    if( (err=gagewatershed(pfile,wfile,datasrc,lyrname,uselyrname,lyrno,idfile,writeid,writeupid,upidfile)) != 0)
         printf("Gage watershed error %d\n",err);
 
 	return 0;
