@@ -233,6 +233,7 @@ int flowdircond( char *pfile, char *zfile, char *zfdcfile)
                 printf("Processors: %d\nRead time: %f\nCompute time: %f\nWrite time: %f\nTotal time: %f\n",
                   size,dataRead, compute, write,total);
 
+
 	//Brackets force MPI-dependent objects to go out of scope before Finalize is called
 	}MPI_Finalize();
 
