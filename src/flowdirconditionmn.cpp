@@ -114,12 +114,13 @@ int main(int argc,char **argv)
 	}
 
     if((err=flowdircond( pfile, zfile, zfdcfile)) != 0)
-        printf("setdird8 error %d\n",err);
+        printf("flowdiircond error %d\n",err);
 
 	return 0;
 
-	errexit:
-	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
+errexit:
+	   printf("Usage TODO\n",argv[0]);
+	  /* printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
 	   printf("Usage with specific file names:\n %s -fel <demfile>\n",argv[0]);
        printf("-sd8 <slopefile> -p <angfile> [-sfdr <flowfile>]\n");
 	   printf("<basefilename> is the name of the raw digital elevation model\n");
@@ -131,7 +132,7 @@ int main(int argc,char **argv)
        printf("before the files are opened:\n");
        printf("fel    carved or pit filled input elevation file\n");
        printf("sd8    D8 slope file (output)\n");
-	   printf("p   D8 flow direction output file\n");
+	   printf("p   D8 flow direction output file\n");*/
        exit(0);
 }    
 
