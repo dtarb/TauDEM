@@ -45,6 +45,7 @@ email:  dtarb@usu.edu
 #include "linearpart.h"
 #include "createpart.h"
 #include "tiffIO.h"
+#include "initneighbor.h"
 using namespace std;
 
 
@@ -113,7 +114,8 @@ int flowdircond( char *pfile, char *zfile, char *zfdcfile)
 	int numOutlets=0;
 	int *outletsX; int *outletsY;
 	int useOutlets=0;
-
+	outletsX = new int[numOutlets];
+		outletsY = new int[numOutlets];
 	tdpartition *neighbor;
 	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -32768);
 	
@@ -147,7 +149,7 @@ int flowdircond( char *pfile, char *zfile, char *zfdcfile)
 					jn=j+d2[k];
 					/* test if neighbor drains towards cell excluding boundaries */
 					short sdir = flowData->getData(in,jn,tempShort);
-					if(sdir > 0) 
+					if(sdir > 0)
 					{
 						if(!zData->isNodata(in,jn))
 						{
@@ -207,7 +209,7 @@ int flowdircond( char *pfile, char *zfile, char *zfdcfile)
 	double computet = MPI_Wtime();
 	
 	//Create and write TIFF file
-	float fNodata = zIO.getNodata();
+	float fNodata =-1.0f;
 	tiffIO zfdcIO(zfdcfile, FLOAT_TYPE, &fNodata, p);
 	zfdcIO.write(xstart, ystart, ny, nx, zData->getGridPointer());
 
