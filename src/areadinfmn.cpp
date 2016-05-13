@@ -49,7 +49,13 @@ email:  dtarb@usu.edu
 int main(int argc,char **argv)
 {
    char pfile[MAXLN],afile[MAXLN],wfile[MAXLN],datasrc[MAXLN],lyrname[MAXLN];
-   int err,useOutlets=0,uselyrname=0,usew=0,lyrno=0,contcheck=1,i,ouputunits=1;
+   int err,useOutlets=0,uselyrname=0,areamode=0,lyrno=0,contcheck=1,i;
+   // areamode is a variable that tracks the mode for area calculation
+   // values are
+   //  0 = default evaluate specific catchment area
+   //  1 = use input weight file
+   //  2 = count cells
+   //  3 = evaluate area in length square units at downstream edge
    if(argc < 2)
     {  
 	   printf("Error: To run this program, use either the Simple Usage option or\n");
@@ -98,42 +104,20 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-
-
-		else if(strcmp(argv[i],"-cc")==0) // cell count option for the catchment area
+		else if(strcmp(argv[i],"-count")==0) // cell count option for the catchment area
 		{
 			i++;
-			if(argc > i)
-			{
-				ouputunits=1;
-				i++;
-			}
-			else goto errexit;
+			if(areamode != 0) goto errexit; // Can not use count if mode has already been changed from default
+			areamode=2;
 		}
 
-		else if(strcmp(argv[i],"-lu")==0) // length units option
+		else if(strcmp(argv[i],"-area")==0) // area units option
 		{
 			i++;
-			if(argc > i)
-			{
-				ouputunits=2;
-				i++;
-			}
-			else goto errexit;
+			if(areamode != 0) goto errexit; // Can not use count if mode has already been changed from default
+			areamode=3;
 		}
-
-		else if(strcmp(argv[i],"-lus")==0) // length units sqared option
-		{
-			i++;
-			if(argc > i)
-			{
-				ouputunits=3;
-				i++;
-			}
-			else goto errexit;
-		}
-		
-		   else if(strcmp(argv[i],"-lyrno")==0)
+        else if(strcmp(argv[i],"-lyrno")==0)
 		{
 			i++;
 			if(argc > i)
@@ -165,7 +149,7 @@ int main(int argc,char **argv)
 			if(argc > i)
 			{
 				strcpy(wfile,argv[i]);
-				usew=1;
+				areamode=1;
 				i++;
 			}
 			else goto errexit;
@@ -185,13 +169,13 @@ int main(int argc,char **argv)
 		nameadd(pfile,argv[1],"ang");
 	}   
    
-   if((err=area(pfile,afile,datasrc,lyrname,uselyrname,lyrno,wfile,useOutlets,usew,contcheck,outputunits)) != 0)
+   if((err=area(pfile,afile,datasrc,lyrname,uselyrname,lyrno,wfile,useOutlets,areamode,contcheck)) != 0)
         printf("area error %d\n",err);
    
 
 	return 0;
 	
-errexit:
+errexit:  //TODO update this
 	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
 	   printf("Usage with specific file names:\n %s -ang <angfile>\n",argv[0]);
        printf("-sca <afile> [-o <shfile>] [-wg <wfile>]\n");
