@@ -50,7 +50,7 @@ email:  dtarb@usu.edu
 
 using namespace std;
 
-int area( char* angfile, char* scafile, char* datasrc,char* lyrname,int uselyrname,int lyrno, char *wfile, int useOutlets, int usew, int contcheck) {
+int area( char* angfile, char* scafile, char* datasrc,char* lyrname,int uselyrname,int lyrno, char *wfile, int useOutlets, int usew, int contcheck,int outputunits) {
 
 	MPI_Init(NULL,NULL);{
 
@@ -208,8 +208,19 @@ int area( char* angfile, char* scafile, char* datasrc,char* lyrname,int uselyrna
 				//  Local inputs
 				if( usew==1) areares=areares+weightData->getData(i,j,tempFloat);
 				else {
-					flowData->getdxdyc(j,tempdxc,tempdyc);
-					areares=areares+tempdxc;} 
+					         flowData->getdxdyc(j,tempdxc,tempdyc);
+					           // 
+					         if(outputunits==1){
+						             areares=areares+1;}
+
+					         else if (outputunits==2) {
+                                    areares=areares+; // need to fix it here
+					                 } 
+					         else if (outputunits==3) {
+
+								 areares=areares+tempdxc*tempdyc;
+					         }
+				 } 
 				if(con && contcheck==1)
 					areadinf->setToNodata(i,j);
 				else 
