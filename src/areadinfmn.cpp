@@ -49,8 +49,7 @@ email:  dtarb@usu.edu
 int main(int argc,char **argv)
 {
    char pfile[MAXLN],afile[MAXLN],wfile[MAXLN],datasrc[MAXLN],lyrname[MAXLN];
-   int err,useOutlets=0,uselyrname=0,usew=0,lyrno=0,contcheck=1,i;
-      
+   int err,useOutlets=0,uselyrname=0,usew=0,lyrno=0,contcheck=1,i,ouputunits=1;
    if(argc < 2)
     {  
 	   printf("Error: To run this program, use either the Simple Usage option or\n");
@@ -101,6 +100,38 @@ int main(int argc,char **argv)
 		}
 
 
+		else if(strcmp(argv[i],"-cc")==0) // cell count option for the catchment area
+		{
+			i++;
+			if(argc > i)
+			{
+				ouputunits=1;
+				i++;
+			}
+			else goto errexit;
+		}
+
+		else if(strcmp(argv[i],"-lu")==0) // length units option
+		{
+			i++;
+			if(argc > i)
+			{
+				ouputunits=2;
+				i++;
+			}
+			else goto errexit;
+		}
+
+		else if(strcmp(argv[i],"-lus")==0) // length units sqared option
+		{
+			i++;
+			if(argc > i)
+			{
+				ouputunits=3;
+				i++;
+			}
+			else goto errexit;
+		}
 		
 		   else if(strcmp(argv[i],"-lyrno")==0)
 		{
@@ -154,7 +185,7 @@ int main(int argc,char **argv)
 		nameadd(pfile,argv[1],"ang");
 	}   
    
-   if((err=area(pfile,afile,datasrc,lyrname,uselyrname,lyrno,wfile,useOutlets,usew,contcheck)) != 0)
+   if((err=area(pfile,afile,datasrc,lyrname,uselyrname,lyrno,wfile,useOutlets,usew,contcheck,outputunits)) != 0)
         printf("area error %d\n",err);
    
 
