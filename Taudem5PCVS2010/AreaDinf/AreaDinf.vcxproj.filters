@@ -21,7 +21,4 @@
       <UniqueIdentifier>{6d209b4f-2ab9-4bf9-97f0-b026d575d726}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="ClassDiagram1.cd" />
-  </ItemGroup>
 </Project>

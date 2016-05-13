@@ -265,13 +265,15 @@ int area( char* angfile, char* scafile, char* datasrc,char* lyrname,int uselyrna
 		finished = areadinf->ringTerm(finished);
 	}
 	// Adjustment for specific catchment area
-	if(areamode==2){
+	float temparea;
+	if(areamode==3){
 	for(i=0; i<nx; i++)
 		for(j=0; j<ny; j++){
-			//  Get area
-			//  get the flow directions
-			//  get dx and dy
-			//  from flow direction figure out theta and d (dx or dy)
+
+			areadinf->getData(i,j,temparea); //get area
+			flowData->getData(i, j, angle); //  get the flow directions
+		    flowData->getdxdyc(j,tempdxc,tempdyc) //  get dx and dy
+			                                    //  from flow direction figure out theta and d (dx or dy)
 			//  apply the formula =(A-0.5*dx*dy)/b
 		}
 	}
