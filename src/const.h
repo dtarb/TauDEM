@@ -33,18 +33,12 @@ email:  dtarb@usu.edu
 #define CONST_H
 
 #include <cfloat>
+#include <climits>
 #include <cmath>
 
 #define MCW MPI_COMM_WORLD
 #define MAX_STRING_LENGTH 255
 #define MAXLN 4096
-
-//TODO: revisit these to see if they are used/needed
-//#define ABOVE 1
-//#define BELOW 2
-//#define LEFT 3
-//#define RIGHT 4
-//
 
 #define TDVERSION "5.2.1"
 
@@ -75,15 +69,15 @@ struct node {
 };
 
 const double PI = 3.14159265359;
-const short MISSINGSHORT = -32768;
-const long MISSINGLONG = -2147483647;
-const float MISSINGFLOAT = -1*FLT_MAX;
+const short MISSINGSHORT = SHRT_MIN;
+const long MISSINGLONG = LONG_MIN;
+const float MISSINGFLOAT = -FLT_MAX;
 const float MINEPS = 1E-5f;
 
 const int d1[9] = { 0,1, 1, 0,-1,-1,-1,0,1};
 const int d2[9] = { 0,0,-1,-1,-1, 0, 1,1,1};
 
 //  TODO adjust this for different dx and dy
-const double aref[10] = { -atan2((double)1,(double)1), 0., -aref[0],(double)(0.5*PI),PI-aref[2],(double)PI,
-                        PI+aref[2],(double)(1.5*PI),2.*PI-aref[2],(double)(2.*PI) };   // DGT is concerned that this assumes square grids.  For different dx and dx needs adjustment
+const double aref[10] = { -atan2(1.0, 1.0), 0., -aref[0], 0.5*PI, PI-aref[2], PI,
+    PI+aref[2], 1.5*PI,2.0*PI-aref[2],2.*PI };   // DGT is concerned that this assumes square grids.  For different dx and dx needs adjustment
 #endif
