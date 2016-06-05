@@ -95,7 +95,6 @@ class linearpart : public tdpartition {
 		bool globalToLocal(int globalX, int globalY, int &localX, int &localY);
 		void localToGlobal(int localX, int localY, int &globalX, int &globalY);
 
-		int getGridXY(int x,int y, int *i, int *j);
 		void transferPack(int *, int *, int *, int*);
 
 		// Member functions inherited from partition
@@ -367,24 +366,6 @@ void linearpart<datatype>::localToGlobal(int localX, int localY, int &globalX, i
 	globalY = rank * ny + localY;
 	if(rank == size-1) 
 		globalY = rank * (ny - totaly%size) + localY;
-}
-
-//TODO: Figure out what this function is actually for.
-//I don't think it is called more than once in Taudem.
-template <class datatype>
-int linearpart<datatype>::getGridXY( int x, int y, int *i, int *j) {
-	*i = *j = -1;
-	int numRowsPerProc = ny/size;
-	int starty = numRowsPerProc*rank;
-	if( rank == size-1)
-		numRowsPerProc += (totaly%size);
-	int  endy = starty + numRowsPerProc;
-	if( x >= 0 && x < nx && y >= starty && y < endy) {
-		*i = x;
-		*j = y - starty;
-		return 1;
-	}
-	return 0;
 }
 
 //TODO: Revisit this function to see how necessary it is.
