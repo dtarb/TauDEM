@@ -127,44 +127,43 @@ linearpart<datatype>::~linearpart(){
 //dx and dy for the grid, MPI datatype (should match the template declaration), and noData value.
 template <class datatype>
 void linearpart<datatype>::init(long totalx, long totaly, double dx_in, double dy_in, MPI_Datatype MPIt, datatype nd){
-	MPI_Comm_rank(MCW, &rank);
-	MPI_Comm_size(MCW, &size);
+    MPI_Comm_rank(MCW, &rank);
+    MPI_Comm_size(MCW, &size);
 
-	//Store all the initialization variables in their appropriate places
-	this->totalx = totalx;
-	this->totaly = totaly;
-	nx = totalx;
-	ny = totaly / size;
-	if(rank == size-1)  ny += (totaly % size); //Add extra rows to the last process
-	dxA = dx_in;
-	dyA = dy_in;
-	MPI_type = MPIt;
-	noData = nd;
+    //Store all the initialization variables in their appropriate places
+    this->totalx = totalx;
+    this->totaly = totaly;
+    nx = totalx;
+    ny = totaly / size;
+    if(rank == size-1)  ny += (totaly % size); //Add extra rows to the last process
+    dxA = dx_in;
+    dyA = dy_in;
+    MPI_type = MPIt;
+    noData = nd;
 
-	//Allocate memory for data and fill with noData value.  Catch exceptions
-	uint64_t prod;  //   use long 64 bit number to hold the product to allocate
-	try
-	{
-	    // We store the borders right before and after the grid.
-	    // This way y=-1 and ny can be safely used with getData 
-	    // without additional checks
-	   
-        prod=(uint64_t)nx*(uint64_t)ny+2*(uint64_t)nx; 
+    // We store the borders right before and after the grid.
+    // This way y=-1 and ny can be safely used with getData 
+    // without additional checks
+    uint64_t prod = (uint64_t)nx*(uint64_t)ny + 2*(uint64_t)nx;
 
+    //Allocate memory for data and fill with noData value.  Catch exceptions
+    try
+    {
         rawData = new datatype[prod];
+    }
+    catch(std::bad_alloc&)
+    {
+        //  DGT added clause below to try trap for insufficient memory in the computer.
+        fprintf(stdout,"Memory allocation error during partition initialization in process %d.\n",rank);
+        fprintf(stdout,"NCols: %ld, NRows: %ld, NCells: %" PRIu64 "\n", nx, ny, prod);
+        fflush(stdout);
 
-		gridData = rawData + nx;
-		topBorder = rawData; 
-		bottomBorder = rawData + nx + nx*ny;
-	}
-	catch(std::bad_alloc&)
-	{
-	//  DGT added clause below to try trap for insufficient memory in the computer.
-		fprintf(stdout,"Memory allocation error during partition initialization in process %d.\n",rank);
-		fprintf(stdout,"NCols: %ld, NRows: %ld, NCells: %" PRIu64 "\n",nx,ny,prod);
-		fflush(stdout);
-		MPI_Abort(MCW, -999);
-	}
+        MPI_Abort(MCW, -999);
+    }
+
+    gridData = rawData + nx;
+    topBorder = rawData; 
+    bottomBorder = rawData + nx + nx*ny;
 
     // Set no-data for borders and partition
     std::fill(rawData, rawData + prod, noData);
