@@ -165,7 +165,7 @@ size_t propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<sho
                     short flow = flowDir.getData(in, jn);
                     auto neighInc = inc.getData(in, jn);
 
-                    if (flow == 0 && (neighInc == 0 || std::abs(neighInc > flat.inc + 1))) {
+                    if (flow == 0 && (neighInc == 0 || std::abs(neighInc) > flat.inc + 1)) {
                         newFlats.push_back({in, jn, flat.inc + 1});
                         inc.setData(in, jn, -(flat.inc + 1));
                     }
