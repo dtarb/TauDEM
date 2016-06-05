@@ -45,7 +45,7 @@ class MPITimer
                 ordered.push_back(x.second);
             }
            
-            std::sort(ordered.begin(), ordered.end(), [](timing& a, timing& b) { return a.id < b.id; });
+            std::sort(ordered.begin(), ordered.end(), [](const timing& a, const timing& b) { return a.id < b.id; });
 
             // FIXME
 
