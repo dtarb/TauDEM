@@ -95,18 +95,7 @@ size_t propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<sho
     int nx = flowDir.getnx();
     int ny = flowDir.getny();
 
-    struct pnode {
-        int x;
-        int y;
-        short inc;
-
-        pnode(int x, int y, short inc) : x(x), y(y), inc(inc) {}
-        bool operator<(const struct pnode& b) const {
-            return inc < b.inc;
-        }
-    };
-    
-    std::vector<pnode> queue;
+    std::vector<node> queue;
 
     // Find the starting nodes at the edge of the raster
     //
@@ -135,9 +124,13 @@ size_t propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<sho
                 auto neighInc = inc.getData(in, jn);
 
                 if (noFlow && (neighInc == 0 || std::abs(neighInc) > st + 1)) {
-                    queue.emplace_back(in, jn, st + 1);
+                    // If neighbor increment is positive, we are overriding a larger increment
+                    // and it is not yet in the queue
+                    if (neighInc >= 0) {
+                        queue.emplace_back(in, jn);
+                    }
 
-                    // Here we set a negative increment if it's still pending
+                    // Here we set a negative increment if it's still not set
                     //
                     // Another flat might be neighboring the same cell with a lower increment,
                     // which has to override the higher increment (that hasn't been set yet but is in the queue).
@@ -154,26 +147,24 @@ size_t propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<sho
     size_t numChanged = 0;
     size_t abandonedCells = 0;
 
-    // Sort queue by lowest increment
-    std::sort(queue.begin(), queue.end());
-    std::vector<pnode> newFlats;
+    std::vector<node> newFlats;
 
     while (!queue.empty()) {
-        for(pnode flat : queue) {
-            // Skip if the increment was already set and it is lower 
-            auto st = inc.getData(flat.x, flat.y);
-            if (st > 0 && st <= flat.inc) {
+        for(node flat : queue) {
+            // Increments are stored as negative for the cells that have been added to the queue
+            // (to signify that they need to be explored)
+            auto st = -inc.getData(flat.x, flat.y);
+          
+            // I don't think this is possible anymore, but just in case.
+            if (st <= 0) {
+                printf("warning: unexpected non-negative increment @ (%d, %d)\n", flat.x, flat.y);
                 continue;
             }
 
-            if (st < 0 && -st < flat.inc) {
-                flat.inc = -st;
-            }
-
-            inc.setData(flat.x, flat.y, flat.inc);
+            inc.setData(flat.x, flat.y, st);
             numChanged++;
 
-            if (flat.inc == SHRT_MAX) {
+            if (st == SHRT_MAX) {
                 abandonedCells++;
                 continue;
             }
@@ -189,15 +180,19 @@ size_t propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<sho
                     short flow = flowDir.getData(in, jn);
                     auto neighInc = inc.getData(in, jn);
 
-                    if (flow == 0 && (neighInc == 0 || std::abs(neighInc) > flat.inc + 1)) {
-                        newFlats.emplace_back(in, jn, flat.inc + 1);
-                        inc.setData(in, jn, -(flat.inc + 1));
+                    if (flow == 0 && (neighInc == 0 || std::abs(neighInc) > st + 1)) {
+                        // If neighbor increment is positive, we are overriding a larger increment
+                        // and it is not yet in the queue
+                        if (neighInc >= 0) {
+                           newFlats.emplace_back(in, jn);
+                        }
+
+                        inc.setData(in, jn, -(st + 1));
                     }
                 }
             }
         }
 
-        std::sort(newFlats.begin(), newFlats.end());
         queue.clear();
         queue.swap(newFlats);
     }
