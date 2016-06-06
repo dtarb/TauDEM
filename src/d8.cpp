@@ -353,7 +353,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
         }
 
         if (sharedFlats > 0) {
-            SparsePartition<short> inc(nx, ny, 0);
+            SparsePartition<int> inc(nx, ny, 0);
             size_t lastNumFlat = resolveFlats_parallel(elevDEM, inc, flowDir, borderingIslands);
 
             if (rank==0) {
@@ -363,7 +363,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
 
             // Repeatedly call resolve flats until there is no change across all processors
             while (lastNumFlat > 0) {
-                SparsePartition<short> newInc(nx, ny, 0);
+                SparsePartition<int> newInc(nx, ny, 0);
 
                 lastNumFlat = resolveFlats_parallel(inc, newInc, flowDir, borderingIslands); 
                 inc = std::move(newInc);
@@ -381,7 +381,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
 
         t.start("Resolve local flats");
         if (!islands.empty()) {
-            SparsePartition<short> inc(nx, ny, 0);
+            SparsePartition<int> inc(nx, ny, 0);
             size_t lastNumFlat = resolveFlats(elevDEM, inc, flowDir, islands);
 
             if (rank==0) {
@@ -392,7 +392,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
             // Repeatedly call resolve flats until there is no change
             while (lastNumFlat > 0)
             {
-                SparsePartition<short> newInc(nx, ny, 0);
+                SparsePartition<int> newInc(nx, ny, 0);
 
                 lastNumFlat = resolveFlats(inc, newInc, flowDir, islands); 
                 inc = std::move(newInc);
@@ -486,7 +486,7 @@ long setPosDir(linearpart<float>& elevDEM, linearpart<short>& flowDir)
 
 // Function to set flow direction based on incremented artificial elevations
 template<typename T>
-void setFlow2(int i, int j, linearpart<short>& flowDir, T& elev, SparsePartition<short>& inc)
+void setFlow2(int i, int j, linearpart<short>& flowDir, T& elev, SparsePartition<int>& inc)
 {
     /*  This function sets directions based upon secondary elevations for
       assignment of flow directions across flats according to Garbrecht and Martz
