@@ -98,8 +98,9 @@ size_t propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<sho
     struct pnode {
         int x;
         int y;
-        int inc;
+        short inc;
 
+        pnode(int x, int y, short inc) : x(x), y(y), inc(inc) {}
         bool operator<(const struct pnode& b) const {
             return inc < b.inc;
         }
@@ -109,14 +110,20 @@ size_t propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<sho
 
     // Find the starting nodes at the edge of the raster
     //
-    // FIXME: oob access
     // FIXME: don't scan border if not needed
+    int ignoredGhostCells = 0;
+
     for (auto y : {-1, ny}) {
         for(int x = 0; x < nx; x++) {
-            int st = inc.getData(x, y);
+            short st = inc.getData(x, y);
 
             if (st == 0)
                 continue;
+
+            if (st == SHRT_MAX) {
+                ignoredGhostCells++;
+                continue;
+            }
 
             auto jn = y == -1 ? 0 : ny - 1;
 
@@ -128,7 +135,7 @@ size_t propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<sho
                 auto neighInc = inc.getData(in, jn);
 
                 if (noFlow && (neighInc == 0 || std::abs(neighInc) > st + 1)) {
-                    queue.push_back({in, jn, st + 1});
+                    queue.emplace_back(in, jn, st + 1);
 
                     // Here we set a negative increment if it's still pending
                     //
@@ -140,7 +147,12 @@ size_t propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<sho
         }
     }
 
+    if (ignoredGhostCells > 0) {
+       printf("warning: ignored %d ghost cells which were at upper limit (%d)\n", ignoredGhostCells, SHRT_MAX);
+    }
+
     size_t numChanged = 0;
+    size_t abandonedCells = 0;
 
     // Sort queue by lowest increment
     std::sort(queue.begin(), queue.end());
@@ -151,6 +163,18 @@ size_t propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<sho
             // Skip if the increment was already set and it is lower 
             auto st = inc.getData(flat.x, flat.y);
             if (st > 0 && st <= flat.inc) {
+                continue;
+            }
+
+            if (st < 0 && -st < flat.inc) {
+                flat.inc = -st;
+            }
+
+            inc.setData(flat.x, flat.y, flat.inc);
+            numChanged++;
+
+            if (flat.inc == SHRT_MAX) {
+                abandonedCells++;
                 continue;
             }
 
@@ -166,19 +190,20 @@ size_t propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<sho
                     auto neighInc = inc.getData(in, jn);
 
                     if (flow == 0 && (neighInc == 0 || std::abs(neighInc) > flat.inc + 1)) {
-                        newFlats.push_back({in, jn, flat.inc + 1});
+                        newFlats.emplace_back(in, jn, flat.inc + 1);
                         inc.setData(in, jn, -(flat.inc + 1));
                     }
                 }
             }
-
-            inc.setData(flat.x, flat.y, flat.inc);
-            numChanged++;
         }
 
         std::sort(newFlats.begin(), newFlats.end());
         queue.clear();
         queue.swap(newFlats);
+    }
+
+    if (abandonedCells > 0) {
+        printf("warning: gave up propagating %zu cells because they were at upper limit (%d)\n", abandonedCells, SHRT_MAX);
     }
 
     return numChanged;
