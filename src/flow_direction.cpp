@@ -50,7 +50,7 @@ int dontCross(int k, int i, int j, linearpart<short>& flowDir)
     return 0;
 }
 
-size_t propagateIncrements(linearpart<short>& flowDir, SparsePartition<short>& inc, std::vector<node>& queue) {
+size_t propagateIncrements(linearpart<short>& flowDir, SparsePartition<int>& inc, std::vector<node>& queue) {
     size_t numInc = 0;
     int st = 1;
     
@@ -87,14 +87,14 @@ size_t propagateIncrements(linearpart<short>& flowDir, SparsePartition<short>& i
         st++;
     }
 
-    if (st > SHRT_MAX) {
-        printf("WARNING: increment overflow during propagation (%d > %d)\n", st, SHRT_MAX);
+    if (st < 0) {
+        printf("WARNING: increment overflow during propagation (st = %d)\n", st);
     }
 
     return numInc;
 }
 
-size_t propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<short>& inc)
+size_t propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<int>& inc)
 {
     int nx = flowDir.getnx();
     int ny = flowDir.getny();
@@ -108,12 +108,12 @@ size_t propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<sho
 
     for (auto y : {-1, ny}) {
         for(int x = 0; x < nx; x++) {
-            short st = inc.getData(x, y);
+            int st = inc.getData(x, y);
 
             if (st == 0)
                 continue;
 
-            if (st == SHRT_MAX) {
+            if (st == INT_MAX) {
                 ignoredGhostCells++;
                 continue;
             }
@@ -168,7 +168,7 @@ size_t propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<sho
             inc.setData(flat.x, flat.y, st);
             numChanged++;
 
-            if (st == SHRT_MAX) {
+            if (st == INT_MAX) {
                 abandonedCells++;
                 continue;
             }
@@ -202,7 +202,7 @@ size_t propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<sho
     }
 
     if (abandonedCells > 0) {
-        printf("warning: gave up propagating %zu cells because they were at upper limit (%d)\n", abandonedCells, SHRT_MAX);
+        printf("warning: gave up propagating %zu cells because they were at upper limit (%d)\n", abandonedCells, INT_MAX);
     }
 
     return numChanged;

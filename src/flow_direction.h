@@ -9,11 +9,11 @@
 
 int dontCross(int k, int i, int j, linearpart<short>& flowDir);
 
-size_t propagateIncrements(linearpart<short>& flowDir, SparsePartition<short>& inc, std::vector<node>& queue);
-size_t propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<short>& inc);
+size_t propagateIncrements(linearpart<short>& flowDir, SparsePartition<int>& inc, std::vector<node>& queue);
+size_t propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<int>& inc);
 
 template<typename T>
-void flowTowardsLower(T& elev, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, SparsePartition<short>& inc)
+void flowTowardsLower(T& elev, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, SparsePartition<int>& inc)
 {
     long nx = flowDir.getnx();
     long ny = flowDir.getny();
@@ -62,7 +62,7 @@ void flowTowardsLower(T& elev, linearpart<short>& flowDir, std::vector<std::vect
 }
 
 template<typename T>
-void flowFromHigher(T& elev, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, SparsePartition<short>& inc)
+void flowFromHigher(T& elev, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, SparsePartition<int>& inc)
 {
     long nx = flowDir.getnx();
     long ny = flowDir.getny();
@@ -104,7 +104,7 @@ void flowFromHigher(T& elev, linearpart<short>& flowDir, std::vector<std::vector
 }
 
 template<typename T>
-int markPits(T& elevDEM, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, SparsePartition<short>& inc)
+int markPits(T& elevDEM, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, SparsePartition<int>& inc)
 {
     int nx = flowDir.getnx();
     int ny = flowDir.getny();
@@ -155,7 +155,7 @@ int markPits(T& elevDEM, linearpart<short>& flowDir, std::vector<std::vector<nod
 }
 
 template<typename T>
-long resolveFlats(T& elevDEM, SparsePartition<short>& inc, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands)
+long resolveFlats(T& elevDEM, SparsePartition<int>& inc, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands)
 {
     long nx = flowDir.getnx();
     long ny = flowDir.getny();
@@ -171,7 +171,7 @@ long resolveFlats(T& elevDEM, SparsePartition<short>& inc, linearpart<short>& fl
     flowTowardsLower(elevDEM, flowDir, islands, inc);
 
     // Drain flats away from higher adjacent terrain
-    SparsePartition<short> s(nx, ny, 0);
+    SparsePartition<int> s(nx, ny, 0);
     
     flowFromHigher(elevDEM, flowDir, islands, s);
 
@@ -179,11 +179,11 @@ long resolveFlats(T& elevDEM, SparsePartition<short>& inc, linearpart<short>& fl
     //
     // higherFlowMax has to be greater than all of the increments
     // higherFlowMax can be maximum value of the data type but it will cause overflow problems if more than one iteration is needed
-    short higherFlowMax = 0;
+    int higherFlowMax = 0;
 
     for (auto& island : islands) {
         for (node flat : island) {    
-            short val = s.getData(flat.x, flat.y);
+            int val = s.getData(flat.x, flat.y);
 
             if (val > higherFlowMax)
                 higherFlowMax = val;
@@ -227,7 +227,7 @@ long resolveFlats(T& elevDEM, SparsePartition<short>& inc, linearpart<short>& fl
 }
 
 template<typename T>
-long resolveFlats_parallel(T& elev, SparsePartition<short>& inc, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands)
+long resolveFlats_parallel(T& elev, SparsePartition<int>& inc, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands)
 {
     int nx = flowDir.getnx();
     int ny = flowDir.getny();
@@ -255,7 +255,7 @@ long resolveFlats_parallel(T& elev, SparsePartition<short>& inc, linearpart<shor
     markPits(elev, flowDir, islands, inc);
 
     // Drain flats away from higher adjacent terrain
-    SparsePartition<short> higherGradient(nx, ny, 0);
+    SparsePartition<int> higherGradient(nx, ny, 0);
    
     flowFromHigher(elev, flowDir, islands, higherGradient);
 
@@ -274,11 +274,11 @@ long resolveFlats_parallel(T& elev, SparsePartition<short>& inc, linearpart<shor
     //
     // higherFlowMax has to be greater than all of the increments
     // higherFlowMax can be maximum value of the data type (e.g. 65535) but it will cause overflow problems if more than one iteration is needed
-    short higherFlowMax = 0;
+    int higherFlowMax = 0;
 
     for (auto& island : islands) {
         for (auto& flat : island) {
-            short val = higherGradient.getData(flat.x, flat.y);
+            int val = higherGradient.getData(flat.x, flat.y);
         
             if (val > higherFlowMax)
                 higherFlowMax = val;
@@ -287,8 +287,8 @@ long resolveFlats_parallel(T& elev, SparsePartition<short>& inc, linearpart<shor
 
     // FIXME: Is this needed? would it affect directions at the border?
     // It is local to a flat area, but can that be reduced further to minimize comm?
-    short globalHigherFlowmax = 0;
-    MPI_Allreduce(&higherFlowMax, &globalHigherFlowmax, 1, MPI_SHORT, MPI_MAX, MCW);
+    int globalHigherFlowmax = 0;
+    MPI_Allreduce(&higherFlowMax, &globalHigherFlowmax, 1, MPI_INT, MPI_MAX, MCW);
 
     size_t badCells = 0;
 
@@ -299,7 +299,7 @@ long resolveFlats_parallel(T& elev, SparsePartition<short>& inc, linearpart<shor
 
             inc.setData(flat.x, flat.y, val + (globalHigherFlowmax - highFlow));
 
-            if (val < 0 || val == SHRT_MAX || highFlow < 0 || highFlow == SHRT_MAX) {
+            if (val < 0 || val == INT_MAX || highFlow < 0 || highFlow == INT_MAX) {
                 badCells++;
             }
         }
