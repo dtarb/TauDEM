@@ -1,6 +1,7 @@
 #ifndef FLOW_DIRECTION_H
 #define FLOW_DIRECTION_H
 
+#include <algorithm>
 #include <vector>
 
 #include "linearpart.h"
@@ -66,10 +67,10 @@ void flowFromHigher(T& elev, linearpart<short>& flowDir, std::vector<std::vector
     long nx = flowDir.getnx();
     long ny = flowDir.getny();
 
+    std::vector<node> highBoundaries;
+
     // Find high boundaries
     for (auto& island : islands) {
-        std::vector<node> highBoundaries;
-
         for (node flat : island) {
             float flatElev = elev.getData(flat.x, flat.y);
             bool highBoundary = false;
@@ -97,9 +98,9 @@ void flowFromHigher(T& elev, linearpart<short>& flowDir, std::vector<std::vector
                 highBoundaries.push_back(flat);
             }
         }
-
-        propagateIncrements(flowDir, inc, highBoundaries);
     }
+
+    propagateIncrements(flowDir, inc, highBoundaries);
 }
 
 template<typename T>
@@ -228,13 +229,13 @@ long resolveFlats(T& elevDEM, SparsePartition<short>& inc, linearpart<short>& fl
 template<typename T>
 long resolveFlats_parallel(T& elev, SparsePartition<short>& inc, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands)
 {
-    long nx = flowDir.getnx();
-    long ny = flowDir.getny();
+    int nx = flowDir.getnx();
+    int ny = flowDir.getny();
 
     int rank;
     MPI_Comm_rank(MCW, &rank);
 
-    int numFlatsChanged = 0, totalNumFlatsChanged = 0;
+    uint64_t numFlatsChanged = 0, totalNumFlatsChanged = 0;
 
     flowTowardsLower(elev, flowDir, islands, inc);
 
@@ -242,10 +243,10 @@ long resolveFlats_parallel(T& elev, SparsePartition<short>& inc, linearpart<shor
         inc.share();
         numFlatsChanged = propagateBorderIncrements(flowDir, inc);
 
-        MPI_Allreduce(&numFlatsChanged, &totalNumFlatsChanged, 1, MPI_INT, MPI_SUM, MCW);
+        MPI_Allreduce(&numFlatsChanged, &totalNumFlatsChanged, 1, MPI_UINT64_T, MPI_SUM, MCW);
 
         if (rank == 0) {
-            printf("PRL: Lower gradient processed %d flats this iteration\n", totalNumFlatsChanged);
+            printf("PRL: Lower gradient processed %llu flats this iteration\n", totalNumFlatsChanged);
         }
     } while(totalNumFlatsChanged > 0);
 
@@ -262,10 +263,10 @@ long resolveFlats_parallel(T& elev, SparsePartition<short>& inc, linearpart<shor
         higherGradient.share();
         numFlatsChanged = propagateBorderIncrements(flowDir, higherGradient);
 
-        MPI_Allreduce(&numFlatsChanged, &totalNumFlatsChanged, 1, MPI_INT, MPI_SUM, MCW);
+        MPI_Allreduce(&numFlatsChanged, &totalNumFlatsChanged, 1, MPI_UINT64_T, MPI_SUM, MCW);
 
         if (rank == 0) {
-            printf("PRL: Higher gradient processed %d flats this iteration\n", totalNumFlatsChanged);
+            printf("PRL: Higher gradient processed %llu flats this iteration\n", totalNumFlatsChanged);
         }
     } while(totalNumFlatsChanged > 0);
 
@@ -285,13 +286,27 @@ long resolveFlats_parallel(T& elev, SparsePartition<short>& inc, linearpart<shor
     }
 
     // FIXME: Is this needed? would it affect directions at the border?
+    // It is local to a flat area, but can that be reduced further to minimize comm?
     short globalHigherFlowmax = 0;
     MPI_Allreduce(&higherFlowMax, &globalHigherFlowmax, 1, MPI_SHORT, MPI_MAX, MCW);
 
+    size_t badCells = 0;
+
     for (auto& island : islands) {
         for (auto flat : island) {
-            inc.addToData(flat.x, flat.y, globalHigherFlowmax - higherGradient.getData(flat.x, flat.y));
+            auto val = inc.getData(flat.x, flat.y);
+            auto highFlow = higherGradient.getData(flat.x, flat.y);
+
+            inc.setData(flat.x, flat.y, val + (globalHigherFlowmax - highFlow));
+
+            if (val < 0 || val == SHRT_MAX || highFlow < 0 || highFlow == SHRT_MAX) {
+                badCells++;
+            }
         }
+    }
+
+    if (badCells > 0) {
+        printf("warning rank %d: %d increment values either incorrect or overflown\n", rank, badCells);
     }
 
     inc.share();

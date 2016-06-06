@@ -87,6 +87,10 @@ size_t propagateIncrements(linearpart<short>& flowDir, SparsePartition<short>& i
         st++;
     }
 
+    if (st > SHRT_MAX) {
+        printf("WARNING: increment overflow during propagation (%d > %d)\n", st, SHRT_MAX);
+    }
+
     return numInc;
 }
 
@@ -157,7 +161,7 @@ size_t propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<sho
           
             // I don't think this is possible anymore, but just in case.
             if (st <= 0) {
-                printf("warning: unexpected non-negative increment @ (%d, %d)\n", flat.x, flat.y);
+                printf("warning: unexpected non-negative increment @ (%d, %d) - %d\n", flat.x, flat.y, -st);
                 continue;
             }
 
