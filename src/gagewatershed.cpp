@@ -234,7 +234,7 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 				/* test if neighbor drains towards cell excluding boundaries */
 				short sdir = flowData->getData(in,jn,tempShort);
 			
-				if(sdir==NULL) 	{ 
+				if(flowData->isNodata(in,jn))	{ 
 					
 					double wi,wj;
 					int gx,gy;  //  Global x and y (col and row) coordinates
