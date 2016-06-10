@@ -354,7 +354,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
 
         if (sharedFlats > 0) {
             SparsePartition<int> inc(nx, ny, 0);
-            size_t lastNumFlat = resolveFlats_parallel(elevDEM, inc, flowDir, borderingIslands);
+            size_t lastNumFlat = resolveFlats_parallel_async(elevDEM, inc, flowDir, borderingIslands);
 
             if (rank==0) {
                 fprintf(stderr, "PRL: Iteration complete. Number of flats remaining: %zu\n", lastNumFlat);
@@ -365,7 +365,7 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
             while (lastNumFlat > 0) {
                 SparsePartition<int> newInc(nx, ny, 0);
 
-                lastNumFlat = resolveFlats_parallel(inc, newInc, flowDir, borderingIslands); 
+                lastNumFlat = resolveFlats_parallel_async(inc, newInc, flowDir, borderingIslands);
                 inc = std::move(newInc);
 
                 if (rank==0) {

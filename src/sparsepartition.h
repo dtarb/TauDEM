@@ -7,6 +7,10 @@
 // rasters that are used sparsely during computation.
 
 #include <cstring>
+
+#include <vector>
+#include <memory>
+
 #include <mpi.h>
 
 const int BLOCK_SIZE_BITS = 8;
@@ -14,8 +18,17 @@ const int BLOCK_SIZE_BITS = 8;
 const int BLOCK_SIZE = 1 << BLOCK_SIZE_BITS;
 const int BLOCK_MASK = ~(BLOCK_SIZE - 1);
 
+class AsyncPartition { 
+    public:
+        virtual void* get_async_buf() = 0;
+        virtual size_t get_async_buf_size() = 0;
+
+        virtual void async_load_buf(bool top, std::vector<int>& changes) = 0;
+        virtual void async_store_buf(bool top) = 0;
+};
+
 template<typename T>
-class SparsePartition {
+class SparsePartition : public AsyncPartition {
     public:
         SparsePartition(T no_data)
         {
@@ -39,6 +52,9 @@ class SparsePartition {
             for(int i = 0; i < blocks_needed; i++) {
                 blocks[i] = nullptr;
             }
+
+            border_buf = std::unique_ptr<T[]>(new T[width_blocks * BLOCK_SIZE]);
+            async_buf = std::unique_ptr<T[]>(new T[width_blocks * BLOCK_SIZE]);
         }
 
         SparsePartition(const SparsePartition& bp) = delete;
@@ -54,6 +70,9 @@ class SparsePartition {
             free_blocks();
             blocks = bp.blocks;
             bp.blocks = nullptr;
+
+            border_buf = std::move(bp.border_buf);
+            async_buf = std::move(bp.async_buf);
 
 			return *this;
         };
@@ -123,6 +142,34 @@ class SparsePartition {
             }
 
             delete[] buf;
+        }
+
+        // Async stuff
+        void* get_async_buf() {
+            return async_buf.get();
+        }
+
+        size_t get_async_buf_size() {
+            return width_blocks * BLOCK_SIZE * sizeof(T);
+        }
+
+        void async_load_buf(bool top, std::vector<int>& changes) {
+            auto y = top ? 0 : height + 1;
+
+            load_border_buf(border_buf.get(), y);
+
+            for (int x = 0; x < width; x++) {
+                if (border_buf[x] != async_buf[x])
+                    changes.push_back(x);
+            }
+
+            store_border_buf(async_buf.get(), y); 
+        }
+
+        void async_store_buf(bool top) {
+            auto y = top ? 1 : height;
+
+            load_border_buf(async_buf.get(), y);
         }
 
     private:
@@ -214,6 +261,9 @@ class SparsePartition {
         T no_data_value;
 
         T** blocks;
+
+        std::unique_ptr<T[]> border_buf;
+        std::unique_ptr<T[]> async_buf;
 };
 
 #endif //SPARSEPARTITION_H
