@@ -486,6 +486,8 @@ class AsyncRasterProcessor
                     border_changes.clear();
                     r->async_load_buf(top, border_changes);
 
+                    comm_bytes_needed += border_changes.size() * sizeof(int);
+
                     bool top_modified = false, bottom_modified = false;
                     raster_update_fns[raster_n](top, border_changes, top_modified, bottom_modified);
 
@@ -530,13 +532,14 @@ class AsyncRasterProcessor
             MPI_Reduce(&total_comms, &global_num_comms, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
             if (rank == 0) {
-                printf("PRL: took %d border transfers - %s\n", global_num_comms, humanReadableSize(global_num_comms * max_border_size).c_str());
+                printf("PRL: took %d border transfers - %s (min needed %s)\n", global_num_comms, humanReadableSize(global_num_comms * max_border_size).c_str(), humanReadableSize(comm_bytes_needed).c_str());
             }
         }
 
     private:
         int rank, size;
         int total_comms = 0;
+        int comm_bytes_needed = 0;
 
         std::unique_ptr<uint8_t[]> mpi_buffer;
         std::unique_ptr<int[]> outstanding_updates;
