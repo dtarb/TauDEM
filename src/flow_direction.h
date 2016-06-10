@@ -492,7 +492,6 @@ class AsyncRasterProcessor
                     raster_update_fns[raster_n](top, border_changes, top_modified, bottom_modified);
 
                     int tag = 101 + raster_n * 2;
-
                     int updates[2] = { -1, -1 };
 
                     // Top neighbor exists
@@ -529,10 +528,13 @@ class AsyncRasterProcessor
             MPI_Buffer_detach(&buf_addr, &buf_size);
 
             int global_num_comms = 0;
+            int global_bytes_needed = 0;
+            
             MPI_Reduce(&total_comms, &global_num_comms, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+            MPI_Reduce(&comm_bytes_needed, &global_bytes_needed, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
             if (rank == 0) {
-                printf("PRL: took %d border transfers - %s (min needed %s)\n", global_num_comms, humanReadableSize(global_num_comms * max_border_size).c_str(), humanReadableSize(comm_bytes_needed).c_str());
+                printf("PRL: took %d border transfers - %s (min needed %s)\n", global_num_comms, humanReadableSize(global_num_comms * max_border_size).c_str(), humanReadableSize(global_bytes_needed).c_str());
             }
         }
 
