@@ -356,19 +356,9 @@ class AsyncRasterProcessor
             MPI_Comm_rank(MPI_COMM_WORLD, &rank);
             MPI_Comm_size(MPI_COMM_WORLD, &size);
        
-            // FIXME: Pick a good size. Depends on mpi ranks and geometry.
-            // FIXME: block if buffer is full?
-
-
             if (rank == 0) {
                 outstanding_updates = std::unique_ptr<int[]>(new int[size]);
             }
-
-            // Setup requests
-        }
-
-        ~AsyncRasterProcessor() {
-
         }
 
         void add(AsyncPartition* raster, update_fn fn) {
@@ -474,23 +464,15 @@ class AsyncRasterProcessor
                                 MPI_Request_free(&req);
                             }
 
-                            // Detach our MPI buffer
-                            void* buf_addr;
-                            int buf_size;
-                            MPI_Buffer_detach(&buf_addr, &buf_size);
-                            return;
+                            break;
                         }
                     } else {
                         // Root signaled global completion - we are done.
- 
-                        // Detach our MPI buffer
-                        void* buf_addr;
-                        int buf_size;
-                        MPI_Buffer_detach(&buf_addr, &buf_size);
-                        return;
+                        break;
                     }
                 } else if (status.MPI_TAG > 100) {
                     // Border update
+                    total_comms++;
                     int raster_n = (status.MPI_TAG - 101) / 2;
                     int top = (status.MPI_TAG - 101) % 2;
 
@@ -538,10 +520,23 @@ class AsyncRasterProcessor
                     printf("%d: unrecognized tag %d from %d\n", rank, status.MPI_TAG, status.MPI_SOURCE);
                 }
             }
+
+            // Detach our MPI buffer
+            void* buf_addr;
+            int buf_size;
+            MPI_Buffer_detach(&buf_addr, &buf_size);
+
+            int global_num_comms = 0;
+            MPI_Reduce(&total_comms, &global_num_comms, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+
+            if (rank == 0) {
+                printf("PRL: took %d border transfers - %s\n", global_num_comms, humanReadableSize(global_num_comms * max_border_size).c_str());
+            }
         }
 
     private:
         int rank, size;
+        int total_comms = 0;
 
         std::unique_ptr<uint8_t[]> mpi_buffer;
         std::unique_ptr<int[]> outstanding_updates;
