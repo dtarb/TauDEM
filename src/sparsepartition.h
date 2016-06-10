@@ -223,9 +223,7 @@ class SparsePartition : public AsyncPartition {
                 // Create new block
                 block_data = new T[BLOCK_SIZE * BLOCK_SIZE];
 
-                for(int i = 0; i < BLOCK_SIZE*BLOCK_SIZE; i++) {
-                    block_data[i] = no_data_value;
-                }
+                std::fill(block_data, block_data + BLOCK_SIZE*BLOCK_SIZE, no_data_value);
 
                 blocks[id] = block_data;
             }

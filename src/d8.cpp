@@ -259,21 +259,6 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
     t.start("Resolve flats");
 
     if (totalNumFlat > 0) {
-        std::vector<node> flats;
-
-        t.start("Add flats");
-
-        // FIXME: Should do this during slope calculation
-        for (int j=0; j<ny; j++) {
-            for (int i=0; i<nx; i++) {
-                if (flowDir.getData(i,j)==0) {
-                    flats.push_back(node(i, j));
-                }
-            }
-        }
-
-        t.end("Add flats");
-
         if (rank == 0) {
             fprintf(stderr, "Finding flat islands...\n");
         }
@@ -289,46 +274,57 @@ int setdird8(char* demfile, char* pointfile, char *slopefile, char *flowfile, in
             SparsePartition<int> island_marker(nx, ny, 0);
             std::vector<node> q;
 
-            for(node flat : flats)
-            {
-                if (island_marker.getData(flat.x, flat.y) != 0) {
-                    continue;
-                }
+            std::vector<node> temp_vector;
 
-                q.push_back(flat);
+            for (int j=0; j<ny; j++) {
+                for(int i=0; i<nx; i++) {
+                    if (flowDir.getData(i, j) != 0) {
+                        continue;
+                    }
 
-                int label = ++numIslands;
-                islands.push_back(std::vector<node>());
-
-                while(!q.empty()) {
-                    node flat = q.back();
-                    q.pop_back();
+                    node flat(i, j);
 
                     if (island_marker.getData(flat.x, flat.y) != 0) {
                         continue;
                     }
 
-                    island_marker.setData(flat.x, flat.y, label);
-                    islands[label - 1].push_back(flat);
+                    q.push_back(flat);
 
-                    for (int k=1; k<=8; k++) {
-                        //if neighbor is in flat
-                        int in = flat.x + d1[k];
-                        int jn = flat.y + d2[k];
+                    int label = ++numIslands;
 
-                        if ((jn == -1 || jn == ny) && flowDir.hasAccess(in, jn)) {
-                            if (flowDir.getData(in, jn) == 0)
-                            {
-                                bordering_island_labels.insert(label);
-                            }
+                    while(!q.empty()) {
+                        node flat = q.back();
+                        q.pop_back();
+
+                        if (island_marker.getData(flat.x, flat.y) != 0) {
+                            continue;
                         }
 
-                        if (!flowDir.isInPartition(in, jn))
-                            continue;
+                        island_marker.setData(flat.x, flat.y, label);
+                        temp_vector.push_back(flat);
 
-                        if (flowDir.getData(in, jn) == 0)
-                            q.push_back(node(in, jn));
+                        for (int k=1; k<=8; k++) {
+                            //if neighbor is in flat
+                            int in = flat.x + d1[k];
+                            int jn = flat.y + d2[k];
+
+                            if ((jn == -1 || jn == ny) && flowDir.hasAccess(in, jn)) {
+                                if (flowDir.getData(in, jn) == 0)
+                                {
+                                    bordering_island_labels.insert(label);
+                                }
+                            }
+
+                            if (!flowDir.isInPartition(in, jn))
+                                continue;
+
+                            if (flowDir.getData(in, jn) == 0)
+                                q.push_back(node(in, jn));
+                        }
                     }
+                    
+                    islands.push_back(std::vector<node>(temp_vector));
+                    temp_vector.clear();
                 }
             }
         }
