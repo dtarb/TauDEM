@@ -46,66 +46,35 @@ email:  dtarb@usu.edu
 #include "tiffIO.h"
 #include <math.h>
 #include "Node.h"
-using namespace std;
+
+#include "flow_direction.h"
+
+struct Dinf {
+    typedef float FlowType;
+
+    static bool HasFlow(FlowType x) {
+        return x >= 0.0;
+    }
+
+    template<typename E>
+    static void SetFlow(int x, int y, linearpart<FlowType>& flowDir, E& elev, SparsePartition<int>& inc) {
+        double tempdxc, tempdyc;
+        flowDir.getdxdyc(y, tempdxc, tempdyc);
+
+        float DXX[3] = {0, tempdxc, tempdyc};//tardemlib.cpp ln 1291
+	    float DD = sqrt(tempdxc*tempdxc+tempdyc*tempdyc);//tardemlib.cpp ln 1293
+
+		SET2(y, x, DXX, DD, elev, inc, flowDir);
+    }
+};
 
 //double fact[9];
 double **fact;
 
 //int setPosDirDinf(tdpartition *elevDEM, tdpartition *flowDir, tdpartition *slope, tdpartition *area, int useflowfile);
-long setPosDirDinf(tdpartition *elevDEM, tdpartition *flowDir, tdpartition *slope, int useflowfile);
-long resolveflats( tdpartition *elevDEM, tdpartition *flowDir, queue<node> *que, bool &first);
-//Checks if cells cross
-int dontCross( int k, int i, int j, tdpartition *flowDir) {
-	long n1, n2, c1, c2, ans=0;
-	long in1,jn1,in2,jn2;
-	short tempShort;
-	float tempFloat;
-	switch(k){
-		case 2:
-			n1=1; c1=4; n2=3; c2=8;
-			in1=i+d1[n1];
-			jn1=j+d2[n1];
-			in2=i+d1[n2];
-			jn2=j+d2[n2];
-			if( (flowDir->getData(in1,jn1,tempFloat)) == c1 || (flowDir->getData(in2,jn2,tempFloat)) == c2)
-				ans=1;
-                	break;
- 		case 4:
-			n1=3; c1=6; n2=5; c2=2;
-			in1=i+d1[n1];
-			jn1=j+d2[n1];
-			in2=i+d1[n2];
-			jn2=j+d2[n2];
-			if( (flowDir->getData(in1,jn1,tempFloat)) == c1 || (flowDir->getData(in2,jn2,tempFloat)) == c2)
-                   		ans=1;
-                	break;
-          	case 6:
-                	n1=7; c1=4; n2=5; c2=8;
-			in1=i+d1[n1];
-			jn1=j+d2[n1];
-			in2=i+d1[n2];
-			jn2=j+d2[n2];
-			if( (flowDir->getData(in1,jn1,tempFloat) == c1 ) )
-                   		ans=1;
-			if (flowDir->getData(in2,jn2,tempFloat) == c2 )
-                   		ans=1;
-                	break;
-          	case 8:
-			n1=1; c1=6; n2=7; c2=2;
-			in1=i+d1[n1];
-			jn1=j+d2[n1];
-			in2=i+d1[n2];
-			jn2=j+d2[n2];
-			if( (flowDir->getData(in1,jn1,tempFloat)) == c1 || (flowDir->getData(in2,jn2,tempFloat)) == c2)
-                        	ans=1;
-                	break;
-		default: break;
-	}
-	return(ans);
-}
-
+long setPosDirDinf(linearpart<float>& elevDEM, linearpart<float>& flowDir, linearpart<float>& slope, int useflowfile);
+    
 //Set positive flowdirections of elevDEM
-
 int setdir( char* demfile, char* angfile, char *slopefile, char *flowfile, int useflowfile) {
 
 	MPI_Init(NULL,NULL);{
@@ -130,14 +99,13 @@ int setdir( char* demfile, char* angfile, char *slopefile, char *flowfile, int u
 	double dxA = dem.getdxA();
 	double dyA = dem.getdyA();
 	
-	
-	tdpartition *elevDEM;
-	elevDEM = CreateNewPartition(dem.getDatatype(), totalX, totalY, dxA, dyA, dem.getNodata());
+    linearpart<float> elevDEM(totalX, totalY, dxA, dyA, MPI_FLOAT, *(float *) dem.getNodata());
+
 	int xstart, ystart;
-	int nx = elevDEM->getnx();
-	int ny = elevDEM->getny();
-	elevDEM->localToGlobal(0, 0, xstart, ystart);
-	elevDEM->savedxdyc(dem);
+	int nx = elevDEM.getnx();
+	int ny = elevDEM.getny();
+	elevDEM.localToGlobal(0, 0, xstart, ystart);
+	elevDEM.savedxdyc(dem);
 	double headert = MPI_Wtime();
 
 	if(rank==0)
@@ -149,15 +117,17 @@ int setdir( char* demfile, char* angfile, char *slopefile, char *flowfile, int u
 		fflush(stderr);
 	}
 
-
-	dem.read(xstart, ystart, ny, nx, elevDEM->getGridPointer());
-	elevDEM->share();
+	dem.read(xstart, ystart, ny, nx, elevDEM.getGridPointer());
+	elevDEM.share();
 
 	double readt = MPI_Wtime();
 	
 	//Creates empty partition to store new flow direction 
-	tdpartition *flowDir;
-	flowDir = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
+	
+	//tdpartition *flowDir;
+	//flowDir = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
+	linearpart<float> flowDir(totalX, totalY, dxA, dyA, MPI_FLOAT, MISSINGFLOAT);
+    flowDir.savedxdyc(dem);
 
 	//If using flowfile is enabled, read it in
 	//tdpartition *imposedflow, *area;
@@ -197,19 +167,20 @@ int setdir( char* demfile, char* angfile, char *slopefile, char *flowfile, int u
 	//Creates empty partition to store new slopes
 	long numFlat, totalNumFlat, lastNumFlat;
 	double computeSlopet;
-	{
-	tdpartition *slope;
-	float slopeNodata = -1.0f;
-	slope = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, slopeNodata);
 
-	//numFlat = setPosDirDinf(elevDEM, flowDir, slope, area, useflowfile);
-	numFlat = setPosDirDinf(elevDEM, flowDir, slope, useflowfile);
+    {
+        float slopeNodata = -1.0f;
 
-	//Stop timer
-	computeSlopet = MPI_Wtime();
-	tiffIO slopeIO(slopefile, FLOAT_TYPE, &slopeNodata, dem);
-	slopeIO.write(xstart, ystart, ny, nx, slope->getGridPointer());
-	}  // This bracket intended to destruct slope partition and release memory
+        linearpart<float> slope(totalX, totalY, dxA, dyA, MPI_FLOAT, slopeNodata);
+        numFlat = setPosDirDinf(elevDEM, flowDir, slope, useflowfile);
+
+        //Stop timer
+        computeSlopet = MPI_Wtime();
+        tiffIO slopeIO(slopefile, FLOAT_TYPE, &slopeNodata, dem);
+        slopeIO.write(xstart, ystart, ny, nx, slope.getGridPointer());
+    }  // This bracket intended to destruct slope partition and release memory
+
+    flowDir.share();
 
 	double writeSlopet = MPI_Wtime();
 
@@ -220,31 +191,78 @@ int setdir( char* demfile, char* angfile, char *slopefile, char *flowfile, int u
 		fflush(stderr);
 	}
 
-	queue<node> que;  //  que to be used in resolveflats
-	bool first=true;  //  Variable to be used in iteration to know whether first or subsequent iteration
-	if( totalNumFlat > 0)
-	{
-		lastNumFlat=totalNumFlat;
-		totalNumFlat = resolveflats(elevDEM, flowDir, &que, first);  
-		//Repeatedly call resolve flats until there is no change 
-		while(totalNumFlat > 0  && totalNumFlat < lastNumFlat)
-		{
-			if(rank==0)
-			{
-				fprintf(stderr,"Iteration complete. Number of flats remaining: %ld\n",totalNumFlat);
-				fflush(stderr);
-			}
-			lastNumFlat=totalNumFlat;
-			totalNumFlat = resolveflats(elevDEM, flowDir, &que, first);
-		}
-	}
+    vector<vector<node>> localIslands, sharedIslands;
+    findIslands<Dinf>(flowDir, localIslands, sharedIslands); 
+
+    uint64_t localSharedFlats = 0, sharedFlats = 0;
+    for (auto& island : sharedIslands) {
+        localSharedFlats += island.size();
+    }
+
+    //t.start("Resolve shared flats");
+    MPI_Allreduce(&localSharedFlats, &sharedFlats, 1, MPI_UINT64_T, MPI_SUM, MCW);
+
+    if (rank == 0 && size > 1) {
+        fprintf(stderr, "Processing partial flats\n");
+
+        printf("PRL: %llu flats shared across processors (%llu local -> %.2f%% shared)\n",
+                sharedFlats, totalNumFlat - sharedFlats, 100. * sharedFlats / totalNumFlat);
+    }
+
+    if (sharedFlats > 0) {
+        SparsePartition<int> inc(nx, ny, 0);
+        size_t lastNumFlat = resolveFlats_parallel_async<Dinf>(elevDEM, inc, flowDir, sharedIslands);
+
+        if (rank==0) {
+            fprintf(stderr, "PRL: Iteration complete. Number of flats remaining: %zu\n", lastNumFlat);
+            fflush(stderr);
+        }
+
+        // Repeatedly call resolve flats until there is no change across all processors
+        while (lastNumFlat > 0) {
+            SparsePartition<int> newInc(nx, ny, 0);
+
+            lastNumFlat = resolveFlats_parallel_async<Dinf>(inc, newInc, flowDir, sharedIslands);
+            inc = std::move(newInc);
+
+            if (rank==0) {
+                fprintf(stderr, "PRL: Iteration complete. Number of flats remaining: %zu\n", lastNumFlat);
+                fflush(stderr);
+            }
+        }
+    }
+    //t.end("Resolve shared flats");
+
+    if (!localIslands.empty()) {
+            SparsePartition<int> inc(nx, ny, 0);
+            size_t lastNumFlat = resolveFlats<Dinf>(elevDEM, inc, flowDir, localIslands);
+
+            if (rank==0) {
+                fprintf(stderr, "Iteration complete. Number of flats remaining: %zu\n\n", lastNumFlat);
+                fflush(stderr);
+            }
+
+            // Repeatedly call resolve flats until there is no change
+            while (lastNumFlat > 0)
+            {
+                SparsePartition<int> newInc(nx, ny, 0);
+
+                lastNumFlat = resolveFlats<Dinf>(inc, newInc, flowDir, localIslands); 
+                inc = std::move(newInc);
+
+                if (rank==0) {
+                    fprintf(stderr, "Iteration complete. Number of flats remaining: %zu\n\n", lastNumFlat);
+                    fflush(stderr);
+                }
+            } 
+        }
 
 	//Timing info
 	double computeFlatt = MPI_Wtime();
 //	printf("Before angwrite rank: %d\n",rank);
 	float flowDirNodata=MISSINGFLOAT;
 	tiffIO flowIO(angfile, FLOAT_TYPE, &flowDirNodata, dem);
-	flowIO.write(xstart, ystart, ny, nx, flowDir->getGridPointer());
+	flowIO.write(xstart, ystart, ny, nx, flowDir.getGridPointer());
 
 	double writet = MPI_Wtime();
 
@@ -310,17 +328,16 @@ void   VSLOPE(float E0,float E1, float E2,
 	else
 		*S= (float) sqrt(S1*S1+S2*S2);
 }
+
 // Sets only flowDir only where there is a positive slope
 // Returns number of cells which are flat
-
-void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition *flowDir, tdpartition *slope)
+void  SET2(int I, int J,float *DXX,float DD, linearpart<float>& elevDEM, linearpart<float>& flowDir, linearpart<float>& slope)
 {
-	double dxA = elevDEM->getdxA();
-	double dyA = elevDEM->getdyA();
+	double dxA = elevDEM.getdxA();
+	double dyA = elevDEM.getdyA();
 	float SK[9];
 	float ANGLE[9];
 	float SMAX;
-	float tempFloat;
 	int K;
 	int KD;
 
@@ -337,9 +354,9 @@ void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition 
 	for(K=1; K<=8; K++)
 	{
 		VSLOPE(
-			elevDEM->getData(J,I,tempFloat),//felevg.d[J][I],
-			elevDEM->getData(J+J1[K],I+I1[K],tempFloat),//[felevg.d[J+J1[K]][I+I1[K]],
-			elevDEM->getData(J+J2[K],I+I2[K],tempFloat),//felevg.d[J+J2[K]][I+I2[K]],
+			elevDEM.getData(J,I),//felevg.d[J][I],
+			elevDEM.getData(J+J1[K],I+I1[K]),//[felevg.d[J+J1[K]][I+I1[K]],
+			elevDEM.getData(J+J2[K],I+I2[K]),//felevg.d[J+J2[K]][I+I2[K]],
 			DXX[ID1[K]],
 			DXX[ID2[K]],
 			DD,
@@ -347,10 +364,9 @@ void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition 
 			&ANGLE[K]
 		);
 	}
-	tempFloat = -1;
 	SMAX=0.;
 	KD=0;
-	flowDir->setData(J,I,tempFloat);  //USE -1 TO INDICATE DIRECTION NOT YET SET 
+	flowDir.setData(J,I, -1);  //USE -1 TO INDICATE DIRECTION NOT YET SET 
 	for(K=1; K<=8; K++)
 	{
 		if(SK[K] >  SMAX)
@@ -362,13 +378,15 @@ void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition 
 
 	if(KD  > 0)
 	{
-		tempFloat = (float) (ANGC[KD]*(PI/2)+ANGF[KD]*ANGLE[KD]) ;
-		flowDir->setData(J,I,tempFloat);//set to angle
+		float flowAngle = ANGC[KD]*(PI/2)+ANGF[KD]*ANGLE[KD];
+		flowDir.setData(J,I, flowAngle);//set to angle
 	}
-	slope->setData(J,I,SMAX);
+	slope.setData(J,I,SMAX);
 }
+
 //Overloaded SET2 for use in resolve flats when slope is no longer recorded.  Also uses artificial elevations and actual elevations
-void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition *elev2, tdpartition *flowDir, tdpartition *dn)
+template<typename T>
+void  SET2(int I, int J,float *DXX,float DD, T& elevDEM, SparsePartition<int>& inc, linearpart<float>& flowDir)
 {
 	float SK[9];
 	float ANGLE[9];
@@ -390,12 +408,22 @@ void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition 
 
 	for(K=1; K<=8; K++)
 	{
-		dn->getData(J+J1[K],I+I1[K],tempShort1);//Check each square to see if it is in the flat.  If it is in the flat, use artifical elevations if not use real elevations
-		dn->getData(J+J2[K],I+I2[K],tempShort2);//dn = 0 if it is not in the flat.  dn = 1 if in flat.
+        if (!flowDir.hasAccess(J + J1[K], I+I1[K])) {
+            continue;
+        }
+        
+        if (!flowDir.hasAccess(J + J2[K], I+I2[K])) {
+            continue;
+        }
+
+        tempShort1 = inc.getData(J+J1[K], I+I1[K]) > 0;
+        tempShort2 = inc.getData(J+J2[K], I+I2[K]) > 0;
+
 		if(tempShort1 <= 0 && tempShort2 <= 0) { //Both E1 and E2 are outside the flat get slope and angle
-			float a=elevDEM->getData(J,I,tempFloat);
-			float b=elevDEM->getData(J+J1[K],I+I1[K],tempFloat);
-			float c=elevDEM->getData(J+J2[K],I+I2[K],tempFloat);
+			float a=elevDEM.getData(J,I);
+			float b=elevDEM.getData(J+J1[K],I+I1[K]);
+			float c=elevDEM.getData(J+J2[K],I+I2[K]);
+
 			VSLOPE(
 				a,//E0
 				b,//E1
@@ -424,8 +452,8 @@ void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition 
 			}
 
 		}else if(tempShort1 <= 0 && tempShort2 >0){//E1 is outside of the flat and E2 is inside the flat. Use DEM elevations. tempShort2/E2 is in the artificial grid
-			float a=elevDEM->getData(J,I,tempFloat);
-			float b=elevDEM->getData(J+J1[K],I+I1[K],tempFloat);
+			float a=elevDEM.getData(J,I);
+			float b=elevDEM.getData(J+J1[K],I+I1[K]);
 
 			if(a>=b)
 			{
@@ -434,9 +462,9 @@ void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition 
 				KD=K;
 				break;
 			}
-			short a1=elev2->getData(J,I,tempShort);
-			short c1=elev2->getData(J+J2[K],I+I2[K],tempShort);
-			short b1=max(a1,c1);
+			int a1=inc.getData(J,I);
+			int c1=inc.getData(J+J2[K],I+I2[K]);
+			int b1=std::max(a1,c1);
 			VSLOPE(
 				(float)a1,//felevg.d[J][I],
 				(float)b1,//[felevg.d[J+J1[K]][I+I1[K]],
@@ -452,9 +480,9 @@ void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition 
 				KD=K;
 			}
 		}else if(tempShort1 > 0 && tempShort2 <= 0){//E2 is out side of the flat and E1 is inside the flat, use DEM elevations
-			float a=elevDEM->getData(J,I,tempFloat);
+			float a=elevDEM.getData(J,I);
 			//float b=elevDEM->getData(J+J1[K],I+I1[K],tempFloat);
-			float c=elevDEM->getData(J+J2[K],I+I2[K],tempFloat);
+			float c=elevDEM.getData(J+J2[K],I+I2[K]);
 			if(a>=c) 
 			{
 				if(!diagOutFound)
@@ -467,9 +495,10 @@ void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition 
 			}
 			else
 			{
-				short a1=elev2->getData(J,I,tempShort);
-				short b1=elev2->getData(J+J1[K],I+I1[K],tempShort);
-				short c1=max(a1,b1);
+				int a1=inc.getData(J,I);
+				int b1=inc.getData(J+J1[K],I+I1[K]);
+				int c1=std::max(a1,b1);
+
 				VSLOPE(
 					(float)a1,//felevg.d[J][I],
 					(float)b1,//[felevg.d[J+J1[K]][I+I1[K]],
@@ -487,10 +516,10 @@ void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition 
 
 			}
 		}else{//Both E1 and E2 are in the flat. Use artificial elevation to get slope and angle
-			short a, b,c;
-			a = elev2->getData(J,I,a);
-			b = elev2->getData(J+J1[K],I+I1[K],b);
-			c = elev2->getData(J+J2[K],I+I2[K],c);
+			int a, b, c;
+			a = inc.getData(J,I);
+			b = inc.getData(J+J1[K],I+I1[K]);
+			c = inc.getData(J+J2[K],I+I2[K]);
 			VSLOPE(
 				(float)a,//felevg.d[J][I],
 				(float)b,//[felevg.d[J+J1[K]][I+I1[K]],
@@ -509,26 +538,26 @@ void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition 
 	}
 	//USE -1 TO INDICATE DIRECTION NOT YET SET, 
 	// but only for non pit grid cells.  Pits will have flowDir as no data
-	if(!flowDir->isNodata(J,I))
+	if(!flowDir.isNodata(J,I))
 	{
-		tempFloat = -1;
-		flowDir->setData(J,I,tempFloat);  
+		flowDir.setData(J,I, -1.0);  
 	}
 
 	if(KD  > 0 )//We have a flow direction.  Calculate the Angle and save/write it.
 	{
 		tempFloat = (float) (ANGC[KD]*(PI/2)+ANGF[KD]*ANGLE[KD]);//Calculate the Angle
+
 		if(tempFloat >= 0.0)//Make sure the angle is positive
-			flowDir->setData(J,I,tempFloat);//set the angle in the flowPartition
+			flowDir.setData(J,I,tempFloat);//set the angle in the flowPartition
 	}
 }
+
 //int setPosDirDinf(tdpartition *elevDEM, tdpartition *flowDir, tdpartition *slope, tdpartition *area, int useflowfile)
-long setPosDirDinf(tdpartition *elevDEM, tdpartition *flowDir, tdpartition *slope, int useflowfile) {
-	double dxA = elevDEM->getdxA();
-	double dyA = elevDEM->getdyA();
-	long nx = elevDEM->getnx();
-	long ny = elevDEM->getny();
-	float tempFloat;double tempdxc,tempdyc;
+long setPosDirDinf(linearpart<float>& elevDEM, linearpart<float>& flowDir, linearpart<float>& slope, int useflowfile) {
+	double dxA = elevDEM.getdxA();
+	double dyA = elevDEM.getdyA();
+	long nx = elevDEM.getnx();
+	long ny = elevDEM.getny();
 	int i,j,k,in,jn, con;
 	long numFlat = 0;
 
@@ -537,18 +566,11 @@ long setPosDirDinf(tdpartition *elevDEM, tdpartition *flowDir, tdpartition *slop
 	//	fact[k] = (double) (1./sqrt(d1[k]*dx*d1[k]*dx + d2[k]*d2[k]*dy*dy));
 	//}
 
-	
-
-
-
-	tempFloat = 0;
 	for( j = 0; j < ny; j++) {
 		for( i=0; i < nx; i++ ) {
-
-		
 			//FlowDir is nodata if it is on the border OR elevDEM has no data
-			if ( elevDEM->isNodata(i,j) || !elevDEM->hasAccess(i-1,j) || !elevDEM->hasAccess(i+1,j) || 
-						!elevDEM->hasAccess(i,j-1) || !elevDEM->hasAccess(i,j+1) )  {
+			if ( elevDEM.isNodata(i,j) || !elevDEM.hasAccess(i-1,j) || !elevDEM.hasAccess(i+1,j) || 
+						!elevDEM.hasAccess(i,j-1) || !elevDEM.hasAccess(i,j+1) )  {
 				//do nothing			
 			}
 			else { 
@@ -558,268 +580,32 @@ long setPosDirDinf(tdpartition *elevDEM, tdpartition *flowDir, tdpartition *slop
 				for( k=1;k<=8 && con != -1;k++) {
 					in=i+d1[k];
 					jn=j+d2[k];
-					if( elevDEM->isNodata(in,jn) ) con=-1;
+					if( elevDEM.isNodata(in,jn) ) con=-1;
 				}
-				if( con == -1 ) flowDir->setToNodata(i,j);
+				if( con == -1 ) flowDir.setToNodata(i,j);
 				//If cell is not contaminated,
 				else {
-					tempFloat= -1.;
-					flowDir->setData(i,j,tempFloat);//set to -1
-					elevDEM->getdxdyc(j,tempdxc,tempdyc);
+					flowDir.setData(i, j, -1.0);
+	
+	                double tempdxc,tempdyc;
+					elevDEM.getdxdyc(j,tempdxc,tempdyc);
 		        
-					
-					float DXX[3] = {0,tempdxc,tempdyc};//tardemlib.cpp ln 1291
+					float DXX[3] = {0, tempdxc, tempdyc};//tardemlib.cpp ln 1291
 					float DD = sqrt(tempdxc*tempdxc+tempdyc*tempdyc);//tardemlib.cpp ln 1293
-					SET2(j,i,DXX,DD, elevDEM,flowDir,slope);//i=y in function form old code j is x switched on purpose
+					
+					SET2(j,i,DXX,DD, elevDEM, flowDir, slope);//i=y in function form old code j is x switched on purpose
 					//  Use SET2 from serial code here modified to get what it has as felevg.d from elevDEM partition
 					//  Modify to return 0 if there is a 0 slope.  Modify SET2 to output flowDIR as no data (do nothing 
 					//  if verified initialization to nodata) and 
 					//  slope as 0 if a positive slope is not found
 
 					//setFlow( i,j, flowDir, elevDEM, area, useflowfile);
-					if( flowDir->getData(i,j,tempFloat)==-1)
+					if(flowDir.getData(i,j)==-1)
 						numFlat++;
 				}
 			}	
 		}
 	}
+
 	return numFlat;
-}
-
-//Resolve flat cells according to Garbrecht and Martz
-long resolveflats( tdpartition *elevDEM, tdpartition *flowDir, queue<node> *que, bool &first) {
-	elevDEM->share();
-	flowDir->share();
-	//Header data
-	long totalx = elevDEM->gettotalx();
-	long totaly = elevDEM->gettotaly();
-	long nx = elevDEM->getnx();
-	long ny = elevDEM->getny();
-	double dxA = elevDEM->getdxA();
-	double dyA = elevDEM->getdyA();
-
-	int rank;
-	MPI_Comm_rank(MCW,&rank);
-
-	long i,j,k,in,jn;
-	bool doNothing, done; double tempdxc,tempdyc;
-	long numFlat;
-	short tempShort;
-	int32_t tempLong;
-	float tempFloat;
-	long numInc, numIncOld, numIncTotal;
-
-	//create and initialize temporary storage for Garbrecht and Martz
-	tdpartition *elev2, *dn, *s;
-	elev2 = CreateNewPartition(SHORT_TYPE, totalx, totaly, dxA, dyA, 1);
-	   //  The assumption here is that resolving a flat does not increment a cell value 
-	   //  more than fits in a short
-	dn = CreateNewPartition(SHORT_TYPE, totalx, totaly, dxA, dyA, 0);
-
-	node temp;
-	long nflat=0, iflat;
-	//  First time through add flat grid cells indicated by flowdir = 0 on to queue
-	//  The queue is retained for later passes so this only needs be done at beginning
-	if(first)
-	{
-		first=false;
-		for(j=0; j<ny; j++){
-			for(i=0; i<nx; i++){
-				if(!flowDir->isNodata(i,j))
-				{
-					if(flowDir->getData(i,j,tempFloat) < 0.0)
-					{
-						temp.x=i; temp.y=j; que->push(temp);
-					}
-				}
-			}
-		}
-	}
- 	nflat=que->size();
-	dn->share();
-	elev2->share();
-
-	//incfall - drain toward lower ground
-	// Setting up while loop to calculate elev2 - the grid draining to lower ground
-	done = false;
-	numIncOld = -1; //holds number of grid cells incremented on previous iteration 
-	//  use -1 to force inequality on first pass through
-	short st = 1; // used to indicate the level to which elev2 has been incremented 
-	float elevDiff;
-	numIncTotal = 0; 
-	if(rank==0)
-	{
-		fprintf(stderr,"Draining flats towards lower adjacent terrain\n");  
-		fflush(stderr);
-	}
-
-	while(numIncTotal != numIncOld){  // Continue to loop as long as grid cells are being incremented
-		numInc = 0;
-		numIncOld = numIncTotal;
-		for(iflat=0; iflat < nflat; iflat++)
-		{
-			temp=que->front(); que->pop(); i=temp.x; j=temp.y; que->push(temp);
-
-				doNothing=false;
-				for(k=1; k<=8; k++){
-					if(dontCross(k,i,j, flowDir)==0){
-						jn = j + d2[k];
-						in = i + d1[k];
-					elevDiff = elevDEM->getData(i,j,tempFloat) - elevDEM->getData(in,jn,tempFloat);// get elevations and elevation difference.
-					flowDir->getData(in,jn,tempFloat); //get current flow direction...
-					if(elevDiff >= 0 && tempFloat >= 0.0) //adjacent cell drains and is equal or lower in elevation so this is a low boundary
-						doNothing = true;//I don't have to do anything move on...
-					else if(elevDiff == 0) //if neighbor is in flat
-						if(elev2->getData(in,jn,tempShort) >=0 && elev2->getData(in,jn,tempShort)<st) //neighbor is not being incremented
-							doNothing = true;//I don't have to do anything
-				}
-			}
-			if(!doNothing){//if I still have to do something...
-				elev2->addToData(i,j,short(1));//increment the s partition in this cell by one.
-					numInc++;
-				}
-		}
-
-		elev2->share();
-		MPI_Allreduce(&numInc, &numIncTotal, 1, MPI_LONG, MPI_SUM, MCW);
-		//  only break from while when total from all processes is no longer converging
-		st++;
-		if(rank==0)
-		{
-			fprintf(stderr,".");  // print a . at each pass to give an indication of progress
-			fflush(stderr);
-		}
-	}
-	if(numIncTotal > 0)  // Not all grid cells were resolved - pits remain
-		// Remaining grid cells are unresolvable pits
-	{
-//			There are pits remaining - set direction to no data
-		for(iflat=0; iflat < nflat; iflat++)
-		{
-			temp=que->front(); que->pop(); i=temp.x; j=temp.y; que->push(temp);
-			doNothing=false;
-				for(k=1; k<=8; k++){
-					if(dontCross(k,i,j, flowDir)==0){
-						jn = j + d2[k];
-						in = i + d1[k];
-						elevDiff = elevDEM->getData(i,j,tempFloat) - elevDEM->getData(in,jn,tempFloat);
-						flowDir->getData(in,jn,tempFloat); 
-						if(elevDiff >= 0 && tempFloat >= 0.) //adjacent cell drains and is equal or lower in elevation so this is a low boundary
-								doNothing = true;
-						else if(elevDiff == 0) //if neighbor is in flat
-							if(elev2->getData(in,jn,tempShort) >=0 && elev2->getData(in,jn,tempShort)<st) //neighbor is not being incremented
-								doNothing = true;
-					}
-				}
-				if(!doNothing)
-					flowDir->setData(i,j,MISSINGFLOAT);  // mark pit
-			}
-			flowDir->share();
-		
-		//numIncOld = numIncTotal;
-		//int total = 0;
-		//	MPI_Allreduce(&allDone, &total, 1, MPI_INT, MPI_SUM, MCW);//see if anybody as done any work.
-		//if(total != 0)//Somebody did some work.
-		//	done = false;
-		//if(numIncOld == 0)//Nobody did any work! we are done.
-		//	done = true;
-	}
-	//  DGT moved from above - write directly into elev2
-	s = CreateNewPartition(SHORT_TYPE, totalx, totaly, dxA, dyA, 0);  //  Use 0 as no data to avoid need to initialize
-
-	//incrise - drain away from higher ground
-	done = false;
-	numIncOld = 0;
-	if(rank==0)
-	{
-		fprintf(stderr,"\nDraining flats away from higher adjacent terrain\n");  
-		fflush(stderr);
-	}
-
-	while(!done){
-		numInc = 0;
-		for(iflat=0; iflat < nflat; iflat++)
-		{
-				temp=que->front(); que->pop(); i=temp.x; j=temp.y; que->push(temp);
-				for(k=1; k<=8; k++){
-					jn = j + d2[k];
-					in = i + d1[k];
-					if(elevDEM->getData(i,j,tempFloat) - elevDEM->getData(in,jn,tempFloat)<0)	//adjacent cell is higher
-						dn->setData(i,j,short(1));//cell in flat
-					if(dn->getData(in,jn,tempShort)>0 && s->getData(in,jn,tempShort)>0) //adjacent cell has been marked already
-						dn->setData(i,j,short(1));
-				}
-		} 
-		dn->share();
-		for(j=0; j<ny; j++){
-			for(i=0; i<nx; i++){//add dn values to s
-				dn->getData(i,j,tempShort);
-				s->addToData(i,j,(tempShort>0 ? short(1) : short(0)));
-				if(tempShort>0) numInc++;
-			}
-		}
-		s->share();
-		dn->share();
-		MPI_Allreduce(&numInc, &numIncTotal, 1, MPI_LONG, MPI_SUM, MCW);
-		if(numIncTotal==numIncOld) done=true;
-		numIncOld = numIncTotal;
-		if(rank==0)
-		{
-			fprintf(stderr,".");  // print a . at each pass to give an indication of progress
-			fflush(stderr);
-		}
-	}
-
-	for(iflat=0; iflat < nflat; iflat++)
-	{
-			temp=que->front(); que->pop(); i=temp.x; j=temp.y; que->push(temp);
-
-			elev2->addToData(i,j,s->getData(i,j,tempShort));
-	}
-	elev2->share();
-
-		
-	long localStillFlat = 0;
-	long totalStillFlat = 0;
-	////elevDEM->getdxdyc(j,tempdxc,tempdyc);
-	//float DXX[3] = {0,tempdxc,tempdyc};//tardemlib.cpp ln 1291
-	//float DD = sqrt(tempdxc*tempdxc+tempdyc*tempdyc);//tardemlib.cpp ln 1293
-	if(rank==0)
-	{
-		fprintf(stderr,"\nSetting directions\n");  
-		fflush(stderr);
-	}
-	for(iflat=0; iflat < nflat; iflat++)
-	{
-
-
-
-	temp=que->front(); que->pop(); i=temp.x; j=temp.y; //  Do not push que on this last one - so que is empty at end
-				//  The logic here was to replace SETFLOW2 from D8 with SET2 so that it computes a DINF flow 
-				//  direction based on the artificial elevations
-
-	elevDEM->getdxdyc(j,tempdxc,tempdyc);
-	float DXX[3] = {0,tempdxc,tempdyc};//tardemlib.cpp ln 1291
-	float DD = sqrt(tempdxc*tempdxc+tempdyc*tempdyc);//tardemlib.cpp ln 1293
-
-			SET2(j,i,DXX,DD,elevDEM,elev2,flowDir,dn);	//use new elevations to calculate flowDir.	
-			if(!flowDir->isNodata(i,j)&& flowDir->getData(i,j,tempFloat)< 0.) //this is still a flat
-			{
-				que->push(temp);
-				localStillFlat++;
-			}
-	}
-
-	MPI_Allreduce(&localStillFlat, &totalStillFlat, 1, MPI_LONG, MPI_SUM, MCW);
-	if(totalStillFlat >0)  //  We will have to iterate again so overwrite original elevation with the modified ones and hope for the best
-	{
-		for(j=0; j<ny; j++)
-			for(i=0; i<nx; i++){
-				elevDEM->setData(i,j,(float)elev2->getData(i,j,tempShort));//set/add change jjn friday
-			}
-	}
-	delete elev2;  //  to avoid memory leaks
-	delete dn;
-	delete s;
-	return totalStillFlat;
 }

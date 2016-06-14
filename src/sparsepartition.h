@@ -12,6 +12,7 @@
 #include <memory>
 
 #include <mpi.h>
+#include "const.h"
 
 const int BLOCK_SIZE_BITS = 8;
 
@@ -23,7 +24,7 @@ class AsyncPartition {
         virtual void* get_async_buf() = 0;
         virtual size_t get_async_buf_size() = 0;
 
-        virtual void async_load_buf(bool top, std::vector<int>& changes) = 0;
+        virtual void async_load_buf(bool top, std::vector<node>& changes) = 0;
         virtual void async_store_buf(bool top) = 0;
 };
 
@@ -153,14 +154,14 @@ class SparsePartition : public AsyncPartition {
             return width_blocks * BLOCK_SIZE * sizeof(T);
         }
 
-        void async_load_buf(bool top, std::vector<int>& changes) {
+        void async_load_buf(bool top, std::vector<node>& changes) {
             auto y = top ? 0 : height + 1;
 
             load_border_buf(border_buf.get(), y);
 
             for (int x = 0; x < width; x++) {
                 if (border_buf[x] != async_buf[x])
-                    changes.push_back(x);
+                    changes.push_back(node(x, y - 1));
             }
 
             store_border_buf(async_buf.get(), y); 

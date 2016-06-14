@@ -8,19 +8,184 @@
 #include "linearpart.h"
 #include "sparsepartition.h"
 
+using std::vector;
+
+//Checks if cells cross
 int dontCross(int k, int i, int j, linearpart<short>& flowDir);
+int dontCross(int k, int i, int j, linearpart<float>& flowDir);
 
-size_t propagateIncrements(linearpart<short>& flowDir, SparsePartition<int>& inc, std::vector<node>& queue);
-size_t propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<int>& inc);
-size_t propagateBorderIncrements_async(linearpart<short>& flowDir, SparsePartition<int>& inc, bool top, std::vector<int>& changes, bool& top_updated, bool& bottom_updated);
+//size_t propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<int>& inc);
+//size_t propagateBorderIncrements_async(linearpart<short>& flowDir, SparsePartition<int>& inc, bool top, std::vector<node>& changes, bool& top_updated, bool& bottom_updated);
 
-template<typename T>
-void flowTowardsLower(T& elev, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, SparsePartition<int>& inc)
+template<typename Algo, typename E>
+int markPits(E& elev, linearpart<typename Algo::FlowType>& flowDir, vector<vector<node>>& islands, SparsePartition<int>& inc);
+
+template<typename Algo>
+size_t propagateIncrements(linearpart<typename Algo::FlowType>& flowDir, SparsePartition<int>& inc, vector<node>& queue) {
+    size_t numInc = 0;
+    int st = 1;
+    
+    vector<node> newFlats;
+    while (!queue.empty()) {
+        for(node flat : queue) {
+            // Duplicate. already set
+            if (inc.getData(flat.x, flat.y) > 0)
+                continue;
+
+            for (int k = 1; k <= 8; k++) {
+                if (dontCross(k, flat.x, flat.y, flowDir) == 0)
+                {
+                    int in = flat.x + d1[k];
+                    int jn = flat.y + d2[k];
+
+                    if (!flowDir.isInPartition(in, jn)) 
+                        continue;
+
+                    typename Algo::FlowType flow = flowDir.getData(in,jn);
+
+                    if (!Algo::HasFlow(flow) && inc.getData(in, jn) == 0) {
+                        newFlats.push_back(node(in, jn));
+                        inc.setData(in, jn, -1);
+                    }
+                }
+            }
+
+            numInc++;
+            inc.setData(flat.x, flat.y, st);
+        }
+
+        queue.clear();
+        queue.swap(newFlats);
+        st++;
+    }
+
+    if (st < 0) {
+        printf("WARNING: increment overflow during propagation (st = %d)\n", st);
+    }
+
+    return numInc;
+}
+
+template<typename Algo>
+size_t propagateBorderIncrements_async(linearpart<typename Algo::FlowType>& flowDir, SparsePartition<int>& inc, bool top, vector<node>& changes, bool& top_updated, bool& bottom_updated)
+{
+    int nx = flowDir.getnx();
+    int ny = flowDir.getny();
+
+    vector<node> queue;
+
+    // Find the starting nodes at the edge of the raster
+    int ignoredGhostCells = 0;
+
+    for (auto flat : changes) {
+        int st = inc.getData(flat.x, flat.y);
+
+        if (st == 0)
+            continue;
+
+        if (st == INT_MAX) {
+            ignoredGhostCells++;
+            continue;
+        }
+
+        auto jn = flat.y == -1 ? 0 : ny - 1;
+
+        for (auto in : {flat.x-1, flat.x, flat.x+1}) {
+            if (!flowDir.isInPartition(in, jn))
+                continue;
+
+            bool noFlow = !Algo::HasFlow(flowDir.getData(in, jn));
+            auto neighInc = inc.getData(in, jn);
+
+            if (noFlow && (neighInc == 0 || std::abs(neighInc) > st + 1)) {
+                // If neighbor increment is positive, we are overriding a larger increment
+                // and it is not yet in the queue
+                if (neighInc >= 0) {
+                    queue.emplace_back(in, jn);
+                }
+
+                // Here we set a negative increment if it's still not set
+                //
+                // Another flat might be neighboring the same cell with a lower increment,
+                // which has to override the higher increment (that hasn't been set yet but is in the queue).
+                inc.setData(in, jn, -(st + 1));
+            }
+        }
+    }
+
+    if (ignoredGhostCells > 0) {
+       printf("warning: ignored %d ghost cells which were at upper limit (%d)\n", ignoredGhostCells, SHRT_MAX);
+    }
+
+    size_t numChanged = 0;
+    size_t abandonedCells = 0;
+    vector<node> newFlats;
+
+    while (!queue.empty()) {
+        for(node flat : queue) {
+            // Increments are stored as negative for the cells that have been added to the queue
+            // (to signify that they need to be explored)
+            auto st = -inc.getData(flat.x, flat.y);
+
+            // I don't think this is possible anymore, but just in case.
+            if (st <= 0) {
+                printf("warning: unexpected non-negative increment @ (%d, %d) - %d\n", flat.x, flat.y, -st);
+                continue;
+            }
+
+            inc.setData(flat.x, flat.y, st);
+            numChanged++;
+
+            if (flat.y == 0) top_updated = true;
+            if (flat.y == ny - 1) bottom_updated = true;
+
+            if (st == INT_MAX) {
+                abandonedCells++;
+                continue;
+            }
+
+            for (int k = 1; k <= 8; k++) {
+                if (dontCross(k, flat.x, flat.y, flowDir) == 0) {
+                    int in = flat.x + d1[k];
+                    int jn = flat.y + d2[k];
+
+                    if (!flowDir.isInPartition(in, jn))
+                        continue;
+
+                    bool noFlow = !Algo::HasFlow(flowDir.getData(in, jn));
+                    auto neighInc = inc.getData(in, jn);
+
+                    if (noFlow && (neighInc == 0 || std::abs(neighInc) > st + 1)) {
+                        // If neighbor increment is positive, we are overriding a larger increment
+                        // and it is not yet in the queue
+                        if (neighInc >= 0) {
+                           newFlats.emplace_back(in, jn);
+                        }
+
+                        inc.setData(in, jn, -(st + 1));
+                    }
+                }
+            }
+        }
+
+        queue.clear();
+        queue.swap(newFlats);
+    }
+
+    if (abandonedCells > 0) {
+        printf("warning: gave up propagating %zu cells because they were at upper limit (%d)\n", abandonedCells, INT_MAX);
+    }
+
+    return numChanged;
+}
+
+template<typename Algo, typename E>
+void flowTowardsLower(E& elev, linearpart<typename Algo::FlowType>& flowDir, vector<vector<node>>& islands, SparsePartition<int>& inc)
 {
     long nx = flowDir.getnx();
     long ny = flowDir.getny();
 
-    std::vector<node> lowBoundaries;
+    vector<node> lowBoundaries;
 
     // Find low boundaries. 
     for(auto& island : islands) {
@@ -28,20 +193,20 @@ void flowTowardsLower(T& elev, linearpart<short>& flowDir, std::vector<std::vect
             float flatElev = elev.getData(flat.x, flat.y);
 
             for (int k = 1; k <= 8; k++) {
-                if (dontCross(k, flat.x, flat.y, flowDir) == 0) {
+                if (dontCross(k, flat.x, flat.y, flowDir) == 0)
+                {
                     int in = flat.x + d1[k];
                     int jn = flat.y + d2[k];
 
-                    if (!flowDir.hasAccess(in, jn))
+                    if (!flowDir.hasAccess(in, jn)) {
                         continue;
+                    }
 
                     auto elevDiff = flatElev - elev.getData(in,jn);
-                    short flow = flowDir.getData(in,jn);
+                    typename Algo::FlowType flow = flowDir.getData(in,jn);
                     
-                    bool edgeDrain = flowDir.isNodata(in, jn);
-
                     // Adjacent cell drains and is equal or lower in elevation so this is a low boundary
-                    if ((elevDiff >= 0 && flow > 0) || edgeDrain) {
+                    if (elevDiff >= 0 && Algo::HasFlow(flow)) {
                         lowBoundaries.push_back(flat);
                         inc.setData(flat.x, flat.y, -1);
 
@@ -53,23 +218,16 @@ void flowTowardsLower(T& elev, linearpart<short>& flowDir, std::vector<std::vect
         }
     }
 
-    size_t numInc = propagateIncrements(flowDir, inc, lowBoundaries);
-
-    // Not all grid cells were resolved - pits remain
-    // Remaining grid cells are unresolvable pits
-    if (numInc > 0)          
-    {
-        markPits(elev, flowDir, islands, inc);
-    }
+    size_t numInc = propagateIncrements<Algo>(flowDir, inc, lowBoundaries);
 }
 
-template<typename T>
-void flowFromHigher(T& elev, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, SparsePartition<int>& inc)
+template<typename Algo, typename E>
+void flowFromHigher(E& elev, linearpart<typename Algo::FlowType>& flowDir, vector<vector<node>>& islands, SparsePartition<int>& inc)
 {
     long nx = flowDir.getnx();
     long ny = flowDir.getny();
 
-    std::vector<node> highBoundaries;
+    vector<node> highBoundaries;
 
     // Find high boundaries
     for (auto& island : islands) {
@@ -78,7 +236,8 @@ void flowFromHigher(T& elev, linearpart<short>& flowDir, std::vector<std::vector
             bool highBoundary = false;
 
             for (int k = 1; k <= 8; k++) {
-                if (dontCross(k, flat.x, flat.y, flowDir) == 0) {
+                if (dontCross(k, flat.x, flat.y, flowDir) == 0)
+                {
                     int in = flat.x + d1[k];
                     int jn = flat.y + d2[k];
 
@@ -102,11 +261,11 @@ void flowFromHigher(T& elev, linearpart<short>& flowDir, std::vector<std::vector
         }
     }
 
-    propagateIncrements(flowDir, inc, highBoundaries);
+    propagateIncrements<Algo>(flowDir, inc, highBoundaries);
 }
 
-template<typename T>
-int markPits(T& elevDEM, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands, SparsePartition<int>& inc)
+template<typename Algo, typename E>
+int markPits(E& elev, linearpart<typename Algo::FlowType>& flowDir, vector<vector<node>>& islands, SparsePartition<int>& inc)
 {
     int nx = flowDir.getnx();
     int ny = flowDir.getny();
@@ -119,25 +278,25 @@ int markPits(T& elevDEM, linearpart<short>& flowDir, std::vector<std::vector<nod
             bool skip = false;
 
             for (int k=1; k<=8; k++) {
-                if (dontCross(k, flat.x, flat.y, flowDir)==0) {
+                if (dontCross(k, flat.x, flat.y, flowDir)==0)
+                {
                     int jn = flat.y + d2[k];
                     int in = flat.x + d1[k];
 
                     if (!flowDir.hasAccess(in, jn)) 
                         continue;
 
-                    auto elevDiff = elevDEM.getData(flat.x, flat.y) - elevDEM.getData(in, jn);
-                    short flow = flowDir.getData(in,jn);
+                    auto elevDiff = elev.getData(flat.x, flat.y) - elev.getData(in, jn);
+                    typename Algo::FlowType flow = flowDir.getData(in,jn);
                     
                     // Adjacent cell drains and is equal or lower in elevation so this is a low boundary
-                    if (elevDiff >= 0 && flow > 0) {
+                    if (elevDiff >= 0 && Algo::HasFlow(flow)) {
                         skip = true;
                         break;
-                    } else if (flow == 0) {
+                    } else if (!Algo::HasFlow(flow)) {
                         // If neighbor is in flat
 
-                        // FIXME: check if this is correct
-                        if (inc.getData(in,jn) >= 0){ // && inc.getData(in,jn)<st) {
+                        if (inc.getData(in,jn) >= 0){ 
                             skip = true;
                             break;
                         }
@@ -156,8 +315,76 @@ int markPits(T& elevDEM, linearpart<short>& flowDir, std::vector<std::vector<nod
     return numPits;
 }
 
-template<typename T>
-long resolveFlats(T& elevDEM, SparsePartition<int>& inc, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands)
+template<typename Algo>
+void findIslands(linearpart<typename Algo::FlowType>& flowDir, vector<vector<node>>& localIslands, vector<vector<node>>& sharedIslands)
+{
+    int width = flowDir.getnx();
+    int height = flowDir.getny();
+
+    int numIslands = 0;
+    SparsePartition<int> islandLabel(width, height, 0);
+    vector<node> q, tempVector;
+
+    for (int j=0; j<height; j++) {
+        for(int i=0; i<width; i++) {
+            if (Algo::HasFlow(flowDir.getData(i, j))) {
+                continue;
+            }
+
+            node flat(i, j);
+
+            if (islandLabel.getData(flat.x, flat.y) != 0) {
+                continue;
+            }
+
+            bool shared = false;
+            int label = ++numIslands;
+            
+            q.push_back(flat);
+
+            while(!q.empty()) {
+                node flat = q.back();
+                q.pop_back();
+
+                if (islandLabel.getData(flat.x, flat.y) != 0) {
+                    continue;
+                }
+
+                islandLabel.setData(flat.x, flat.y, label);
+                tempVector.push_back(flat);
+
+                for (int k=1; k<=8; k++) {
+                    int in = flat.x + d1[k];
+                    int jn = flat.y + d2[k];
+
+                    if ((jn == -1 || jn == height) && flowDir.hasAccess(in, jn)) {
+                        if (!Algo::HasFlow(flowDir.getData(in, jn)))
+                        {
+                            shared = true;
+                        }
+                    }
+
+                    if (!flowDir.isInPartition(in, jn))
+                        continue;
+
+                    if (!Algo::HasFlow(flowDir.getData(in, jn)))
+                        q.push_back(node(in, jn));
+                }
+            }
+
+            if (!shared) {
+                localIslands.push_back(vector<node>(tempVector));
+            } else {
+                sharedIslands.push_back(vector<node>(tempVector));
+            }
+
+            tempVector.clear();
+        }
+    }
+}
+
+template<typename Algo, typename E>
+long resolveFlats(E& elev, SparsePartition<int>& inc, linearpart<typename Algo::FlowType>& flowDir, std::vector<std::vector<node>>& islands)
 {
     long nx = flowDir.getnx();
     long ny = flowDir.getny();
@@ -170,12 +397,16 @@ long resolveFlats(T& elevDEM, SparsePartition<int>& inc, linearpart<short>& flow
         fflush(stderr);
     }
 
-    flowTowardsLower(elevDEM, flowDir, islands, inc);
-
-    // Drain flats away from higher adjacent terrain
     SparsePartition<int> s(nx, ny, 0);
     
-    flowFromHigher(elevDEM, flowDir, islands, s);
+    flowTowardsLower<Algo>(elev, flowDir, islands, inc);
+
+    // Not all grid cells were resolved - pits remain
+    // Remaining grid cells are unresolvable pits
+    markPits<Algo>(elev, flowDir, islands, inc);
+
+    // Drain flats away from higher adjacent terrain
+    flowFromHigher<Algo>(elev, flowDir, islands, s);
 
     // High flow must be inverted before it is combined
     //
@@ -206,15 +437,15 @@ long resolveFlats(T& elevDEM, SparsePartition<int>& inc, linearpart<short>& flow
     long flatsRemaining = 0;
     for (auto& island : islands) {
         for (node flat : island) {
-            setFlow2(flat.x, flat.y, flowDir, elevDEM, inc);
+            Algo::SetFlow(flat.x, flat.y, flowDir, elev, inc);
 
-            if (flowDir.getData(flat.x, flat.y) == 0) {
+            if (!Algo::HasFlow(flowDir.getData(flat.x, flat.y))) {
                 flatsRemaining++;
             }
         }
     }
 
-    auto hasFlowDirection = [&](const node& n) { return flowDir.getData(n.x, n.y) != 0; };
+    auto hasFlowDirection = [&](const node& n) { return Algo::HasFlow(flowDir.getData(n.x, n.y)); };
     auto isEmpty = [&](const std::vector<node>& i) { return i.empty(); };
     
     // Remove flats which have flow direction set
@@ -228,129 +459,131 @@ long resolveFlats(T& elevDEM, SparsePartition<int>& inc, linearpart<short>& flow
     return flatsRemaining;
 }
 
-template<typename T>
-long resolveFlats_parallel(T& elev, SparsePartition<int>& inc, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands)
-{
-    int nx = flowDir.getnx();
-    int ny = flowDir.getny();
+//template<typename T>
+//long resolveFlats_parallel(T& elev, SparsePartition<int>& inc, linearpart<short>& flowDir, vector<vector<node>>& islands)
+//{
+    //int nx = flowDir.getnx();
+    //int ny = flowDir.getny();
 
-    int rank;
-    MPI_Comm_rank(MCW, &rank);
+    //int rank;
+    //MPI_Comm_rank(MCW, &rank);
 
-    uint64_t numFlatsChanged = 0, totalNumFlatsChanged = 0;
+    //uint64_t numFlatsChanged = 0, totalNumFlatsChanged = 0;
 
-    flowTowardsLower(elev, flowDir, islands, inc);
+    ////flowTowardsLower(elev, flowDir, islands, inc);
 
-    do {
-        inc.share();
-        numFlatsChanged = propagateBorderIncrements(flowDir, inc);
+    //do {
+        //inc.share();
+        //numFlatsChanged = propagateBorderIncrements(flowDir, inc);
 
-        MPI_Allreduce(&numFlatsChanged, &totalNumFlatsChanged, 1, MPI_UINT64_T, MPI_SUM, MCW);
+        //MPI_Allreduce(&numFlatsChanged, &totalNumFlatsChanged, 1, MPI_UINT64_T, MPI_SUM, MCW);
 
-        if (rank == 0) {
-            printf("PRL: Lower gradient processed %llu flats this iteration\n", totalNumFlatsChanged);
-        }
-    } while(totalNumFlatsChanged > 0);
+        //if (rank == 0) {
+            //printf("PRL: Lower gradient processed %llu flats this iteration\n", totalNumFlatsChanged);
+        //}
+    //} while(totalNumFlatsChanged > 0);
 
-    // Not all grid cells were resolved - pits remain
-    // Remaining grid cells are unresolvable pits
-    markPits(elev, flowDir, islands, inc);
+    //auto no_flow = [](short flow) { return flow == 0; };
 
-    // Drain flats away from higher adjacent terrain
-    SparsePartition<int> higherGradient(nx, ny, 0);
+    //// Not all grid cells were resolved - pits remain
+    //// Remaining grid cells are unresolvable pits
+    //markPits(elev, flowDir, islands, inc, no_flow);
+
+    //// Drain flats away from higher adjacent terrain
+    //SparsePartition<int> higherGradient(nx, ny, 0);
    
-    flowFromHigher(elev, flowDir, islands, higherGradient);
+    ////flowFromHigher(elev, flowDir, islands, higherGradient);
 
-    do {
-        higherGradient.share();
-        numFlatsChanged = propagateBorderIncrements(flowDir, higherGradient);
+    //do {
+        //higherGradient.share();
+        //numFlatsChanged = propagateBorderIncrements(flowDir, higherGradient);
 
-        MPI_Allreduce(&numFlatsChanged, &totalNumFlatsChanged, 1, MPI_UINT64_T, MPI_SUM, MCW);
+        //MPI_Allreduce(&numFlatsChanged, &totalNumFlatsChanged, 1, MPI_UINT64_T, MPI_SUM, MCW);
 
-        if (rank == 0) {
-            printf("PRL: Higher gradient processed %llu flats this iteration\n", totalNumFlatsChanged);
-        }
-    } while(totalNumFlatsChanged > 0);
+        //if (rank == 0) {
+            //printf("PRL: Higher gradient processed %llu flats this iteration\n", totalNumFlatsChanged);
+        //}
+    //} while(totalNumFlatsChanged > 0);
 
-    // High flow must be inverted before it is combined
-    //
-    // higherFlowMax has to be greater than all of the increments
-    // higherFlowMax can be maximum value of the data type (e.g. 65535) but it will cause overflow problems if more than one iteration is needed
-    int higherFlowMax = 0;
+    //// High flow must be inverted before it is combined
+    ////
+    //// higherFlowMax has to be greater than all of the increments
+    //// higherFlowMax can be maximum value of the data type (e.g. 65535) but it will cause overflow problems if more than one iteration is needed
+    //int higherFlowMax = 0;
 
-    for (auto& island : islands) {
-        for (auto& flat : island) {
-            int val = higherGradient.getData(flat.x, flat.y);
+    //for (auto& island : islands) {
+        //for (auto& flat : island) {
+            //int val = higherGradient.getData(flat.x, flat.y);
         
-            if (val > higherFlowMax)
-                higherFlowMax = val;
-        }
-    }
+            //if (val > higherFlowMax)
+                //higherFlowMax = val;
+        //}
+    //}
 
-    // FIXME: Is this needed? would it affect directions at the border?
-    // It is local to a flat area, but can that be reduced further to minimize comm?
-    int globalHigherFlowmax = 0;
-    MPI_Allreduce(&higherFlowMax, &globalHigherFlowmax, 1, MPI_INT, MPI_MAX, MCW);
+    //// FIXME: Is this needed? would it affect directions at the border?
+    //// It is local to a flat area, but can that be reduced further to minimize comm?
+    //int globalHigherFlowmax = 0;
+    //MPI_Allreduce(&higherFlowMax, &globalHigherFlowmax, 1, MPI_INT, MPI_MAX, MCW);
 
-    size_t badCells = 0;
+    //size_t badCells = 0;
 
-    for (auto& island : islands) {
-        for (auto flat : island) {
-            auto val = inc.getData(flat.x, flat.y);
-            auto highFlow = higherGradient.getData(flat.x, flat.y);
+    //for (auto& island : islands) {
+        //for (auto flat : island) {
+            //auto val = inc.getData(flat.x, flat.y);
+            //auto highFlow = higherGradient.getData(flat.x, flat.y);
 
-            inc.setData(flat.x, flat.y, val + (globalHigherFlowmax - highFlow));
+            //inc.setData(flat.x, flat.y, val + (globalHigherFlowmax - highFlow));
 
-            if (val < 0 || val == INT_MAX || highFlow < 0 || highFlow == INT_MAX) {
-                badCells++;
-            }
-        }
-    }
+            //if (val < 0 || val == INT_MAX || highFlow < 0 || highFlow == INT_MAX) {
+                //badCells++;
+            //}
+        //}
+    //}
 
-    if (badCells > 0) {
-        printf("warning rank %d: %d increment values either incorrect or overflown\n", rank, badCells);
-    }
+    //if (badCells > 0) {
+        //printf("warning rank %d: %d increment values either incorrect or overflown\n", rank, badCells);
+    //}
 
-    inc.share();
+    //inc.share();
 
-    if (rank==0) {
-        fprintf(stderr,"\nPRL: Setting directions\n");
-        fflush(stderr);
-    }
+    //if (rank==0) {
+        //fprintf(stderr,"\nPRL: Setting directions\n");
+        //fflush(stderr);
+    //}
 
-    uint64_t localFlatsRemaining = 0, globalFlatsRemaining = 0;
+    //uint64_t localFlatsRemaining = 0, globalFlatsRemaining = 0;
 
-    for (auto& island : islands) {
-        for (node flat : island) {
-            setFlow2(flat.x, flat.y, flowDir, elev, inc);
+    //for (auto& island : islands) {
+        //for (node flat : island) {
+            //setFlow2(flat.x, flat.y, flowDir, elev, inc);
     
-            if (flowDir.getData(flat.x, flat.y) == 0) {
-                localFlatsRemaining++;
-            }
-        }
-    }
+            //if (flowDir.getData(flat.x, flat.y) == 0) {
+                //localFlatsRemaining++;
+            //}
+        //}
+    //}
 
-    flowDir.share();
-    MPI_Allreduce(&localFlatsRemaining, &globalFlatsRemaining, 1, MPI_UINT64_T, MPI_SUM, MCW);
+    //flowDir.share();
+    //MPI_Allreduce(&localFlatsRemaining, &globalFlatsRemaining, 1, MPI_UINT64_T, MPI_SUM, MCW);
 
-    auto hasFlowDirection = [&](const node& n) { return flowDir.getData(n.x, n.y) != 0; };
-    auto isEmpty = [&](const std::vector<node>& i) { return i.empty(); };
+    //auto hasFlowDirection = [&](const node& n) { return flowDir.getData(n.x, n.y) != 0; };
+    //auto isEmpty = [&](const std::vector<node>& i) { return i.empty(); };
     
-    // Remove flats which have flow direction set
-    for (auto& island : islands) {
-        island.erase(std::remove_if(island.begin(), island.end(), hasFlowDirection), island.end());
-    }
+    //// Remove flats which have flow direction set
+    //for (auto& island : islands) {
+        //island.erase(std::remove_if(island.begin(), island.end(), hasFlowDirection), island.end());
+    //}
 
-    // Remove empty islands
-    islands.erase(std::remove_if(islands.begin(), islands.end(), isEmpty), islands.end());
+    //// Remove empty islands
+    //islands.erase(std::remove_if(islands.begin(), islands.end(), isEmpty), islands.end());
 
-    return globalFlatsRemaining;
-}
+    //return globalFlatsRemaining;
+//}
 
 class AsyncRasterProcessor
 {
     public:
-        typedef std::function<void(bool, std::vector<int>&, bool&, bool&)> update_fn;
+        typedef std::function<void(bool, std::vector<node>&, bool&, bool&)> update_fn;
 
         AsyncRasterProcessor() {
             MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -387,42 +620,51 @@ class AsyncRasterProcessor
             // Tags:
             //  100 - control message
             //  101+ - borders messages
+            MPI_Request req;
 
             // Send initial border data if it is modified (or for all cases?)
             for (int x = 0; x < rasters.size(); x++) {
-                int tag = 101 + x * 2;
+                int tag = 101 + x;
 
                 // FIXME: send initial border only if updated
                 auto* r = rasters[x];
 
                 int updates[2] = { -1, -1 };
 
+                uint8_t* buf = (uint8_t *) r->get_async_buf();
+                int buf_size = r->get_async_buf_size();
+
                 if (rank > 0) {
                     r->async_store_buf(true);
 
-                    MPI_Request req;
-                    MPI_Ibsend(r->get_async_buf(), r->get_async_buf_size(), MPI_BYTE, rank - 1, tag, MPI_COMM_WORLD, &req);
-                    MPI_Request_free(&req);
+                    bool empty = std::all_of(buf, buf + buf_size, [](uint8_t x) { return x == 0; }); 
 
-                    updates[0] = rank - 1;
+                    if (!empty) {
+                        MPI_Ibsend(buf, buf_size, MPI_BYTE, rank - 1, tag, MPI_COMM_WORLD, &req);
+                        MPI_Request_free(&req);
+
+                        updates[0] = rank - 1;
+                    }
                 }
 
                 if (rank < size - 1) {
                     r->async_store_buf(false);
 
-                    MPI_Request req;
-                    MPI_Ibsend(r->get_async_buf(), r->get_async_buf_size(), MPI_BYTE, rank + 1, tag + 1, MPI_COMM_WORLD, &req);
-                    MPI_Request_free(&req);
+                    bool empty = std::all_of(buf, buf + buf_size, [](uint8_t x) { return x == 0; }); 
 
-                    updates[1] = rank + 1;
+                    if (!empty) {
+                        MPI_Ibsend(buf, buf_size, MPI_BYTE, rank + 1, tag, MPI_COMM_WORLD, &req);
+                        MPI_Request_free(&req);
+
+                        updates[1] = rank + 1;
+                    }
                 }
 
-                MPI_Request req;
                 MPI_Ibsend(updates, 2, MPI_INT, 0, 100, MCW, &req);
                 MPI_Request_free(&req);
             }
 
-            std::vector<int> border_changes;
+            std::vector<node> border_changes;
 
             while (true) {
                 MPI_Status status;
@@ -440,7 +682,6 @@ class AsyncRasterProcessor
 
                     if (rank == 0) {
                         // Process status notifications from other ranks
-
                         outstanding_updates[status.MPI_SOURCE]--;
 
                         if (updates[0] != -1) { outstanding_updates[updates[0]]++; }
@@ -456,10 +697,10 @@ class AsyncRasterProcessor
                         }
 
                         if (done) {
+                            MPI_Request req;
                             int unused[2] = {0, 0};
 
                             for (int x = 1; x < size; x++) {
-                                MPI_Request req;
                                 MPI_Ibsend(unused, 2, MPI_INT, x, 100, MPI_COMM_WORLD, &req);
                                 MPI_Request_free(&req);
                             }
@@ -473,8 +714,8 @@ class AsyncRasterProcessor
                 } else if (status.MPI_TAG > 100) {
                     // Border update
                     total_comms++;
-                    int raster_n = (status.MPI_TAG - 101) / 2;
-                    int top = (status.MPI_TAG - 101) % 2;
+                    int raster_n = (status.MPI_TAG - 101);
+                    int top = status.MPI_SOURCE + 1 == rank;
 
                     //printf("%d: Got border upd to %d %d\n", rank, raster_n, top);
 
@@ -491,13 +732,13 @@ class AsyncRasterProcessor
                     bool top_modified = false, bottom_modified = false;
                     raster_update_fns[raster_n](top, border_changes, top_modified, bottom_modified);
 
-                    int tag = 101 + raster_n * 2;
+                    int tag = 101 + raster_n;
+                    MPI_Request req;
                     int updates[2] = { -1, -1 };
 
                     // Top neighbor exists
                     if (rank != 0 && top_modified) {
                         r->async_store_buf(true);
-                        MPI_Request req;
                         MPI_Ibsend(r->get_async_buf(), r->get_async_buf_size(), MPI_BYTE, rank - 1, tag, MPI_COMM_WORLD, &req);
                         MPI_Request_free(&req);
 
@@ -507,15 +748,13 @@ class AsyncRasterProcessor
                     // Bottom neighbor exists
                     if (rank != size - 1 && bottom_modified) {
                         r->async_store_buf(false);
-                        MPI_Request req;
-                        MPI_Ibsend(r->get_async_buf(), r->get_async_buf_size(), MPI_BYTE, rank + 1, tag + 1, MPI_COMM_WORLD, &req);
+                        MPI_Ibsend(r->get_async_buf(), r->get_async_buf_size(), MPI_BYTE, rank + 1, tag, MPI_COMM_WORLD, &req);
                         MPI_Request_free(&req);
 
                         updates[1] = rank + 1;
                     }
 
-                    MPI_Request req;
-                    MPI_Ibsend(&updates, 2, MPI_INT, 0, 100, MCW, &req);
+                    MPI_Ibsend(updates, 2, MPI_INT, 0, 100, MCW, &req);
                     MPI_Request_free(&req);
                 } else {
                     printf("%d: unrecognized tag %d from %d\n", rank, status.MPI_TAG, status.MPI_SOURCE);
@@ -546,12 +785,12 @@ class AsyncRasterProcessor
         std::unique_ptr<uint8_t[]> mpi_buffer;
         std::unique_ptr<int[]> outstanding_updates;
 
-        std::vector<AsyncPartition*> rasters;
-        std::vector<update_fn> raster_update_fns;
+        vector<AsyncPartition*> rasters;
+        vector<update_fn> raster_update_fns;
 };
 
-template<typename T>
-long resolveFlats_parallel_async(T& elev, SparsePartition<int>& inc, linearpart<short>& flowDir, std::vector<std::vector<node>>& islands)
+template<typename Algo, typename E>
+long resolveFlats_parallel_async(E& elev, SparsePartition<int>& inc, linearpart<typename Algo::FlowType>& flowDir, vector<vector<node>>& islands)
 {
     int nx = flowDir.getnx();
     int ny = flowDir.getny();
@@ -561,22 +800,22 @@ long resolveFlats_parallel_async(T& elev, SparsePartition<int>& inc, linearpart<
 
     SparsePartition<int> higherGradient(nx, ny, 0);
 
-    flowTowardsLower(elev, flowDir, islands, inc);
-    flowFromHigher(elev, flowDir, islands, higherGradient);
+    flowTowardsLower<Algo>(elev, flowDir, islands, inc);
+    flowFromHigher<Algo>(elev, flowDir, islands, higherGradient);
 
     {
         AsyncRasterProcessor arp;
 
-        arp.add(&inc, [&flowDir, &inc](bool new_top, std::vector<int>& border_diff, bool& top_updated, bool& bottom_updated) {
+        arp.add(&inc, [&flowDir, &inc](bool new_top, std::vector<node>& border_diff, bool& top_updated, bool& bottom_updated) {
             //printf("got low update - %d\n", border_diff.size());
 
-            propagateBorderIncrements_async(flowDir, inc, new_top, border_diff, top_updated, bottom_updated);
+            propagateBorderIncrements_async<Algo>(flowDir, inc, new_top, border_diff, top_updated, bottom_updated);
         });
 
-        arp.add(&higherGradient, [&flowDir, &higherGradient](bool new_top, std::vector<int>& border_diff, bool& top_updated, bool& bottom_updated) {
+        arp.add(&higherGradient, [&flowDir, &higherGradient](bool new_top, std::vector<node>& border_diff, bool& top_updated, bool& bottom_updated) {
             //printf("got high update - %d\n", border_diff.size());
 
-            propagateBorderIncrements_async(flowDir, higherGradient, new_top, border_diff, top_updated, bottom_updated);
+            propagateBorderIncrements_async<Algo>(flowDir, higherGradient, new_top, border_diff, top_updated, bottom_updated);
         });
 
         arp.run();
@@ -584,7 +823,7 @@ long resolveFlats_parallel_async(T& elev, SparsePartition<int>& inc, linearpart<
 
     // Not all grid cells were resolved - pits remain
     // Remaining grid cells are unresolvable pits
-    markPits(elev, flowDir, islands, inc);
+    markPits<Algo>(elev, flowDir, islands, inc);
 
     // High flow must be inverted before it is combined
     //
@@ -636,9 +875,9 @@ long resolveFlats_parallel_async(T& elev, SparsePartition<int>& inc, linearpart<
 
     for (auto& island : islands) {
         for (node flat : island) {
-            setFlow2(flat.x, flat.y, flowDir, elev, inc);
+            Algo::SetFlow(flat.x, flat.y, flowDir, elev, inc);
     
-            if (flowDir.getData(flat.x, flat.y) == 0) {
+            if (!Algo::HasFlow(flowDir.getData(flat.x, flat.y))) {
                 localFlatsRemaining++;
             }
         }
@@ -647,7 +886,7 @@ long resolveFlats_parallel_async(T& elev, SparsePartition<int>& inc, linearpart<
     flowDir.share();
     MPI_Allreduce(&localFlatsRemaining, &globalFlatsRemaining, 1, MPI_UINT64_T, MPI_SUM, MCW);
 
-    auto hasFlowDirection = [&](const node& n) { return flowDir.getData(n.x, n.y) != 0; };
+    auto hasFlowDirection = [&](const node& n) { return Algo::HasFlow(flowDir.getData(n.x, n.y)); };
     auto isEmpty = [&](const std::vector<node>& i) { return i.empty(); };
     
     // Remove flats which have flow direction set
