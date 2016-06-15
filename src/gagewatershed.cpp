@@ -147,7 +147,10 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 	double readt = MPI_Wtime();
 	//printf("Read time %lf\n",readt);
 	//fflush(stdout);
-
+	 // writing upstream coordinates
+	FILE *fidout1;
+	fidout1 = fopen(upidfile,"w");// process 0 writes 
+	fprintf(fidout1,"up stream coordinates \n");
 	//Create empty partition to store new information
 	tdpartition *wshed;
 	wshed = CreateNewPartition(LONG_TYPE, totalX, totalY, dxA, dyA, MISSINGLONG);
@@ -184,7 +187,7 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 	float tempFloat=0.0;
 	short tempShort=0;
 	int32_t tempLong=0;
-
+	int myid=0;
 	tdpartition *neighbor;
 	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, MISSINGSHORT);
 
@@ -204,10 +207,8 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 	neighbor->clearBorders();
 	wshed->share();
 	// open upid file to write and update upstream watershed id file ( need to confirm)
-	FILE *fp1;
-    fp1 = fopen(upidfile,"a");
-	if (!rank) fprintf(fp1,"Upstream Contributing coordinates:\n"); 
-
+	vector<double> arr1;
+	vector<double> arr2;
 	//flowData->getData(500,600,tempShort);
 	finished = false;
 	//Ring terminating while loop
@@ -233,16 +234,21 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 				jn=j+d2[k];
 				/* test if neighbor drains towards cell excluding boundaries */
 				short sdir = flowData->getData(in,jn,tempShort);
-			
+		       
 				if(flowData->isNodata(in,jn))	{ 
-					
-					double wi,wj;
+					 double mx,my;
 					int gx,gy;  //  Global x and y (col and row) coordinates
 						flowData->localToGlobal(in,jn,gx,gy);
-						p.globalXYToGeo(gx,gy,wi,wj);
-						//printf("%f, %f", wi,wj);
-						fprintf (fp1,"%f, %f\n",wi,wj);
+						p.globalXYToGeo(gx,gy,mx,my);
+						//printf("%f, %f", mx,my);
+						//fprintf (fp1,"%f, %f\n",wi,wj);
+						arr1.push_back(mx);
+						arr2.push_back(my);
+						//wi[myid]=mx;
+						//printf("%f", wi[myid]);
+						//myid++;
 				
+				  	fprintf(fidout1,"%f, %f\n",arr1[i],arr2[i]);
 				}
 				if(sdir > 0) 
 				{
@@ -303,7 +309,7 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 	//  Reduce all values to the 0 process
 	int *dsidsr;	
     dsidsr=new int[numOutlets];
-	MPI_Reduce(dsids, dsidsr,numOutlets,MPI_INT, MPI_MAX,0, MCW);
+	MPI_Reduce(dsids,dsidsr,numOutlets,MPI_INT, MPI_MAX,0, MCW);
 
 	//Stop timer
 	double computet = MPI_Wtime();
@@ -318,11 +324,24 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 				fprintf(fidout,"id iddown\n");
 				for(i=0; i<numOutlets; i++)
 				{
+
 					fprintf(fidout,"%d %d\n",ids[i],dsidsr[i]);
 				}
 		}
 	}
+	            
+	if(rank == 1)
+		{
+			
+				
+				for(i=0; i<arr1.size(); i++)
+				{
 
+					fprintf(fidout1,"%f, %f\n",arr1[i],arr2[i]);
+				}
+		}
+	
+	
 	//Create and write TIFF file
 	long lNodata = MISSINGLONG;
 	tiffIO wshedIO(wfile, LONG_TYPE, &lNodata, p);
@@ -332,8 +351,10 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 	if( rank == 0) 
 		printf("Size: %d\nRead time: %f\nCompute time: %f\nWrite time: %f\nTotal time: %f\n",
 		  size,readt-begint, computet-readt, writet-computet,writet-begint);
-	fclose(fp1);
 
+	
+
+	
 	//Brackets force MPI-dependent objects to go out of scope before Finalize is called
 	}MPI_Finalize();
 
