@@ -168,7 +168,7 @@ int main(int argc,char **argv)
 			i++;
 			if(argc > i)
 			{
-				sscanf(argv[i],"%d",&lyrno);
+				sscanf(argv[i],"%ld",&lyrno);
 				i++;											
 			}
 			else goto errexit;

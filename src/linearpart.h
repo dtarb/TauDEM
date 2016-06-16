@@ -446,13 +446,10 @@ void linearpart<datatype>::init(long totalx, long totaly, double dx_in, double d
     }
 
     // calculate global coordinates on DEM surface
-
     cx = (totalx / sizeX) * coordX;
     cy = (totaly / sizeY) * coordY;
     nx = coordX != (sizeX - 1) ? totalx / sizeX : totalx - cx;
     ny = coordY != (sizeY - 1) ? totaly / sizeY : totaly - cy;
-
-    printf("totalx %d totaly %d nx %d ny %d cx %d cy %d coordx %d coordy %d\n", totalx, totaly, nx, ny, cx, cy, coordx, coordy);
 
     // create vector type for left and right borders if necessary
     if (leftRank != -1 || rightRank != -1) {
