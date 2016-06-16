@@ -5,7 +5,7 @@
   Utah State University  
   May 23, 2010 
   
-*/
+ */
 
 /*  Copyright (C) 2010  David Tarboton, Utah State University
 
@@ -35,7 +35,7 @@ Logan, UT 84322-8200
 USA 
 http://www.engineering.usu.edu/dtarb/ 
 email:  dtarb@usu.edu 
-*/
+ */
 
 //  This software is distributed from http://hydrology.usu.edu/taudem/
 
@@ -46,163 +46,140 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 #include "DropAnalysis.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 int dropan(char *areafile, char *dirfile, char *elevfile, char *ssafile, char *dropfile,
-                           char* datasrc,char* lyrname,int uselyrname,int lyrno, float threshmin, float threshmax, int nthresh, int steptype,
-                           float *threshopt);
+        char* datasrc, char* lyrname, int uselyrname, int lyrno, float threshmin, float threshmax, int nthresh, int steptype,
+        float *threshopt);
 
-int main(int argc,char **argv)  
-{
-   char areafile[MAXLN],dirfile[MAXLN], elevfile[MAXLN], ssafile[MAXLN], dropfile[MAXLN], datasrc[MAXLN],lyrname[MAXLN];
-   float threshmin, threshmax, threshopt;
-   int err, nthresh, uselyrname=0,lyrno=0,steptype;
-      
-   if(argc < 2) goto errexit;
-   // Set defaults
-   threshmin=5;  
-   threshmax=500;
-   nthresh=10;
-   steptype=0;
-   if(argc == 2)
-	{
-		printf("No simple use option for this function because an outlets file is needed.\n", argv[0]);
-		goto errexit;
+int main(int argc, char **argv) {
+    char areafile[MAXLN], dirfile[MAXLN], elevfile[MAXLN], ssafile[MAXLN], dropfile[MAXLN], datasrc[MAXLN], lyrname[MAXLN];
+    float threshmin, threshmax, threshopt;
+    int err, nthresh, uselyrname = 0, lyrno = 0, steptype;
+
+    if (argc < 2) goto errexit;
+    // Set defaults
+    threshmin = 5;
+    threshmax = 500;
+    nthresh = 10;
+    steptype = 0;
+    if (argc == 2) {
+        printf("No simple use option for this function because an outlets file is needed.\n", argv[0]);
+        goto errexit;
     }
-   if(argc > 2)
-   {
-		//printf("You are running %s with the specific file names option.\n", argv[0]);
-        int i=1;	
-		while(argc > i)
-		{
-			if(strcmp(argv[i],"-ad8")==0)
-			{
-				i++;
-				if(argc > i)
-				{
-					strcpy(areafile,argv[i]);
-					i++;
-				}
-				else goto errexit;
-			}
-			else if(strcmp(argv[i],"-p")==0)
-			{
-				i++;
-				if(argc > i)
-				{
-					strcpy(dirfile,argv[i]);
-					i++;
-				}
-				else goto errexit;
-			}
-			else if(strcmp(argv[i],"-fel")==0)
-			{
-				i++;
-				if(argc > i)
-				{
-					strcpy(elevfile,argv[i]);
-					i++;
-				}
-				else goto errexit;
-			}
-			else if(strcmp(argv[i],"-ssa")==0)
-			{
-				i++;
-				if(argc > i)
-				{
-					strcpy(ssafile,argv[i]);
-					i++;
-				}
-				else goto errexit;
-			}
-			 else if(strcmp(argv[i],"-o")==0)
-		{
-			i++;
-			if(argc > i)
-			{
-				strcpy(datasrc,argv[i]);
-				//useOutlets = 1;	
-				i++;											
-			}
-			else goto errexit;
-		}
+    if (argc > 2) {
+        //printf("You are running %s with the specific file names option.\n", argv[0]);
+        int i = 1;
+        while (argc > i) {
+            if (strcmp(argv[i], "-ad8") == 0) {
+                i++;
+                if (argc > i) {
+                    strcpy(areafile, argv[i]);
+                    i++;
+                } else goto errexit;
+            } else if (strcmp(argv[i], "-p") == 0) {
+                i++;
+                if (argc > i) {
+                    strcpy(dirfile, argv[i]);
+                    i++;
+                } else goto errexit;
+            } else if (strcmp(argv[i], "-fel") == 0) {
+                i++;
+                if (argc > i) {
+                    strcpy(elevfile, argv[i]);
+                    i++;
+                } else goto errexit;
+            } else if (strcmp(argv[i], "-ssa") == 0) {
+                i++;
+                if (argc > i) {
+                    strcpy(ssafile, argv[i]);
+                    i++;
+                } else goto errexit;
+            } else if (strcmp(argv[i], "-ddm") == 0) {
+                i++;
+                if (argc > i) {
+                    if (strcmp(argv[i], "row") == 0) {
+                        tdpartition::decompType = DECOMP_ROW;
+                    } else if (strcmp(argv[i], "column") == 0) {
+                        tdpartition::decompType = DECOMP_COLUMN;
+                    } else if (strcmp(argv[i], "block") == 0) {
+                        tdpartition::decompType = DECOMP_BLOCK;
+                    } else {
+                        goto errexit;
+                    }
+                    i++;
+                } else goto errexit;
+            } else if (strcmp(argv[i], "-o") == 0) {
+                i++;
+                if (argc > i) {
+                    strcpy(datasrc, argv[i]);
+                    //useOutlets = 1;	
+                    i++;
+                } else goto errexit;
+            }
+
+            else if (strcmp(argv[i], "-lyrno") == 0) {
+                i++;
+                if (argc > i) {
+                    sscanf(argv[i], "%d", &lyrno);
+                    i++;
+                } else goto errexit;
+            }
+
+            else if (strcmp(argv[i], "-lyrname") == 0) {
+                i++;
+                if (argc > i) {
+                    strcpy(lyrname, argv[i]);
+                    uselyrname = 1;
+                    i++;
+                } else goto errexit;
+            }
 
 
-		   else if(strcmp(argv[i],"-lyrno")==0)
-		{
-			i++;
-			if(argc > i)
-			{
-				sscanf(argv[i],"%d",&lyrno);
-				i++;											
-			}
-			else goto errexit;
-		}
+            else if (strcmp(argv[i], "-drp") == 0) {
+                i++;
+                if (argc > i) {
+                    strcpy(dropfile, argv[i]);
+                    i++;
+                } else goto errexit;
+            } else if (strcmp(argv[i], "-par") == 0) {
+                i++;
+                if (argc > i + 3) {
+                    sscanf(argv[i], "%f", &threshmin);
+                    i++;
+                    sscanf(argv[i], "%f", &threshmax);
+                    i++;
+                    sscanf(argv[i], "%d", &nthresh);
+                    i++;
+                    sscanf(argv[i], "%d", &steptype);
+                    i++;
+                } else goto errexit;
+            } else goto errexit;
+        }
+    }
+    if ((err = dropan(areafile, dirfile, elevfile, ssafile, dropfile,
+            datasrc, lyrname, uselyrname, lyrno, threshmin, threshmax, nthresh, steptype,
+            &threshopt)) != 0)
+        printf("Drop Analysis Error %d\n", err);
+    //	else printf("%f  Value for optimum that drop analysis selected - see output file for details.\n",threshopt);
 
-	   
-	 else if(strcmp(argv[i],"-lyrname")==0)
-		{
-			i++;
-			if(argc > i)
-			{
-				strcpy(lyrname,argv[i]);
-		        uselyrname = 1;
-				i++;											
-			}
-			else goto errexit;
-		}
-
-
-
-			else if(strcmp(argv[i],"-drp")==0)
-			{
-				i++;
-				if(argc > i)
-				{
-					strcpy(dropfile,argv[i]);
-					i++;
-				}
-				else goto errexit;
-			}
-			else if(strcmp(argv[i],"-par")==0)
-			{
-				i++;
-				if(argc > i+3)
-				{
-					sscanf(argv[i],"%f",&threshmin);
-					i++;
-					sscanf(argv[i],"%f",&threshmax);
-					i++;
-					sscanf(argv[i],"%d",&nthresh);
-					i++;
-					sscanf(argv[i],"%d",&steptype);
-					i++;
-				}
-				else goto errexit;
-			}
-		    else goto errexit;
-		}
-   }
-    if((err=dropan(areafile, dirfile, elevfile, ssafile, dropfile, 
-			   datasrc,lyrname,uselyrname,lyrno, threshmin, threshmax, nthresh, steptype, 
-			   &threshopt)) != 0)
-        printf("Drop Analysis Error %d\n",err);
-//	else printf("%f  Value for optimum that drop analysis selected - see output file for details.\n",threshopt);
-
-	return 0;
+    return 0;
 errexit:
-   printf("\nUse with specific file names:\n %s -slp <slopefile>\n",argv[0]);
-   printf("-ad8 <ad8file> -p <dirfile> -fel <elevfile> -ssa <ssafile> -o <outletsshapefile>\n");
-   printf("-drp <dropfile> [-par <min> <max> <nthresh> <steptype>] \n");
-   printf("<ad8file> is the name of the input contributing area file used in calculations of drainage density. \n");
-   printf("<dirfile> is the name of the input D8 flow directions file.\n");
-   printf("<elevfile> is the name of the input elevation file.\n");
-   printf("<ssafile> is the name of the accumulated stream source file.  This needs to have the property that it is\n");
-   printf("monotonically increasing downstream along the D8 flow directions.\n");
-   printf("<outletsshapefile> is the name of the shapefile containing input outlets.\n");
-   printf("<dropfile> a text file for drop analysis tabular output.\n");
-   printf("<min> Lower bound of range used to search for optimum threshold.\n");
-   printf("<max> Upper bound of range used to search for optimum threshold.\n");
-   printf("<nthresh> Number of thresholds used to search for optimum threshold.\n");
-   printf("<steptype> Type of threshold step to be used (0=log, 1=arithmetic).\n");
-   return 0; 
-} 
-   
+    printf("\nUse with specific file names:\n %s -slp <slopefile>\n", argv[0]);
+    printf("-ad8 <ad8file> -p <dirfile> -fel <elevfile> -ssa <ssafile> -o <outletsshapefile>\n");
+    printf("-drp <dropfile> [-par <min> <max> <nthresh> <steptype>] [-ddm <ddm>]\n");
+    printf("<ad8file> is the name of the input contributing area file used in calculations of drainage density. \n");
+    printf("<dirfile> is the name of the input D8 flow directions file.\n");
+    printf("<elevfile> is the name of the input elevation file.\n");
+    printf("<ssafile> is the name of the accumulated stream source file.  This needs to have the property that it is\n");
+    printf("monotonically increasing downstream along the D8 flow directions.\n");
+    printf("<outletsshapefile> is the name of the shapefile containing input outlets.\n");
+    printf("<dropfile> a text file for drop analysis tabular output.\n");
+    printf("<min> Lower bound of range used to search for optimum threshold.\n");
+    printf("<max> Upper bound of range used to search for optimum threshold.\n");
+    printf("<nthresh> Number of thresholds used to search for optimum threshold.\n");
+    printf("<steptype> Type of threshold step to be used (0=log, 1=arithmetic).\n");
+    printf("<ddm> is the data decomposition method. Either \"row\", \"column\" or \"block\".\n");
+    return 0;
+}
+

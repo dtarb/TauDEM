@@ -52,6 +52,8 @@ email:  dtarb@usu.edu
 #include <stdlib.h>
 #include "commonLib.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 int d8flowpathextremeup(char *pfile, char*safile, char *ssafile, int usemax, char* datasrc,char* lyrname,int uselyrname,int lyrno,int useoutlets, int contcheck);
 
 int main(int argc,char **argv)  
@@ -117,8 +119,25 @@ int main(int argc,char **argv)
 				}
 				else goto errexit;
 			}
-
-			   else if(strcmp(argv[i],"-lyrno")==0)
+                else if(strcmp(argv[i],"-ddm")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				if(strcmp(argv[i],"row")==0) {
+                                    tdpartition::decompType = DECOMP_ROW;
+                                } else if (strcmp(argv[i],"column")==0) {
+                                    tdpartition::decompType = DECOMP_COLUMN;
+                                } else if (strcmp(argv[i],"block")==0) {
+                                    tdpartition::decompType = DECOMP_BLOCK;
+                                } else {
+                                    goto errexit;
+                                }
+				i++;
+			}
+			else goto errexit;
+		}
+		else if(strcmp(argv[i],"-lyrno")==0)
 		{
 			i++;
 			if(argc > i)
@@ -163,11 +182,12 @@ int main(int argc,char **argv)
 errexit:
    printf("Simple Use:\n %s <basefilename>\n",argv[0]);
    printf("Use with specific file names:\n %s -p <pfile>\n",argv[0]);
-   printf("-sa <safile> -ssa <ssafile> [-min] [-nc] [-o <outletsfile>]\n");
+   printf("-sa <safile> -ssa <ssafile> [-min] [-nc] [-o <outletsfile>] [-ddm <ddm>]\n");
    printf("<basefilename> is the name of the base digital elevation model without suffixes for simple input. Suffixes 'p', 'sa' and 'ssa' will be appended. \n");
    printf("<pfile> is the name of D8 flow directions file.\n");
    printf("<safile> is the name of input file with values from which extreme upslope is to be found.\n");
    printf("<ssa> is the name of the output file with extreme upslope values.\n");
+   printf("<ddm> is the data decomposition method. Either \"row\", \"column\" or \"block\".\n");
    printf("-min indicates to search for a minimum (default is max)\n");
    printf("-nc indicates to override edge contamination checking (checking is on by default)\n");
    return 0; 

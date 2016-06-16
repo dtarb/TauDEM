@@ -46,6 +46,8 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 #include "aread8.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 int main(int argc,char **argv)
 {
    char pfile[MAXLN],afile[MAXLN],wfile[MAXLN],datasrc[MAXLN],lyrname[MAXLN];
@@ -142,6 +144,24 @@ int main(int argc,char **argv)
 		{
 			i++;
 			contcheck=0;
+		}
+                else if(strcmp(argv[i],"-ddm")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				if(strcmp(argv[i],"row")==0) {
+                                    tdpartition::decompType = DECOMP_ROW;
+                                } else if (strcmp(argv[i],"column")==0) {
+                                    tdpartition::decompType = DECOMP_COLUMN;
+                                } else if (strcmp(argv[i],"block")==0) {
+                                    tdpartition::decompType = DECOMP_BLOCK;
+                                } else {
+                                    goto errexit;
+                                }
+				i++;
+			}
+			else goto errexit;
 		}		
 	   else 
 		{
@@ -161,12 +181,13 @@ int main(int argc,char **argv)
 	errexit:
 	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
 	   printf("Usage with specific file names:\n %s -p <pfile>\n",argv[0]);
-       printf("-ad8 <afile> [-o <shfile>] [-wg <wfile>]\n");
+       printf("-ad8 <afile> [-o <shfile>] [-wg <wfile>] [-ddm <ddm>]\n");
 	   printf("<basefilename> is the name of the raw digital elevation model\n");
 	   printf("<pfile> is the D8 flow direction input file.\n");
 	   printf("<afile> is the D8 area output file.\n");
 	   printf("[-o <shfile>] is the optional outlet shape input file.\n");
        printf("[-wg <wfile>] is the optional weight grid input file.\n");
+       printf("<ddm> is the data decomposition method. Either \"row\", \"column\" or \"block\".\n");
        printf("The flag -nc overrides edge contamination checking\n");
 	   printf("The following are appended to the file names\n");
        printf("before the files are opened:\n");
