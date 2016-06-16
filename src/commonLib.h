@@ -55,7 +55,8 @@ email:  dtarb@usu.edu
 
 int nameadd(char* full, char* arg, const char* suff);
 double prop(float a, int k, double dx1 , double dy1);
-char *getLayername(char *inputogrfile);
+std::string getLayername(std::string input_path);
+
 const char *getOGRdrivername(char *datasrcnew);
 void getlayerfail(OGRDataSourceH hDS1,char * outletsds, int outletslyr);
 int readoutlets(char *outletsds,char *lyrname,int uselayername, int outletslyr, OGRSpatialReferenceH hSRSRaster, int *noutlets, double*& x, double*& y);

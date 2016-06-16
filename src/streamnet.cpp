@@ -123,9 +123,9 @@ void createStreamNetShapefile(char *streamnetsrc, char *streamnetlyr, OGRSpatial
 
         // layer name is file name without extension
         if (strlen(streamnetlyr) == 0) {
-            char *streamnetlayername;
-            streamnetlayername = getLayername(streamnetsrc); // get layer name if the layer name is not provided
-            hLayer1 = OGR_DS_CreateLayer(hDS1, streamnetlayername, hSRSraster, wkbLineString, NULL);
+            // get layer name if the layer name is not provided
+            std::string layername = getLayername(streamnetsrc);
+            hLayer1 = OGR_DS_CreateLayer(hDS1, layername.c_str(), hSRSraster, wkbLineString, NULL);
         } else {
             hLayer1 = OGR_DS_CreateLayer(hDS1, streamnetlyr, hSRSraster, wkbLineString, NULL);
         }// provide same spatial reference as raster in streamnetshp file
@@ -133,8 +133,6 @@ void createStreamNetShapefile(char *streamnetsrc, char *streamnetlyr, OGRSpatial
             printf("warning: Layer creation failed.\n");
             //exit( 1 );
         }
-
-
 
         /* Add a few fields to the layer defn */ //need some work for setfiled width
         // add fields, field width and precision
