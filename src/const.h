@@ -40,7 +40,7 @@ email:  dtarb@usu.edu
 #define MAX_STRING_LENGTH 255
 #define MAXLN 4096
 
-#define TDVERSION "5.2.1"
+#define TDVERSION "5.3.5"
 
 enum DATA_TYPE
 	{ SHORT_TYPE,
