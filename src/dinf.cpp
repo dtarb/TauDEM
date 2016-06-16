@@ -53,25 +53,23 @@ struct Dinf {
     typedef float FlowType;
 
     static bool HasFlow(FlowType x) {
-        return x >= 0.0;
+        return x != -1.0;
     }
 
     template<typename E>
     static void SetFlow(int x, int y, linearpart<FlowType>& flowDir, E& elev, SparsePartition<int>& inc) {
-        double tempdxc, tempdyc;
-        flowDir.getdxdyc(y, tempdxc, tempdyc);
+        double dxc, dyc;
+        flowDir.getdxdyc(y, dxc, dyc);
 
-        float DXX[3] = {0, tempdxc, tempdyc};//tardemlib.cpp ln 1291
-	    float DD = sqrt(tempdxc*tempdxc+tempdyc*tempdyc);//tardemlib.cpp ln 1293
+        float DXX[3] = {0, dxc, dyc};
+        float DD = sqrt(dxc*dxc+dyc*dyc);
 
-		SET2(y, x, DXX, DD, elev, inc, flowDir);
+        SET2(y, x, DXX, DD, elev, inc, flowDir);
     }
 };
 
-//double fact[9];
 double **fact;
 
-//int setPosDirDinf(tdpartition *elevDEM, tdpartition *flowDir, tdpartition *slope, tdpartition *area, int useflowfile);
 long setPosDirDinf(linearpart<float>& elevDEM, linearpart<float>& flowDir, linearpart<float>& slope, int useflowfile);
     
 //Set positive flowdirections of elevDEM
