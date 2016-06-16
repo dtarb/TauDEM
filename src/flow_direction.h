@@ -10,12 +10,58 @@
 
 using std::vector;
 
-//Checks if cells cross
-int dontCross(int k, int i, int j, linearpart<short>& flowDir);
-int dontCross(int k, int i, int j, linearpart<float>& flowDir);
+// Checks if cells cross
+bool cellsCross(int k, int i, int j, linearpart<short>& flowDir)
+{
+    int n1, c1, n2, c2;
 
-//size_t propagateBorderIncrements(linearpart<short>& flowDir, SparsePartition<int>& inc);
-//size_t propagateBorderIncrements_async(linearpart<short>& flowDir, SparsePartition<int>& inc, bool top, std::vector<node>& changes, bool& top_updated, bool& bottom_updated);
+    switch(k) {
+    case 2:
+        n1=1;
+        c1=4;
+        n2=3;
+        c2=8;
+        break;
+    case 4:
+        n1=3;
+        c1=6;
+        n2=5;
+        c2=2;
+        break;
+    case 6:
+        n1=7;
+        c1=4;
+        n2=5;
+        c2=8;
+        break;
+    case 8:
+        n1=1;
+        c1=6;
+        n2=7;
+        c2=2;
+        break;
+    default:
+        return 0;
+    }
+
+    int in1=i+d1[n1];
+    int jn1=j+d2[n1];
+    int in2=i+d1[n2];
+    int jn2=j+d2[n2];
+
+    if (flowDir.getData(in1,jn1) == c1 || flowDir.getData(in2,jn2) == c2)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+// FIXME: D-inf, should we care if cells cross?
+bool cellsCross(int k, int i, int j, linearpart<float>& flowDir)
+{
+    return false;
+}
 
 template<typename Algo, typename E>
 int markPits(E& elev, linearpart<typename Algo::FlowType>& flowDir, vector<vector<node>>& islands, SparsePartition<int>& inc);
@@ -33,20 +79,20 @@ size_t propagateIncrements(linearpart<typename Algo::FlowType>& flowDir, SparseP
                 continue;
 
             for (int k = 1; k <= 8; k++) {
-                if (dontCross(k, flat.x, flat.y, flowDir) == 0)
-                {
-                    int in = flat.x + d1[k];
-                    int jn = flat.y + d2[k];
+                if (cellsCross(k, flat.x, flat.y, flowDir))
+                    continue;
 
-                    if (!flowDir.isInPartition(in, jn)) 
-                        continue;
+                int in = flat.x + d1[k];
+                int jn = flat.y + d2[k];
 
-                    typename Algo::FlowType flow = flowDir.getData(in,jn);
+                if (!flowDir.isInPartition(in, jn)) 
+                    continue;
 
-                    if (!Algo::HasFlow(flow) && inc.getData(in, jn) == 0) {
-                        newFlats.push_back(node(in, jn));
-                        inc.setData(in, jn, -1);
-                    }
+                typename Algo::FlowType flow = flowDir.getData(in,jn);
+
+                if (!Algo::HasFlow(flow) && inc.getData(in, jn) == 0) {
+                    newFlats.push_back(node(in, jn));
+                    inc.setData(in, jn, -1);
                 }
             }
 
@@ -145,25 +191,26 @@ size_t propagateBorderIncrements_async(linearpart<typename Algo::FlowType>& flow
             }
 
             for (int k = 1; k <= 8; k++) {
-                if (dontCross(k, flat.x, flat.y, flowDir) == 0) {
-                    int in = flat.x + d1[k];
-                    int jn = flat.y + d2[k];
+                if (cellsCross(k, flat.x, flat.y, flowDir))
+                    continue;
 
-                    if (!flowDir.isInPartition(in, jn))
-                        continue;
+                int in = flat.x + d1[k];
+                int jn = flat.y + d2[k];
 
-                    bool noFlow = !Algo::HasFlow(flowDir.getData(in, jn));
-                    auto neighInc = inc.getData(in, jn);
+                if (!flowDir.isInPartition(in, jn))
+                    continue;
 
-                    if (noFlow && (neighInc == 0 || std::abs(neighInc) > st + 1)) {
-                        // If neighbor increment is positive, we are overriding a larger increment
-                        // and it is not yet in the queue
-                        if (neighInc >= 0) {
-                           newFlats.emplace_back(in, jn);
-                        }
+                bool noFlow = !Algo::HasFlow(flowDir.getData(in, jn));
+                auto neighInc = inc.getData(in, jn);
 
-                        inc.setData(in, jn, -(st + 1));
+                if (noFlow && (neighInc == 0 || std::abs(neighInc) > st + 1)) {
+                    // If neighbor increment is positive, we are overriding a larger increment
+                    // and it is not yet in the queue
+                    if (neighInc >= 0) {
+                        newFlats.emplace_back(in, jn);
                     }
+
+                    inc.setData(in, jn, -(st + 1));
                 }
             }
         }
@@ -193,27 +240,27 @@ void flowTowardsLower(E& elev, linearpart<typename Algo::FlowType>& flowDir, vec
             float flatElev = elev.getData(flat.x, flat.y);
 
             for (int k = 1; k <= 8; k++) {
-                if (dontCross(k, flat.x, flat.y, flowDir) == 0)
-                {
-                    int in = flat.x + d1[k];
-                    int jn = flat.y + d2[k];
+                if (cellsCross(k, flat.x, flat.y, flowDir))
+                    continue;
 
-                    if (!flowDir.hasAccess(in, jn)) {
-                        continue;
-                    }
+                int in = flat.x + d1[k];
+                int jn = flat.y + d2[k];
 
-                    auto elevDiff = flatElev - elev.getData(in,jn);
-                    typename Algo::FlowType flow = flowDir.getData(in,jn);
-                    
-                    // Adjacent cell drains and is equal or lower in elevation so this is a low boundary
-                    if (elevDiff >= 0 && Algo::HasFlow(flow)) {
-                        lowBoundaries.push_back(flat);
-                        inc.setData(flat.x, flat.y, -1);
-
-                        // No need to check the other neighbors
-                        break;
-                    } 
+                if (!flowDir.hasAccess(in, jn)) {
+                    continue;
                 }
+
+                auto elevDiff = flatElev - elev.getData(in,jn);
+                typename Algo::FlowType flow = flowDir.getData(in,jn);
+
+                // Adjacent cell drains and is equal or lower in elevation so this is a low boundary
+                if (elevDiff >= 0 && Algo::HasFlow(flow)) {
+                    lowBoundaries.push_back(flat);
+                    inc.setData(flat.x, flat.y, -1);
+
+                    // No need to check the other neighbors
+                    break;
+                } 
             }
         }
     }
@@ -236,21 +283,21 @@ void flowFromHigher(E& elev, linearpart<typename Algo::FlowType>& flowDir, vecto
             bool highBoundary = false;
 
             for (int k = 1; k <= 8; k++) {
-                if (dontCross(k, flat.x, flat.y, flowDir) == 0)
-                {
-                    int in = flat.x + d1[k];
-                    int jn = flat.y + d2[k];
+                if (cellsCross(k, flat.x, flat.y, flowDir))
+                    continue;
 
-                    if (!flowDir.hasAccess(in, jn))
-                        continue;
+                int in = flat.x + d1[k];
+                int jn = flat.y + d2[k];
 
-                    auto elevDiff = flatElev - elev.getData(in, jn);
-                    
-                    if (elevDiff < 0) {
-                        // Adjacent cell has higher elevation so this is a high boundary
-                        highBoundary = true;
-                        break;
-                    }
+                if (!flowDir.hasAccess(in, jn))
+                    continue;
+
+                auto elevDiff = flatElev - elev.getData(in, jn);
+
+                if (elevDiff < 0) {
+                    // Adjacent cell has higher elevation so this is a high boundary
+                    highBoundary = true;
+                    break;
                 }
             }
 
@@ -278,28 +325,28 @@ int markPits(E& elev, linearpart<typename Algo::FlowType>& flowDir, vector<vecto
             bool skip = false;
 
             for (int k=1; k<=8; k++) {
-                if (dontCross(k, flat.x, flat.y, flowDir)==0)
-                {
-                    int jn = flat.y + d2[k];
-                    int in = flat.x + d1[k];
+                if (cellsCross(k, flat.x, flat.y, flowDir))
+                    continue;
 
-                    if (!flowDir.hasAccess(in, jn)) 
-                        continue;
+                int in = flat.x + d1[k];
+                int jn = flat.y + d2[k];
 
-                    auto elevDiff = elev.getData(flat.x, flat.y) - elev.getData(in, jn);
-                    typename Algo::FlowType flow = flowDir.getData(in,jn);
-                    
-                    // Adjacent cell drains and is equal or lower in elevation so this is a low boundary
-                    if (elevDiff >= 0 && Algo::HasFlow(flow)) {
+                if (!flowDir.hasAccess(in, jn)) 
+                    continue;
+
+                auto elevDiff = elev.getData(flat.x, flat.y) - elev.getData(in, jn);
+                typename Algo::FlowType flow = flowDir.getData(in,jn);
+
+                // Adjacent cell drains and is equal or lower in elevation so this is a low boundary
+                if (elevDiff >= 0 && Algo::HasFlow(flow)) {
+                    skip = true;
+                    break;
+                } else if (!Algo::HasFlow(flow)) {
+                    // If neighbor is in flat
+
+                    if (inc.getData(in,jn) >= 0){ 
                         skip = true;
                         break;
-                    } else if (!Algo::HasFlow(flow)) {
-                        // If neighbor is in flat
-
-                        if (inc.getData(in,jn) >= 0){ 
-                            skip = true;
-                            break;
-                        }
                     }
                 }
             }
@@ -459,127 +506,6 @@ long resolveFlats(E& elev, SparsePartition<int>& inc, linearpart<typename Algo::
     return flatsRemaining;
 }
 
-//template<typename T>
-//long resolveFlats_parallel(T& elev, SparsePartition<int>& inc, linearpart<short>& flowDir, vector<vector<node>>& islands)
-//{
-    //int nx = flowDir.getnx();
-    //int ny = flowDir.getny();
-
-    //int rank;
-    //MPI_Comm_rank(MCW, &rank);
-
-    //uint64_t numFlatsChanged = 0, totalNumFlatsChanged = 0;
-
-    ////flowTowardsLower(elev, flowDir, islands, inc);
-
-    //do {
-        //inc.share();
-        //numFlatsChanged = propagateBorderIncrements(flowDir, inc);
-
-        //MPI_Allreduce(&numFlatsChanged, &totalNumFlatsChanged, 1, MPI_UINT64_T, MPI_SUM, MCW);
-
-        //if (rank == 0) {
-            //printf("PRL: Lower gradient processed %llu flats this iteration\n", totalNumFlatsChanged);
-        //}
-    //} while(totalNumFlatsChanged > 0);
-
-    //auto no_flow = [](short flow) { return flow == 0; };
-
-    //// Not all grid cells were resolved - pits remain
-    //// Remaining grid cells are unresolvable pits
-    //markPits(elev, flowDir, islands, inc, no_flow);
-
-    //// Drain flats away from higher adjacent terrain
-    //SparsePartition<int> higherGradient(nx, ny, 0);
-   
-    ////flowFromHigher(elev, flowDir, islands, higherGradient);
-
-    //do {
-        //higherGradient.share();
-        //numFlatsChanged = propagateBorderIncrements(flowDir, higherGradient);
-
-        //MPI_Allreduce(&numFlatsChanged, &totalNumFlatsChanged, 1, MPI_UINT64_T, MPI_SUM, MCW);
-
-        //if (rank == 0) {
-            //printf("PRL: Higher gradient processed %llu flats this iteration\n", totalNumFlatsChanged);
-        //}
-    //} while(totalNumFlatsChanged > 0);
-
-    //// High flow must be inverted before it is combined
-    ////
-    //// higherFlowMax has to be greater than all of the increments
-    //// higherFlowMax can be maximum value of the data type (e.g. 65535) but it will cause overflow problems if more than one iteration is needed
-    //int higherFlowMax = 0;
-
-    //for (auto& island : islands) {
-        //for (auto& flat : island) {
-            //int val = higherGradient.getData(flat.x, flat.y);
-        
-            //if (val > higherFlowMax)
-                //higherFlowMax = val;
-        //}
-    //}
-
-    //// FIXME: Is this needed? would it affect directions at the border?
-    //// It is local to a flat area, but can that be reduced further to minimize comm?
-    //int globalHigherFlowmax = 0;
-    //MPI_Allreduce(&higherFlowMax, &globalHigherFlowmax, 1, MPI_INT, MPI_MAX, MCW);
-
-    //size_t badCells = 0;
-
-    //for (auto& island : islands) {
-        //for (auto flat : island) {
-            //auto val = inc.getData(flat.x, flat.y);
-            //auto highFlow = higherGradient.getData(flat.x, flat.y);
-
-            //inc.setData(flat.x, flat.y, val + (globalHigherFlowmax - highFlow));
-
-            //if (val < 0 || val == INT_MAX || highFlow < 0 || highFlow == INT_MAX) {
-                //badCells++;
-            //}
-        //}
-    //}
-
-    //if (badCells > 0) {
-        //printf("warning rank %d: %d increment values either incorrect or overflown\n", rank, badCells);
-    //}
-
-    //inc.share();
-
-    //if (rank==0) {
-        //fprintf(stderr,"\nPRL: Setting directions\n");
-        //fflush(stderr);
-    //}
-
-    //uint64_t localFlatsRemaining = 0, globalFlatsRemaining = 0;
-
-    //for (auto& island : islands) {
-        //for (node flat : island) {
-            //setFlow2(flat.x, flat.y, flowDir, elev, inc);
-    
-            //if (flowDir.getData(flat.x, flat.y) == 0) {
-                //localFlatsRemaining++;
-            //}
-        //}
-    //}
-
-    //flowDir.share();
-    //MPI_Allreduce(&localFlatsRemaining, &globalFlatsRemaining, 1, MPI_UINT64_T, MPI_SUM, MCW);
-
-    //auto hasFlowDirection = [&](const node& n) { return flowDir.getData(n.x, n.y) != 0; };
-    //auto isEmpty = [&](const std::vector<node>& i) { return i.empty(); };
-    
-    //// Remove flats which have flow direction set
-    //for (auto& island : islands) {
-        //island.erase(std::remove_if(island.begin(), island.end(), hasFlowDirection), island.end());
-    //}
-
-    //// Remove empty islands
-    //islands.erase(std::remove_if(islands.begin(), islands.end(), isEmpty), islands.end());
-
-    //return globalFlatsRemaining;
-//}
-
 class AsyncRasterProcessor
 {
     public:
@@ -607,13 +533,14 @@ class AsyncRasterProcessor
                 max_border_size = std::max(max_border_size, r->get_async_buf_size());
             }
 
-            // FIXME:
+            // FIXME: pick reasonable size
+            // FIXME: actually, get rid of buffered sends
             size_t buffer_size = size * num_borders * (max_border_size + MPI_BSEND_OVERHEAD);
             mpi_buffer = std::unique_ptr<uint8_t[]>(new uint8_t[buffer_size]);
             MPI_Buffer_attach(mpi_buffer.get(), buffer_size);
 
             if (rank == 0) {
-                printf("PRL: Allocating %s for MPI buffer\n", humanReadableSize(buffer_size).c_str());
+                printf("ASYNC: Allocating %s for MPI buffer\n", humanReadableSize(buffer_size).c_str());
                 std::fill(outstanding_updates.get(), outstanding_updates.get() + size, rasters.size());
             }
 
@@ -773,7 +700,10 @@ class AsyncRasterProcessor
             MPI_Reduce(&comm_bytes_needed, &global_bytes_needed, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
             if (rank == 0) {
-                printf("PRL: took %d border transfers - %s (min needed %s)\n", global_num_comms, humanReadableSize(global_num_comms * max_border_size).c_str(), humanReadableSize(global_bytes_needed).c_str());
+                auto raw_comm_bytes = global_num_comms * max_border_size;
+                auto overhead = 100 - 100. * global_bytes_needed / raw_comm_bytes;
+
+                printf("ASYNC: took %d border transfers - %s (used %s - overhead %.1f%%)\n", global_num_comms, humanReadableSize(raw_comm_bytes).c_str(), humanReadableSize(global_bytes_needed).c_str(), overhead);
             }
         }
 
@@ -807,13 +737,13 @@ long resolveFlats_parallel_async(E& elev, SparsePartition<int>& inc, linearpart<
         AsyncRasterProcessor arp;
 
         arp.add(&inc, [&flowDir, &inc](bool new_top, std::vector<node>& border_diff, bool& top_updated, bool& bottom_updated) {
-            //printf("got low update - %d\n", border_diff.size());
+            //printf("rank %d: got low gradient update - %d cells\n", rank, border_diff.size());
 
             propagateBorderIncrements_async<Algo>(flowDir, inc, new_top, border_diff, top_updated, bottom_updated);
         });
 
         arp.add(&higherGradient, [&flowDir, &higherGradient](bool new_top, std::vector<node>& border_diff, bool& top_updated, bool& bottom_updated) {
-            //printf("got high update - %d\n", border_diff.size());
+            //printf("rank %d: got high gradient update - %d cells\n", rank, border_diff.size());
 
             propagateBorderIncrements_async<Algo>(flowDir, higherGradient, new_top, border_diff, top_updated, bottom_updated);
         });

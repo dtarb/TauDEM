@@ -23,7 +23,7 @@ endif()
 add_executable(aread8 aread8mn.cpp aread8.cpp ${COMMON_SRC})
 add_executable(areadinf areadinfmn.cpp areadinf.cpp ${COMMON_SRC})
 
-add_executable(d8flowdir D8FlowDirmn.cpp d8.cpp flow_direction.cpp ${COMMON_SRC})
+add_executable(d8flowdir D8FlowDirmn.cpp d8.cpp ${COMMON_SRC})
 add_executable(d8flowpathextremeup D8flowpathextremeup.cpp D8FlowPathExtremeUpmn.cpp ${COMMON_SRC})
 add_executable(d8hdisttostrm D8HDistToStrm.cpp D8HDistToStrmmn.cpp ${COMMON_SRC})
 
@@ -32,7 +32,7 @@ add_executable(dinfconclimaccum DinfConcLimAccum.cpp DinfConcLimAccummn.cpp ${CO
 add_executable(dinfdecayaccum dinfdecayaccum.cpp DinfDecayAccummn.cpp ${COMMON_SRC})
 add_executable(dinfdistdown DinfDistDown.cpp DinfDistDownmn.cpp ${COMMON_SRC})
 add_executable(dinfdistup DinfDistUp.cpp DinfDistUpmn.cpp ${COMMON_SRC})
-add_executable(dinfflowdir DinfFlowDirmn.cpp dinf.cpp flow_direction.cpp ${COMMON_SRC})
+add_executable(dinfflowdir DinfFlowDirmn.cpp dinf.cpp ${COMMON_SRC})
 add_executable(dinfrevaccum DinfRevAccum.cpp DinfRevAccummn.cpp ${COMMON_SRC})
 add_executable(dinftranslimaccum DinfTransLimAccum.cpp DinfTransLimAccummn.cpp ${COMMON_SRC})
 add_executable(dinfupdependence DinfUpDependence.cpp DinfUpDependencemn.cpp ${COMMON_SRC})
