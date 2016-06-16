@@ -103,7 +103,7 @@ void setFlow(int i, int j, linearpart<short>& flowDir, linearpart<float>& elevDE
 
         float slope = fact[j][k] * (elev - elevDEM.getData(in,jn));
 
-        if (slope > smax && dontCross(k,i,j,flowDir)==0) {
+        if (slope > smax && !cellsCross(k,i,j,flowDir)) {
             smax = slope;
             short dirnb = flowDir.getData(in,jn);
 
