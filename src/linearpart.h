@@ -54,7 +54,6 @@ email:  dtarb@usu.edu
 
 #ifndef LINEARPART_H
 #define LINEARPART_H
-using namespace std;
 
 template<class datatype>
 class linearpart : public tdpartition {
@@ -85,6 +84,7 @@ protected:
     int topleftRank, toprightRank;
     int bottomleftRank, bottomrightRank;
     int numOfNeighbours;
+
     MPI_Datatype MPI_type;
     datatype noData;
     datatype *gridData;
@@ -108,9 +108,7 @@ protected:
     int *neighbourRanks;
 
 public:
-
-    linearpart() : tdpartition() {
-    }
+    linearpart() : tdpartition() {}
 
     linearpart(long totalx, long totaly, double dx_in, double dy_in, MPI_Datatype dt, datatype nd) {
         init(totalx, totaly, dx_in, dy_in, dt, nd);
@@ -126,42 +124,30 @@ public:
     void share();
 
     void passBorders();
-
     void addBorders();
-
     void clearBorders();
 
     int ringTerm(int isFinished);
 
     bool globalToLocal(int globalX, int globalY, int &localX, int &localY);
-
     void localToGlobal(int localX, int localY, int &globalX, int &globalY);
-
-    int getGridXY(int x, int y, int *i, int *j);
 
     void transferPack(int** neighbourBuffers, int**neighbourCountArr);
 
-    void *getGridPointer() {
+    void *getGridPointer() const {
         return gridData;
     }
 
     bool isNodata(int x, int y) const;
     void setToNodata(int x, int y);
 
-    datatype getData(long x, long y, datatype &val) const;
-    void setData(long x, long y, datatype val);
-
-    // FIXME:
-    datatype getData(int x, int y) {
-        datatype WTF;
-        return getData(x, y, WTF);
-    }
+    datatype getData(int x, int y) const;
+    datatype getData(int x, int y, datatype &val) const;
+    void setData(int x, int y, datatype val);
+    void addToData(int x, int y, datatype val);
 
     void savedxdyc(tiffIO &obj);
-
-    void getdxdyc(long iny, double &val_dxc, double &val_dyc);
-
-    void addToData(long x, long y, datatype val);
+    void getdxdyc(int y, double &val_dxc, double &val_dyc);
 
     bool hasLeftNeighbour();
     bool hasRightNeighbour();
@@ -178,7 +164,6 @@ private:
     void findClosestFactors(int number, int &firstFactor, int &secondFactor);
 
 };
-
 
 //Destructor.  Just frees up memory.
 
@@ -303,6 +288,7 @@ template<class datatype>
 void linearpart<datatype>::init(long totalx, long totaly, double dx_in, double dy_in, MPI_Datatype MPIt, datatype nd) {
     MPI_Comm_rank(MCW, &rank);
     MPI_Comm_size(MCW, &size);
+
     leftRank = -1;
     rightRank = -1;
     topRank = -1;
@@ -476,7 +462,7 @@ void linearpart<datatype>::init(long totalx, long totaly, double dx_in, double d
         toprightBorder = new datatype[1];
         bottomleftBorder = new datatype[1];
         bottomrightBorder = new datatype[1];
-    } catch (bad_alloc &) {
+    } catch (std::bad_alloc &) {
         //  DGT added clause below to try trap for insufficient memory in the computer.
         fprintf(stdout, "Memory allocation error during partition initialization in process %d.\n", rank);
         fprintf(stdout, "NCols: %ld, NRows: %ld, NCells: %ld\n", nx, ny, prod);
@@ -617,22 +603,15 @@ void linearpart<datatype>::init(long totalx, long totaly, double dx_in, double d
             borderTypes[neighbourIndex] = BOTTOMRIGHT_BORDER;
         }
     }
-
-    //TODO: find out what these are for
-    after1 = after2 = before1 = before2 = NULL;
 }
 
-
 //Returns true if (x,y) is in partition
-
 template<class datatype>
 bool linearpart<datatype>::isInPartition(int x, int y) const {
-    if (x >= 0 && x < nx && y >= 0 && y < ny) return true;
-    else return false;
+    return x >= 0 && x < nx && y >= 0 && y < ny;
 }
 
 //Returns true if (x,y) is in or on borders of partition
-
 template<class datatype>
 bool linearpart<datatype>::hasAccess(int x, int y) const {
     //isInPartition takes care of the case where (x,y) is inside the grid
@@ -660,7 +639,6 @@ bool linearpart<datatype>::hasAccess(int x, int y) const {
 }
 
 //Shares border information between adjacent processes
-
 template<class datatype>
 void linearpart<datatype>::share() {
     MPI_Status status;
@@ -832,26 +810,6 @@ void linearpart<datatype>::localToGlobal(int localX, int localY, int &globalX, i
     globalY = coordY * minHeightPerProc + localY;
 }
 
-//TODO: Figure out what this function is actually for.
-//I don't think it is called more than once in Taudem.
-//Ahmet: No TauDEM program is using this function. Remove?
-
-template<class datatype>
-int linearpart<datatype>::getGridXY(int x, int y, int *i, int *j) {
-    *i = *j = -1;
-    int numRowsPerProc = ny / size;
-    int starty = numRowsPerProc * rank;
-    if (rank == size - 1)
-        numRowsPerProc += (totaly % size);
-    int endy = starty + numRowsPerProc;
-    if (x >= 0 && x < nx && y >= starty && y < endy) {
-        *i = x;
-        *j = y - starty;
-        return 1;
-    }
-    return 0;
-}
-
 template<class datatype>
 void linearpart<datatype>::transferPack(int** neighbourBuffers, int**neighbourCountArr) {
     if (size == 1) return;
@@ -868,7 +826,6 @@ void linearpart<datatype>::transferPack(int** neighbourBuffers, int**neighbourCo
     MPI_Waitall(numOfNeighbours, requests, statuses);
 
     for (unsigned int i = 0; i < numOfNeighbours; ++i) {
-
         MPI_Probe(neighbourRanks[i], 0, MCW, &statuses[i]); // Blocking function this only returns when there is a message to receive
         MPI_Get_count(&statuses[i], MPI_INT, neighbourCountArr[i]);
 
@@ -890,75 +847,22 @@ void linearpart<datatype>::transferPack(int** neighbourBuffers, int**neighbourCo
 }
 
 //Returns true if grid element (x,y) is equal to noData.
-
 template<class datatype>
-bool linearpart<datatype>::isNodata(int inx, int iny) const {
-    int64_t x, y; //int64 because it oculd be -1.
-    x = inx;
-    y = iny;
-    //DGT to avoid nested calls and type inconsistency
-    if (x >= 0 && x < nx && y >= 0 && y < ny)return (abs((float) (gridData[x + y * nx] - noData)) < MINEPS);
-        //	if(isInPartition(x,y)) return (abs(gridData[x+y*nx]-noData)<MINEPS);
-    else if (x >= 0 && x < nx) {
-        if (y == -1)
-            return (abs((float) (topBorder[x] - noData)) < MINEPS);
-        else if (y == ny)
-            return (abs((float) (bottomBorder[x] - noData)) < MINEPS);
-    } else if (y >= 0 && y < ny) {
-        if (x == -1)
-            return (abs((float) (leftBorder[y] - noData)) < MINEPS);
-        else if (x == nx)
-            return (abs((float) (rightBorder[y] - noData)) < MINEPS);
-    } else if (x == -1 && y == -1) {
-        return (abs((float) (topleftBorder[0] - noData)) < MINEPS);
-    } else if (x == nx && y == -1) {
-        return (abs((float) (toprightBorder[0] - noData)) < MINEPS);
-    } else if (x == -1 && y == ny) {
-        return (abs((float) (bottomleftBorder[0] - noData)) < MINEPS);
-    } else if (x == nx && y == ny) {
-        return (abs((float) (bottomrightBorder[0] - noData)) < MINEPS);
-    }
-    return true;
+bool linearpart<datatype>::isNodata(int x, int y) const {
+    return getData(x, y) == noData;
 }
 
 //Sets the element in the grid to noData.
-
 template<class datatype>
-void linearpart<datatype>::setToNodata(int inx, int iny) {
-    int64_t x, y;
-    x = inx;
-    y = iny;
-    if (x >= 0 && x < nx && y >= 0 && y < ny) gridData[x + y * nx] = noData;
-        //	if(isInPartition(x,y)) gridData[x+y*nx] = noData;
-    else if (x >= 0 && x < nx) {
-        if (y == -1)
-            topBorder[x] = noData;
-        else if (y == ny)
-            bottomBorder[x] = noData;
-    } else if (y >= 0 && y < ny) {
-        if (x == -1)
-            leftBorder[y] = noData;
-        else if (x == nx)
-            rightBorder[y] = noData;
-    } else if (x == -1 && y == -1) {
-        topleftBorder[0] = noData;
-    } else if (x == nx && y == -1) {
-        toprightBorder[0] = noData;
-    } else if (x == -1 && y == ny) {
-        bottomleftBorder[0] = noData;
-    } else if (x == nx && y == ny) {
-        bottomrightBorder[0] = noData;
-    }
+void linearpart<datatype>::setToNodata(int x, int y) {
+    setData(x, y, noData);
 }
 
 //Returns the element in the grid with coordinate (x,y).
-
 template<class datatype>
-datatype linearpart<datatype>::getData(long inx, long iny, datatype &val) const {
-    int64_t x, y;
-    x = inx;
-    y = iny;
-    //	if(isInPartition(x,y)) val = gridData[x+y*nx];
+datatype linearpart<datatype>::getData(int x, int y) const {
+    datatype val;
+
     if (x >= 0 && x < nx && y >= 0 && y < ny) val = gridData[x + y * nx];
     else if (x >= 0 && x < nx) {
         if (y == -1) val = topBorder[x];
@@ -975,6 +879,14 @@ datatype linearpart<datatype>::getData(long inx, long iny, datatype &val) const 
     } else if (x == nx && y == ny) {
         val = bottomrightBorder[0];
     }
+
+    return val;
+}
+
+// FIXME: get rid of this ugly function
+template<class datatype>
+datatype linearpart<datatype>::getData(int x, int y, datatype &val) const {
+    val = getData(x, y);
     return val;
 }
 
@@ -993,23 +905,16 @@ void linearpart<datatype>::savedxdyc(tiffIO &obj) {
 }
 
 template<class datatype>
-void linearpart<datatype>::getdxdyc(long iny, double &val_dxc, double &val_dyc) {
-    int64_t y;
-    y = iny;
+void linearpart<datatype>::getdxdyc(int y, double &val_dxc, double &val_dyc) {
     if (y >= 0 && y < ny) {
         val_dxc = dxc[y];
         val_dyc = dyc[y];
     }
 }
 
-
 //Sets the element in the grid to the specified value.
-
 template<class datatype>
-void linearpart<datatype>::setData(long inx, long iny, datatype val) {
-    int64_t x, y;
-    x = inx;
-    y = iny;
+void linearpart<datatype>::setData(int x, int y, datatype val) {
     //	if(isInPartition(x,y)) gridData[x+y*nx] = val;
     if (x >= 0 && x < nx && y >= 0 && y < ny) gridData[x + y * nx] = val;
     else if (x >= 0 && x < nx) {
@@ -1030,12 +935,8 @@ void linearpart<datatype>::setData(long inx, long iny, datatype val) {
 }
 
 //Increments the element in the grid by the specified value.
-
 template<class datatype>
-void linearpart<datatype>::addToData(long inx, long iny, datatype val) {
-    int64_t x, y;
-    x = inx;
-    y = iny;
+void linearpart<datatype>::addToData(int x, int y, datatype val) {
     //	if(isInPartition(x,y)) gridData[x+y*nx] += val;
     if (x >= 0 && x < nx && y >= 0 && y < ny) gridData[x + y * nx] += val;
     else if (x >= 0 && x < nx) {
