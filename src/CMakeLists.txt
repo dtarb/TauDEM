@@ -51,9 +51,6 @@ add_executable(streamnet streamnetmn.cpp streamnet.cpp ${COMMON_SRC})
 add_executable(threshold Threshold.cpp Thresholdmn.cpp ${COMMON_SRC})
 
 add_executable(gagewatershed gagewatershedmn.cpp gagewatershed.cpp ${COMMON_SRC})
-#add_executable (ReadTif ReadTif.cpp ReadTifmn.cpp ${COMMON_SRC})
-#add_executable (compare ${OBJFILES} compare.cpp)
-#add_executable (extract ${OBJFILES} extract.cpp)
 
 install(TARGETS aread8 
                 areadinf
