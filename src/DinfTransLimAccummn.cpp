@@ -45,6 +45,8 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 #include "tardemlib.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 //-ang demang.tif -tsup demtsup.tif -tc demtc.tif [-cs demcs.tif -ctpt demctpt.tiff] 
 //-tla demtla.tif -tdep demtdep.tif [-o outletfile.shp] [-nc]
 
@@ -109,6 +111,24 @@ int main(int argc,char **argv)
 			{
 				strcpy(cinfile,argv[i]);//Input concentration grid (optional)
 				usec=1;//use input concentraiotn file
+				i++;
+			}
+			else goto errexit;
+		}
+                else if(strcmp(argv[i],"-ddm")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				if(strcmp(argv[i],"row")==0) {
+                                    tdpartition::decompType = DECOMP_ROW;
+                                } else if (strcmp(argv[i],"column")==0) {
+                                    tdpartition::decompType = DECOMP_COLUMN;
+                                } else if (strcmp(argv[i],"block")==0) {
+                                    tdpartition::decompType = DECOMP_BLOCK;
+                                } else {
+                                    goto errexit;
+                                }
 				i++;
 			}
 			else goto errexit;
@@ -210,7 +230,7 @@ errexit:
 	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
 	   printf("Usage with specific file names:\n %s -ang <pfile>\n",argv[0]);
        printf("-tsup <wfile> -tc <tcfile> [-cs <cfile> -ctpt <coutfile>]\n");
-	   printf("-tla <tlafile> -tdep <depfile> [-o <shfile>] [<-nc>]\n");
+	   printf("-tla <tlafile> -tdep <depfile> [-o <shfile>] [<-nc>] [-ddm <ddm>]\n");
 	   printf("<basefilename> is the name of the raw digital elevation model\n");
 	   printf("<angfile> is the D-infinity flow direction input file.\n");
 	   printf("<wfile> is the input transport supply grid file.\n");
@@ -220,6 +240,7 @@ errexit:
 	   printf("<tlafile> is the output transport limitted accumulation grid file.\n");
 	   printf("<depfile> is the output deposition grid file.\n");
 	   printf("<shfile> is the optional outlet shapefile.\n");
+           printf("<ddm> is the data decomposition method. Either \"row\", \"column\" or \"block\".\n");
        printf("The flag -nc overrides edge contamination checking\n");
 	   printf("The following are appended to the file names\n");
        printf("before the files are opened:\n");

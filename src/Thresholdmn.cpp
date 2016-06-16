@@ -45,6 +45,8 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 #include "tardemlib.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 int threshold(char *ssafile,char *srcfile,char *maskfile, float thresh, int usemask);
 
 int main(int argc,char **argv)  
@@ -99,6 +101,24 @@ int main(int argc,char **argv)
 				}
 				else goto errexit;
 			}
+                        else if(strcmp(argv[i],"-ddm")==0)
+                    {
+			i++;
+			if(argc > i)
+			{
+				if(strcmp(argv[i],"row")==0) {
+                                    tdpartition::decompType = DECOMP_ROW;
+                                } else if (strcmp(argv[i],"column")==0) {
+                                    tdpartition::decompType = DECOMP_COLUMN;
+                                } else if (strcmp(argv[i],"block")==0) {
+                                    tdpartition::decompType = DECOMP_BLOCK;
+                                } else {
+                                    goto errexit;
+                                }
+				i++;
+			}
+			else goto errexit;
+                    }
 		   else if(strcmp(argv[i],"-thresh")==0)
 			{
 				i++;
@@ -119,13 +139,14 @@ int main(int argc,char **argv)
 errexit:
    printf("Simple Use:\n %s <basefilename>\n",argv[0]);
    printf("Use with specific file names:\n %s -fel <ssafile>\n",argv[0]);
-   printf("-ss <srcfile> [-thresh <thresholdvalue>] [-mask <maskfile>]\n");
+   printf("-ss <srcfile> [-thresh <thresholdvalue>] [-mask <maskfile>] [-ddm <ddm>]\n");
    printf("<basefilename> is the name of the base digital elevation model without suffixes for simple input. Suffixes 'ssa' and 'src' will be appended. \n");
    printf("<ssafile> is the name of file to be thresholded.\n");
    printf("<srcfile> is the name of file with the thresholded output.\n");
    printf("<maskfile> is the name of a file that masks the domain.\n");
    printf("<thresholdvalue> is the value of the threshold.\n");
    printf("The threshold logic is src = ((ssa >= thresh) & (mask >=0)) ? 1:0.\n");
+   printf("<ddm> is the data decomposition method. Either \"row\", \"column\" or \"block\".\n");
    return 0; 
 } 
    

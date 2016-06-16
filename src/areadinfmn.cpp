@@ -45,6 +45,8 @@ email:  dtarb@usu.edu
 #include <stdlib.h>
 #include "commonLib.h"
 #include "areadinf.h"
+
+DecompType tdpartition::decompType = DECOMP_BLOCK;
   
 int main(int argc,char **argv)
 {
@@ -99,10 +101,25 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-
-
-		
-		   else if(strcmp(argv[i],"-lyrno")==0)
+                else if(strcmp(argv[i],"-ddm")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				if(strcmp(argv[i],"row")==0) {
+                                    tdpartition::decompType = DECOMP_ROW;
+                                } else if (strcmp(argv[i],"column")==0) {
+                                    tdpartition::decompType = DECOMP_COLUMN;
+                                } else if (strcmp(argv[i],"block")==0) {
+                                    tdpartition::decompType = DECOMP_BLOCK;
+                                } else {
+                                    goto errexit;
+                                }
+				i++;
+			}
+			else goto errexit;
+		}
+                else if(strcmp(argv[i],"-lyrno")==0)
 		{
 			i++;
 			if(argc > i)
@@ -163,13 +180,14 @@ int main(int argc,char **argv)
 errexit:
 	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
 	   printf("Usage with specific file names:\n %s -ang <angfile>\n",argv[0]);
-       printf("-sca <afile> [-o <shfile>] [-wg <wfile>]\n");
+       printf("-sca <afile> [-o <shfile>] [-wg <wfile>] [-ddm <ddm>]\n");
 	   printf("<basefilename> is the name of the raw digital elevation model\n");
 	   printf("<angfile> is the D-infinity flow direction input file.\n");
 	   printf("<afile> is the D-infinity area output file.\n");
 	   printf("[-o <shfile>] is the optional outlet shape input file.\n");
        printf("[-wg <wfile>] is the optional weight grid input file.\n");
        printf("The flag -nc overrides edge contamination checking\n");
+       printf("<ddm> is the data decomposition method. Either \"row\", \"column\" or \"block\".\n");
 	   printf("The following are appended to the file names\n");
        printf("before the files are opened:\n");
        printf("sca   D-infinity contributing area file (output)\n");

@@ -47,6 +47,7 @@ email:  dtarb@usu.edu
 #include "tardemlib.h"
 #include "streamnet.h"
 
+DecompType tdpartition::decompType = DECOMP_ROW;
 
 int main(int argc,char **argv)
 {

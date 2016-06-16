@@ -46,6 +46,8 @@ email:  dtarb@usu.edu
 #include <stdlib.h>
 #include "commonLib.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 int distgrid(char *pfile, char *srcfile, char *distfile, int thresh);
 
 int main(int argc,char **argv)
@@ -102,6 +104,24 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
+                else if(strcmp(argv[i],"-ddm")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				if(strcmp(argv[i],"row")==0) {
+                                    tdpartition::decompType = DECOMP_ROW;
+                                } else if (strcmp(argv[i],"column")==0) {
+                                    tdpartition::decompType = DECOMP_COLUMN;
+                                } else if (strcmp(argv[i],"block")==0) {
+                                    tdpartition::decompType = DECOMP_BLOCK;
+                                } else {
+                                    goto errexit;
+                                }
+				i++;
+			}
+			else goto errexit;
+		}
 		else if(strcmp(argv[i],"-thresh")==0)
 		{
 			i++;
@@ -134,11 +154,12 @@ int main(int argc,char **argv)
 	errexit:
 	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
        printf("Usage with specific file names:\n %s -p <pfile>\n",argv[0]);
-	   printf("-src <srcfile> -dist <distfile> [-thresh <thresh>]\n");
+	   printf("-src <srcfile> -dist <distfile> [-thresh <thresh>] [-ddm <ddm>]\n");
   	   printf("<basefilename> is the name of the base digital elevation model\n");
 	   printf("<pfile> is the d8 flow direction input file.\n");
        printf("<srcfile> is the stream raster input file.\n");
        printf("<distfile> is the distance to stream output file.\n");
+       printf("<ddm> is the data decomposition method. Either \"row\", \"column\" or \"block\".\n");
 	   printf("The optional <thresh> is the user input threshold number.\n");
        printf("The following are appended to the file names\n");
        printf("before the files are opened:\n");

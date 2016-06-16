@@ -39,75 +39,36 @@ email:  dtarb@usu.edu
 //  This software is distributed from http://hydrology.usu.edu/taudem/
 #ifndef COMMON_H
 #define COMMON_H
-#include <cmath>
-#include <float.h>
-#include "mpi.h"
-#include <stdint.h>
-#include "ogr_api.h"
 
-#define MCW MPI_COMM_WORLD
-#define MAX_STRING_LENGTH 255
-#define MAXLN 4096
+#include <queue>
 
-//TODO: revisit these to see if they are used/needed
-//#define ABOVE 1
-//#define BELOW 2
-//#define LEFT 3
-//#define RIGHT 4
-//
+#include <mpi.h>
+#include <gdal.h>
+#include <ogr_api.h>
 
-#define NOTFINISHED 0
-#define FINISHED 1
-
-#define TDVERSION "5.3.5"
-
-enum DATA_TYPE
-	{ SHORT_TYPE,
-	  LONG_TYPE,
-	  FLOAT_TYPE,
-	  DOUBLE_TYPE,
-	  UNKNOWN_TYPE,
-	  INVALID_DATA_TYPE = -1
-	};
-
-//TODO: revisit this structure to see where it is used
-struct node {
-	int x;
-	int y;
-};
-
-const double PI =  3.14159265359;
-const short MISSINGSHORT = -32768;
-
-const long MISSINGLONG = -2147483647;
-const float MISSINGFLOAT = -1*FLT_MAX;
-const float MINEPS = 1E-5f;
-
-const int d1[9] = { 0,1, 1, 0,-1,-1,-1,0,1};
-const int d2[9] = { 0,0,-1,-1,-1, 0, 1,1,1};
-
-
+#include "const.h"
+#include "linearpart.h"
 
 //  TODO adjust this for different dx and dy
 //const double aref[10] = { -atan2((double)1,(double)1), 0., -aref[0],(double)(0.5*PI),PI-aref[2],(double)PI,
                        // PI+aref[2],(double)(1.5*PI),2.*PI-aref[2],(double)(2.*PI) };   // DGT is concerned that this assumes square grids.  For different dx and dx needs adjustment
 
-int nameadd( char*,char*,const char*);
-double prop( float a, int k, double dx1 , double dy1);
-char *getLayername(char *inputogrfile);
+int nameadd(char* full, char* arg, const char* suff);
+double prop(float a, int k, double dx1 , double dy1);
+std::string getLayername(std::string input_path);
+
 const char *getOGRdrivername(char *datasrcnew);
 void getlayerfail(OGRDataSourceH hDS1,char * outletsds, int outletslyr);
 int readoutlets(char *outletsds,char *lyrname,int uselayername, int outletslyr, OGRSpatialReferenceH hSRSRaster, int *noutlets, double*& x, double*& y);
 int readoutlets(char *outletsds,char *lyrname,int uselayername, int outletslyr, OGRSpatialReferenceH  hSRSraster,int *noutlets, double*& x, double*& y, int*& id);
 
-#include <queue>
-#include "linearpart.h"
-
 bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData);
 
-/* void initNeighborDinfup(tdpartition* neighbor,tdpartition* flowData,queue<node> *que,
+void initNeighborDinfup(tdpartition* neighbor,tdpartition* flowData, std::queue<node> *que,
 					  int nx,int ny,int useOutlets, int *outletsX,int *outletsY,long numOutlets);
-void initNeighborD8up(tdpartition* neighbor,tdpartition* flowData,queue<node> *que,
-					  int nx,int ny,int useOutlets, int *outletsX,int *outletsY,long numOutlets);  */
+void initNeighborD8up(tdpartition* neighbor,tdpartition* flowData, std::queue<node> *que,
+					  int nx,int ny,int useOutlets, int *outletsX,int *outletsY,long numOutlets); 
+
+std::string humanReadableSize(uint64_t size);
 #endif
 

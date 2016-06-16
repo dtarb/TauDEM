@@ -64,9 +64,8 @@ email:  dtarb@usu.edu
 #include "createpart.h"
 #include "tiffIO.h"
 #include "ogr_api.h"
-//#include "shapelib/shapefil.h"
 #include "MoveOutletsToStrm.h"
-#
+
 using namespace std;
 OGRSFDriverH    driver;
 OGRDataSourceH  hDSsh, hDSshmoved;
@@ -222,9 +221,9 @@ int outletstosrc(char *pfile, char *srcfile, char *outletsdatasrc, char *outlets
 				
 				//hLayershmoved = OGR_DS_CreateLayer( hDSshmoved, outletmovedlayer, hSRSRaster, wkbPoint, NULL ); // create layer for moved outlet, where raster layer spatial reference is used fro shapefile
 			   if(strlen(outletmovedlayer)==0){
-		          char * layernameshmoved; 
-                 layernameshmoved=getLayername(outletmoveddatasrc); // get layer name which is file name without extension
-	             hLayershmoved= OGR_DS_CreateLayer( hDSshmoved,layernameshmoved,hSRSRaster, wkbPoint, NULL );} 
+                    // get layer name which is file name without extension
+                   std::string layername_shmoved = getLayername(outletmoveddatasrc);
+	             hLayershmoved= OGR_DS_CreateLayer( hDSshmoved, layername_shmoved.c_str(), hSRSRaster, wkbPoint, NULL );} 
 
 	           else {
 		         hLayershmoved= OGR_DS_CreateLayer(hDSshmoved, outletmovedlayer, hSRSRaster, wkbPoint, NULL ); }// provide same spatial reference as raster in streamnetshp file

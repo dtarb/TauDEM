@@ -46,7 +46,6 @@ email:  dtarb@usu.edu
 //As of VS 2010 MS provides stdint.h so can now use <> rather than "" and use system stdint.h 
 // See http://en.wikipedia.org/wiki/Stdint.h for details.
 //  See http://msdn.microsoft.com/en-us/library/36k2cdd4(v=vs.71).aspx for explanation of difference
-#include "commonLib.h"
 #include <gdal.h>
 #include <cpl_conv.h>
 #include <cpl_string.h>
@@ -135,7 +134,7 @@ class tiffIO{
 		//BT void write(unsigned long long xstart, unsigned long long ystart, unsigned long long numRows, unsigned long long numCols, void* source);
 		void read(long xstart, long ystart, long numRows, long numCols, void* dest);
 		void write(long xstart, long ystart, long numRows, long numCols, void* source);
-
+		
 		bool compareTiff(const tiffIO &comp);
 				
 		//void geoToGlobalXY(double geoX, double geoY, unsigned long long &globalX, unsigned long long &globalY);
