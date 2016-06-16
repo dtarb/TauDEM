@@ -45,6 +45,8 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 #include "flood.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 int main(int argc,char **argv)
 {
    char demfile[MAXLN],newfile[MAXLN],flowfile[MAXLN];
@@ -89,6 +91,24 @@ int main(int argc,char **argv)
 			if(argc > i)
 			{
 				strcpy(newfile,argv[i]);
+				i++;
+			}
+			else goto errexit;
+		}
+                else if(strcmp(argv[i],"-ddm")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				if(strcmp(argv[i],"row")==0) {
+                                    tdpartition::decompType = DECOMP_ROW;
+                                } else if (strcmp(argv[i],"column")==0) {
+                                    tdpartition::decompType = DECOMP_COLUMN;
+                                } else if (strcmp(argv[i],"block")==0) {
+                                    tdpartition::decompType = DECOMP_BLOCK;
+                                } else {
+                                    goto errexit;
+                                }
 				i++;
 			}
 			else goto errexit;
@@ -153,11 +173,12 @@ int main(int argc,char **argv)
 	errexit:
 	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
 	   printf("Usage with specific file names:\n %s -z <demfile>\n",argv[0]);
-       printf("-fel <newfile> [-sfdr <flowfile>]\n");
+           printf("-fel <newfile> [-sfdr <flowfile>] [-ddm <ddm>]\n");
 	   printf("<basefilename> is the name of the raw digital elevation model.\n");
 	   printf("<demfile> is the name of the input elevation grid file.\n");
 	   printf("<newfile> is the output elevation grid with pits filled.\n");
 	   printf("<flowfile> is the input grid of flow directions to be imposed.\n");
+           printf("<ddm> is the data decomposition method. Either \"row\", \"column\" or \"block\".\n");
 	   printf("The following are appended to the file names\n");
        printf("before the files are opened:\n");
        printf("fel    output elevation grid with pits filled.\n\n");

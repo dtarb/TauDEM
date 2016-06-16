@@ -64,9 +64,9 @@ int peukerdouglas(char *felfile, char *ssfile,float *p)
 
 	long x,y;
 	int k,ik,jk,jomax,iomax,bound;
-	float ndve,emax;
-	float* ndveptr;
-								/* Read elevation headers */
+	float emax;
+    
+    /* Read elevation headers */
 	tiffIO felev(felfile, FLOAT_TYPE);			//input	 elevation	
 	long totalX = felev.getTotalX();			//Globabl x and y
 	long totalY = felev.getTotalY();
@@ -81,8 +81,6 @@ int peukerdouglas(char *felfile, char *ssfile,float *p)
 		}
 
 
-	ndveptr =  (float*)felev.getNodata();
-	ndve = *ndveptr;
 								//Create partition and read data
 	tdpartition *elev;
 	elev = CreateNewPartition(felev.getDatatype(), totalX, totalY, dxA, dyA, felev.getNodata());
@@ -117,7 +115,7 @@ int peukerdouglas(char *felfile, char *ssfile,float *p)
 								//  Suggestion **->isOnEdge(x,y) to return true if on edge of global domain or adjacent to a no data value, otherwise to return false.
 								//  FIX code below to if on a global edge or adjacent to a no-data value do first "if block"
 
-		  if(rank == 0 && y == 0 || rank == (size-1) && y == (elevny-1) )
+		  if((rank == 0 && y == 0) || (rank == (size-1) && y == (elevny-1)))
 		  {
 			  selev->setData(x,y,elev->getData(x, y,floatTemp1 ));
 			  ss->setData(x,y,(short)0);

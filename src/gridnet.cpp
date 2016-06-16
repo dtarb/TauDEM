@@ -5,7 +5,7 @@
   Utah State University  
   May 23, 2010 
   
-*/
+ */
 
 /*  Copyright (C) 2010  David Tarboton, Utah State University
 
@@ -35,7 +35,7 @@ Logan, UT 84322-8200
 USA 
 http://www.engineering.usu.edu/dtarb/ 
 email:  dtarb@usu.edu 
-*/
+ */
 
 //  This software is distributed from http://hydrology.usu.edu/taudem/
 
@@ -48,462 +48,745 @@ email:  dtarb@usu.edu
 #include "tiffIO.h"
 using namespace std;
 
+int gridnet(char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *maskfile,
+        char* datasrc, char* lyrname, int uselyrname, int lyrno, int useMask, int useOutlets, int thresh) {//1
+
+    MPI_Init(NULL, NULL);
+    {
+
+        int rank, size;
+        MPI_Comm_rank(MCW, &rank); //returns the rank of the calling processes in a communicator
+        MPI_Comm_size(MCW, &size); //returns the number of processes in a communicator
+        if (rank == 0)printf("GridNet version %s\n", TDVERSION);
+
+        double *x, *y;
+        int numOutlets = 0;
+        bool usingShapeFile = false;
+
+        double begint = MPI_Wtime();
+        tiffIO p(pfile, SHORT_TYPE);
+        long totalX = p.getTotalX();
+        long totalY = p.getTotalY();
+        double dxA = p.getdxA();
+        double dyA = p.getdyA();
+        OGRSpatialReferenceH hSRSRaster;
+        hSRSRaster = p.getspatialref();
+
+        if (useOutlets == 1) {//3
+            if (rank == 0) {//4
+                if (readoutlets(datasrc, lyrname, uselyrname, lyrno, hSRSRaster, &numOutlets, x, y) == 0) {
+                    //				for(int i=0; i< numOutlets; i++)
+                    //					printf("rank: %d, X: %lf, Y: %lf\n",rank,x[i],y[i]);
+                    usingShapeFile = true;
+                    //	printf("Rank: %d, numOutlets: %d\n",rank,numOutlets);
+                    MPI_Bcast(&numOutlets, 1, MPI_INT, 0, MCW);
+                    MPI_Bcast(x, numOutlets, MPI_DOUBLE, 0, MCW);
+                    MPI_Bcast(y, numOutlets, MPI_DOUBLE, 0, MCW);
+                    //printf("after bcast\n"); fflush(stdout);
+                }//5
+                else {
+                    printf("Error opening shapefile. Exiting \n");
+                    MPI_Abort(MCW, 5);
+                }
+            }//4
+            else {
+                //int countPts;
+                //MPI_Bcast(&countPts, 1, MPI_INT, 0, MCW);
+                MPI_Bcast(&numOutlets, 1, MPI_INT, 0, MCW);
+
+                //x = (double*) malloc( sizeof( double ) * numOutlets );
+                //y = (double*) malloc( sizeof( double ) * numOutlets );
+                x = new double[numOutlets];
+                y = new double[numOutlets];
+
+                MPI_Bcast(x, numOutlets, MPI_DOUBLE, 0, MCW);
+                MPI_Bcast(y, numOutlets, MPI_DOUBLE, 0, MCW);
+                usingShapeFile = true;
+                //printf("Rank: %d, numOutlets: %d\n",rank,numOutlets);
+            }
+        }//3
+        //printf("Rank: %d, Numoutlets: %d\n",rank,numOutlets); fflush(stdout);
+        //	for(int i=0; i< numOutlets; i++)
+        //		printf("rank: %d, X: %lf, Y: %lf\n",rank,x[i],y[i]);
+
+        //Create tiff object, read and store header info
+        //tiffIO p(pfile,SHORT_TYPE);
+        //long totalX = p.getTotalX();
+        //long totalY = p.getTotalY();
+        //double dxA = p.getdxA();
+        //double dyA = p.getdyA();
+        if (rank == 0) {
+            float timeestimate = (1.2e-6 * totalX * totalY / pow((double) size, 0.65)) / 60 + 1; // Time estimate in minutes
+            fprintf(stderr, "This run may take on the order of %.0f minutes to complete.\n", timeestimate);
+            fprintf(stderr, "This estimate is very approximate. \nRun time is highly uncertain as it depends on the complexity of the input data \nand speed and memory of the computer. This estimate is based on our testing on \na dual quad core Dell Xeon E5405 2.0GHz PC with 16GB RAM.\n");
+            fflush(stderr);
+        }
+
+        //printf("After header read %d\n",rank);   fflush(stdout);
+
+        //Create partition and read data
+        tdpartition *flowData;
+        flowData = CreateNewPartition(p.getDatatype(), totalX, totalY, dxA, dyA, p.getNodata());
+        int nx = flowData->getnx();
+        int ny = flowData->getny();
+        int xstart, ystart;
+        flowData->localToGlobal(0, 0, xstart, ystart);
+        flowData->savedxdyc(p);
+        p.read(xstart, ystart, ny, nx, flowData->getGridPointer());
+        //printf("Pfile read");  fflush(stdout);
+
+        //if using Mask, create partion and read it
+        tdpartition *maskData;
+        if (useMask == 1) {
+            tiffIO mask(maskfile, LONG_TYPE);
+            if (!p.compareTiff(mask)) {
+                printf("File sizes do not match\n%s\n", maskfile);
+                MPI_Abort(MCW, 5);
+                return 1;
+            }
+            maskData = CreateNewPartition(mask.getDatatype(), totalX, totalY, dxA, dyA, mask.getNodata());
+            mask.read(xstart, ystart, maskData->getny(), maskData->getnx(), maskData->getGridPointer());
+        } else {
+            maskData = CreateNewPartition(LONG_TYPE, totalX, totalY, dxA, dyA, 1);
+            thresh = 0; //  Here we have a partition filled with ones and a 0 threshold so mask condition is always satisfied
+        }
+        //Begin timer
+        double readt = MPI_Wtime();
+        //printf("Read time %lf\n",readt);
+        //fflush(stdout);
+
+        //Convert geo coords to grid coords
+        int *outletsX, *outletsY;
+        if (usingShapeFile) {
+            outletsX = new int[numOutlets];
+            outletsY = new int[numOutlets];
+            for (int i = 0; i < numOutlets; i++)
+                p.geoToGlobalXY(x[i], y[i], outletsX[i], outletsY[i]);
+        }
+
+        //Create empty partition to store new information
+        tdpartition *plen;
+        tdpartition *tlen;
+        tdpartition *gord;
+        plen = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, -1.0f);
+        tlen = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, -1.0f);
+        gord = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -1);
+
+        // con is used to check for contamination at the edges
+        long i, j;
+        short k;
+        long in, jn;
+        float area;
+        bool con = false, finished;
+        float tempFloat = 0.0;
+        short tempShort = 0;
+        int32_t tempLong = 0;
+
+        /*  Calculate Distances  */
+        float **dist;
+        //for(i=1; i<=8; i++){
+        //dist[i]=sqrt(d1[i]*d1[i]*dy*dy+d2[i]*d2[i]*dx*dx);
+        //}
+        double tempdxc, tempdyc;
+        dist = new float*[ny];
+        for (int m = 0; m < ny; m++)
+            dist[m] = new float[9];
+        for (int m = 0; m < ny; m++) {
+            flowData->getdxdyc(m, tempdxc, tempdyc);
+            for (int kk = 1; kk <= 8; kk++) {
+                dist[m][kk] = sqrt(tempdxc * tempdxc * d1[kk] * d1[kk] + tempdyc * tempdyc * d2[kk] * d2[kk]);
+            }
+
+        }
+
+        tdpartition *neighbor;
+        neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -32768);
+
+        //Share information and set borders to zero
+        flowData->share();
+        maskData->share();
+        plen->clearBorders();
+        tlen->clearBorders();
+        gord->clearBorders();
+        neighbor->clearBorders();
+
+        node temp;
+        queue<node> que;
+
+
+        if (!usingShapeFile) {
+            //Treat gord like area in aread8.  Initialize to 1
+            for (j = 0; j < ny; j++) {
+                for (i = 0; i < nx; i++) {
+                    if (!flowData->isNodata(i, j) && maskData->getData(i, j, tempLong) >= thresh)
+                        gord->setData(i, j, (short) 1);
+                }
+            }
+
+            //Count the contributing neighbors and put on queue
+            for (j = 0; j < ny; j++) {
+                for (i = 0; i < nx; i++) {
 
 
 
-int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *maskfile,
-		char* datasrc,char* lyrname,int uselyrname,int lyrno, int useMask, int useOutlets, int thresh) 
-{//1
+                    //Initialize neighbor count to no data, but then 0 if flow direction is defined
+                    neighbor->setToNodata(i, j);
+                    if (!flowData->isNodata(i, j)) {
+                        //Set contributing neighbors to 0 
+                        neighbor->setData(i, j, (short) 0);
+                        //Count number of contributing neighbors
+                        for (k = 1; k <= 8; k++) {
+                            in = i + d1[k];
+                            jn = j + d2[k];
+                            if (flowData->hasAccess(in, jn) && !flowData->isNodata(in, jn)) {
+                                flowData->getData(in, jn, tempShort);
+                                if (tempShort - k == 4 || tempShort - k == -4)
+                                    neighbor->addToData(i, j, (short) 1);
+                            }
+                        }
+                        if (neighbor->getData(i, j, tempShort) == 0) {
+                            //Push nodes with no contributing neighbors on queue
+                            temp.x = i;
+                            temp.y = j;
+                            que.push(temp);
+                        }
+                    }
+                }
+            }
+        }// If Outlets are specified
+        else {
+            //Set area to 0 for all points not upstream of outlets
+            for (j = 0; j < ny; j++) {
+                for (i = 0; i < nx; i++) {
+                    if (!flowData->isNodata(i, j))
+                        gord->setData(i, j, (short) 0);
+                }
+            }
+            //Put outlets on queue to be evalutated
+            queue<node> toBeEvaled;
+            //printf("Num outlets: %d\n",numOutlets);
+            for (i = 0; i < numOutlets; i++) {
+                flowData->globalToLocal(outletsX[i], outletsY[i], temp.x, temp.y);
+                if (flowData->isInPartition(temp.x, temp.y))
+                    toBeEvaled.push(temp);
+            }
 
-	MPI_Init(NULL,NULL);{
+            //TODO - this is 100% linear partition dependent.
+            //Create a packet for message passing
+            int *bufferAbove = NULL;
+            int *bufferBelow = NULL;
+            int *bufferLeft = NULL;
+            int *bufferRight = NULL;
+            int* bufferTopLeft = NULL;
+            int* bufferTopRight = NULL;
+            int* bufferBottomLeft = NULL;
+            int* bufferBottomRight = NULL;
+            int countA, countB, countL, countR, countTL, countTR, countBL, countBR;
 
-	int rank,size;
-	MPI_Comm_rank(MCW,&rank);//returns the rank of the calling processes in a communicator
-	MPI_Comm_size(MCW,&size);//returns the number of processes in a communicator
-	if(rank==0)printf("GridNet version %s\n",TDVERSION);
-		
-	double *x, *y;
-	int numOutlets=0;
-	bool usingShapeFile=false;
+            int neighbourCount = neighbor->getNeighbourCount();
+            int ** neighbourBuffers = NULL;
+            int ** neighbourCountArr = NULL;
 
-	double begint = MPI_Wtime();
-	tiffIO p(pfile,SHORT_TYPE);
-	long totalX = p.getTotalX();
-	long totalY = p.getTotalY();
-	double dxA = p.getdxA();
-	double dyA = p.getdyA();
-	OGRSpatialReferenceH hSRSRaster;
-    hSRSRaster=p.getspatialref();
+            if (neighbourCount > 0) {
+                neighbourBuffers = new int*[neighbourCount];
+                neighbourCountArr = new int*[neighbourCount];
 
-	if( useOutlets == 1) {//3
-		if(rank==0){//4
-			if(readoutlets(datasrc,lyrname,uselyrname,lyrno, hSRSRaster,&numOutlets, x, y)==0){
-//				for(int i=0; i< numOutlets; i++)
-//					printf("rank: %d, X: %lf, Y: %lf\n",rank,x[i],y[i]);
-				usingShapeFile=true;
-			//	printf("Rank: %d, numOutlets: %d\n",rank,numOutlets);
-				MPI_Bcast(&numOutlets, 1, MPI_INT, 0, MCW);
-				MPI_Bcast(x, numOutlets, MPI_DOUBLE, 0, MCW);
-				MPI_Bcast(y, numOutlets, MPI_DOUBLE, 0, MCW);
-				//printf("after bcast\n"); fflush(stdout);
-			}//5
-			else {
-				printf("Error opening shapefile. Exiting \n");
-				MPI_Abort(MCW,5);
-			}
-	}//4
-		else {
-			//int countPts;
-			//MPI_Bcast(&countPts, 1, MPI_INT, 0, MCW);
-			MPI_Bcast(&numOutlets, 1, MPI_INT, 0, MCW);
+                int neighbourIndex = 0;
 
-			//x = (double*) malloc( sizeof( double ) * numOutlets );
-			//y = (double*) malloc( sizeof( double ) * numOutlets );
-			x = new double[numOutlets];
-			y = new double[numOutlets];
+                if (neighbor->hasTopNeighbour()) {
+                    bufferAbove = new int[nx];
+                    if (!bufferAbove) {
+                        printf("Error allocating memory\n");
+                        MPI_Abort(MCW, 5);
+                    }
+                    neighbourBuffers[neighbourIndex] = bufferAbove;
+                    neighbourCountArr[neighbourIndex] = &countA;
 
-			MPI_Bcast(x, numOutlets, MPI_DOUBLE, 0, MCW);
-			MPI_Bcast(y, numOutlets, MPI_DOUBLE, 0, MCW);
-			usingShapeFile=true;
-			//printf("Rank: %d, numOutlets: %d\n",rank,numOutlets);
-		}
-	}//3
-	//printf("Rank: %d, Numoutlets: %d\n",rank,numOutlets); fflush(stdout);
-//	for(int i=0; i< numOutlets; i++)
-//		printf("rank: %d, X: %lf, Y: %lf\n",rank,x[i],y[i]);
+                    ++neighbourIndex;
+                }
 
-	//Create tiff object, read and store header info
-	//tiffIO p(pfile,SHORT_TYPE);
-	//long totalX = p.getTotalX();
-	//long totalY = p.getTotalY();
-	//double dxA = p.getdxA();
-	//double dyA = p.getdyA();
-	if(rank==0)
-		{
-			float timeestimate=(1.2e-6*totalX*totalY/pow((double) size,0.65))/60+1;  // Time estimate in minutes
-			fprintf(stderr,"This run may take on the order of %.0f minutes to complete.\n",timeestimate);
-			fprintf(stderr,"This estimate is very approximate. \nRun time is highly uncertain as it depends on the complexity of the input data \nand speed and memory of the computer. This estimate is based on our testing on \na dual quad core Dell Xeon E5405 2.0GHz PC with 16GB RAM.\n");
-			fflush(stderr);
-		}
+                if (neighbor->hasBottomNeighbour()) {
+                    bufferBelow = new int[nx];
+                    if (!bufferBelow) {
+                        printf("Error allocating memory\n");
+                        MPI_Abort(MCW, 5);
+                    }
+                    neighbourBuffers[neighbourIndex] = bufferBelow;
+                    neighbourCountArr[neighbourIndex] = &countB;
 
-	//printf("After header read %d\n",rank);   fflush(stdout);
+                    ++neighbourIndex;
+                }
 
-	//Create partition and read data
-	tdpartition *flowData;
-	flowData = CreateNewPartition(p.getDatatype(), totalX, totalY, dxA, dyA, p.getNodata());
-	int nx = flowData->getnx();
-	int ny = flowData->getny();
-	int xstart, ystart;
-	flowData->localToGlobal(0, 0, xstart, ystart);
-	flowData->savedxdyc(p);
-	p.read(xstart, ystart, ny, nx, flowData->getGridPointer());
-	//printf("Pfile read");  fflush(stdout);
+                if (neighbor->hasLeftNeighbour()) {
+                    bufferLeft = new int[ny];
+                    if (!bufferLeft) {
+                        printf("Error allocating memory\n");
+                        MPI_Abort(MCW, 5);
+                    }
+                    neighbourBuffers[neighbourIndex] = bufferLeft;
+                    neighbourCountArr[neighbourIndex] = &countL;
 
-	//if using Mask, create partion and read it
-	tdpartition *maskData;
-	if( useMask == 1){
-		tiffIO mask(maskfile,LONG_TYPE);
-		if(!p.compareTiff(mask)) {
-			printf("File sizes do not match\n%s\n",maskfile);
-			MPI_Abort(MCW,5);
-			return 1;  
-		}
-		maskData = CreateNewPartition(mask.getDatatype(), totalX, totalY, dxA, dyA, mask.getNodata());
-		mask.read(xstart, ystart, maskData->getny(), maskData->getnx(), maskData->getGridPointer());
-	}
-	else
-	{
-		maskData = CreateNewPartition(LONG_TYPE, totalX, totalY, dxA, dyA, 1);
-		thresh=0;  //  Here we have a partition filled with ones and a 0 threshold so mask condition is always satisfied
-	}
-	//Begin timer
-	double readt = MPI_Wtime();
-	//printf("Read time %lf\n",readt);
-	//fflush(stdout);
+                    ++neighbourIndex;
+                }
 
-	//Convert geo coords to grid coords
-	int *outletsX, *outletsY;
-	if(usingShapeFile) {
-		outletsX = new int[numOutlets];
-		outletsY = new int[numOutlets];
-		for( int i=0; i<numOutlets; i++)
-			p.geoToGlobalXY(x[i], y[i], outletsX[i], outletsY[i]);
-	}
+                if (neighbor->hasRightNeighbour()) {
+                    bufferRight = new int[ny];
+                    if (!bufferRight) {
+                        printf("Error allocating memory\n");
+                        MPI_Abort(MCW, 5);
+                    }
+                    neighbourBuffers[neighbourIndex] = bufferRight;
+                    neighbourCountArr[neighbourIndex] = &countR;
 
-	//Create empty partition to store new information
-	tdpartition *plen;
-	tdpartition *tlen;
-	tdpartition *gord;
-	plen = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, -1.0f);
-	tlen = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, -1.0f);
-	gord = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -1);
+                    ++neighbourIndex;
+                }
 
-	// con is used to check for contamination at the edges
-	long i,j;
-	short k;
-	long in,jn;
-	float area;
-	bool con=false, finished;
-	float tempFloat=0.0;
-	short tempShort=0;
-	int32_t tempLong=0; 
+                if (neighbor->hasTopLeftNeighbour()) {
+                    bufferTopLeft = new int;
+                    neighbourBuffers[neighbourIndex] = bufferTopLeft;
+                    neighbourCountArr[neighbourIndex] = &countTL;
 
-		/*  Calculate Distances  */
-	float **dist;
-	//for(i=1; i<=8; i++){
-		//dist[i]=sqrt(d1[i]*d1[i]*dy*dy+d2[i]*d2[i]*dx*dx);
-	//}
-	double tempdxc,tempdyc;
-	dist = new float*[ny];
-    for(int m = 0; m <ny; m++)
-    dist[m] = new float[9];
-	for (int m=0; m<ny;m++){
-		flowData->getdxdyc(m,tempdxc,tempdyc);
-		for(int kk=1; kk<=8; kk++)
-      {
-	    dist[m][kk]=sqrt(tempdxc*tempdxc*d1[kk]*d1[kk]+tempdyc*tempdyc*d2[kk]*d2[kk]);
-	}
+                    ++neighbourIndex;
+                }
 
-	}
+                if (neighbor->hasTopRightNeighbour()) {
+                    bufferTopRight = new int;
+                    neighbourBuffers[neighbourIndex] = bufferTopRight;
+                    neighbourCountArr[neighbourIndex] = &countTR;
 
-	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -32768);
-	
-	//Share information and set borders to zero
-	flowData->share();
-	maskData->share();
-	plen->clearBorders();
-	tlen->clearBorders();
-	gord->clearBorders();
-	neighbor->clearBorders();
+                    ++neighbourIndex;
+                }
 
-	node temp;
-	queue<node> que;
-	
 
-	if(!usingShapeFile) {
-		//Treat gord like area in aread8.  Initialize to 1
-		for(j=0; j<ny; j++) {
-			for(i=0; i<nx; i++ ) {
-				if(!flowData->isNodata(i,j) && maskData->getData(i,j,tempLong)>= thresh)
-					gord->setData(i,j,(short)1);
-			}
-		}
-	
-		//Count the contributing neighbors and put on queue
-		for(j=0; j<ny; j++) {
-			for(i=0; i<nx; i++) {
+                if (neighbor->hasBottomLeftNeighbour()) {
+                    bufferBottomLeft = new int;
+                    neighbourBuffers[neighbourIndex] = bufferBottomLeft;
+                    neighbourCountArr[neighbourIndex] = &countBL;
 
-		
+                    ++neighbourIndex;
+                }
 
-				//Initialize neighbor count to no data, but then 0 if flow direction is defined
-				neighbor->setToNodata(i,j);
-				if(!flowData->isNodata(i,j)) {
-					//Set contributing neighbors to 0 
-					neighbor->setData(i,j,(short)0);
-					//Count number of contributing neighbors
-					for(k=1; k<=8; k++){
-						in = i+d1[k];
-						jn = j+d2[k];
-						if(flowData->hasAccess(in,jn) && !flowData->isNodata(in,jn)){
-							flowData->getData(in,jn,tempShort);
-							if(tempShort-k == 4 || tempShort-k == -4)
-								neighbor->addToData(i,j,(short)1);
-						}
-					}
-					if(neighbor->getData(i, j, tempShort) == 0){
-						//Push nodes with no contributing neighbors on queue
-						temp.x = i;
-						temp.y = j;
-						que.push(temp);
-					}
-				}
-			}
-		} 
-	}
-	// If Outlets are specified
-	else {
-		//Set area to 0 for all points not upstream of outlets
-		for(j=0; j<ny; j++) {
-			for(i=0; i<nx; i++ ) {
-				if(!flowData->isNodata(i,j))
-					gord->setData(i,j,(short)0);
-			}
-		}
-		//Put outlets on queue to be evalutated
-		queue<node> toBeEvaled;
-		//printf("Num outlets: %d\n",numOutlets);
-		for( i=0; i<numOutlets; i++) {
-			flowData->globalToLocal(outletsX[i], outletsY[i], temp.x, temp.y);
-			if(flowData->isInPartition(temp.x, temp.y))
-				toBeEvaled.push(temp);
-		}
+                if (neighbor->hasBottomRightNeighbour()) {
+                    bufferBottomRight = new int;
+                    neighbourBuffers[neighbourIndex] = bufferBottomRight;
+                    neighbourCountArr[neighbourIndex] = &countBR;
+                }
+            }
 
-		//TODO - this is 100% linear partition dependent.
-		//Create a packet for message passing
-		int *bufferAbove = new int[nx];
-		int *bufferBelow = new int[nx];
-		int countA, countB;
+            finished = false;
+            while (!finished) {
+                countA = 0;
+                countB = 0;
+                countL = 0;
+                countR = 0;
+                countTL = 0;
+                countTR = 0;
+                countBL = 0;
+                countBR = 0;
 
-		//TODO - consider copying this statement into other memory allocations
-		if( bufferAbove == NULL || bufferBelow == NULL ) {
-			printf("Error allocating memory\n");
-			MPI_Abort(MCW,5);
-		}
-		
-		MPI_Status status;
-		int rank;
-		MPI_Comm_rank(MCW,&rank);
+                while (!toBeEvaled.empty()) {
+                    temp = toBeEvaled.front();
+                    toBeEvaled.pop();
+                    i = temp.x;
+                    j = temp.y;
+                    // Only evaluate if cell hasn't been evaled yet
+                    if (neighbor->isNodata(i, j)) {
+                        //Set area of cell
+                        gord->setData(i, j, (short) 1);
+                        //Set contributing neighbors to 0
+                        neighbor->setData(i, j, (short) 0);
+                        //Count number of contributing neighbors
+                        for (k = 1; k <= 8; k++) {
+                            in = i + d1[k];
+                            jn = j + d2[k];
+                            if (flowData->hasAccess(in, jn) && !flowData->isNodata(in, jn)) {
+                                flowData->getData(in, jn, tempShort);
+                                if (tempShort - k == 4 || tempShort - k == -4) {
+                                    if (in == -1 && jn == -1) {
+                                        bufferTopLeft[0] = -1;
+                                        countTL = 1;
+                                    } else if (jn == -1 && in == nx) {
+                                        bufferTopRight[0] = -1;
+                                        countTR = 1;
+                                    } else if (jn == ny && in == -1) {
+                                        bufferBottomLeft[0] = -1;
+                                        countBL = 1;
+                                    } else if (jn == ny && in == nx) {
+                                        bufferBottomRight[0] = -1;
+                                        countBR = 1;
+                                    } else if (jn == -1) {
+                                        bufferAbove[countA] = in;
+                                        countA += 1;
+                                    } else if (jn == ny) {
+                                        bufferBelow[countB] = in;
+                                        countB += 1;
+                                    } else if (in == -1) {
+                                        bufferLeft[countL] = jn;
+                                        countL += 1;
+                                    } else if (in == nx) {
+                                        bufferRight[countR] = jn;
+                                        countR += 1;
+                                    } else {
+                                        temp.x = in;
+                                        temp.y = jn;
+                                        toBeEvaled.push(temp);
+                                    }
 
-		finished = false;
-		while(!finished) {
-			countA = 0;
-			countB = 0;
-			while(!toBeEvaled.empty()) {
-				temp = toBeEvaled.front();
-				toBeEvaled.pop();
-				i = temp.x;
-				j = temp.y;
-				// Only evaluate if cell hasn't been evaled yet
-				if(neighbor->isNodata(i,j)){
-					//Set area of cell
-					gord->setData(i,j,(short)1);
-					//Set contributing neighbors to 0
-					neighbor->setData(i,j,(short)0);
-					//Count number of contributing neighbors
-					for( k=1; k<=8; k++){
-						in = i+d1[k];
-						jn = j+d2[k];
-						if(flowData->hasAccess(in,jn) && !flowData->isNodata(in,jn)) {
-							flowData->getData(in,jn,tempShort);
-							if(tempShort-k == 4 || tempShort-k == -4){
-								if( jn == -1 ) {
-									bufferAbove[countA] = in;
-									countA +=1;
-								}
-								else if( jn == ny ) {
-									bufferBelow[countB] = in;
-									countB += 1;
-								}
-								else {
-									temp.x = in;
-									temp.y = jn;
-									toBeEvaled.push(temp);
-								}
-								neighbor->addToData(i,j,(short)1);
-							}
-						}					
-					}
+                                    neighbor->addToData(i, j, (short) 1);
+                                }
+                            }
+                        }
 
-					if(neighbor->getData(i,j, tempShort) == 0){
-						//Push nodes with no contributing neighbors on queue
-						temp.x = i;
-						temp.y = j;
-						que.push(temp);
-					}
-					
-				}	
-			}
-			finished = true;
-			
-			neighbor->transferPack( &countA, bufferAbove, &countB, bufferBelow );
+                        if (neighbor->getData(i, j, tempShort) == 0) {
+                            //Push nodes with no contributing neighbors on queue
+                            temp.x = i;
+                            temp.y = j;
+                            que.push(temp);
+                        }
 
-			if( countA > 0 || countB > 0 )
-				finished = false;
+                    }
+                }
+                finished = true;
 
-			if( rank < size-1 ) {
-				for( k=0; k<countA; k++ ) {
-					temp.x = bufferAbove[k];
-					temp.y = ny-1;
-					toBeEvaled.push(temp);
-				}
-			}
-			if( rank > 0 ) {
-				for( k=0; k<countB; k++ ) {
-					temp.x = bufferBelow[k];
-					temp.y = 0;
-					toBeEvaled.push(temp);
-				}
-			}
-			finished = neighbor->ringTerm( finished );
-		}
+                neighbor->transferPack(neighbourBuffers, neighbourCountArr);
 
-	}
-	
-	finished = false;
-	//Ring terminating while loop
-	while(!finished) {
-		while(!que.empty()){
-			//Takes next node with no contributing neighbors
-			temp = que.front();
-			que.pop();
-			i = temp.x;
-			j = temp.y;			
-	
-			if(flowData->isInPartition(i,j)){   // DGT thinks this is redundant - nothing should be on queue that is not in partition - but does no harm
-				//  Here is where the flow algebra is evaluated
-				short a1,a2;
-				float ld;
-				if(maskData->getData(i,j,tempLong)>=thresh)
-				{
-					tempFloat=0.0f;  //  Initialize to 0
-					tlen->setData(i,j,tempFloat);  
-					plen->setData(i,j,tempFloat);
-					a1=0;
-					a2=0;	
-					for(k=1; k<=8; k++)
-					{  
-						in=i+d1[k];
-						jn=j+d2[k];
-					   /* test if neighbor drains towards cell excluding boundaries */
-						short sdir = flowData->getData(in,jn,tempShort);
-						if(sdir > 0) 
-						{
-							if( maskData->getData(in,jn,tempLong)>=thresh && (sdir-k==4 || sdir-k==-4))
-							{
-								//  Implement Strahler ordering 
-								if(gord->getData(in,jn,tempShort) >= a1)
-								{
-									a2=a1;
-									a1=gord->getData(in,jn,tempShort);
-								}
-								else if ( gord->getData(in,jn,tempShort) > a2 )
-									a2=gord->getData(in,jn,tempShort);
-								//  Length calculations
-								ld= plen->getData(in,jn,tempFloat) + dist[j][sdir];
-								tlen->addToData(i,j,(float)(tlen->getData(in,jn,tempFloat)+dist[j][sdir]));
-								if( ld > plen->getData(i,j,tempFloat))
-									plen->setData(i,j,ld);
-							}
-						}
-					}
-					if(a2+1 > a1) gord->setData(i,j,(short)(a2+1));
-					else gord->setData(i,j,(short)a1);
-				}
-			}
+                for (int i = 0; i < neighbourCount; i++) {
+                    if (*neighbourCountArr[i] > 0) {
+                        finished = false;
+                        break;
+                    }
+                }
 
-			//  End of evaluation of flow algebra
-			// Drain cell into surrounding neighbors
-			flowData->getData(i,j,k);
-			in = i+d1[k];
-			jn = j+d2[k];
-			//TODO - streamlining here
-			if(flowData->hasAccess(in,jn) && !flowData->isNodata(in,jn)){
-				//Decrement the number of contributing neighbors in neighbor
-				neighbor->addToData(in,jn,(short)-1);
-		
-				//Check if neighbor needs to be added to que
-				if(flowData->isInPartition(in,jn) && neighbor->getData(in, jn, tempShort) == 0 ){
-					temp.x=in;
-					temp.y=jn;
-					que.push(temp);
-				}
-			}
-		}
-		//Pass information
-		neighbor->addBorders();
-		gord->share();
-		plen->share();
-		tlen->share();
+                // added to prevent duplications in toBeEvaled list
+                bool isTopLeftAdded = false;
+                bool isTopRightAdded = false;
+                bool isBottomLeftAdded = false;
+                bool isBottomRightAdded = false;
 
-		//If this created a cell with no contributing neighbors, put it on the queue
-		for(i=0; i<nx; i++){
-			if(neighbor->getData(i, -1, tempShort)!=0 && neighbor->getData(i, 0, tempShort)==0){
-				temp.x = i;
-				temp.y = 0;
-				que.push(temp);
-			}
-			if(neighbor->getData(i, ny, tempShort)!=0 && neighbor->getData(i, ny-1, tempShort)==0){
-				temp.x = i;
-				temp.y = ny-1;
-				que.push(temp); 
-			}
-		}
-		//Clear out borders
-		neighbor->clearBorders();
-	
-		//Check if done
-		finished = que.empty();
-		finished = gord->ringTerm(finished);
-	}
+                if (neighbor->hasTopNeighbour()) {
+                    for (k = 0; k < countA; k++) {
+                        temp.x = bufferAbove[k];
+                        temp.y = 0;
+                        toBeEvaled.push(temp);
 
-	//Stop timer
-	double computet = MPI_Wtime();
-	
-	//Create and write TIFF file
-	short sNodata = -1;
-	float fNodata = -1.0f;
-	tiffIO gordIO(gordfile, SHORT_TYPE, &sNodata, p);
-	gordIO.write(xstart, ystart, ny, nx, gord->getGridPointer());
-	tiffIO plenIO(plenfile, FLOAT_TYPE, &fNodata, p);
-	plenIO.write(xstart, ystart, ny, nx, plen->getGridPointer());
-	tiffIO tlenIO(tlenfile, FLOAT_TYPE, &fNodata, p);
-	tlenIO.write(xstart, ystart, ny, nx, tlen->getGridPointer());
+                        if (temp.x == 0)
+                            isTopLeftAdded = true;
 
-	double writet = MPI_Wtime();
-	double dataRead, compute, write, total,tempd;
-        dataRead = readt-begint;
-        compute = computet-readt;
-        write = writet-computet;
+                        if (temp.x == nx - 1)
+                            isTopRightAdded = true;
+                    }
+                }
+
+                if (neighbor->hasBottomNeighbour()) {
+                    for (k = 0; k < countB; k++) {
+                        temp.x = bufferBelow[k];
+                        temp.y = ny - 1;
+                        toBeEvaled.push(temp);
+
+                        if (temp.x == 0)
+                            isBottomLeftAdded = true;
+
+                        if (temp.x == nx - 1)
+                            isBottomRightAdded = true;
+                    }
+                }
+
+                if (neighbor->hasLeftNeighbour()) {
+                    for (k = 0; k < countL; k++) {
+                        temp.x = 0;
+                        temp.y = bufferLeft[k];
+
+                        if (temp.y == 0 && !isTopLeftAdded) {
+                            toBeEvaled.push(temp);
+                            isTopLeftAdded = true;
+                        } else if (temp.y == ny - 1 && !isBottomLeftAdded) {
+                            toBeEvaled.push(temp);
+                            isBottomLeftAdded = true;
+                        } else if (temp.y != 0 && temp.y != ny - 1) {
+                            toBeEvaled.push(temp);
+                        }
+                    }
+                }
+
+                if (neighbor->hasRightNeighbour()) {
+                    for (k = 0; k < countR; k++) {
+                        temp.x = nx - 1;
+                        temp.y = bufferRight[k];
+
+                        if (temp.y == 0 && !isTopRightAdded) {
+                            toBeEvaled.push(temp);
+                            isTopRightAdded = true;
+                        } else if (temp.y == ny - 1 && !isBottomRightAdded) {
+                            toBeEvaled.push(temp);
+                            isBottomRightAdded = true;
+                        } else if (temp.y != 0 && temp.y != ny - 1) {
+                            toBeEvaled.push(temp);
+                        }
+                    }
+                }
+
+                if (neighbor->hasTopLeftNeighbour()) {
+                    if (countTL == 1 && !isTopLeftAdded) {
+                        temp.x = 0;
+                        temp.y = 0;
+                        toBeEvaled.push(temp);
+                        isTopLeftAdded = true;
+                    }
+                }
+
+                if (neighbor->hasTopRightNeighbour()) {
+                    if (countTR == 1 && !isTopRightAdded) {
+                        temp.x = nx - 1;
+                        temp.y = 0;
+                        toBeEvaled.push(temp);
+                        isTopRightAdded = true;
+                    }
+                }
+
+                if (neighbor->hasBottomLeftNeighbour()) {
+                    if (countBL == 1 && !isBottomLeftAdded) {
+                        temp.x = 0;
+                        temp.y = ny - 1;
+                        toBeEvaled.push(temp);
+                        isBottomLeftAdded = true;
+                    }
+                }
+
+                if (neighbor->hasBottomRightNeighbour()) {
+                    if (countBR == 1 && !isBottomRightAdded) {
+                        temp.x = nx - 1;
+                        temp.y = ny - 1;
+                        toBeEvaled.push(temp);
+                        isBottomRightAdded = true;
+                    }
+                }
+
+                finished = neighbor->ringTerm(finished);
+            }
+
+            if (neighbourBuffers) {
+                for (int i = 0; i < neighbourCount; i++) {
+                    delete [] neighbourBuffers[i];
+                }
+
+                delete[] neighbourBuffers;
+            }
+
+            if (neighbourCountArr) {
+                delete[] neighbourCountArr;
+            }
+        }
+
+        finished = false;
+        //Ring terminating while loop
+        while (!finished) {
+            while (!que.empty()) {
+                //Takes next node with no contributing neighbors
+                temp = que.front();
+                que.pop();
+                i = temp.x;
+                j = temp.y;
+
+                if (flowData->isInPartition(i, j)) { // DGT thinks this is redundant - nothing should be on queue that is not in partition - but does no harm
+                    //  Here is where the flow algebra is evaluated
+                    short a1, a2;
+                    float ld;
+                    if (maskData->getData(i, j, tempLong) >= thresh) {
+                        tempFloat = 0.0f; //  Initialize to 0
+                        tlen->setData(i, j, tempFloat);
+                        plen->setData(i, j, tempFloat);
+                        a1 = 0;
+                        a2 = 0;
+                        for (k = 1; k <= 8; k++) {
+                            in = i + d1[k];
+                            jn = j + d2[k];
+                            /* test if neighbor drains towards cell excluding boundaries */
+                            short sdir = flowData->getData(in, jn, tempShort);
+                            if (sdir > 0) {
+                                if (maskData->getData(in, jn, tempLong) >= thresh && (sdir - k == 4 || sdir - k == -4)) {
+                                    //  Implement Strahler ordering 
+                                    if (gord->getData(in, jn, tempShort) >= a1) {
+                                        a2 = a1;
+                                        a1 = gord->getData(in, jn, tempShort);
+                                    } else if (gord->getData(in, jn, tempShort) > a2)
+                                        a2 = gord->getData(in, jn, tempShort);
+                                    //  Length calculations
+                                    ld = plen->getData(in, jn, tempFloat) + dist[j][sdir];
+                                    tlen->addToData(i, j, (float) (tlen->getData(in, jn, tempFloat) + dist[j][sdir]));
+                                    if (ld > plen->getData(i, j, tempFloat))
+                                        plen->setData(i, j, ld);
+                                }
+                            }
+                        }
+                        if (a2 + 1 > a1) gord->setData(i, j, (short) (a2 + 1));
+                        else gord->setData(i, j, (short) a1);
+                    }
+                }
+
+                //  End of evaluation of flow algebra
+                // Drain cell into surrounding neighbors
+                flowData->getData(i, j, k);
+                in = i + d1[k];
+                jn = j + d2[k];
+                //TODO - streamlining here
+                if (flowData->hasAccess(in, jn) && !flowData->isNodata(in, jn)) {
+                    //Decrement the number of contributing neighbors in neighbor
+                    neighbor->addToData(in, jn, (short) - 1);
+
+                    //Check if neighbor needs to be added to que
+                    if (flowData->isInPartition(in, jn) && neighbor->getData(in, jn, tempShort) == 0) {
+                        temp.x = in;
+                        temp.y = jn;
+                        que.push(temp);
+                    }
+                }
+            }
+            //Pass information
+            neighbor->addBorders();
+            gord->share();
+            plen->share();
+            tlen->share();
+
+            //If this created a cell with no contributing neighbors, put it on the queue
+           bool isTopLeftAdded = false;
+            bool isTopRightAdded = false;
+            bool isBottomLeftAdded = false;
+            bool isBottomRightAdded = false;
+
+            //If this created a cell with no contributing neighbors, put it on the queue
+            for (i = 0; i < nx; i++) {
+                if (neighbor->getData(i, -1, tempShort) != 0 && neighbor->getData(i, 0, tempShort) == 0) {
+                    temp.x = i;
+                    temp.y = 0;
+                    if (i == 0 && !isTopLeftAdded) {
+                        que.push(temp);
+                        isTopLeftAdded = true;
+                    } else if (i == nx - 1 && !isTopRightAdded) {
+                        que.push(temp);
+                        isTopRightAdded = true;
+                    } else if (i != 0 && i != nx - 1) {
+                        que.push(temp);
+                    }
+
+                }
+                if (neighbor->getData(i, ny, tempShort) != 0 && neighbor->getData(i, ny - 1, tempShort) == 0) {
+                    temp.x = i;
+                    temp.y = ny - 1;
+                    if (i == 0 && !isBottomLeftAdded) {
+                        que.push(temp);
+                        isBottomLeftAdded = true;
+                    } else if (i == nx - 1 && !isBottomRightAdded) {
+                        que.push(temp);
+                        isBottomRightAdded = true;
+                    } else if (i != 0 && i != nx - 1) {
+                        que.push(temp);
+                    }
+                }
+            }
+
+            for (i = 0; i < ny; i++) {
+                if (neighbor->getData(-1, i, tempShort) != 0 && neighbor->getData(0, i, tempShort) == 0) {
+                    temp.x = 0;
+                    temp.y = i;
+                    if (i == 0 && !isTopLeftAdded) {
+                        que.push(temp);
+                        isTopLeftAdded = true;
+                    } else if (i == ny - 1 && !isBottomLeftAdded) {
+                        que.push(temp);
+                        isBottomLeftAdded = true;
+                    } else if (i != 0 && i != ny - 1) {
+                        que.push(temp);
+                    }
+                }
+                if (neighbor->getData(nx, i, tempShort) != 0 && neighbor->getData(nx - 1, i, tempShort) == 0) {
+                    temp.x = nx - 1;
+                    temp.y = i;
+                    if (i == 0 && !isTopRightAdded) {
+                        que.push(temp);
+                        isTopRightAdded = true;
+                    } else if (i == ny - 1 && !isBottomRightAdded) {
+                        que.push(temp);
+                        isBottomRightAdded = true;
+                    } else if (i != 0 && i != ny - 1) {
+                        que.push(temp);
+                    }
+                }
+            }
+
+            if (neighbor->getData(-1, -1, tempShort) != 0 && neighbor->getData(0, 0, tempShort) == 0 && !isTopLeftAdded) {
+                temp.x = 0;
+                temp.y = 0;
+                que.push(temp);
+                isTopLeftAdded = true;
+            }
+
+            if (neighbor->getData(nx, -1, tempShort) != 0 && neighbor->getData(nx - 1, 0, tempShort) == 0 && !isTopRightAdded) {
+                temp.x = nx - 1;
+                temp.y = 0;
+                que.push(temp);
+                isTopRightAdded = true;
+            }
+
+            if (neighbor->getData(-1, ny, tempShort) != 0 && neighbor->getData(0, ny - 1, tempShort) == 0 && !isBottomLeftAdded) {
+                temp.x = 0;
+                temp.y = ny - 1;
+                que.push(temp);
+                isBottomLeftAdded = true;
+            }
+
+            if (neighbor->getData(nx, ny, tempShort) != 0 && neighbor->getData(nx - 1, ny - 1, tempShort) == 0 && !isBottomRightAdded) {
+                temp.x = nx - 1;
+                temp.y = ny - 1;
+                que.push(temp);
+                isBottomRightAdded = true;
+            }
+            
+            //Clear out borders
+            neighbor->clearBorders();
+
+            //Check if done
+            finished = que.empty();
+            finished = gord->ringTerm(finished);
+        }
+
+        //Stop timer
+        double computet = MPI_Wtime();
+
+        //Create and write TIFF file
+        short sNodata = -1;
+        float fNodata = -1.0f;
+        tiffIO gordIO(gordfile, SHORT_TYPE, &sNodata, p);
+        gordIO.write(xstart, ystart, ny, nx, gord->getGridPointer());
+        tiffIO plenIO(plenfile, FLOAT_TYPE, &fNodata, p);
+        plenIO.write(xstart, ystart, ny, nx, plen->getGridPointer());
+        tiffIO tlenIO(tlenfile, FLOAT_TYPE, &fNodata, p);
+        tlenIO.write(xstart, ystart, ny, nx, tlen->getGridPointer());
+
+        double writet = MPI_Wtime();
+        double dataRead, compute, write, total, tempd;
+        dataRead = readt - begint;
+        compute = computet - readt;
+        write = writet - computet;
         total = writet - begint;
 
-        MPI_Allreduce (&dataRead, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        dataRead = tempd/size;
-        MPI_Allreduce (&compute, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        compute = tempd/size;
-        MPI_Allreduce (&write, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        write = tempd/size;
-        MPI_Allreduce (&total, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        total = tempd/size;
+        MPI_Allreduce(&dataRead, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
+        dataRead = tempd / size;
+        MPI_Allreduce(&compute, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
+        compute = tempd / size;
+        MPI_Allreduce(&write, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
+        write = tempd / size;
+        MPI_Allreduce(&total, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
+        total = tempd / size;
 
-        if( rank == 0)
-                printf("Processors: %d\nRead time: %f\nCompute time: %f\nWrite time: %f\nTotal time: %f\n",
-                  size,dataRead, compute, write,total);
+        if (rank == 0)
+            printf("Processors: %d\nRead time: %f\nCompute time: %f\nWrite time: %f\nTotal time: %f\n",
+                size, dataRead, compute, write, total);
 
-	//Brackets force MPI-dependent objects to go out of scope before Finalize is called
-	}MPI_Finalize();
+        //Brackets force MPI-dependent objects to go out of scope before Finalize is called
+    }
+    MPI_Finalize();
 
-	return 0;
+    return 0;
 }
 
 

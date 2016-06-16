@@ -62,6 +62,8 @@ email:  dtarb@usu.edu
 //#include "shapelib/shapefil.h"
 #include "MoveOutletsToStrm.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 int main(int argc,char **argv)
 {
    char pfile[MAXLN],srcfile[MAXLN],outletsdatasrc[MAXLN],outletslayer[MAXLN],outletmoveddatasrc[MAXLN],outletmovedlayer[MAXLN]="";
@@ -106,9 +108,25 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-
-
-		   else if(strcmp(argv[i],"-lyrno")==0)
+                else if(strcmp(argv[i],"-ddm")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				if(strcmp(argv[i],"row")==0) {
+                                    tdpartition::decompType = DECOMP_ROW;
+                                } else if (strcmp(argv[i],"column")==0) {
+                                    tdpartition::decompType = DECOMP_COLUMN;
+                                } else if (strcmp(argv[i],"block")==0) {
+                                    tdpartition::decompType = DECOMP_BLOCK;
+                                } else {
+                                    goto errexit;
+                                }
+				i++;
+			}
+			else goto errexit;
+		}
+                else if(strcmp(argv[i],"-lyrno")==0)
 		{
 			i++;
 			if(argc > i)
@@ -179,13 +197,14 @@ errexit:
 	   printf("Incorrect input.\n");
 	   printf("Use with specific file names:\n %s -p <pfile>\n",argv[0]);
        printf("-src <srcfile> -o <outletsshapefile> -om <outletsmoved>\n");
-       printf("[-md <max dist>]\n");
+       printf("[-md <max dist>] [-ddm <ddm>]\n");
 	   printf("<pfile> is the name of the D8 flow direction file (input).\n");
 	   printf("<srcfile> is the name of the stream raster file (input).\n");
 	   printf("<outletsshapefile> is the name of the outlet shape file (input).\n");
 	   printf("<outletsmoved> is the name of the moved outlet shape file (output).\n");
 	   printf("<max dist> is the maximum number of grid cells to move an outlet (input).\n");
 	   printf("Default <max dist> is 50 if not input.\n");
+           printf("<ddm> is the data decomposition method. Either \"row\", \"column\" or \"block\".\n");
        exit(0);
 } 
 

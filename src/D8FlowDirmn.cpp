@@ -45,10 +45,11 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 #include "d8.h"
 
+DecompType tdpartition::decompType = DECOMP_ROW;
 
 int main(int argc,char **argv)
 {
-  char demfile[MAXLN], pointfile[MAXLN], slopefile[MAXLN], flowfile[MAXLN];
+  char demfile[MAXLN] = { 0 }, pointfile[MAXLN] = { 0 }, slopefile[MAXLN] = { 0 }, flowfile[MAXLN] = { 0 };
   int err, i;
     short useflowfile=0;
 
@@ -110,7 +111,24 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-
+                else if(strcmp(argv[i],"-ddm")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				if(strcmp(argv[i],"row")==0) {
+                                    tdpartition::decompType = DECOMP_ROW;
+                                } else if (strcmp(argv[i],"column")==0) {
+                                    tdpartition::decompType = DECOMP_COLUMN;
+                                } else if (strcmp(argv[i],"block")==0) {
+                                    tdpartition::decompType = DECOMP_BLOCK;
+                                } else {
+                                    goto errexit;
+                                }
+				i++;
+			}
+			else goto errexit;
+		}
 		else 
 		{
 			goto errexit;
@@ -130,12 +148,13 @@ int main(int argc,char **argv)
 	errexit:
 	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
 	   printf("Usage with specific file names:\n %s -fel <demfile>\n",argv[0]);
-       printf("-sd8 <slopefile> -p <angfile> [-sfdr <flowfile>]\n");
+       printf("-sd8 <slopefile> -p <angfile> [-sfdr <flowfile>] [-ddm <ddm>]\n");
 	   printf("<basefilename> is the name of the raw digital elevation model\n");
 	   printf("<demfile> is the pit filled or carved DEM input file.\n");
 	   printf("<slopefile> is the slope output file.\n");
 	   printf("<pointfile> is the output d8 flow direction file.\n");
        printf("[-sfdr <flowfile>] is the optional user imposed stream flow direction file.\n");
+       printf("<ddm> is the data decomposition method. Either \"row\", \"column\" or \"block\".\n");
        printf("The following are appended to the file names\n");
        printf("before the files are opened:\n");
        printf("fel    carved or pit filled input elevation file\n");

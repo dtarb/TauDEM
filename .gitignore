@@ -1,6 +1,7 @@
 #################
 ## Eclipse
-
+src/.idea/
+TestSuite/
 *.pydevproject
 .project
 .metadata
@@ -148,6 +149,9 @@ pip-log.txt
 /slopeavedown
 /streamnet
 /threshold
+
+/build*
+
 # ignore folders related to installer
 WindowsInstaller/GDAL_32/
 WindowsInstaller/GDAL_64/
@@ -156,4 +160,3 @@ WindowsInstaller/TauDEM_exe/
 WindowsInstaller/TauDEMArcGIS/
 *.msi
 *.exe
-
