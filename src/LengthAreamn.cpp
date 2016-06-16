@@ -47,6 +47,8 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 #include "tardemlib.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 int main(int argc,char **argv)  
 {
    char plenfile[MAXLN],ad8file[MAXLN], ssfile[MAXLN];
@@ -112,6 +114,24 @@ int main(int argc,char **argv)
 				}
 				else goto errexit;
 			}
+                        else if(strcmp(argv[i],"-ddm")==0)
+                        {
+                            i++;
+                            if(argc > i)
+                            {
+                            	if(strcmp(argv[i],"row")==0) {
+                                        tdpartition::decompType = DECOMP_ROW;
+                                    } else if (strcmp(argv[i],"column")==0) {
+                                        tdpartition::decompType = DECOMP_COLUMN;
+                                 } else if (strcmp(argv[i],"block")==0) {
+                                        tdpartition::decompType = DECOMP_BLOCK;
+                                    } else {
+                                        goto errexit;
+                                    }
+                            	i++;
+                            }
+                            else goto errexit;
+                        }
 		    else goto errexit;
 		}
    }
@@ -122,13 +142,14 @@ int main(int argc,char **argv)
 errexit:
    printf("Simple Use:\n %s <basefilename>\n",argv[0]);
    printf("Use with specific file names:\n %s -plen <plenfile>\n",argv[0]);
-   printf("-ad8 <ad8file> -ss <ssfile> [-par <M> <y>] \n");
+   printf("-ad8 <ad8file> -ss <ssfile> [-par <M> <y>] [-ddm <ddm>]\n");
    printf("<basefilename> is the name of the base digital elevation model without suffixes for simple input. Suffixes 'plen', 'ad8' and 'ss' will be appended. \n");
    printf("<plenfile> is the name of the input upslope longest path length file.\n");
    printf("<ad8file> is the name of input contributing area file.\n");
    printf("<ssfile> is the name of the output file with the result A >= M L^y ? 1:0.\n");
    printf("<M> is the coefficient, default value 0.03 if not specified.\n");
    printf("<y> is the exponent on upslope length, default value 1.3 if not specified.\n");
+   printf("<ddm> is the data decomposition method. Either \"row\", \"column\" or \"block\".\n");
    return 0; 
 } 
    

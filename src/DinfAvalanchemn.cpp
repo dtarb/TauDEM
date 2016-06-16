@@ -45,6 +45,8 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 #include "tardemlib.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 //-ang demang.tif -fel demfel.tif -ass demass.tif -rz demrz.tif -dfs demdfs.tif [-thresh 0.2] [-alpha 20] [-direct]
 
 int main(int argc,char **argv)
@@ -132,6 +134,24 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
+                else if(strcmp(argv[i],"-ddm")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				if(strcmp(argv[i],"row")==0) {
+                                    tdpartition::decompType = DECOMP_ROW;
+                                } else if (strcmp(argv[i],"column")==0) {
+                                    tdpartition::decompType = DECOMP_COLUMN;
+                                } else if (strcmp(argv[i],"block")==0) {
+                                    tdpartition::decompType = DECOMP_BLOCK;
+                                } else {
+                                    goto errexit;
+                                }
+				i++;
+			}
+			else goto errexit;
+		}
 		else if(strcmp(argv[i],"-alpha")==0)
 		{
 			i++;
@@ -171,12 +191,13 @@ errexit:
 	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
        printf("Usage with specific file names:\n %s -fel <felfile>\n",argv[0]);
 	   printf("-ang <angfile> -ass <assfile> -ass <assfile> -rz <rzfile>\n");
-	   printf("[-thresh <thresh>] [-alpha <alpha>] [<path>]\n");
+	   printf("[-thresh <thresh>] [-alpha <alpha>] [-ddm <ddm>] [<path>]\n");
   	   printf("<basefilename> is the name of the base digital elevation model\n");
 	   printf("<felfile> is the pit filled or carved elevation input file.\n");
        printf("<angfile> is the d-infinity flow direction input file.\n");
        printf("<assfile> is the avalanche source site input grid file.\n");
 	   printf("<rzfile> is the avalanche runout zone output grid file.\n");
+           printf("<ddm> is the data decomposition method. Either \"row\", \"column\" or \"block\".\n");
 	   printf("The optional <thresh> is the input proportion threshold number.\n");
 	   printf("The optional <alpha> is the user input angle threshold number.\n");
 	   printf("The optional <path> is the flag to indicate whether distance is measured along\n");

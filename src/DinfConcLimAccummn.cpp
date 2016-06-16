@@ -46,6 +46,7 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 #include "tardemlib.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
 
 int main(int argc,char **argv)
 {
@@ -131,8 +132,24 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-		
-
+		else if(strcmp(argv[i],"-ddm")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				if(strcmp(argv[i],"row")==0) {
+                                    tdpartition::decompType = DECOMP_ROW;
+                                } else if (strcmp(argv[i],"column")==0) {
+                                    tdpartition::decompType = DECOMP_COLUMN;
+                                } else if (strcmp(argv[i],"block")==0) {
+                                    tdpartition::decompType = DECOMP_BLOCK;
+                                } else {
+                                    goto errexit;
+                                }
+				i++;
+			}
+			else goto errexit;
+		}
 		else if(strcmp(argv[i],"-o")==0)
 		{
 			i++;
@@ -198,7 +215,7 @@ int main(int argc,char **argv)
 	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
 	   printf("Usage with specific file names:\n %s -ang <angfile>\n",argv[0]);
        printf("-dg <indicatorFile> -dm <dmfile> -ctpt <afile>\n");
-	   printf("-q <qfile> [-o <outletshapefile>] [-csol <cSol>] [<-nc>]\n");
+	   printf("-q <qfile> [-o <outletshapefile>] [-csol <cSol>] [<-nc>] [-ddm <ddm>]\n");
 	   printf("<basefilename> is the name of the raw digital elevation model\n");
 	   printf("<angfile> is the D-infinity flow direction input file.\n");
 	   printf("<indicatorFile> is the disturbance indicator input grid file.\n");
@@ -207,6 +224,7 @@ int main(int argc,char **argv)
 	   printf("<qfile> is the specific discharge input grid file.\n");
 	   printf("<outletshapefile> is the optional outlet shape input file.\n");
 	   printf("<cSol> is the optional concentration threshold.\n");
+           printf("<ddm> is the data decomposition method. Either \"row\", \"column\" or \"block\".\n");
        printf("The flag -nc overrides edge contamination checking\n");
 	   printf("The following are appended to the file names\n");
        printf("before the files are opened:\n");
