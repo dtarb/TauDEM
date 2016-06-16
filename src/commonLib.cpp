@@ -918,28 +918,14 @@ bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData) 
 
 //get extension from OGR vector file
 //get layername if not provided by user
+std::string getLayername(std::string input_path) {
+    const size_t slash_pos = input_path.find_last_of("/\\");
+    const size_t dot_pos = input_path.find_last_of(".");
 
-char *getLayername(char *inputogrfile) {
-    std::string filenamewithpath;
-    filenamewithpath = inputogrfile;
-    size_t found = filenamewithpath.find_last_of("/\\");
-    std::string filenamewithoutpath;
-    filenamewithoutpath = filenamewithpath.substr(found + 1);
-    const char *filename = filenamewithoutpath.c_str(); // convert string to char
-    const char *ext;
-    ext = strrchr(filename, '.'); // getting extension
-    char layername[MAXLN];
-    size_t len = strlen(filename);
-    size_t len1 = strlen(ext);
-    memcpy(layername, filename, len - len1);
-    layername[len - len1] = 0;
-    printf("%s ", layername);
-    return layername;
+    return input_path.substr(slash_pos + 1, dot_pos);
 }
-//
 
 //get ogr driver index for writing shapefile
-
 const char *getOGRdrivername(char *datasrcnew){
     const char *ogrextension_list[5] = {".sqlite",".shp",".json",".kml",".geojson"};  // extension list --can add more 
     const char *ogrdriver_code[5] = {"SQLite","ESRI Shapefile","GeoJSON","KML","GeoJSON"};   //  code list -- can add more
