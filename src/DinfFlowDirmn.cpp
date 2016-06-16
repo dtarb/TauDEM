@@ -42,16 +42,10 @@ email:  dtarb@usu.edu
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-//#include "gridCodes.h"
 #include "commonLib.h"
-//#include "shapefile.h"
 #include "tardemlib.h"
-//#include "dinf.cpp"
-//#include<math.h>
-//#include "commonLib.h"
-//#include "dinf.h"
 
-DecompType tdpartition::decompType = DECOMP_BLOCK;
+DecompType tdpartition::decompType = DECOMP_ROW;
 
 int main(int argc,char **argv)
 {

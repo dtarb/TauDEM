@@ -61,7 +61,7 @@ struct D8 {
     typedef short FlowType;
 
     static bool HasFlow(FlowType x) {
-        return x > 0;
+        return x != 0;
     }
 
     template<typename E>
