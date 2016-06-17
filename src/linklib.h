@@ -38,11 +38,12 @@ email:  dtarb@usu.edu
 
 //  This software is distributed from http://hydrology.usu.edu/taudem/
 
-#pragma once
+#ifndef LINKLIB_H
+#define LINKLIB_H
+
 #include <iostream>
 #include <cmath>
 #include <mpi.h>
-#include <math.h>
 #include <iomanip>
 #include <queue>
 #include "commonLib.h"
@@ -50,13 +51,8 @@ email:  dtarb@usu.edu
 #include "createpart.h"
 #include "partition.h"
 #include "tiffIO.h"
-//#include "shapelib/shapefil.h"
-//#ifndef LINKLIB_H
-//#define LINKLIB_H
-using namespace std;
 
 long LAST_ID = -1;
-
 
 struct point{
 	long x;
@@ -77,7 +73,7 @@ struct streamlink{
 	double elevD;
 	double length;
 	short order;
-	queue <point>coord; //  We store the coordinates of a link in a queue
+    std::queue<point> coord; //  We store the coordinates of a link in a queue
 	long numCoords;
 	bool terminated;
 	
@@ -171,11 +167,9 @@ streamlink* FindLink(int32_t Id){
 	if(linkSet.head->data->Id == Id){
 		return linkSet.head->data;
 	}else{// not the first llnode in the list
-		llnode* previous, *current;
+		llnode *current;
 		current = linkSet.head;
-		previous = NULL;
 		while(current->data->Id != Id && current->next != NULL){//search the linked list
-			previous = current;
 			current = current->next;
 		}
 		if(current->data->Id == Id){//found it
@@ -539,7 +533,6 @@ void SendAndReciveLinks(int nx,int ny,tdpartition* idGrid, tdpartition* contribs
 		if(rank!=0){
 			for(i = 0; i < nx; i++){//count links to send down
 				if(!contribs->isNodata(i,-1) && contribs->getData(i,-1,tempShort) < 0){//i am on the boarder and I am negitive, check who points to me and send there id.
-					int p = flowDir->getData((long)i-1,(long)0,tempShort);
 					if( i>0 && flowDir->getData((long)i-1,(long)0,tempShort) == 2 && src->getData(i-1,0,tempShort) == 1 && idGrid->getData(i-1,0,tempLong) >=0){
 						toSend++;
 					}else if(flowDir->getData((long)i,(long)0,tempShort) == 3 && src->getData(i,0,tempShort) == 1 && idGrid->getData(i,0,tempLong) >=0){
@@ -552,7 +545,6 @@ void SendAndReciveLinks(int nx,int ny,tdpartition* idGrid, tdpartition* contribs
 			MPI_Send(&toSend,1,MPI_INT,rank-1,rank,MCW);//tell the reciver how many links to recive.
 			for(i = 0; i < nx; i++){//count links to send up
 				if(!contribs->isNodata(i,-1) && contribs->getData(i,-1,tempShort) < 0){//i am on the boarder and I am negitive, check who points to me and send there id.
-					int p = flowDir->getData((long)i-1,(long)0,tempShort);
 					if( i>0 && flowDir->getData((long)i-1,(long)0,tempShort) == 2 && src->getData(i-1,0,tempShort) == 1 && idGrid->getData(i-1,0,tempLong) >=0){
 						if(sendLink(idGrid->getData(i-1,0,tempLong), rank-1)){//check to see if sent properly
 							linksSent++;
@@ -580,7 +572,6 @@ void SendAndReciveLinks(int nx,int ny,tdpartition* idGrid, tdpartition* contribs
 		if(rank!=size-1){
 			for(i = 0; i < nx; i++){//count links to send down
 				if(!contribs->isNodata(i,ny) && contribs->getData(i,ny,tempShort) < 0){//i am on the boarder and I am negitive, check who points to me and send there id.
-					int p = flowDir->getData((long)i-1,(long)ny-1,tempShort);
 					if( i>0 && flowDir->getData((long)i-1,(long)ny-1,tempShort) == 8 && src->getData(i-1,ny-1,tempShort) == 1 && idGrid->getData(i-1,ny-1,tempLong) >=0){
 						toSend++;
 					}else if(flowDir->getData((long)i,(long)ny-1,tempShort) == 7 && src->getData(i,ny-1,tempShort) == 1 && idGrid->getData(i,ny-1,tempLong) >=0){
@@ -593,7 +584,6 @@ void SendAndReciveLinks(int nx,int ny,tdpartition* idGrid, tdpartition* contribs
 			MPI_Send(&toSend,1,MPI_INT,rank+1,rank,MCW);//tell the reciver how many links to recive.
 			for(i = 0; i < nx; i++){//count links to send up
 				if(!contribs->isNodata(i,ny) && contribs->getData(i,ny,tempShort) < 0){//i am on the boarder and I am negitive, check who points to me and send there id.
-					int p = flowDir->getData((long)i-1,(long)ny-1,tempShort);
 					if( i>0 && flowDir->getData((long)i-1,(long)ny-1,tempShort) == 8 && src->getData(i-1,ny-1,tempShort) == 1 && idGrid->getData(i-1,ny-1,tempLong) >=0){
 						if(sendLink(idGrid->getData(i-1,ny-1,tempLong), rank+1)){//check to see if sent properly
 							linksSent++;
@@ -654,7 +644,6 @@ void SendAndReciveLinks(int nx,int ny,tdpartition* idGrid, tdpartition* contribs
 		// examime each neighbor that could be contributing and if it does 
 		for(i = 0; i < nx; i++){//count links to send down
 			if(!contribs->isNodata(i,-1) && contribs->getData(i,-1,tempShort) < 0){//i am on the boarder and I am negitive, check who points to me and send there id.
-				int p = flowDir->getData((long)i-1,(long)0,tempShort);
 				if( i>0 && flowDir->getData((long)i-1,(long)0,tempShort) == 2 
 					&& src->getData(i-1,0,tempShort) == 1 && idGrid->getData(i-1,0,tempLong) >=0){
 						toSend++;
@@ -670,7 +659,6 @@ void SendAndReciveLinks(int nx,int ny,tdpartition* idGrid, tdpartition* contribs
 		MPI_Send(&toSend,1,MPI_INT,rank-1,rank,MCW);//tell the reciver how many links to recive.
 		for(i = 0; i < nx; i++){//count links to send up
 			if(!contribs->isNodata(i,-1) && contribs->getData(i,-1,tempShort) < 0){//i am on the boarder and I am negitive, check who points to me and send there id.
-				int p = flowDir->getData((long)i-1,(long)0,tempShort);
 				if( i>0 && flowDir->getData((long)i-1,(long)0,tempShort) == 2 && src->getData(i-1,0,tempShort) == 1 && idGrid->getData(i-1,0,tempLong) >=0){
 					if(sendLink(idGrid->getData(i-1,0,tempLong), rank-1)){//check to see if sent properly
 						linksSent++;
@@ -699,7 +687,6 @@ void SendAndReciveLinks(int nx,int ny,tdpartition* idGrid, tdpartition* contribs
 		if(rank!=size-1){
 			for(i = 0; i < nx; i++){//count links to send down
 				if(!contribs->isNodata(i,ny) && contribs->getData(i,ny,tempShort) < 0){//i am on the boarder and I am negitive, check who points to me and send there id.
-					int p = flowDir->getData((long)i-1,(long)ny-1,tempShort);
 					if( i>0 && flowDir->getData((long)i-1,(long)ny-1,tempShort) == 8 && src->getData(i-1,ny-1,tempShort) == 1 && idGrid->getData(i-1,ny-1,tempLong) >=0){
 						toSend++;
 					}else if(flowDir->getData((long)i,(long)ny-1,tempShort) == 7 && src->getData(i,ny-1,tempShort) == 1 && idGrid->getData(i,ny-1,tempLong) >=0){
@@ -712,7 +699,6 @@ void SendAndReciveLinks(int nx,int ny,tdpartition* idGrid, tdpartition* contribs
 			MPI_Send(&toSend,1,MPI_INT,rank+1,rank,MCW);//tell the reciver how many links to recive.
 			for(i = 0; i < nx; i++){//count links to send up
 				if(!contribs->isNodata(i,ny) && contribs->getData(i,ny,tempShort) < 0){//i am on the boarder and I am negitive, check who points to me and send there id.
-					int p = flowDir->getData((long)i-1,(long)ny-1,tempShort);
 					if( i>0 && flowDir->getData((long)i-1,(long)ny-1,tempShort) == 8 && src->getData(i-1,ny-1,tempShort) == 1 && idGrid->getData(i-1,ny-1,tempLong) >=0){
 						if(sendLink(idGrid->getData(i-1,ny-1,tempLong), rank+1)){//check to see if sent properly
 							linksSent++;
@@ -737,11 +723,9 @@ void SendAndReciveLinks(int nx,int ny,tdpartition* idGrid, tdpartition* contribs
 		}
 		//evens send down
 	}else{//odd recev
-		int i = 0;
 		if(rank != 0){//recv from bellow
 			MPI_Recv(&toRecv,1,MPI_INT,rank-1,rank-1,MCW,&stat);//how many do I recive?
-			int i =0;
-			for(i=0;i<toRecv;i++){//recive links
+			for(int i=0;i<toRecv;i++){//recive links
 				//MPI_Recv(&sent,1,MPI_INT,rank-1,rank-1,MCW,&stat);//how many do I recive?
 				if(recvLink(rank-1))//might need to check if all recived... JJN
 					linksRecv++;
@@ -749,11 +733,9 @@ void SendAndReciveLinks(int nx,int ny,tdpartition* idGrid, tdpartition* contribs
 					MPI_Abort(MCW,2);
 			}
 		}
-		i = 0;
 		if(rank != size-1){//recive from above
 			MPI_Recv(&toRecv,1,MPI_INT,rank+1,rank+1,MCW,&stat);//how many do I recive?
-			int i =0;
-			for(i=0;i<toRecv;i++){//recive links
+			for(int i=0;i<toRecv;i++){//recive links
 				//MPI_Recv(&sent,1,MPI_INT,rank-1,rank-1,MCW,&stat);//how many do I recive?
 				if(recvLink(rank+1))//might need to check if all recived... JJN
 					linksRecv++;
@@ -921,3 +903,5 @@ bool ReceiveWaitingLinks(int rank, int size)
 	}
 	return(true);
 }
+
+#endif

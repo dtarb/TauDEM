@@ -45,6 +45,8 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 #include "tardemlib.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 int main(int argc,char **argv)
 {
    char slopefile[MAXLN],areafile[MAXLN],atanbfile[MAXLN];
@@ -87,6 +89,24 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
+                else if(strcmp(argv[i],"-ddm")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				if(strcmp(argv[i],"row")==0) {
+                                    tdpartition::decompType = DECOMP_ROW;
+                                } else if (strcmp(argv[i],"column")==0) {
+                                    tdpartition::decompType = DECOMP_COLUMN;
+                                } else if (strcmp(argv[i],"block")==0) {
+                                    tdpartition::decompType = DECOMP_BLOCK;
+                                } else {
+                                    goto errexit;
+                                }
+				i++;
+			}
+			else goto errexit;
+		}
 		else if(strcmp(argv[i],"-sar")==0)
 		{
 			i++;
@@ -115,11 +135,12 @@ int main(int argc,char **argv)
 	errexit:
 	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
 	   printf("Usage with specific file names:\n %s -sca <areafile>\n",argv[0]);
-       printf("-slp <slopefile> -sar <atanbfile>\n");
+       printf("-slp <slopefile> -sar <atanbfile> [-ddm <ddm>]\n");
 	   printf("<basefilename> is the name of the raw digital elevation model\n");
 	   printf("<areafile> is the D-infinity specific catchment area input file.\n");
 	   printf("<slopefile> is the D-infinity slope input file.\n");
 	   printf("<atanbfile> is the slope area ratio output file.\n");
+           printf("<ddm> is the data decomposition method. Either \"row\", \"column\" or \"block\".\n");
 	   printf("The following are appended to the file names\n");
        printf("before the files are opened:\n");
        printf("sca    D-infinity specific catchment area grid (input)\n");

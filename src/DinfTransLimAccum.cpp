@@ -4,7 +4,7 @@
   Utah State University  
   May 23, 2010 
   
-*/
+ */
 
 /*  Copyright (C) 2010  David Tarboton, Utah State University
 
@@ -34,7 +34,7 @@ Logan, UT 84322-8200
 USA 
 http://www.engineering.usu.edu/dtarb/ 
 email:  dtarb@usu.edu 
-*/
+ */
 
 //  This software is distributed from http://hydrology.usu.edu/taudem/
 
@@ -46,9 +46,8 @@ email:  dtarb@usu.edu
 #include "linearpart.h"
 #include "createpart.h"
 #include "tiffIO.h"
-#include "initneighbor.h"
-using namespace std;
 
+using namespace std;
 
 // The old program was written in column major order.
 // d1 and d2 were used to translate flow data (1-8 taken from the indeces)
@@ -59,332 +58,404 @@ using namespace std;
 // moved to commonlib.h
 
 //Transport limited accumulation funciton
-int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *depfile, 
-			char *cinfile, char *coutfile, char* datasrc,char* lyrname,int uselyrname,int lyrno, int useOutlets, int usec, 
-			int contcheck)
-{
 
-	MPI_Init(NULL,NULL);{
+int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *depfile,
+        char *cinfile, char *coutfile, char* datasrc, char* lyrname, int uselyrname, int lyrno, int useOutlets, int usec,
+        int contcheck) {
 
-	//Only used for timing
-	int rank,size;
-	MPI_Comm_rank(MCW,&rank);
-	MPI_Comm_size(MCW,&size);
-	if(rank==0)printf("DinfTransLimAccum version %s\n",TDVERSION);
+    MPI_Init(NULL, NULL);
+    {
 
-	//  Read shapfile 
-	double *x, *y;
-	int numOutlets=0;
-	tiffIO ang(angfile, FLOAT_TYPE);
-	long totalX = ang.getTotalX();
-	long totalY = ang.getTotalY();
-	double dxA = ang.getdxA();
-	double dyA = ang.getdyA();
-	OGRSpatialReferenceH hSRSRaster;
-	hSRSRaster=ang.getspatialref();
-	if( useOutlets == 1) {
-		if(rank==0){
-			if(readoutlets(datasrc,lyrname,uselyrname,lyrno,hSRSRaster, &numOutlets, x, y) !=0){
-				printf("Exiting \n");
-				MPI_Abort(MCW,5);
-			}else {
-				MPI_Bcast(&numOutlets, 1, MPI_INT, 0, MCW);
-				MPI_Bcast(x, numOutlets, MPI_DOUBLE, 0, MCW);
-				MPI_Bcast(y, numOutlets, MPI_DOUBLE, 0, MCW);
-			}
-		}
-		else {
-			MPI_Bcast(&numOutlets, 1, MPI_INT, 0, MCW);
+        //Only used for timing
+        int rank, size;
+        MPI_Comm_rank(MCW, &rank);
+        MPI_Comm_size(MCW, &size);
+        if (rank == 0)printf("DinfTransLimAccum version %s\n", TDVERSION);
 
-			x = (double*) malloc( sizeof( double ) * numOutlets );
-			y = (double*) malloc( sizeof( double ) * numOutlets );
-			
-			MPI_Bcast(x, numOutlets, MPI_DOUBLE, 0, MCW);
-			MPI_Bcast(y, numOutlets, MPI_DOUBLE, 0, MCW);
-		}
-	}
+        //  Read shapfile 
+        double *x, *y;
+        int numOutlets = 0;
+        tiffIO ang(angfile, FLOAT_TYPE);
+        long totalX = ang.getTotalX();
+        long totalY = ang.getTotalY();
+        double dxA = ang.getdxA();
+        double dyA = ang.getdyA();
+        OGRSpatialReferenceH hSRSRaster;
+        hSRSRaster = ang.getspatialref();
+        if (useOutlets == 1) {
+            if (rank == 0) {
+                if (readoutlets(datasrc, lyrname, uselyrname, lyrno, hSRSRaster, &numOutlets, x, y) != 0) {
+                    printf("Exiting \n");
+                    MPI_Abort(MCW, 5);
+                } else {
+                    MPI_Bcast(&numOutlets, 1, MPI_INT, 0, MCW);
+                    MPI_Bcast(x, numOutlets, MPI_DOUBLE, 0, MCW);
+                    MPI_Bcast(y, numOutlets, MPI_DOUBLE, 0, MCW);
+                }
+            } else {
+                MPI_Bcast(&numOutlets, 1, MPI_INT, 0, MCW);
 
-	float loadin,loadout,transin,transout,tsupp,tcc,angle;
-	double p,tempdxc,tempdyc;
+                x = (double*) malloc(sizeof ( double) * numOutlets);
+                y = (double*) malloc(sizeof ( double) * numOutlets);
 
-	//  Keep track of time
-	double begint = MPI_Wtime();
+                MPI_Bcast(x, numOutlets, MPI_DOUBLE, 0, MCW);
+                MPI_Bcast(y, numOutlets, MPI_DOUBLE, 0, MCW);
+            }
+        }
 
-	//Create tiff object, read and store header info
-	/*tiffIO ang(angfile, FLOAT_TYPE);
-	long totalX = ang.getTotalX();
-	long totalY = ang.getTotalY();
-	double dxA = ang.getdxA();
-	double dyA = ang.getdyA();*/
+        float loadin, loadout, transin, transout, tsupp, tcc, angle;
+        double p, tempdxc, tempdyc;
 
-	if(rank==0)
-		{
-			float timeestimate=(1.2e-6*totalX*totalY/pow((double) size,0.65))/60+1;  // Time estimate in minutes
-			fprintf(stderr,"This run may take on the order of %.0f minutes to complete.\n",timeestimate);
-			fprintf(stderr,"This estimate is very approximate. \nRun time is highly uncertain as it depends on the complexity of the input data \nand speed and memory of the computer. This estimate is based on our testing on \na dual quad core Dell Xeon E5405 2.0GHz PC with 16GB RAM.\n");
-			fflush(stderr);
-		}
+        //  Keep track of time
+        double begint = MPI_Wtime();
 
-	//Create partition and read data
-	tdpartition *flowData;
-	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dxA, dyA, ang.getNodata());
-	int nx = flowData->getnx();
-	int ny = flowData->getny();
-	int xstart, ystart;
-	flowData->localToGlobal(0, 0, xstart, ystart);
-	flowData->savedxdyc(ang);
-	ang.read(xstart, ystart, ny, nx, flowData->getGridPointer());
-	
-	//Transport supply grid, get information from file
-	tdpartition *tsupData;
-	tiffIO tsup(tsupfile, FLOAT_TYPE);
-	if(!ang.compareTiff(tsup)) {
-		printf("File sizes do not match\n%s\n",tsupfile);
-		MPI_Abort(MCW,5);
-		return 1;  
-	}
-	tsupData = CreateNewPartition(tsup.getDatatype(), totalX, totalY, dxA, dyA, tsup.getNodata());
-	tsup.read(xstart, ystart, tsupData->getny(), tsupData->getnx(), tsupData->getGridPointer());
-	
-	//Transport capacity grid, get information from file
-	tdpartition *tcData;
-	tiffIO tc(tcfile, FLOAT_TYPE);
-	if(!ang.compareTiff(tc)){
-		printf("File sizes do not match\n%s\n",tcfile);
-		MPI_Abort(MCW,5);
-		return 1;  
-	} 
-	tcData = CreateNewPartition(tc.getDatatype(), totalX, totalY, dxA, dyA, tc.getNodata());
-	tc.read(xstart, ystart, tcData->getny(), tcData->getnx(), tcData->getGridPointer());
+        //Create tiff object, read and store header info
+        /*tiffIO ang(angfile, FLOAT_TYPE);
+        long totalX = ang.getTotalX();
+        long totalY = ang.getTotalY();
+        double dxA = ang.getdxA();
+        double dyA = ang.getdyA();*/
 
-	//if using concentration grid, get information from file	
-	tdpartition *cinData;
-	if( usec == 1){		
-		tiffIO cin(cinfile, FLOAT_TYPE);
-		if(!ang.compareTiff(cin)) {
-			printf("File sizes do not match\n%s\n",cinfile);
-			MPI_Abort(MCW,5);
-			return 1;  
-		}
-		cinData = CreateNewPartition(cin.getDatatype(), totalX, totalY, dxA, dyA, cin.getNodata());
-		cin.read(xstart, ystart, cinData->getny(), cinData->getnx(), cinData->getGridPointer());
-	}
+        if (rank == 0) {
+            float timeestimate = (1.2e-6 * totalX * totalY / pow((double) size, 0.65)) / 60 + 1; // Time estimate in minutes
+            fprintf(stderr, "This run may take on the order of %.0f minutes to complete.\n", timeestimate);
+            fprintf(stderr, "This estimate is very approximate. \nRun time is highly uncertain as it depends on the complexity of the input data \nand speed and memory of the computer. This estimate is based on our testing on \na dual quad core Dell Xeon E5405 2.0GHz PC with 16GB RAM.\n");
+            fflush(stderr);
+        }
 
-	//Begin timer
-	double readt = MPI_Wtime();
+        //Create partition and read data
+        tdpartition *flowData;
+        flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dxA, dyA, ang.getNodata());
+        int nx = flowData->getnx();
+        int ny = flowData->getny();
+        int xstart, ystart;
+        flowData->localToGlobal(0, 0, xstart, ystart);
+        flowData->savedxdyc(ang);
+        ang.read(xstart, ystart, ny, nx, flowData->getGridPointer());
 
-	//Convert geo coords to grid coords
-	int *outletsX=0, *outletsY=0;
-	if(useOutlets==1) {
-		outletsX = new int[numOutlets];
-		outletsY = new int[numOutlets];
-		for( int i=0; i<numOutlets; i++)
-			ang.geoToGlobalXY(x[i], y[i], outletsX[i], outletsY[i]);
-	}
+        //Transport supply grid, get information from file
+        tdpartition *tsupData;
+        tiffIO tsup(tsupfile, FLOAT_TYPE);
+        if (!ang.compareTiff(tsup)) {
+            printf("File sizes do not match\n%s\n", tsupfile);
+            MPI_Abort(MCW, 5);
+            return 1;
+        }
+        tsupData = CreateNewPartition(tsup.getDatatype(), totalX, totalY, dxA, dyA, tsup.getNodata());
+        tsup.read(xstart, ystart, tsupData->getny(), tsupData->getnx(), tsupData->getGridPointer());
 
-	//Create empty partition to store new information
-	tdpartition *tla;
-	tla = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
+        //Transport capacity grid, get information from file
+        tdpartition *tcData;
+        tiffIO tc(tcfile, FLOAT_TYPE);
+        if (!ang.compareTiff(tc)) {
+            printf("File sizes do not match\n%s\n", tcfile);
+            MPI_Abort(MCW, 5);
+            return 1;
+        }
+        tcData = CreateNewPartition(tc.getDatatype(), totalX, totalY, dxA, dyA, tc.getNodata());
+        tc.read(xstart, ystart, tcData->getny(), tcData->getnx(), tcData->getGridPointer());
 
-	tdpartition *dep;
-	dep = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA,  MISSINGFLOAT);
-	
-	tdpartition *csout;
-	if(usec==1){			
-			csout = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA,  MISSINGFLOAT);
-	}
+        //if using concentration grid, get information from file	
+        tdpartition *cinData;
+        if (usec == 1) {
+            tiffIO cin(cinfile, FLOAT_TYPE);
+            if (!ang.compareTiff(cin)) {
+                printf("File sizes do not match\n%s\n", cinfile);
+                MPI_Abort(MCW, 5);
+                return 1;
+            }
+            cinData = CreateNewPartition(cin.getDatatype(), totalX, totalY, dxA, dyA, cin.getNodata());
+            cin.read(xstart, ystart, cinData->getny(), cinData->getnx(), cinData->getGridPointer());
+        }
 
-	// con is used to check for contamination at the edges
-	long i,j;
-	short k;
-	long in,jn;
-	bool con=false, finished;
-	float tempFloat=0;
-	short tempShort=0;
+        //Begin timer
+        double readt = MPI_Wtime();
 
-	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -32768);
-	
-	//Share information and set borders to zero
-	flowData->share();
-	if(usec==1) cinData->share(); //share is not needed, the program does not change this
-	tsupData->share();
-	tcData->share();
-	neighbor->clearBorders();
+        //Convert geo coords to grid coords
+        int *outletsX = 0, *outletsY = 0;
+        if (useOutlets == 1) {
+            outletsX = new int[numOutlets];
+            outletsY = new int[numOutlets];
+            for (int i = 0; i < numOutlets; i++)
+                ang.geoToGlobalXY(x[i], y[i], outletsX[i], outletsY[i]);
+        }
 
-	node temp;
-	queue<node> que;
+        //Create empty partition to store new information
+        tdpartition *tla;
+        tla = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
 
-	initNeighborDinfup(neighbor,flowData,&que,nx, ny, useOutlets, outletsX, outletsY, numOutlets);
-	finished = false;
-	FILE *fp;
-	
-	//Ring terminating while loop
-	while(!finished) {
-		while(!que.empty()) 
-		{
-			//Takes next node with no contributing neighbors
-			temp = que.front();
-			que.pop();
-			i = temp.x;
-			j = temp.y;
-			//  FLOW ALGEBRA EXPRESSION EVALUATION		
-		
-			if(flowData->isInPartition(i,j)  && (!tsupData->isNodata(i,j)) && (!tcData->isNodata(i,j))){
-			  if(usec==0 || !cinData->isNodata(i,j)){
-				//  Initialize the result
-				transin=0.;
-				loadin=0. ;
-				con=false;  // not contaminated so far
-				for(k=1; k<=8; k++) {
-					in = i+d1[k];
-					jn = j+d2[k];
-					if(!flowData->hasAccess(in,jn) || flowData->isNodata(in,jn))
-						con=true;
-					else{
-						flowData->getData(in,jn, angle);
-						flowData->getdxdyc(jn,tempdxc,tempdyc);
-						p = prop(angle, (k+4)%8,tempdxc,tempdyc);
-						if(p>0.){
-							float neighbor_transport=0.0;
-							if(tla->isNodata(in,jn))con=true;
-							else transin=transin+p*tla->getData(in,jn,neighbor_transport);
-							if(usec==1)
-							{
-								if(csout->isNodata(in,jn))con=true;
-								
-								else {  // Here load of contaminant coming from the neighbor is sediment transport from neighbor * concentration of neighbor
-								loadin=loadin+p*neighbor_transport*csout->getData(in,jn,tempFloat);
-								}
-							}
-						}
-					}
-				}
-				//  Local inputs
-				tsupData->getData(i,j,tsupp);
-				tcData->getData(i,j,tcc);
-				float depp;
-				if((transin+tsupp) > tcc)
-				{
-					transout=tcc;
-					depp=transin+tsupp-transout;
-				}
-				else
-				{
-					transout=transin+tsupp;
-					depp=0.;
-				}
-				tla->setData(i,j,transout);
-				dep->setData(i,j,depp);
-				if(usec==1)
-				{
-					
-					if(transout < transin) // no erosion from cell
-					{
-						if(transin > 0)loadout=loadin*transout/transin;
-						else loadout=0;
-					}
-					else
-						loadout=loadin+cinData->getData(i,j,tempFloat)*(transout-transin);
-					if(transout > 0.)
-						csout->setData(i,j,(float)(loadout/transout));
-					else
-						csout->setData(i,j,(float)(0.0));
-				}
-				if(con && contcheck == 1)
-				{
-					dep->setToNodata(i,j);
-					tla->setToNodata(i,j);
-					if(usec==1)csout->setToNodata(i,j);
-				}
-			  }
-			}
-			//  END FLOW ALGEBRA EXPRESSION EVALUATION
-			//  Decrement neighbor dependence of downslope cell
-			flowData->getData(i, j, angle);
-			flowData->getdxdyc(j,tempdxc,tempdyc);
-			for(k=1; k<=8; k++) {			
-				p = prop(angle, k,tempdxc,tempdyc);
-				if(p>0.0) {
-					in = i+d1[k];  jn = j+d2[k];
-					//Decrement the number of contributing neighbors in neighbor
-					neighbor->addToData(in,jn,(short)-1);				
-					//Check if neighbor needs to be added to que
-					if(flowData->isInPartition(in,jn) && neighbor->getData(in, jn, tempShort) == 0 ){
-						temp.x=in;
-						temp.y=jn;
-						que.push(temp);
-					}
-				}
-			}
-		}
-		//Pass information
-		tla->share();
-		//  dep->share();  Not needed as not used in calculations
-		if(usec==1) csout->share();
-		neighbor->addBorders();
+        tdpartition *dep;
+        dep = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
 
-		//If this created a cell with no contributing neighbors, put it on the queue
-		for(i=0; i<nx; i++){
-			if(neighbor->getData(i, -1, tempShort)!=0 && neighbor->getData(i, 0, tempShort)==0){
-				temp.x = i;
-				temp.y = 0;
-				que.push(temp);
-			}
-			if(neighbor->getData(i, ny, tempShort)!=0 && neighbor->getData(i, ny-1, tempShort)==0){
-				temp.x = i;
-				temp.y = ny-1;
-				que.push(temp); 
-			}
-		}
-		// Clear out borders
-		neighbor->clearBorders();
+        tdpartition *csout;
+        if (usec == 1) {
+            csout = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
+        }
 
-		//Check if done
-		finished = que.empty();
-		finished = tla->ringTerm(finished);
-	}
+        // con is used to check for contamination at the edges
+        long i, j;
+        short k;
+        long in, jn;
+        bool con = false, finished;
+        float tempFloat = 0;
+        short tempShort = 0;
 
-	//Stop timer
-	double computet = MPI_Wtime();
+        tdpartition *neighbor;
+        neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -32768);
 
-	//Create and write TIFF file
-	float scaNodata = MISSINGFLOAT;
-	tiffIO ttla(tlafile, FLOAT_TYPE, &scaNodata, ang);
-	ttla.write(xstart, ystart, ny, nx, tla->getGridPointer());
+        //Share information and set borders to zero
+        flowData->share();
+        if (usec == 1) cinData->share(); //share is not needed, the program does not change this
+        tsupData->share();
+        tcData->share();
+        neighbor->clearBorders();
 
-	tiffIO ddep(depfile, FLOAT_TYPE, &scaNodata, ang);
-	ddep.write(xstart, ystart, ny, nx, dep->getGridPointer());
+        node temp;
+        queue<node> que;
 
-	if(usec == 1){
-		tiffIO ccsout(coutfile, FLOAT_TYPE, &scaNodata, ang);
-		ccsout.write(xstart, ystart, ny, nx, csout->getGridPointer());
-	}
+        initNeighborDinfup(neighbor, flowData, &que, nx, ny, useOutlets, outletsX, outletsY, numOutlets);
+        finished = false;
+        FILE *fp;
 
-	double writet = MPI_Wtime();
-        double dataRead, compute, write, total,tempd;
-        dataRead = readt-begint;
-        compute = computet-readt;
-        write = writet-computet;
+        //Ring terminating while loop
+        while (!finished) {
+            while (!que.empty()) {
+                //Takes next node with no contributing neighbors
+                temp = que.front();
+                que.pop();
+                i = temp.x;
+                j = temp.y;
+                //  FLOW ALGEBRA EXPRESSION EVALUATION		
+
+                if (flowData->isInPartition(i, j) && (!tsupData->isNodata(i, j)) && (!tcData->isNodata(i, j))) {
+                    if (usec == 0 || !cinData->isNodata(i, j)) {
+                        //  Initialize the result
+                        transin = 0.;
+                        loadin = 0.;
+                        con = false; // not contaminated so far
+                        for (k = 1; k <= 8; k++) {
+                            in = i + d1[k];
+                            jn = j + d2[k];
+                            if (!flowData->hasAccess(in, jn) || flowData->isNodata(in, jn))
+                                con = true;
+                            else {
+                                flowData->getData(in, jn, angle);
+                                flowData->getdxdyc(jn, tempdxc, tempdyc);
+                                p = prop(angle, (k + 4) % 8, tempdxc, tempdyc);
+                                if (p > 0.) {
+                                    float neighbor_transport = 0.0;
+                                    if (tla->isNodata(in, jn))con = true;
+                                    else transin = transin + p * tla->getData(in, jn, neighbor_transport);
+                                    if (usec == 1) {
+                                        if (csout->isNodata(in, jn))con = true;
+
+                                        else { // Here load of contaminant coming from the neighbor is sediment transport from neighbor * concentration of neighbor
+                                            loadin = loadin + p * neighbor_transport * csout->getData(in, jn, tempFloat);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        //  Local inputs
+                        tsupData->getData(i, j, tsupp);
+                        tcData->getData(i, j, tcc);
+                        float depp;
+                        if ((transin + tsupp) > tcc) {
+                            transout = tcc;
+                            depp = transin + tsupp - transout;
+                        } else {
+                            transout = transin + tsupp;
+                            depp = 0.;
+                        }
+                        tla->setData(i, j, transout);
+                        dep->setData(i, j, depp);
+                        if (usec == 1) {
+
+                            if (transout < transin) // no erosion from cell
+                            {
+                                if (transin > 0)loadout = loadin * transout / transin;
+                                else loadout = 0;
+                            } else
+                                loadout = loadin + cinData->getData(i, j, tempFloat)*(transout - transin);
+                            if (transout > 0.)
+                                csout->setData(i, j, (float) (loadout / transout));
+                            else
+                                csout->setData(i, j, (float) (0.0));
+                        }
+                        if (con && contcheck == 1) {
+                            dep->setToNodata(i, j);
+                            tla->setToNodata(i, j);
+                            if (usec == 1)csout->setToNodata(i, j);
+                        }
+                    }
+                }
+                //  END FLOW ALGEBRA EXPRESSION EVALUATION
+                //  Decrement neighbor dependence of downslope cell
+                flowData->getData(i, j, angle);
+                flowData->getdxdyc(j, tempdxc, tempdyc);
+                for (k = 1; k <= 8; k++) {
+                    p = prop(angle, k, tempdxc, tempdyc);
+                    if (p > 0.0) {
+                        in = i + d1[k];
+                        jn = j + d2[k];
+                        //Decrement the number of contributing neighbors in neighbor
+                        neighbor->addToData(in, jn, (short) - 1);
+                        //Check if neighbor needs to be added to que
+                        if (flowData->isInPartition(in, jn) && neighbor->getData(in, jn, tempShort) == 0) {
+                            temp.x = in;
+                            temp.y = jn;
+                            que.push(temp);
+                        }
+                    }
+                }
+            }
+            //Pass information
+            tla->share();
+            //  dep->share();  Not needed as not used in calculations
+            if (usec == 1) csout->share();
+            neighbor->addBorders();
+
+            //If this created a cell with no contributing neighbors, put it on the queue
+            bool isTopLeftAdded = false;
+            bool isTopRightAdded = false;
+            bool isBottomLeftAdded = false;
+            bool isBottomRightAdded = false;
+
+            for (i = 0; i < nx; i++) {
+                if (neighbor->getData(i, -1, tempShort) != 0 && neighbor->getData(i, 0, tempShort) == 0) {
+                    temp.x = i;
+                    temp.y = 0;
+                    if (i == 0 && !isTopLeftAdded) {
+                        que.push(temp);
+                        isTopLeftAdded = true;
+                    } else if (i == nx - 1 && !isTopRightAdded) {
+                        que.push(temp);
+                        isTopRightAdded = true;
+                    } else if (i != 0 && i != nx - 1) {
+                        que.push(temp);
+                    }
+
+                }
+                if (neighbor->getData(i, ny, tempShort) != 0 && neighbor->getData(i, ny - 1, tempShort) == 0) {
+                    temp.x = i;
+                    temp.y = ny - 1;
+                    if (i == 0 && !isBottomLeftAdded) {
+                        que.push(temp);
+                        isBottomLeftAdded = true;
+                    } else if (i == nx - 1 && !isBottomRightAdded) {
+                        que.push(temp);
+                        isBottomRightAdded = true;
+                    } else if (i != 0 && i != nx - 1) {
+                        que.push(temp);
+                    }
+                }
+            }
+
+            for (i = 0; i < ny; i++) {
+                if (neighbor->getData(-1, i, tempShort) != 0 && neighbor->getData(0, i, tempShort) == 0) {
+                    temp.x = 0;
+                    temp.y = i;
+                    if (i == 0 && !isTopLeftAdded) {
+                        que.push(temp);
+                        isTopLeftAdded = true;
+                    } else if (i == ny - 1 && !isBottomLeftAdded) {
+                        que.push(temp);
+                        isBottomLeftAdded = true;
+                    } else if (i != 0 && i != ny - 1) {
+                        que.push(temp);
+                    }
+                }
+                if (neighbor->getData(nx, i, tempShort) != 0 && neighbor->getData(nx - 1, i, tempShort) == 0) {
+                    temp.x = nx - 1;
+                    temp.y = i;
+                    if (i == 0 && !isTopRightAdded) {
+                        que.push(temp);
+                        isTopRightAdded = true;
+                    } else if (i == ny - 1 && !isBottomRightAdded) {
+                        que.push(temp);
+                        isBottomRightAdded = true;
+                    } else if (i != 0 && i != ny - 1) {
+                        que.push(temp);
+                    }
+                }
+            }
+
+            if (neighbor->getData(-1, -1, tempShort) != 0 && neighbor->getData(0, 0, tempShort) == 0 && !isTopLeftAdded) {
+                temp.x = 0;
+                temp.y = 0;
+                que.push(temp);
+                isTopLeftAdded = true;
+            }
+
+            if (neighbor->getData(nx, -1, tempShort) != 0 && neighbor->getData(nx - 1, 0, tempShort) == 0 && !isTopRightAdded) {
+                temp.x = nx - 1;
+                temp.y = 0;
+                que.push(temp);
+                isTopRightAdded = true;
+            }
+
+            if (neighbor->getData(-1, ny, tempShort) != 0 && neighbor->getData(0, ny - 1, tempShort) == 0 && !isBottomLeftAdded) {
+                temp.x = 0;
+                temp.y = ny - 1;
+                que.push(temp);
+                isBottomLeftAdded = true;
+            }
+
+            if (neighbor->getData(nx, ny, tempShort) != 0 && neighbor->getData(nx - 1, ny - 1, tempShort) == 0 && !isBottomRightAdded) {
+                temp.x = nx - 1;
+                temp.y = ny - 1;
+                que.push(temp);
+                isBottomRightAdded = true;
+            }
+            // Clear out borders
+            neighbor->clearBorders();
+
+            //Check if done
+            finished = que.empty();
+            finished = tla->ringTerm(finished);
+        }
+
+        //Stop timer
+        double computet = MPI_Wtime();
+
+        //Create and write TIFF file
+        float scaNodata = MISSINGFLOAT;
+        tiffIO ttla(tlafile, FLOAT_TYPE, &scaNodata, ang);
+        ttla.write(xstart, ystart, ny, nx, tla->getGridPointer());
+
+        tiffIO ddep(depfile, FLOAT_TYPE, &scaNodata, ang);
+        ddep.write(xstart, ystart, ny, nx, dep->getGridPointer());
+
+        if (usec == 1) {
+            tiffIO ccsout(coutfile, FLOAT_TYPE, &scaNodata, ang);
+            ccsout.write(xstart, ystart, ny, nx, csout->getGridPointer());
+        }
+
+        double writet = MPI_Wtime();
+        double dataRead, compute, write, total, tempd;
+        dataRead = readt - begint;
+        compute = computet - readt;
+        write = writet - computet;
         total = writet - begint;
 
-        MPI_Allreduce (&dataRead, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        dataRead = tempd/size;
-        MPI_Allreduce (&compute, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        compute = tempd/size;
-        MPI_Allreduce (&write, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        write = tempd/size;
-        MPI_Allreduce (&total, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        total = tempd/size;
+        MPI_Allreduce(&dataRead, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
+        dataRead = tempd / size;
+        MPI_Allreduce(&compute, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
+        compute = tempd / size;
+        MPI_Allreduce(&write, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
+        write = tempd / size;
+        MPI_Allreduce(&total, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
+        total = tempd / size;
 
-        if( rank == 0)
-                printf("Processors: %d\nRead time: %f\nCompute time: %f\nWrite time: %f\nTotal time: %f\n",
-                  size, dataRead, compute, write,total);
-
-
-	//Brackets force MPI-dependent objects to go out of scope before Finalize is called
-	}MPI_Finalize();
+        if (rank == 0)
+            printf("Processors: %d\nRead time: %f\nCompute time: %f\nWrite time: %f\nTotal time: %f\n",
+                size, dataRead, compute, write, total);
 
 
-	return 0;
+        //Brackets force MPI-dependent objects to go out of scope before Finalize is called
+    }
+    MPI_Finalize();
+
+
+    return 0;
 }

@@ -47,6 +47,8 @@ email:  dtarb@usu.edu
 #include "tardemlib.h"
 #include "DinfDistDown.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 int main(int argc,char **argv)
 {
 char angfile[MAXLN],felfile[MAXLN],slpfile[MAXLN],wfile[MAXLN],dtsfile[MAXLN],srcfile[MAXLN];
@@ -95,6 +97,24 @@ char angfile[MAXLN],felfile[MAXLN],slpfile[MAXLN],wfile[MAXLN],dtsfile[MAXLN],sr
 			if(argc > i)
 			{
 				strcpy(slpfile,argv[i]);
+				i++;
+			}
+			else goto errexit;
+		}
+                else if(strcmp(argv[i],"-ddm")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				if(strcmp(argv[i],"row")==0) {
+                                    tdpartition::decompType = DECOMP_ROW;
+                                } else if (strcmp(argv[i],"column")==0) {
+                                    tdpartition::decompType = DECOMP_COLUMN;
+                                } else if (strcmp(argv[i],"block")==0) {
+                                    tdpartition::decompType = DECOMP_BLOCK;
+                                } else {
+                                    goto errexit;
+                                }
 				i++;
 			}
 			else goto errexit;
@@ -247,7 +267,7 @@ if((err=dinfdistdown(angfile,felfile,slpfile,wfile,srcfile,dtsfile,statmethod,
 	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
 	   printf("Usage with specific file names:\n %s -ang <angfile>\n",argv[0]);
        printf("-fel <felfile> -slp <slpfile> -src <srcfile> [-wg <wfile>] -dd <dtsfile>\n");
-  	   printf("[-m ave h] [-nc]\n");
+  	   printf("[-m ave h] [-nc] [-ddm <ddm>]\n");
 	   printf("<basefilename> is the name of the raw digital elevation model\n");
 	   printf("<angfile> is the D-infinity flow direction input file.\n");
 	   printf("<felfile> is the pit filled or carved elevation input file.\n");
@@ -255,6 +275,7 @@ if((err=dinfdistdown(angfile,felfile,slpfile,wfile,srcfile,dtsfile,statmethod,
 	   printf("<srcfile> is the stream raster input file.\n");
 	   printf("<wgfile> is the D-infinity flow direction input file.\n");
 	   printf("<dtsfile> is the D-infinity distance output file.\n");
+           printf("<ddm> is the data decomposition method. Either \"row\", \"column\" or \"block\".\n");
 	   printf("[-m ave h] is the optional method flag.\n");
 	   printf("The flag -nc overrides edge contamination checking\n");
 	   printf("The following are appended to the file names\n");

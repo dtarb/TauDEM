@@ -5,7 +5,7 @@
   Utah State University  
   May 23, 2010 
   
-*/
+ */
 
 /*  Copyright (C) 2010  David Tarboton, Utah State University
 
@@ -35,7 +35,7 @@ Logan, UT 84322-8200
 USA 
 http://www.engineering.usu.edu/dtarb/ 
 email:  dtarb@usu.edu 
-*/
+ */
 
 //  This software is distributed from http://hydrology.usu.edu/taudem/
 
@@ -47,7 +47,6 @@ email:  dtarb@usu.edu
 #include "createpart.h"
 #include "tiffIO.h"
 #include "DinfDistUp.h"
-#include "initneighbor.h"
 using namespace std;
 
 
@@ -63,288 +62,358 @@ float **dist;
 
 //Calling function
 int dinfdistup(char *angfile,char *felfile,char *slpfile,char *wfile, char *rtrfile,
-			   int statmethod,int typemethod,int usew, int concheck, float thresh)
+        int statmethod,int typemethod,int usew, int concheck, float thresh)
 {
-	int er;
-switch (typemethod)
-{
-case 0:
-	er=hdisttoridgegrd(angfile,wfile,rtrfile,statmethod, 
-		concheck,thresh,usew);
-break;
-case 1:
-	er=vrisetoridgegrd(angfile,felfile,rtrfile, 
-		statmethod,concheck,thresh);
-break;
-case 2:
-	er=pdisttoridgegrd(angfile,felfile,wfile,rtrfile, 
-					statmethod,usew,concheck,thresh);
-break;
-case 3:
-	er=sdisttoridgegrd(angfile,felfile,wfile,rtrfile, 
-					statmethod,usew,concheck,thresh);
-break;
-}
-return (er);
+    switch (typemethod)
+    {
+        case 0:
+            return hdisttoridgegrd(angfile, wfile, rtrfile, statmethod, 
+                    concheck, thresh, usew);
+        case 1:
+            return vrisetoridgegrd(angfile, felfile, rtrfile,
+                    statmethod, concheck, thresh);
+        case 2:
+            return pdisttoridgegrd(angfile, felfile, wfile, rtrfile, 
+                    statmethod, usew, concheck, thresh);
+        case 3:
+            return sdisttoridgegrd(angfile, felfile, wfile, rtrfile, 
+                    statmethod, usew, concheck, thresh);
+    }
+
+    printf("dinfdistup: Unknown typemethod\n");
+    return -1;
 }
 
 //*****************************//
 //Horizontal distance to ridge //
 //*****************************//
-int hdisttoridgegrd(char *angfile, char *wfile, char *rtrfile, int statmethod, 
-					int concheck, float thresh,int usew)
-{
-	MPI_Init(NULL,NULL);{
 
-	//Only used for timing
-	int rank,size;
-	MPI_Comm_rank(MCW,&rank);
-	MPI_Comm_size(MCW,&size);
-	if(rank==0)printf("DinfDistUp -h version %s\n",TDVERSION);
+int hdisttoridgegrd(char *angfile, char *wfile, char *rtrfile, int statmethod,
+        int concheck, float thresh, int usew) {
+    MPI_Init(NULL, NULL);
+    {
 
-	float wt=1.0,angle,sump,distr,dtss;
-	double p,tempdxc,tempdyc;
+        //Only used for timing
+        int rank, size;
+        MPI_Comm_rank(MCW, &rank);
+        MPI_Comm_size(MCW, &size);
+        if (rank == 0)printf("DinfDistUp -h version %s\n", TDVERSION);
 
-	//  Keep track of time
-	double begint = MPI_Wtime();
+        float wt = 1.0, angle, sump, distr, dtss;
+        double p, tempdxc, tempdyc;
 
-	//Create tiff object, read and store header info
-	tiffIO ang(angfile, FLOAT_TYPE);
-	long totalX = ang.getTotalX();
-	long totalY = ang.getTotalY();
-	double dxA = ang.getdxA();
-	double dyA = ang.getdyA();
-	if(rank==0)
-		{
-			float timeestimate=(1.2e-6*totalX*totalY/pow((double) size,0.65))/60+1;  // Time estimate in minutes
-			fprintf(stderr,"This run may take on the order of %.0f minutes to complete.\n",timeestimate);
-			fprintf(stderr,"This estimate is very approximate. \nRun time is highly uncertain as it depends on the complexity of the input data \nand speed and memory of the computer. This estimate is based on our testing on \na dual quad core Dell Xeon E5405 2.0GHz PC with 16GB RAM.\n");
-			fflush(stderr);
-		}
+        //  Keep track of time
+        double begint = MPI_Wtime();
 
-	//  Calculate horizontal distances in each direction
-	//int kk;
-	//for(kk=1; kk<=8; kk++)
-	//{
-		//dist[kk]=sqrt(dx*dx*d2[kk]*d2[kk]+dy*dy*d1[kk]*d1[kk]);
-	//}
+        //Create tiff object, read and store header info
+        tiffIO ang(angfile, FLOAT_TYPE);
+        long totalX = ang.getTotalX();
+        long totalY = ang.getTotalY();
+        double dxA = ang.getdxA();
+        double dyA = ang.getdyA();
+        if (rank == 0) {
+            float timeestimate = (1.2e-6 * totalX * totalY / pow((double) size, 0.65)) / 60 + 1; // Time estimate in minutes
+            fprintf(stderr, "This run may take on the order of %.0f minutes to complete.\n", timeestimate);
+            fprintf(stderr, "This estimate is very approximate. \nRun time is highly uncertain as it depends on the complexity of the input data \nand speed and memory of the computer. This estimate is based on our testing on \na dual quad core Dell Xeon E5405 2.0GHz PC with 16GB RAM.\n");
+            fflush(stderr);
+        }
 
-
+        //  Calculate horizontal distances in each direction
+        //int kk;
+        //for(kk=1; kk<=8; kk++)
+        //{
+        //dist[kk]=sqrt(dx*dx*d2[kk]*d2[kk]+dy*dy*d1[kk]*d1[kk]);
+        //}
 
 
-	//Create partition and read data
-	tdpartition *flowData;
-	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dxA, dyA, ang.getNodata());
-	int nx = flowData->getnx();
-	int ny = flowData->getny();
-	int xstart, ystart;
-	flowData->localToGlobal(0, 0, xstart, ystart);
-	flowData->savedxdyc(ang);
-	ang.read(xstart, ystart, ny, nx, flowData->getGridPointer());
-
-    dist = new float*[ny];
-    for(int m = 0; m <ny; m++)
-    dist[m] = new float[9];
-	for (int m=0; m<ny;m++){
-		flowData->getdxdyc(m,tempdxc,tempdyc);
-		for(int kk=1; kk<=8; kk++)
-	{
-		dist[m][kk]=sqrt(tempdxc*tempdxc*d1[kk]*d1[kk]+tempdyc*tempdyc*d2[kk]*d2[kk]);
-	}
-
-	}
 
 
-	//if using weightData, get information from file
-	tdpartition *weightData;
-	if( usew == 1){
-		tiffIO w(wfile, FLOAT_TYPE);
-		if(!ang.compareTiff(w)) {
-			printf("File sizes do not match\n%s\n",wfile);
-			MPI_Abort(MCW,5);
-		return 1; 
-		}
-		weightData = CreateNewPartition(w.getDatatype(), totalX, totalY, dxA, dyA, w.getNodata());
-		w.read(xstart, ystart, weightData->getny(), weightData->getnx(), weightData->getGridPointer());
-	}
-	
-	//Begin timer
-	double readt = MPI_Wtime();
+        //Create partition and read data
+        tdpartition *flowData;
+        flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dxA, dyA, ang.getNodata());
+        int nx = flowData->getnx();
+        int ny = flowData->getny();
+        int xstart, ystart;
+        flowData->localToGlobal(0, 0, xstart, ystart);
+        flowData->savedxdyc(ang);
+        ang.read(xstart, ystart, ny, nx, flowData->getGridPointer());
 
-	//Create empty partition to store new information
-	tdpartition *dts;
-	dts = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
+        dist = new float*[ny];
+        for (int m = 0; m < ny; m++)
+            dist[m] = new float[9];
+        for (int m = 0; m < ny; m++) {
+            flowData->getdxdyc(m, tempdxc, tempdyc);
+            for (int kk = 1; kk <= 8; kk++) {
+                dist[m][kk] = sqrt(tempdxc * tempdxc * d1[kk] * d1[kk] + tempdyc * tempdyc * d2[kk] * d2[kk]);
+            }
 
-	// con is used to check for contamination at the edges
-	long i,j;
-	short k;
-	long in,jn;
-	bool con=false, finished;
-	float tempFloat=0;
-	short tempShort=0;
+        }
 
-	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, MISSINGSHORT);
-	
-	//Share information and set borders to zero
-	flowData->share();
-	if(usew==1) weightData->share();
-	dts->share();  // to fill borders with no data
-	neighbor->clearBorders();
 
-	node temp;
-	queue<node> que;
-	
-	//Count the flow receiving neighbors and put on queue
-	int useOutlets=0;
-	long numOutlets=0;
-	int *outletsX=0, *outletsY=0;
-	initNeighborDinfup(neighbor,flowData,&que,nx, ny, useOutlets, outletsX, outletsY, numOutlets);
+        //if using weightData, get information from file
+        tdpartition *weightData;
+        if (usew == 1) {
+            tiffIO w(wfile, FLOAT_TYPE);
+            if (!ang.compareTiff(w)) {
+                printf("File sizes do not match\n%s\n", wfile);
+                MPI_Abort(MCW, 5);
+                return 1;
+            }
+            weightData = CreateNewPartition(w.getDatatype(), totalX, totalY, dxA, dyA, w.getNodata());
+            w.read(xstart, ystart, weightData->getny(), weightData->getnx(), weightData->getGridPointer());
+        }
 
-	finished = false;
-	//Ring terminating while loop
-	while(!finished) {
-		while(!que.empty()) 
-		{
-			//Takes next node with no contributing neighbors
-			temp = que.front();
-			que.pop();
-			i = temp.x;
-			j = temp.y;
-			//  EVALUATE UP FLOW ALGEBRA EXPRESSION
-			distr=0.0;  //  initialized at 0
-			sump=0.;
-			bool first=true;
-			con=false;  // Start off not edge contaminated
-		
-			for(k=1; k<=8; k++) {
-				in = i+d1[k];
-				jn = j+d2[k];
-				if(!flowData->hasAccess(in,jn) || flowData->isNodata(in,jn))
-					con=true;
-				else{
-					flowData->getData(in,jn, angle);
-					flowData->getdxdyc(jn,tempdxc,tempdyc);
-					p = prop(angle, (k+4)%8,tempdxc,tempdyc);
-					if(p>0. && p>thresh){
-						if(dts->isNodata(in,jn))con=true;
-						else
-						{
-							sump=sump+p;
-							dts->getData(in,jn,dtss);
-							float wt=1.;
-							if(usew==1){
-								if(weightData->isNodata(in,jn))
-									con=true;
-								else
-									weightData->getData(in,jn,wt);
-							}	
-							if(statmethod==0){//average
-							
-								distr=distr+p*(dist[j][k]*wt+dtss);
-								
-							}
-							else if(statmethod==1){// maximum
-								if(dist[j][k]*wt+dtss>distr)distr=dist[j][k]*wt+dtss;
-							}
-							else{ // Minimum
-								if(first){  
-									distr=dist[j][k]*wt+dtss;
-									first=false;
-								}else
-								{
-									if(dist[j][k]*wt+dtss<distr)distr=dist[j][k]*wt+dtss;
-								}
-							}
-						}
-					}
-				}
-			}
-			if((con && concheck==1))dts->setToNodata(i,j); // set to no data if contamination and checking
-			else
-			{
-				if(statmethod==0 && sump>0.)dts->setData(i,j,(float)(distr/sump));
-				else dts->setData(i,j,distr);
-			}
-			//  END UP FLOW ALGEBRA EVALUATION
-			//  Decrement neighbor dependence of downslope cell
-			flowData->getData(i, j, angle);
-			flowData->getdxdyc(j,tempdxc,tempdyc);
-			for(k=1; k<=8; k++) {			
-				p = prop(angle, k,tempdxc,tempdyc);
-				if(p>0.0) {
-					in = i+d1[k];  jn = j+d2[k];
-					//Decrement the number of contributing neighbors in neighbor
-					neighbor->addToData(in,jn,(short)-1);				
-					//Check if neighbor needs to be added to que
-					if(flowData->isInPartition(in,jn) && neighbor->getData(in, jn, tempShort) == 0 ){
-						temp.x=in;
-						temp.y=jn;
-						que.push(temp);
-					}
-				}
-			}
-		}
-	
-		//Pass information
-		dts->share();
-		neighbor->addBorders();
+        //Begin timer
+        double readt = MPI_Wtime();
 
-		//If this created a cell with no contributing neighbors, put it on the queue
-		for(i=0; i<nx; i++){
-			if(neighbor->getData(i, -1, tempShort)!=0 && neighbor->getData(i, 0, tempShort)==0)
-			{
-				temp.x = i;
-				temp.y = 0;
-				que.push(temp);
-			}
-			if(neighbor->getData(i, ny, tempShort)!=0 && neighbor->getData(i, ny-1, tempShort)==0)
-			{
-				temp.x = i;
-				temp.y = ny-1;
-				que.push(temp); 
-			}
-		}
+        //Create empty partition to store new information
+        tdpartition *dts;
+        dts = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
 
-		neighbor->clearBorders();
-	
-		//Check if done
-		finished = que.empty();
-		finished = dts->ringTerm(finished);
-	}
+        // con is used to check for contamination at the edges
+        long i, j;
+        short k;
+        long in, jn;
+        bool con = false, finished;
+        float tempFloat = 0;
+        short tempShort = 0;
 
-	//Stop timer
-	double computet = MPI_Wtime();
+        tdpartition *neighbor;
+        neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, MISSINGSHORT);
 
-	//Create and write TIFF file
-	float ddNodata = MISSINGFLOAT;
-	tiffIO dd(rtrfile, FLOAT_TYPE, &ddNodata, ang);
-	dd.write(xstart, ystart, ny, nx, dts->getGridPointer());
+        //Share information and set borders to zero
+        flowData->share();
+        if (usew == 1) weightData->share();
+        dts->share(); // to fill borders with no data
+        neighbor->clearBorders();
 
-	double writet = MPI_Wtime();
-        double dataRead, compute, write, total,tempd;
-        dataRead = readt-begint;
-        compute = computet-readt;
-        write = writet-computet;
+        node temp;
+        queue<node> que;
+
+        //Count the flow receiving neighbors and put on queue
+        int useOutlets = 0;
+        long numOutlets = 0;
+        int *outletsX = 0, *outletsY = 0;
+        initNeighborDinfup(neighbor, flowData, &que, nx, ny, useOutlets, outletsX, outletsY, numOutlets);
+
+        finished = false;
+        //Ring terminating while loop
+        while (!finished) {
+            while (!que.empty()) {
+                //Takes next node with no contributing neighbors
+                temp = que.front();
+                que.pop();
+                i = temp.x;
+                j = temp.y;
+                //  EVALUATE UP FLOW ALGEBRA EXPRESSION
+                distr = 0.0; //  initialized at 0
+                sump = 0.;
+                bool first = true;
+                con = false; // Start off not edge contaminated
+
+                for (k = 1; k <= 8; k++) {
+                    in = i + d1[k];
+                    jn = j + d2[k];
+                    if (!flowData->hasAccess(in, jn) || flowData->isNodata(in, jn))
+                        con = true;
+                    else {
+                        flowData->getData(in, jn, angle);
+                        flowData->getdxdyc(jn, tempdxc, tempdyc);
+                        p = prop(angle, (k + 4) % 8, tempdxc, tempdyc);
+                        if (p > 0. && p > thresh) {
+                            if (dts->isNodata(in, jn))con = true;
+                            else {
+                                sump = sump + p;
+                                dts->getData(in, jn, dtss);
+                                float wt = 1.;
+                                if (usew == 1) {
+                                    if (weightData->isNodata(in, jn))
+                                        con = true;
+                                    else
+                                        weightData->getData(in, jn, wt);
+                                }
+                                if (statmethod == 0) {//average
+
+                                    distr = distr + p * (dist[j][k] * wt + dtss);
+
+                                } else if (statmethod == 1) {// maximum
+                                    if (dist[j][k] * wt + dtss > distr)distr = dist[j][k] * wt + dtss;
+                                } else { // Minimum
+                                    if (first) {
+                                        distr = dist[j][k] * wt + dtss;
+                                        first = false;
+                                    } else {
+                                        if (dist[j][k] * wt + dtss < distr)distr = dist[j][k] * wt + dtss;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if ((con && concheck == 1))dts->setToNodata(i, j); // set to no data if contamination and checking
+                else {
+                    if (statmethod == 0 && sump > 0.)dts->setData(i, j, (float) (distr / sump));
+                    else dts->setData(i, j, distr);
+                }
+                //  END UP FLOW ALGEBRA EVALUATION
+                //  Decrement neighbor dependence of downslope cell
+                flowData->getData(i, j, angle);
+                flowData->getdxdyc(j, tempdxc, tempdyc);
+                for (k = 1; k <= 8; k++) {
+                    p = prop(angle, k, tempdxc, tempdyc);
+                    if (p > 0.0) {
+                        in = i + d1[k];
+                        jn = j + d2[k];
+                        //Decrement the number of contributing neighbors in neighbor
+                        neighbor->addToData(in, jn, (short) - 1);
+                        //Check if neighbor needs to be added to que
+                        if (flowData->isInPartition(in, jn) && neighbor->getData(in, jn, tempShort) == 0) {
+                            temp.x = in;
+                            temp.y = jn;
+                            que.push(temp);
+                        }
+                    }
+                }
+            }
+
+            //Pass information
+            dts->share();
+            neighbor->addBorders();
+
+            //If this created a cell with no contributing neighbors, put it on the queue
+            bool isTopLeftAdded = false;
+            bool isTopRightAdded = false;
+            bool isBottomLeftAdded = false;
+            bool isBottomRightAdded = false;
+
+            //If this created a cell with no contributing neighbors, put it on the queue
+            for (i = 0; i < nx; i++) {
+                if (neighbor->getData(i, -1, tempShort) != 0 && neighbor->getData(i, 0, tempShort) == 0) {
+                    temp.x = i;
+                    temp.y = 0;
+                    if (i == 0 && !isTopLeftAdded) {
+                        que.push(temp);
+                        isTopLeftAdded = true;
+                    } else if (i == nx - 1 && !isTopRightAdded) {
+                        que.push(temp);
+                        isTopRightAdded = true;
+                    } else if (i != 0 && i != nx - 1) {
+                        que.push(temp);
+                    }
+
+                }
+                if (neighbor->getData(i, ny, tempShort) != 0 && neighbor->getData(i, ny - 1, tempShort) == 0) {
+                    temp.x = i;
+                    temp.y = ny - 1;
+                    if (i == 0 && !isBottomLeftAdded) {
+                        que.push(temp);
+                        isBottomLeftAdded = true;
+                    } else if (i == nx - 1 && !isBottomRightAdded) {
+                        que.push(temp);
+                        isBottomRightAdded = true;
+                    } else if (i != 0 && i != nx - 1) {
+                        que.push(temp);
+                    }
+                }
+            }
+
+            for (i = 0; i < ny; i++) {
+                if (neighbor->getData(-1, i, tempShort) != 0 && neighbor->getData(0, i, tempShort) == 0) {
+                    temp.x = 0;
+                    temp.y = i;
+                    if (i == 0 && !isTopLeftAdded) {
+                        que.push(temp);
+                        isTopLeftAdded = true;
+                    } else if (i == ny - 1 && !isBottomLeftAdded) {
+                        que.push(temp);
+                        isBottomLeftAdded = true;
+                    } else if (i != 0 && i != ny - 1) {
+                        que.push(temp);
+                    }
+                }
+                if (neighbor->getData(nx, i, tempShort) != 0 && neighbor->getData(nx - 1, i, tempShort) == 0) {
+                    temp.x = nx - 1;
+                    temp.y = i;
+                    if (i == 0 && !isTopRightAdded) {
+                        que.push(temp);
+                        isTopRightAdded = true;
+                    } else if (i == ny - 1 && !isBottomRightAdded) {
+                        que.push(temp);
+                        isBottomRightAdded = true;
+                    } else if (i != 0 && i != ny - 1) {
+                        que.push(temp);
+                    }
+                }
+            }
+
+            if (neighbor->getData(-1, -1, tempShort) != 0 && neighbor->getData(0, 0, tempShort) == 0 && !isTopLeftAdded) {
+                temp.x = 0;
+                temp.y = 0;
+                que.push(temp);
+                isTopLeftAdded = true;
+            }
+
+            if (neighbor->getData(nx, -1, tempShort) != 0 && neighbor->getData(nx - 1, 0, tempShort) == 0 && !isTopRightAdded) {
+                temp.x = nx - 1;
+                temp.y = 0;
+                que.push(temp);
+                isTopRightAdded = true;
+            }
+
+            if (neighbor->getData(-1, ny, tempShort) != 0 && neighbor->getData(0, ny - 1, tempShort) == 0 && !isBottomLeftAdded) {
+                temp.x = 0;
+                temp.y = ny - 1;
+                que.push(temp);
+                isBottomLeftAdded = true;
+            }
+
+            if (neighbor->getData(nx, ny, tempShort) != 0 && neighbor->getData(nx - 1, ny - 1, tempShort) == 0 && !isBottomRightAdded) {
+                temp.x = nx - 1;
+                temp.y = ny - 1;
+                que.push(temp);
+                isBottomRightAdded = true;
+            }
+
+            neighbor->clearBorders();
+
+            //Check if done
+            finished = que.empty();
+            finished = dts->ringTerm(finished);
+        }
+
+        //Stop timer
+        double computet = MPI_Wtime();
+
+        //Create and write TIFF file
+        float ddNodata = MISSINGFLOAT;
+        tiffIO dd(rtrfile, FLOAT_TYPE, &ddNodata, ang);
+        dd.write(xstart, ystart, ny, nx, dts->getGridPointer());
+
+        double writet = MPI_Wtime();
+        double dataRead, compute, write, total, tempd;
+        dataRead = readt - begint;
+        compute = computet - readt;
+        write = writet - computet;
         total = writet - begint;
 
-        MPI_Allreduce (&dataRead, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        dataRead = tempd/size;
-        MPI_Allreduce (&compute, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        compute = tempd/size;
-        MPI_Allreduce (&write, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        write = tempd/size;
-        MPI_Allreduce (&total, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        total = tempd/size;
+        MPI_Allreduce(&dataRead, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
+        dataRead = tempd / size;
+        MPI_Allreduce(&compute, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
+        compute = tempd / size;
+        MPI_Allreduce(&write, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
+        write = tempd / size;
+        MPI_Allreduce(&total, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
+        total = tempd / size;
 
-        if( rank == 0)
-                printf("Processors: %d\nRead time: %f\nCompute time: %f\nWrite time: %f\nTotal time: %f\n",
-                  size, dataRead, compute, write,total);
+        if (rank == 0)
+            printf("Processors: %d\nRead time: %f\nCompute time: %f\nWrite time: %f\nTotal time: %f\n",
+                size, dataRead, compute, write, total);
 
-	//Brackets force MPI-dependent objects to go out of scope before Finalize is called
-	}MPI_Finalize();
+        //Brackets force MPI-dependent objects to go out of scope before Finalize is called
+    }
+    MPI_Finalize();
 
-	return 0;
+    return 0;
 }
 
 
@@ -352,857 +421,1057 @@ int hdisttoridgegrd(char *angfile, char *wfile, char *rtrfile, int statmethod,
 //***************************//
 //Vertical rise to the ridge //
 //**************************//
-int vrisetoridgegrd(char *angfile, char *felfile, char *rtrfile, int statmethod, 
-					int concheck, float thresh)
-{
-	MPI_Init(NULL,NULL);{
 
-	//Only used for timing
-	int rank,size;
-	MPI_Comm_rank(MCW,&rank);
-	MPI_Comm_size(MCW,&size);
-	if(rank==0)printf("DinfDistUp -v version %s\n",TDVERSION);
+int vrisetoridgegrd(char *angfile, char *felfile, char *rtrfile, int statmethod,
+        int concheck, float thresh) {
+    MPI_Init(NULL, NULL);
+    {
 
-	float wt=1.0,angle,sump,distr,dtss,elv,elvn,distk;
-	double p,tempdxc,tempdyc;
+        //Only used for timing
+        int rank, size;
+        MPI_Comm_rank(MCW, &rank);
+        MPI_Comm_size(MCW, &size);
+        if (rank == 0)printf("DinfDistUp -v version %s\n", TDVERSION);
 
-	//  Keep track of time
-	double begint = MPI_Wtime();
+        float wt = 1.0, angle, sump, distr, dtss, elv, elvn, distk;
+        double p, tempdxc, tempdyc;
 
-	//Create tiff object, read and store header info
-	tiffIO ang(angfile, FLOAT_TYPE);
-	long totalX = ang.getTotalX();
-	long totalY = ang.getTotalY();
-	double dxA = ang.getdxA();
-	double dyA = ang.getdyA();
-	if(rank==0)
-		{
-			float timeestimate=(1.2e-6*totalX*totalY/pow((double) size,0.65))/60+1;  // Time estimate in minutes
-			fprintf(stderr,"This run may take on the order of %.0f minutes to complete.\n",timeestimate);
-			fprintf(stderr,"This estimate is very approximate. \nRun time is highly uncertain as it depends on the complexity of the input data \nand speed and memory of the computer. This estimate is based on our testing on \na dual quad core Dell Xeon E5405 2.0GHz PC with 16GB RAM.\n");
-			fflush(stderr);
-		}
+        //  Keep track of time
+        double begint = MPI_Wtime();
 
-	//Create partition and read data
-	tdpartition *flowData;
-	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dxA, dyA, ang.getNodata());
-	int nx = flowData->getnx();
-	int ny = flowData->getny();
-	int xstart, ystart;
-	flowData->localToGlobal(0, 0, xstart, ystart);
-	flowData->savedxdyc(ang);
-	ang.read(xstart, ystart, ny, nx, flowData->getGridPointer());
+        //Create tiff object, read and store header info
+        tiffIO ang(angfile, FLOAT_TYPE);
+        long totalX = ang.getTotalX();
+        long totalY = ang.getTotalY();
+        double dxA = ang.getdxA();
+        double dyA = ang.getdyA();
+        if (rank == 0) {
+            float timeestimate = (1.2e-6 * totalX * totalY / pow((double) size, 0.65)) / 60 + 1; // Time estimate in minutes
+            fprintf(stderr, "This run may take on the order of %.0f minutes to complete.\n", timeestimate);
+            fprintf(stderr, "This estimate is very approximate. \nRun time is highly uncertain as it depends on the complexity of the input data \nand speed and memory of the computer. This estimate is based on our testing on \na dual quad core Dell Xeon E5405 2.0GHz PC with 16GB RAM.\n");
+            fflush(stderr);
+        }
 
-	//  Elevation data
-	tdpartition *felData;
-	tiffIO fel(felfile, FLOAT_TYPE);
-	if(!ang.compareTiff(fel)) {
-		printf("File sizes do not match\n%s\n",felfile);
-		MPI_Abort(MCW,5);
-	return 1; 
-	}
-	felData = CreateNewPartition(fel.getDatatype(), totalX, totalY, dxA, dyA, fel.getNodata());
-	fel.read(xstart, ystart, felData->getny(), felData->getnx(), felData->getGridPointer());
+        //Create partition and read data
+        tdpartition *flowData;
+        flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dxA, dyA, ang.getNodata());
+        int nx = flowData->getnx();
+        int ny = flowData->getny();
+        int xstart, ystart;
+        flowData->localToGlobal(0, 0, xstart, ystart);
+        flowData->savedxdyc(ang);
+        ang.read(xstart, ystart, ny, nx, flowData->getGridPointer());
 
-	//Begin timer
-	double readt = MPI_Wtime();
+        //  Elevation data
+        tdpartition *felData;
+        tiffIO fel(felfile, FLOAT_TYPE);
+        if (!ang.compareTiff(fel)) {
+            printf("File sizes do not match\n%s\n", felfile);
+            MPI_Abort(MCW, 5);
+            return 1;
+        }
+        felData = CreateNewPartition(fel.getDatatype(), totalX, totalY, dxA, dyA, fel.getNodata());
+        fel.read(xstart, ystart, felData->getny(), felData->getnx(), felData->getGridPointer());
 
-	//Create empty partition to store new information
-	tdpartition *dts;
-	dts = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
+        //Begin timer
+        double readt = MPI_Wtime();
 
-	// con is used to check for contamination at the edges
-	long i,j;
-	short k;
-	long in,jn;
-	bool con=false, finished;
-	float tempFloat=0;
-	short tempShort=0;
+        //Create empty partition to store new information
+        tdpartition *dts;
+        dts = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
 
-	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, MISSINGSHORT);
-	
-	//Share information and set borders to zero
-	flowData->share();
-	felData->share();
-	dts->share();  // to fill borders with no data
-	neighbor->clearBorders();
+        // con is used to check for contamination at the edges
+        long i, j;
+        short k;
+        long in, jn;
+        bool con = false, finished;
+        float tempFloat = 0;
+        short tempShort = 0;
 
-	node temp;
-	queue<node> que;
-	
-	//Count the flow receiving neighbors and put on queue
-	int useOutlets=0;
-	long numOutlets=0;
-	int *outletsX=0, *outletsY=0;
-	initNeighborDinfup(neighbor,flowData,&que,nx, ny, useOutlets, outletsX, outletsY, numOutlets);
+        tdpartition *neighbor;
+        neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, MISSINGSHORT);
 
-	finished = false;
-	//Ring terminating while loop
-	while(!finished) {
-		while(!que.empty()) 
-		{
-			//Takes next node with no contributing neighbors
-			temp = que.front();
-			que.pop();
-			i = temp.x;
-			j = temp.y;
-			//  EVALUATE UP FLOW ALGEBRA EXPRESSION
-			distr=0.0;  //  initialized at 0
-			sump=0.;
-			bool first=true;
-			felData->getData(i,j,elv);
-			con=false;  // Start off not edge contaminated
-			for(k=1; k<=8; k++) {
-				in = i+d1[k];
-				jn = j+d2[k];
-				if(!flowData->hasAccess(in,jn) || flowData->isNodata(in,jn))
-					con=true;
-				else{
-					flowData->getData(in,jn, angle);
-					flowData->getdxdyc(jn,tempdxc,tempdyc);
-					p = prop(angle, (k+4)%8,tempdxc,tempdyc);
-					if(p>0. && p > thresh)
-					{
-						if(dts->isNodata(in,jn))con=true;
-						else if(felData->isNodata(in,jn))con=true;
-						else
-						{
-							sump=sump+p;
-							dts->getData(in,jn,dtss);
-							felData->getData(in,jn,elvn);
-							distk=elvn-elv;
-							float wt=1.;
-							//if(usew==1){
-							//	if(weightData->isNodata(in,jn))
-							//		con=true;
-							//	else
-							//		weightData->getData(in,jn,wt);
-							//}	
-							if(statmethod==0){//average
-								distr=distr+p*(distk*wt+dtss);
-							}
-							else if(statmethod==1){// maximum
-								if(first){  //  do not assume that maximum elevation diff is positive in case of wierd (or not pit filled) elevations
-									distr=distk*wt+dtss;
-									first=false;
-								}else
-								{
-									if(distk*wt+dtss>distr)distr=distk*wt+dtss;
-								}
-							}
-							else{ // Minimum
-								if(first){  
-									distr=distk*wt+dtss;
-									first=false;
-								}else
-								{
-									if(distk*wt+dtss<distr)distr=distk*wt+dtss;
-								}
-							}
-						}
-					}
-				}
-			}
-			if((con && concheck==1))dts->setToNodata(i,j); // set to no data if contamination and checking
-			else
-			{
-				if(statmethod==0 && sump>0.)dts->setData(i,j,(float)(distr/sump));
-				else dts->setData(i,j,distr);
-			}
-			//  END UP FLOW ALGEBRA EVALUATION
-			//  Decrement neighbor dependence of downslope cell
-			flowData->getData(i, j, angle);
-			flowData->getdxdyc(j,tempdxc,tempdyc);
-			for(k=1; k<=8; k++) {			
-				p = prop(angle, k,tempdxc,tempdyc);
-				if(p>0.0) {
-					in = i+d1[k];  jn = j+d2[k];
-					//Decrement the number of contributing neighbors in neighbor
-					neighbor->addToData(in,jn,(short)-1);				
-					//Check if neighbor needs to be added to que
-					if(flowData->isInPartition(in,jn) && neighbor->getData(in, jn, tempShort) == 0 ){
-						temp.x=in;
-						temp.y=jn;
-						que.push(temp);
-					}
-				}
-			}
-		}
-	
-		//Pass information
-		dts->share();
-		neighbor->addBorders();
+        //Share information and set borders to zero
+        flowData->share();
+        felData->share();
+        dts->share(); // to fill borders with no data
+        neighbor->clearBorders();
 
-		//If this created a cell with no contributing neighbors, put it on the queue
-		for(i=0; i<nx; i++){
-			if(neighbor->getData(i, -1, tempShort)!=0 && neighbor->getData(i, 0, tempShort)==0)
-			{
-				temp.x = i;
-				temp.y = 0;
-				que.push(temp);
-			}
-			if(neighbor->getData(i, ny, tempShort)!=0 && neighbor->getData(i, ny-1, tempShort)==0)
-			{
-				temp.x = i;
-				temp.y = ny-1;
-				que.push(temp); 
-			}
-		}
+        node temp;
+        queue<node> que;
 
-		neighbor->clearBorders();
-	
-		//Check if done
-		finished = que.empty();
-		finished = dts->ringTerm(finished);
-	}
+        //Count the flow receiving neighbors and put on queue
+        int useOutlets = 0;
+        long numOutlets = 0;
+        int *outletsX = 0, *outletsY = 0;
+        initNeighborDinfup(neighbor, flowData, &que, nx, ny, useOutlets, outletsX, outletsY, numOutlets);
 
-	//Stop timer
-	double computet = MPI_Wtime();
+        finished = false;
+        //Ring terminating while loop
+        while (!finished) {
+            while (!que.empty()) {
+                //Takes next node with no contributing neighbors
+                temp = que.front();
+                que.pop();
+                i = temp.x;
+                j = temp.y;
+                //  EVALUATE UP FLOW ALGEBRA EXPRESSION
+                distr = 0.0; //  initialized at 0
+                sump = 0.;
+                bool first = true;
+                felData->getData(i, j, elv);
+                con = false; // Start off not edge contaminated
+                for (k = 1; k <= 8; k++) {
+                    in = i + d1[k];
+                    jn = j + d2[k];
+                    if (!flowData->hasAccess(in, jn) || flowData->isNodata(in, jn))
+                        con = true;
+                    else {
+                        flowData->getData(in, jn, angle);
+                        flowData->getdxdyc(jn, tempdxc, tempdyc);
+                        p = prop(angle, (k + 4) % 8, tempdxc, tempdyc);
+                        if (p > 0. && p > thresh) {
+                            if (dts->isNodata(in, jn))con = true;
+                            else if (felData->isNodata(in, jn))con = true;
+                            else {
+                                sump = sump + p;
+                                dts->getData(in, jn, dtss);
+                                felData->getData(in, jn, elvn);
+                                distk = elvn - elv;
+                                float wt = 1.;
+                                //if(usew==1){
+                                //	if(weightData->isNodata(in,jn))
+                                //		con=true;
+                                //	else
+                                //		weightData->getData(in,jn,wt);
+                                //}	
+                                if (statmethod == 0) {//average
+                                    distr = distr + p * (distk * wt + dtss);
+                                } else if (statmethod == 1) {// maximum
+                                    if (first) { //  do not assume that maximum elevation diff is positive in case of wierd (or not pit filled) elevations
+                                        distr = distk * wt + dtss;
+                                        first = false;
+                                    } else {
+                                        if (distk * wt + dtss > distr)distr = distk * wt + dtss;
+                                    }
+                                } else { // Minimum
+                                    if (first) {
+                                        distr = distk * wt + dtss;
+                                        first = false;
+                                    } else {
+                                        if (distk * wt + dtss < distr)distr = distk * wt + dtss;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if ((con && concheck == 1))dts->setToNodata(i, j); // set to no data if contamination and checking
+                else {
+                    if (statmethod == 0 && sump > 0.)dts->setData(i, j, (float) (distr / sump));
+                    else dts->setData(i, j, distr);
+                }
+                //  END UP FLOW ALGEBRA EVALUATION
+                //  Decrement neighbor dependence of downslope cell
+                flowData->getData(i, j, angle);
+                flowData->getdxdyc(j, tempdxc, tempdyc);
+                for (k = 1; k <= 8; k++) {
+                    p = prop(angle, k, tempdxc, tempdyc);
+                    if (p > 0.0) {
+                        in = i + d1[k];
+                        jn = j + d2[k];
+                        //Decrement the number of contributing neighbors in neighbor
+                        neighbor->addToData(in, jn, (short) - 1);
+                        //Check if neighbor needs to be added to que
+                        if (flowData->isInPartition(in, jn) && neighbor->getData(in, jn, tempShort) == 0) {
+                            temp.x = in;
+                            temp.y = jn;
+                            que.push(temp);
+                        }
+                    }
+                }
+            }
 
-	//Create and write TIFF file
-	float ddNodata = MISSINGFLOAT;
-	tiffIO dd(rtrfile, FLOAT_TYPE, &ddNodata, ang);
-	dd.write(xstart, ystart, ny, nx, dts->getGridPointer());
+            //Pass information
+            dts->share();
+            neighbor->addBorders();
 
-	double writet = MPI_Wtime();
-        double dataRead, compute, write, total,tempd;
-        dataRead = readt-begint;
-        compute = computet-readt;
-        write = writet-computet;
+            //If this created a cell with no contributing neighbors, put it on the queue            
+            bool isTopLeftAdded = false;
+            bool isTopRightAdded = false;
+            bool isBottomLeftAdded = false;
+            bool isBottomRightAdded = false;
+
+            for (i = 0; i < nx; i++) {
+                if (neighbor->getData(i, -1, tempShort) != 0 && neighbor->getData(i, 0, tempShort) == 0) {
+                    temp.x = i;
+                    temp.y = 0;
+                    if (i == 0 && !isTopLeftAdded) {
+                        que.push(temp);
+                        isTopLeftAdded = true;
+                    } else if (i == nx - 1 && !isTopRightAdded) {
+                        que.push(temp);
+                        isTopRightAdded = true;
+                    } else if (i != 0 && i != nx - 1) {
+                        que.push(temp);
+                    }
+
+                }
+                if (neighbor->getData(i, ny, tempShort) != 0 && neighbor->getData(i, ny - 1, tempShort) == 0) {
+                    temp.x = i;
+                    temp.y = ny - 1;
+                    if (i == 0 && !isBottomLeftAdded) {
+                        que.push(temp);
+                        isBottomLeftAdded = true;
+                    } else if (i == nx - 1 && !isBottomRightAdded) {
+                        que.push(temp);
+                        isBottomRightAdded = true;
+                    } else if (i != 0 && i != nx - 1) {
+                        que.push(temp);
+                    }
+                }
+            }
+
+            for (i = 0; i < ny; i++) {
+                if (neighbor->getData(-1, i, tempShort) != 0 && neighbor->getData(0, i, tempShort) == 0) {
+                    temp.x = 0;
+                    temp.y = i;
+                    if (i == 0 && !isTopLeftAdded) {
+                        que.push(temp);
+                        isTopLeftAdded = true;
+                    } else if (i == ny - 1 && !isBottomLeftAdded) {
+                        que.push(temp);
+                        isBottomLeftAdded = true;
+                    } else if (i != 0 && i != ny - 1) {
+                        que.push(temp);
+                    }
+                }
+                if (neighbor->getData(nx, i, tempShort) != 0 && neighbor->getData(nx - 1, i, tempShort) == 0) {
+                    temp.x = nx - 1;
+                    temp.y = i;
+                    if (i == 0 && !isTopRightAdded) {
+                        que.push(temp);
+                        isTopRightAdded = true;
+                    } else if (i == ny - 1 && !isBottomRightAdded) {
+                        que.push(temp);
+                        isBottomRightAdded = true;
+                    } else if (i != 0 && i != ny - 1) {
+                        que.push(temp);
+                    }
+                }
+            }
+
+            if (neighbor->getData(-1, -1, tempShort) != 0 && neighbor->getData(0, 0, tempShort) == 0 && !isTopLeftAdded) {
+                temp.x = 0;
+                temp.y = 0;
+                que.push(temp);
+                isTopLeftAdded = true;
+            }
+
+            if (neighbor->getData(nx, -1, tempShort) != 0 && neighbor->getData(nx - 1, 0, tempShort) == 0 && !isTopRightAdded) {
+                temp.x = nx - 1;
+                temp.y = 0;
+                que.push(temp);
+                isTopRightAdded = true;
+            }
+
+            if (neighbor->getData(-1, ny, tempShort) != 0 && neighbor->getData(0, ny - 1, tempShort) == 0 && !isBottomLeftAdded) {
+                temp.x = 0;
+                temp.y = ny - 1;
+                que.push(temp);
+                isBottomLeftAdded = true;
+            }
+
+            if (neighbor->getData(nx, ny, tempShort) != 0 && neighbor->getData(nx - 1, ny - 1, tempShort) == 0 && !isBottomRightAdded) {
+                temp.x = nx - 1;
+                temp.y = ny - 1;
+                que.push(temp);
+                isBottomRightAdded = true;
+            }
+
+            neighbor->clearBorders();
+
+            //Check if done
+            finished = que.empty();
+            finished = dts->ringTerm(finished);
+        }
+
+        //Stop timer
+        double computet = MPI_Wtime();
+
+        //Create and write TIFF file
+        float ddNodata = MISSINGFLOAT;
+        tiffIO dd(rtrfile, FLOAT_TYPE, &ddNodata, ang);
+        dd.write(xstart, ystart, ny, nx, dts->getGridPointer());
+
+        double writet = MPI_Wtime();
+        double dataRead, compute, write, total, tempd;
+        dataRead = readt - begint;
+        compute = computet - readt;
+        write = writet - computet;
         total = writet - begint;
 
-        MPI_Allreduce (&dataRead, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        dataRead = tempd/size;
-        MPI_Allreduce (&compute, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        compute = tempd/size;
-        MPI_Allreduce (&write, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        write = tempd/size;
-        MPI_Allreduce (&total, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        total = tempd/size;
+        MPI_Allreduce(&dataRead, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
+        dataRead = tempd / size;
+        MPI_Allreduce(&compute, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
+        compute = tempd / size;
+        MPI_Allreduce(&write, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
+        write = tempd / size;
+        MPI_Allreduce(&total, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
+        total = tempd / size;
 
-        if( rank == 0)
-                printf("Processors: %d\nRead time: %f\nCompute time: %f\nWrite time: %f\nTotal time: %f\n",
-                  size, dataRead, compute, write,total);
+        if (rank == 0)
+            printf("Processors: %d\nRead time: %f\nCompute time: %f\nWrite time: %f\nTotal time: %f\n",
+                size, dataRead, compute, write, total);
 
-	//Brackets force MPI-dependent objects to go out of scope before Finalize is called
-	}MPI_Finalize();
+        //Brackets force MPI-dependent objects to go out of scope before Finalize is called
+    }
+    MPI_Finalize();
 
-	return 0;
+    return 0;
 }
 
 //*********************************//
 //Pythagoras distance to the ridge //
 //********************************//
-int pdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile, 
-					int statmethod, int usew, int concheck, float thresh)
-{
-	MPI_Init(NULL,NULL);{
 
-	//Only used for timing
-	int rank,size;
-	MPI_Comm_rank(MCW,&rank);
-	MPI_Comm_size(MCW,&size);
-	if(rank==0)printf("DinfDistUp -p version %s\n",TDVERSION);
+int pdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
+        int statmethod, int usew, int concheck, float thresh) {
+    MPI_Init(NULL, NULL);
+    {
 
-	float wt=1.0,angle,sump,distrh,distrv,dtssh,dtssv,elvn,elv,distk;
-	double p,tempdxc,tempdyc;
+        //Only used for timing
+        int rank, size;
+        MPI_Comm_rank(MCW, &rank);
+        MPI_Comm_size(MCW, &size);
+        if (rank == 0)printf("DinfDistUp -p version %s\n", TDVERSION);
 
-	//  Keep track of time
-	double begint = MPI_Wtime();
+        float wt = 1.0, angle, sump, distrh, distrv, dtssh, dtssv, elvn, elv, distk;
+        double p, tempdxc, tempdyc;
 
-	//Create tiff object, read and store header info
-	tiffIO ang(angfile, FLOAT_TYPE);
-	long totalX = ang.getTotalX();
-	long totalY = ang.getTotalY();
-	double dxA = ang.getdxA();
-	double dyA = ang.getdyA();
-	if(rank==0)
-		{
-			float timeestimate=(1.2e-6*totalX*totalY/pow((double) size,0.65))/60+1;  // Time estimate in minutes
-			fprintf(stderr,"This run may take on the order of %.0f minutes to complete.\n",timeestimate);
-			fprintf(stderr,"This estimate is very approximate. \nRun time is highly uncertain as it depends on the complexity of the input data \nand speed and memory of the computer. This estimate is based on our testing on \na dual quad core Dell Xeon E5405 2.0GHz PC with 16GB RAM.\n");
-			fflush(stderr);
-		}
+        //  Keep track of time
+        double begint = MPI_Wtime();
 
-	//  Calculate horizontal distances in each direction
-	//int kk;
-	//for(kk=1; kk<=8; kk++)
-	//{
-		//dist[kk]=sqrt(dx*dx*d2[kk]*d2[kk]+dy*dy*d1[kk]*d1[kk]);
-	//}
+        //Create tiff object, read and store header info
+        tiffIO ang(angfile, FLOAT_TYPE);
+        long totalX = ang.getTotalX();
+        long totalY = ang.getTotalY();
+        double dxA = ang.getdxA();
+        double dyA = ang.getdyA();
+        if (rank == 0) {
+            float timeestimate = (1.2e-6 * totalX * totalY / pow((double) size, 0.65)) / 60 + 1; // Time estimate in minutes
+            fprintf(stderr, "This run may take on the order of %.0f minutes to complete.\n", timeestimate);
+            fprintf(stderr, "This estimate is very approximate. \nRun time is highly uncertain as it depends on the complexity of the input data \nand speed and memory of the computer. This estimate is based on our testing on \na dual quad core Dell Xeon E5405 2.0GHz PC with 16GB RAM.\n");
+            fflush(stderr);
+        }
 
-	//Create partition and read data
-	tdpartition *flowData;
-	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dxA, dyA, ang.getNodata());
-	int nx = flowData->getnx();
-	int ny = flowData->getny();
-	int xstart, ystart;
-	flowData->localToGlobal(0, 0, xstart, ystart);
-	flowData->savedxdyc(ang);
-	ang.read(xstart, ystart, ny, nx, flowData->getGridPointer());
+        //  Calculate horizontal distances in each direction
+        //int kk;
+        //for(kk=1; kk<=8; kk++)
+        //{
+        //dist[kk]=sqrt(dx*dx*d2[kk]*d2[kk]+dy*dy*d1[kk]*d1[kk]);
+        //}
 
-	 dist = new float*[ny];
-    for(int m = 0; m <ny; m++)
-    dist[m] = new float[9];
-	for (int m=0; m<ny;m++){
-		flowData->getdxdyc(m,tempdxc,tempdyc);
-		for(int kk=1; kk<=8; kk++)
-	{
-		dist[m][kk]=sqrt(tempdxc*tempdxc*d1[kk]*d1[kk]+tempdyc*tempdyc*d2[kk]*d2[kk]);
-	}
+        //Create partition and read data
+        tdpartition *flowData;
+        flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dxA, dyA, ang.getNodata());
+        int nx = flowData->getnx();
+        int ny = flowData->getny();
+        int xstart, ystart;
+        flowData->localToGlobal(0, 0, xstart, ystart);
+        flowData->savedxdyc(ang);
+        ang.read(xstart, ystart, ny, nx, flowData->getGridPointer());
 
-	}
+        dist = new float*[ny];
+        for (int m = 0; m < ny; m++)
+            dist[m] = new float[9];
+        for (int m = 0; m < ny; m++) {
+            flowData->getdxdyc(m, tempdxc, tempdyc);
+            for (int kk = 1; kk <= 8; kk++) {
+                dist[m][kk] = sqrt(tempdxc * tempdxc * d1[kk] * d1[kk] + tempdyc * tempdyc * d2[kk] * d2[kk]);
+            }
 
-	//  Elevation data
-	tdpartition *felData;
-	tiffIO fel(felfile, FLOAT_TYPE);
-	if(!ang.compareTiff(fel)) {
-		printf("File sizes do not match\n%s\n",felfile);
-		MPI_Abort(MCW,5);
-	return 1; 
-	}
-	felData = CreateNewPartition(fel.getDatatype(), totalX, totalY, dxA, dyA, fel.getNodata());
-	fel.read(xstart, ystart, felData->getny(), felData->getnx(), felData->getGridPointer());
+        }
 
-	//if using weightData, get information from file
-	tdpartition *weightData;
-	if( usew == 1){
-		tiffIO w(wfile, FLOAT_TYPE);
-		if(!ang.compareTiff(w)) {
-			printf("File sizes do not match\n%s\n",wfile);
-			MPI_Abort(MCW,5);
-		return 1; 
-		}
-		weightData = CreateNewPartition(w.getDatatype(), totalX, totalY, dxA, dyA, w.getNodata());
-		w.read(xstart, ystart, weightData->getny(), weightData->getnx(), weightData->getGridPointer());
-	}
+        //  Elevation data
+        tdpartition *felData;
+        tiffIO fel(felfile, FLOAT_TYPE);
+        if (!ang.compareTiff(fel)) {
+            printf("File sizes do not match\n%s\n", felfile);
+            MPI_Abort(MCW, 5);
+            return 1;
+        }
+        felData = CreateNewPartition(fel.getDatatype(), totalX, totalY, dxA, dyA, fel.getNodata());
+        fel.read(xstart, ystart, felData->getny(), felData->getnx(), felData->getGridPointer());
 
-	//Begin timer
-	double readt = MPI_Wtime();
+        //if using weightData, get information from file
+        tdpartition *weightData;
+        if (usew == 1) {
+            tiffIO w(wfile, FLOAT_TYPE);
+            if (!ang.compareTiff(w)) {
+                printf("File sizes do not match\n%s\n", wfile);
+                MPI_Abort(MCW, 5);
+                return 1;
+            }
+            weightData = CreateNewPartition(w.getDatatype(), totalX, totalY, dxA, dyA, w.getNodata());
+            w.read(xstart, ystart, weightData->getny(), weightData->getnx(), weightData->getGridPointer());
+        }
 
-	//Create empty partitions to store new information
-	tdpartition *dtsh;  // horizontal distance
-	dtsh = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
+        //Begin timer
+        double readt = MPI_Wtime();
 
-	tdpartition *dtsv;  // vertical distance
-	dtsv = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
+        //Create empty partitions to store new information
+        tdpartition *dtsh; // horizontal distance
+        dtsh = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
 
-	// con is used to check for contamination at the edges
-	long i,j;
-	short k;
-	long in,jn;
-	bool con=false, finished;
-	float tempFloat=0;
-	short tempShort=0;
+        tdpartition *dtsv; // vertical distance
+        dtsv = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
 
-	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, MISSINGSHORT);
-	
-	//Share information and set borders to zero
-	flowData->share();
-	felData->share();
-	if(usew==1) weightData->share();
-	dtsh->share();  // to fill borders with no data
-	dtsv->share(); 
-	neighbor->clearBorders();
+        // con is used to check for contamination at the edges
+        long i, j;
+        short k;
+        long in, jn;
+        bool con = false, finished;
+        float tempFloat = 0;
+        short tempShort = 0;
 
-	node temp;
-	queue<node> que;
-	
-	//Count the flow receiving neighbors and put on queue
-	int useOutlets=0;
-	long numOutlets=0;
-	int *outletsX=0, *outletsY=0;
-	initNeighborDinfup(neighbor,flowData,&que,nx, ny, useOutlets, outletsX, outletsY, numOutlets);
+        tdpartition *neighbor;
+        neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, MISSINGSHORT);
 
-	finished = false;
-	//Ring terminating while loop
-	while(!finished) {
-		while(!que.empty()) 
-		{
-			//Takes next node with no contributing neighbors
-			temp = que.front();
-			que.pop();
-			i = temp.x;
-			j = temp.y;
-			//  EVALUATE UP FLOW ALGEBRA EXPRESSION
-			if (felData->isNodata(i,j)){
-				dtsv->setToNodata(i,j);  //  If elevation is not known result has to be no data
-				dtsh->setToNodata(i,j);
-			}
-			else
-			{
-				distrh=0.0;  // distance result
-				distrv=0.0;
-				sump=0.;
-				bool first=true;
-				felData->getData(i,j,elv);
-				con=false;  // Start off not edge contaminated
-				for(k=1; k<=8; k++) {
-					in = i+d1[k];
-					jn = j+d2[k];
-					if(!flowData->hasAccess(in,jn) || flowData->isNodata(in,jn))
-						con=true;
-					else{
-						flowData->getData(in,jn, angle);
-						flowData->getdxdyc(jn,tempdxc,tempdyc);
-						p = prop(angle, (k+4)%8,tempdxc,tempdyc);
-						if(p>0. && p > thresh)
-						{
-							if(dtsh->isNodata(in,jn))con=true;
-							else if(felData->isNodata(in,jn))con=true;
-							else
-							{
-								sump=sump+p;
-								dtsh->getData(in,jn,dtssh);
-								dtsv->getData(in,jn,dtssv);
-								felData->getData(in,jn,elvn);
-								distk=elvn-elv;
-								float wt=1.;
-								if(usew==1){
-									if(weightData->isNodata(in,jn))
-										con=true;
-									else
-										weightData->getData(in,jn,wt);
-								}	
-								if(statmethod==0){//average
-									distrh=distrh+p*(dist[j][k]*wt+dtssh);
-									distrv=distrv+p*(distk+dtssv);
-								}
-								else if(statmethod==1){// maximum
-									if(first){  //  do not assume that maximum elevation diff is positive in case of wierd (or not pit filled) elevations
-										distrh=dist[j][k]*wt+dtssh;
-										distrv=distk+dtssv;
-										first=false;
-									}else
-									{
-										if(dist[j][k]*wt+dtssh>distrh)distrh=dist[j][k]*wt+dtssh;
-										if(distk+dtssv>distrv)distrv=distk+dtssv;
-									}
-								}
-								else{ // Minimum
-									if(first){  
-										distrh=dist[j][k]*wt+dtssh;
-										distrv=distk+dtssv;
-										first=false;
-									}else
-									{
-										if(dist[j][k]*wt+dtssh<distrh)distrh=dist[j][k]*wt+dtssh;
-										if(distk+dtssv<distrv)distrv=distk+dtssv;
-									}
-								}
-							}
-						}
-					}
-				}
-				if((con && concheck==1))// set to no data if contamination and checking
-				{
-					dtsh->setToNodata(i,j); 
-					dtsv->setToNodata(i,j); 
-				}
-				else
-				{
-					if(statmethod==0 && sump>0.)
-					{
-						dtsh->setData(i,j,(float)(distrh/sump));
-						dtsv->setData(i,j,(float)(distrv/sump));
-					}
-					else {
-						dtsh->setData(i,j,distrh);
-						dtsv->setData(i,j,distrv);
-					}
-				}
-			}
-			//  END UP FLOW ALGEBRA EVALUATION
-			//  Decrement neighbor dependence of downslope cell
-			flowData->getData(i, j, angle);
-			flowData->getdxdyc(j,tempdxc,tempdyc);
-			for(k=1; k<=8; k++) {			
-				p = prop(angle, k,tempdxc,tempdyc);
-				if(p>0.0) {
-					in = i+d1[k];  jn = j+d2[k];
-					//Decrement the number of contributing neighbors in neighbor
-					neighbor->addToData(in,jn,(short)-1);				
-					//Check if neighbor needs to be added to que
-					if(flowData->isInPartition(in,jn) && neighbor->getData(in, jn, tempShort) == 0 ){
-						temp.x=in;
-						temp.y=jn;
-						que.push(temp);
-					}
-				}
-			}
-		}
-	
-		//Pass information
-		dtsh->share();
-		dtsv->share();
-		neighbor->addBorders();
+        //Share information and set borders to zero
+        flowData->share();
+        felData->share();
+        if (usew == 1) weightData->share();
+        dtsh->share(); // to fill borders with no data
+        dtsv->share();
+        neighbor->clearBorders();
 
-		//If this created a cell with no contributing neighbors, put it on the queue
-		for(i=0; i<nx; i++){
-			if(neighbor->getData(i, -1, tempShort)!=0 && neighbor->getData(i, 0, tempShort)==0)
-			{
-				temp.x = i;
-				temp.y = 0;
-				que.push(temp);
-			}
-			if(neighbor->getData(i, ny, tempShort)!=0 && neighbor->getData(i, ny-1, tempShort)==0)
-			{
-				temp.x = i;
-				temp.y = ny-1;
-				que.push(temp); 
-			}
-		}
+        node temp;
+        queue<node> que;
 
-		neighbor->clearBorders();
-	
-		//Check if done
-		finished = que.empty();
-		finished = dtsh->ringTerm(finished);
-	}
+        //Count the flow receiving neighbors and put on queue
+        int useOutlets = 0;
+        long numOutlets = 0;
+        int *outletsX = 0, *outletsY = 0;
+        initNeighborDinfup(neighbor, flowData, &que, nx, ny, useOutlets, outletsX, outletsY, numOutlets);
 
-	//  Now compute the pythagorus difference
-	for(j=0; j<ny; j++) {
-		for(i=0; i<nx; i++) {
-			if(dtsv->isNodata(i,j))dtsh->setToNodata(i,j);
-			else if(!dtsh->isNodata(i,j))
-			{
-				dtsh->getData(i,j,dtssh);
-				dtsv->getData(i,j,dtssv);
-				dtssh=sqrt(dtssh*dtssh+dtssv*dtssv);
-				dtsh->setData(i,j,dtssh);
-			}
-		}
-	}
+        finished = false;
+        //Ring terminating while loop
+        while (!finished) {
+            while (!que.empty()) {
+                //Takes next node with no contributing neighbors
+                temp = que.front();
+                que.pop();
+                i = temp.x;
+                j = temp.y;
+                //  EVALUATE UP FLOW ALGEBRA EXPRESSION
+                if (felData->isNodata(i, j)) {
+                    dtsv->setToNodata(i, j); //  If elevation is not known result has to be no data
+                    dtsh->setToNodata(i, j);
+                } else {
+                    distrh = 0.0; // distance result
+                    distrv = 0.0;
+                    sump = 0.;
+                    bool first = true;
+                    felData->getData(i, j, elv);
+                    con = false; // Start off not edge contaminated
+                    for (k = 1; k <= 8; k++) {
+                        in = i + d1[k];
+                        jn = j + d2[k];
+                        if (!flowData->hasAccess(in, jn) || flowData->isNodata(in, jn))
+                            con = true;
+                        else {
+                            flowData->getData(in, jn, angle);
+                            flowData->getdxdyc(jn, tempdxc, tempdyc);
+                            p = prop(angle, (k + 4) % 8, tempdxc, tempdyc);
+                            if (p > 0. && p > thresh) {
+                                if (dtsh->isNodata(in, jn))con = true;
+                                else if (felData->isNodata(in, jn))con = true;
+                                else {
+                                    sump = sump + p;
+                                    dtsh->getData(in, jn, dtssh);
+                                    dtsv->getData(in, jn, dtssv);
+                                    felData->getData(in, jn, elvn);
+                                    distk = elvn - elv;
+                                    float wt = 1.;
+                                    if (usew == 1) {
+                                        if (weightData->isNodata(in, jn))
+                                            con = true;
+                                        else
+                                            weightData->getData(in, jn, wt);
+                                    }
+                                    if (statmethod == 0) {//average
+                                        distrh = distrh + p * (dist[j][k] * wt + dtssh);
+                                        distrv = distrv + p * (distk + dtssv);
+                                    } else if (statmethod == 1) {// maximum
+                                        if (first) { //  do not assume that maximum elevation diff is positive in case of wierd (or not pit filled) elevations
+                                            distrh = dist[j][k] * wt + dtssh;
+                                            distrv = distk + dtssv;
+                                            first = false;
+                                        } else {
+                                            if (dist[j][k] * wt + dtssh > distrh)distrh = dist[j][k] * wt + dtssh;
+                                            if (distk + dtssv > distrv)distrv = distk + dtssv;
+                                        }
+                                    } else { // Minimum
+                                        if (first) {
+                                            distrh = dist[j][k] * wt + dtssh;
+                                            distrv = distk + dtssv;
+                                            first = false;
+                                        } else {
+                                            if (dist[j][k] * wt + dtssh < distrh)distrh = dist[j][k] * wt + dtssh;
+                                            if (distk + dtssv < distrv)distrv = distk + dtssv;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if ((con && concheck == 1))// set to no data if contamination and checking
+                    {
+                        dtsh->setToNodata(i, j);
+                        dtsv->setToNodata(i, j);
+                    } else {
+                        if (statmethod == 0 && sump > 0.) {
+                            dtsh->setData(i, j, (float) (distrh / sump));
+                            dtsv->setData(i, j, (float) (distrv / sump));
+                        } else {
+                            dtsh->setData(i, j, distrh);
+                            dtsv->setData(i, j, distrv);
+                        }
+                    }
+                }
+                //  END UP FLOW ALGEBRA EVALUATION
+                //  Decrement neighbor dependence of downslope cell
+                flowData->getData(i, j, angle);
+                flowData->getdxdyc(j, tempdxc, tempdyc);
+                for (k = 1; k <= 8; k++) {
+                    p = prop(angle, k, tempdxc, tempdyc);
+                    if (p > 0.0) {
+                        in = i + d1[k];
+                        jn = j + d2[k];
+                        //Decrement the number of contributing neighbors in neighbor
+                        neighbor->addToData(in, jn, (short) - 1);
+                        //Check if neighbor needs to be added to que
+                        if (flowData->isInPartition(in, jn) && neighbor->getData(in, jn, tempShort) == 0) {
+                            temp.x = in;
+                            temp.y = jn;
+                            que.push(temp);
+                        }
+                    }
+                }
+            }
+
+            //Pass information
+            dtsh->share();
+            dtsv->share();
+            neighbor->addBorders();
+
+            //If this created a cell with no contributing neighbors, put it on the queue
+            bool isTopLeftAdded = false;
+            bool isTopRightAdded = false;
+            bool isBottomLeftAdded = false;
+            bool isBottomRightAdded = false;
+
+            for (i = 0; i < nx; i++) {
+                if (neighbor->getData(i, -1, tempShort) != 0 && neighbor->getData(i, 0, tempShort) == 0) {
+                    temp.x = i;
+                    temp.y = 0;
+                    if (i == 0 && !isTopLeftAdded) {
+                        que.push(temp);
+                        isTopLeftAdded = true;
+                    } else if (i == nx - 1 && !isTopRightAdded) {
+                        que.push(temp);
+                        isTopRightAdded = true;
+                    } else if (i != 0 && i != nx - 1) {
+                        que.push(temp);
+                    }
+
+                }
+                if (neighbor->getData(i, ny, tempShort) != 0 && neighbor->getData(i, ny - 1, tempShort) == 0) {
+                    temp.x = i;
+                    temp.y = ny - 1;
+                    if (i == 0 && !isBottomLeftAdded) {
+                        que.push(temp);
+                        isBottomLeftAdded = true;
+                    } else if (i == nx - 1 && !isBottomRightAdded) {
+                        que.push(temp);
+                        isBottomRightAdded = true;
+                    } else if (i != 0 && i != nx - 1) {
+                        que.push(temp);
+                    }
+                }
+            }
+
+            for (i = 0; i < ny; i++) {
+                if (neighbor->getData(-1, i, tempShort) != 0 && neighbor->getData(0, i, tempShort) == 0) {
+                    temp.x = 0;
+                    temp.y = i;
+                    if (i == 0 && !isTopLeftAdded) {
+                        que.push(temp);
+                        isTopLeftAdded = true;
+                    } else if (i == ny - 1 && !isBottomLeftAdded) {
+                        que.push(temp);
+                        isBottomLeftAdded = true;
+                    } else if (i != 0 && i != ny - 1) {
+                        que.push(temp);
+                    }
+                }
+                if (neighbor->getData(nx, i, tempShort) != 0 && neighbor->getData(nx - 1, i, tempShort) == 0) {
+                    temp.x = nx - 1;
+                    temp.y = i;
+                    if (i == 0 && !isTopRightAdded) {
+                        que.push(temp);
+                        isTopRightAdded = true;
+                    } else if (i == ny - 1 && !isBottomRightAdded) {
+                        que.push(temp);
+                        isBottomRightAdded = true;
+                    } else if (i != 0 && i != ny - 1) {
+                        que.push(temp);
+                    }
+                }
+            }
+
+            if (neighbor->getData(-1, -1, tempShort) != 0 && neighbor->getData(0, 0, tempShort) == 0 && !isTopLeftAdded) {
+                temp.x = 0;
+                temp.y = 0;
+                que.push(temp);
+                isTopLeftAdded = true;
+            }
+
+            if (neighbor->getData(nx, -1, tempShort) != 0 && neighbor->getData(nx - 1, 0, tempShort) == 0 && !isTopRightAdded) {
+                temp.x = nx - 1;
+                temp.y = 0;
+                que.push(temp);
+                isTopRightAdded = true;
+            }
+
+            if (neighbor->getData(-1, ny, tempShort) != 0 && neighbor->getData(0, ny - 1, tempShort) == 0 && !isBottomLeftAdded) {
+                temp.x = 0;
+                temp.y = ny - 1;
+                que.push(temp);
+                isBottomLeftAdded = true;
+            }
+
+            if (neighbor->getData(nx, ny, tempShort) != 0 && neighbor->getData(nx - 1, ny - 1, tempShort) == 0 && !isBottomRightAdded) {
+                temp.x = nx - 1;
+                temp.y = ny - 1;
+                que.push(temp);
+                isBottomRightAdded = true;
+            }
+
+            neighbor->clearBorders();
+
+            //Check if done
+            finished = que.empty();
+            finished = dtsh->ringTerm(finished);
+        }
+
+        //  Now compute the pythagorus difference
+        for (j = 0; j < ny; j++) {
+            for (i = 0; i < nx; i++) {
+                if (dtsv->isNodata(i, j))dtsh->setToNodata(i, j);
+                else if (!dtsh->isNodata(i, j)) {
+                    dtsh->getData(i, j, dtssh);
+                    dtsv->getData(i, j, dtssv);
+                    dtssh = sqrt(dtssh * dtssh + dtssv * dtssv);
+                    dtsh->setData(i, j, dtssh);
+                }
+            }
+        }
 
 
-	//Stop timer
-	double computet = MPI_Wtime();
+        //Stop timer
+        double computet = MPI_Wtime();
 
-	//Create and write TIFF file
-	float ddNodata = MISSINGFLOAT;
-	tiffIO dd(rtrfile, FLOAT_TYPE, &ddNodata, ang);
-	dd.write(xstart, ystart, ny, nx, dtsh->getGridPointer());
+        //Create and write TIFF file
+        float ddNodata = MISSINGFLOAT;
+        tiffIO dd(rtrfile, FLOAT_TYPE, &ddNodata, ang);
+        dd.write(xstart, ystart, ny, nx, dtsh->getGridPointer());
 
-	double writet = MPI_Wtime();
-        double dataRead, compute, write, total,tempd;
-        dataRead = readt-begint;
-        compute = computet-readt;
-        write = writet-computet;
+        double writet = MPI_Wtime();
+        double dataRead, compute, write, total, tempd;
+        dataRead = readt - begint;
+        compute = computet - readt;
+        write = writet - computet;
         total = writet - begint;
 
-        MPI_Allreduce (&dataRead, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        dataRead = tempd/size;
-        MPI_Allreduce (&compute, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        compute = tempd/size;
-        MPI_Allreduce (&write, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        write = tempd/size;
-        MPI_Allreduce (&total, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        total = tempd/size;
+        MPI_Allreduce(&dataRead, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
+        dataRead = tempd / size;
+        MPI_Allreduce(&compute, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
+        compute = tempd / size;
+        MPI_Allreduce(&write, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
+        write = tempd / size;
+        MPI_Allreduce(&total, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
+        total = tempd / size;
 
-        if( rank == 0)
-                printf("Processors: %d\nRead time: %f\nCompute time: %f\nWrite time: %f\nTotal time: %f\n",
-                  size, dataRead, compute, write,total);
+        if (rank == 0)
+            printf("Processors: %d\nRead time: %f\nCompute time: %f\nWrite time: %f\nTotal time: %f\n",
+                size, dataRead, compute, write, total);
 
-	//Brackets force MPI-dependent objects to go out of scope before Finalize is called
-	}MPI_Finalize();
+        //Brackets force MPI-dependent objects to go out of scope before Finalize is called
+    }
+    MPI_Finalize();
 
-	return 0;
+    return 0;
 }
 
 
 //******************************//
 //Surface distance to the ridge //
 //*****************************//
-int sdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile, 
-					int statmethod, int usew, int concheck, float thresh)
-{
-	MPI_Init(NULL,NULL);{
 
-	//Only used for timing
-	int rank,size;
-	MPI_Comm_rank(MCW,&rank);
-	MPI_Comm_size(MCW,&size);
-	if(rank==0)printf("DinfDistUp -s version %s\n",TDVERSION);
+int sdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
+        int statmethod, int usew, int concheck, float thresh) {
+    MPI_Init(NULL, NULL);
+    {
 
-	float wt=1.0,angle,sump,distr,dtss,elvn,elv,distk;
-	double p,tempdxc,tempdyc;
+        //Only used for timing
+        int rank, size;
+        MPI_Comm_rank(MCW, &rank);
+        MPI_Comm_size(MCW, &size);
+        if (rank == 0)printf("DinfDistUp -s version %s\n", TDVERSION);
 
-	//  Keep track of time
-	double begint = MPI_Wtime();
+        float wt = 1.0, angle, sump, distr, dtss, elvn, elv, distk;
+        double p, tempdxc, tempdyc;
 
-	//Create tiff object, read and store header info
-	tiffIO ang(angfile, FLOAT_TYPE);
-	long totalX = ang.getTotalX();
-	long totalY = ang.getTotalY();
-	double dxA = ang.getdxA();
-	double dyA = ang.getdyA();
-	if(rank==0)
-		{
-			float timeestimate=(1.2e-6*totalX*totalY/pow((double) size,0.65))/60+1;  // Time estimate in minutes
-			fprintf(stderr,"This run may take on the order of %.0f minutes to complete.\n",timeestimate);
-			fprintf(stderr,"This estimate is very approximate. \nRun time is highly uncertain as it depends on the complexity of the input data \nand speed and memory of the computer. This estimate is based on our testing on \na dual quad core Dell Xeon E5405 2.0GHz PC with 16GB RAM.\n");
-			fflush(stderr);
-		}
+        //  Keep track of time
+        double begint = MPI_Wtime();
 
-	//  Calculate horizontal distances in each direction
-	//int kk;
-	//for(kk=1; kk<=8; kk++)
-	//{
-		//dist[kk]=sqrt(dx*dx*d2[kk]*d2[kk]+dy*dy*d1[kk]*d1[kk]);
-	//}
+        //Create tiff object, read and store header info
+        tiffIO ang(angfile, FLOAT_TYPE);
+        long totalX = ang.getTotalX();
+        long totalY = ang.getTotalY();
+        double dxA = ang.getdxA();
+        double dyA = ang.getdyA();
+        if (rank == 0) {
+            float timeestimate = (1.2e-6 * totalX * totalY / pow((double) size, 0.65)) / 60 + 1; // Time estimate in minutes
+            fprintf(stderr, "This run may take on the order of %.0f minutes to complete.\n", timeestimate);
+            fprintf(stderr, "This estimate is very approximate. \nRun time is highly uncertain as it depends on the complexity of the input data \nand speed and memory of the computer. This estimate is based on our testing on \na dual quad core Dell Xeon E5405 2.0GHz PC with 16GB RAM.\n");
+            fflush(stderr);
+        }
 
-	//Create partition and read data
-	tdpartition *flowData;
-	flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dxA, dyA, ang.getNodata());
-	int nx = flowData->getnx();
-	int ny = flowData->getny();
-	int xstart, ystart;
-	flowData->localToGlobal(0, 0, xstart, ystart);
-	flowData->savedxdyc(ang);
-	ang.read(xstart, ystart, ny, nx, flowData->getGridPointer());
+        //  Calculate horizontal distances in each direction
+        //int kk;
+        //for(kk=1; kk<=8; kk++)
+        //{
+        //dist[kk]=sqrt(dx*dx*d2[kk]*d2[kk]+dy*dy*d1[kk]*d1[kk]);
+        //}
+
+        //Create partition and read data
+        tdpartition *flowData;
+        flowData = CreateNewPartition(ang.getDatatype(), totalX, totalY, dxA, dyA, ang.getNodata());
+        int nx = flowData->getnx();
+        int ny = flowData->getny();
+        int xstart, ystart;
+        flowData->localToGlobal(0, 0, xstart, ystart);
+        flowData->savedxdyc(ang);
+        ang.read(xstart, ystart, ny, nx, flowData->getGridPointer());
 
 
-	 dist = new float*[ny];
-    for(int m = 0; m <ny; m++)
-    dist[m] = new float[9];
-	for (int m=0; m<ny;m++){
-		flowData->getdxdyc(m,tempdxc,tempdyc);
-		for(int kk=1; kk<=8; kk++)
-	{
-		dist[m][kk]=sqrt(tempdxc*tempdxc*d1[kk]*d1[kk]+tempdyc*tempdyc*d2[kk]*d2[kk]);
-	}
+        dist = new float*[ny];
+        for (int m = 0; m < ny; m++)
+            dist[m] = new float[9];
+        for (int m = 0; m < ny; m++) {
+            flowData->getdxdyc(m, tempdxc, tempdyc);
+            for (int kk = 1; kk <= 8; kk++) {
+                dist[m][kk] = sqrt(tempdxc * tempdxc * d1[kk] * d1[kk] + tempdyc * tempdyc * d2[kk] * d2[kk]);
+            }
 
-	}
-	//  Elevation data
-	tdpartition *felData;
-	tiffIO fel(felfile, FLOAT_TYPE);
-	if(!ang.compareTiff(fel)) {
-		printf("File sizes do not match\n%s\n",felfile);
-		MPI_Abort(MCW,5);
-	return 1; 
-	}
-	felData = CreateNewPartition(fel.getDatatype(), totalX, totalY, dxA, dyA, fel.getNodata());
-	fel.read(xstart, ystart, felData->getny(), felData->getnx(), felData->getGridPointer());
+        }
+        //  Elevation data
+        tdpartition *felData;
+        tiffIO fel(felfile, FLOAT_TYPE);
+        if (!ang.compareTiff(fel)) {
+            printf("File sizes do not match\n%s\n", felfile);
+            MPI_Abort(MCW, 5);
+            return 1;
+        }
+        felData = CreateNewPartition(fel.getDatatype(), totalX, totalY, dxA, dyA, fel.getNodata());
+        fel.read(xstart, ystart, felData->getny(), felData->getnx(), felData->getGridPointer());
 
-	//if using weightData, get information from file
-	tdpartition *weightData;
-	if( usew == 1){
-		tiffIO w(wfile, FLOAT_TYPE);
-		if(!ang.compareTiff(w)) {
-			printf("File sizes do not match\n%s\n",wfile);
-			MPI_Abort(MCW,5);
-		return 1; 
-		}
-		weightData = CreateNewPartition(w.getDatatype(), totalX, totalY, dxA, dyA, w.getNodata());
-		w.read(xstart, ystart, weightData->getny(), weightData->getnx(), weightData->getGridPointer());
-	}
+        //if using weightData, get information from file
+        tdpartition *weightData;
+        if (usew == 1) {
+            tiffIO w(wfile, FLOAT_TYPE);
+            if (!ang.compareTiff(w)) {
+                printf("File sizes do not match\n%s\n", wfile);
+                MPI_Abort(MCW, 5);
+                return 1;
+            }
+            weightData = CreateNewPartition(w.getDatatype(), totalX, totalY, dxA, dyA, w.getNodata());
+            w.read(xstart, ystart, weightData->getny(), weightData->getnx(), weightData->getGridPointer());
+        }
 
-	//Begin timer
-	double readt = MPI_Wtime();
+        //Begin timer
+        double readt = MPI_Wtime();
 
-	//Create empty partitions to store new information
-	tdpartition *dts;  // surface distance
-	dts = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
+        //Create empty partitions to store new information
+        tdpartition *dts; // surface distance
+        dts = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, MISSINGFLOAT);
 
-	// con is used to check for contamination at the edges
-	long i,j;
-	short k;
-	long in,jn;
-	bool con=false, finished;
-	float tempFloat=0;
-	short tempShort=0;
+        // con is used to check for contamination at the edges
+        long i, j;
+        short k;
+        long in, jn;
+        bool con = false, finished;
+        float tempFloat = 0;
+        short tempShort = 0;
 
-	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, MISSINGSHORT);
-	
-	//Share information and set borders to zero
-	flowData->share();
-	felData->share();
-	if(usew==1) weightData->share();
-	dts->share();  
-	neighbor->clearBorders();
+        tdpartition *neighbor;
+        neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, MISSINGSHORT);
 
-	node temp;
-	queue<node> que;
-	
-	//Count the flow receiving neighbors and put on queue
-	int useOutlets=0;
-	long numOutlets=0;
-	int *outletsX=0, *outletsY=0;
-	initNeighborDinfup(neighbor,flowData,&que,nx, ny, useOutlets, outletsX, outletsY, numOutlets);
+        //Share information and set borders to zero
+        flowData->share();
+        felData->share();
+        if (usew == 1) weightData->share();
+        dts->share();
+        neighbor->clearBorders();
 
-	finished = false;
-	//Ring terminating while loop
-	while(!finished) {
-		while(!que.empty()) 
-		{
-			//Takes next node with no contributing neighbors
-			temp = que.front();
-			que.pop();
-			i = temp.x;
-			j = temp.y;
-			//  EVALUATE UP FLOW ALGEBRA EXPRESSION
-			if (felData->isNodata(i,j)){
-				dts->setToNodata(i,j);  //  If elevation is not known result has to be no data
-			}
-			else
-			{
-				distr=0.0;  // distance result
-				sump=0.;
-				bool first=true;
-				felData->getData(i,j,elv);
-				con=false;  // Start off not edge contaminated
-				for(k=1; k<=8; k++) {
-					in = i+d1[k];
-					jn = j+d2[k];
-					if(!flowData->hasAccess(in,jn) || flowData->isNodata(in,jn))
-						con=true;
-					else{
-						flowData->getData(in,jn, angle);
-						flowData->getdxdyc(jn,tempdxc,tempdyc);
-						p = prop(angle, (k+4)%8,tempdxc,tempdyc);
-						if(p>0. && p > thresh)
-						{
-							if(dts->isNodata(in,jn))con=true;
-							else if(felData->isNodata(in,jn))con=true;
-							else
-							{
-								sump=sump+p;
-								dts->getData(in,jn,dtss);
-								felData->getData(in,jn,elvn);
-								float wt=1.;
-								if(usew==1){
-									if(weightData->isNodata(in,jn))
-										con=true;
-									else
-										weightData->getData(in,jn,wt);
-								}	
-								distk=sqrt((elv-elvn)*(elv-elvn)+(dist[j][k]*wt)*(dist[j][k]*wt));
-								if(statmethod==0){//average
-									distr=distr+p*(distk+dtss);
-								}
-								else if(statmethod==1){// maximum
-									if(first){  //  do not assume that maximum elevation diff is positive in case of wierd (or not pit filled) elevations
-										distr=distk+dtss;
-										first=false;
-									}else
-									{
-										if(distk+dtss>distr)distr=distk+dtss;
-									}
-								}
-								else{ // Minimum
-									if(first){  
-										distr=distk+dtss;
-										first=false;
-									}else
-									{
-										if(distk+dtss<distr)distr=distk+dtss;
-									}
-								}
-							}
-						}
-					}
-				}
-				if((con && concheck==1))// set to no data if contamination and checking
-				{
-					dts->setToNodata(i,j);  
-				}
-				else
-				{
-					if(statmethod==0 && sump>0.)
-					{
-						dts->setData(i,j,(float)(distr/sump));
-					}
-					else {
-						dts->setData(i,j,distr);
-					}
-				}
-			}
-			//  END UP FLOW ALGEBRA EVALUATION
-			//  Decrement neighbor dependence of downslope cell
-			flowData->getData(i, j, angle);
-			flowData->getdxdyc(j,tempdxc,tempdyc);
-			for(k=1; k<=8; k++) {			
-				p = prop(angle, k,tempdxc,tempdyc);
-				if(p>0.0) {
-					in = i+d1[k];  jn = j+d2[k];
-					//Decrement the number of contributing neighbors in neighbor
-					neighbor->addToData(in,jn,(short)-1);				
-					//Check if neighbor needs to be added to que
-					if(flowData->isInPartition(in,jn) && neighbor->getData(in, jn, tempShort) == 0 ){
-						temp.x=in;
-						temp.y=jn;
-						que.push(temp);
-					}
-				}
-			}
-		}
-	
-		//Pass information
-		dts->share();
-		neighbor->addBorders();
+        node temp;
+        queue<node> que;
 
-		//If this created a cell with no contributing neighbors, put it on the queue
-		for(i=0; i<nx; i++){
-			if(neighbor->getData(i, -1, tempShort)!=0 && neighbor->getData(i, 0, tempShort)==0)
-			{
-				temp.x = i;
-				temp.y = 0;
-				que.push(temp);
-			}
-			if(neighbor->getData(i, ny, tempShort)!=0 && neighbor->getData(i, ny-1, tempShort)==0)
-			{
-				temp.x = i;
-				temp.y = ny-1;
-				que.push(temp); 
-			}
-		}
+        //Count the flow receiving neighbors and put on queue
+        int useOutlets = 0;
+        long numOutlets = 0;
+        int *outletsX = 0, *outletsY = 0;
+        initNeighborDinfup(neighbor, flowData, &que, nx, ny, useOutlets, outletsX, outletsY, numOutlets);
 
-		neighbor->clearBorders();
-	
-		//Check if done
-		finished = que.empty();
-		finished = dts->ringTerm(finished);
-	}
+        finished = false;
+        //Ring terminating while loop
+        while (!finished) {
+            while (!que.empty()) {
+                //Takes next node with no contributing neighbors
+                temp = que.front();
+                que.pop();
+                i = temp.x;
+                j = temp.y;
+                //  EVALUATE UP FLOW ALGEBRA EXPRESSION
+                if (felData->isNodata(i, j)) {
+                    dts->setToNodata(i, j); //  If elevation is not known result has to be no data
+                } else {
+                    distr = 0.0; // distance result
+                    sump = 0.;
+                    bool first = true;
+                    felData->getData(i, j, elv);
+                    con = false; // Start off not edge contaminated
+                    for (k = 1; k <= 8; k++) {
+                        in = i + d1[k];
+                        jn = j + d2[k];
+                        if (!flowData->hasAccess(in, jn) || flowData->isNodata(in, jn))
+                            con = true;
+                        else {
+                            flowData->getData(in, jn, angle);
+                            flowData->getdxdyc(jn, tempdxc, tempdyc);
+                            p = prop(angle, (k + 4) % 8, tempdxc, tempdyc);
+                            if (p > 0. && p > thresh) {
+                                if (dts->isNodata(in, jn))con = true;
+                                else if (felData->isNodata(in, jn))con = true;
+                                else {
+                                    sump = sump + p;
+                                    dts->getData(in, jn, dtss);
+                                    felData->getData(in, jn, elvn);
+                                    float wt = 1.;
+                                    if (usew == 1) {
+                                        if (weightData->isNodata(in, jn))
+                                            con = true;
+                                        else
+                                            weightData->getData(in, jn, wt);
+                                    }
+                                    distk = sqrt((elv - elvn)*(elv - elvn)+(dist[j][k] * wt)*(dist[j][k] * wt));
+                                    if (statmethod == 0) {//average
+                                        distr = distr + p * (distk + dtss);
+                                    } else if (statmethod == 1) {// maximum
+                                        if (first) { //  do not assume that maximum elevation diff is positive in case of wierd (or not pit filled) elevations
+                                            distr = distk + dtss;
+                                            first = false;
+                                        } else {
+                                            if (distk + dtss > distr)distr = distk + dtss;
+                                        }
+                                    } else { // Minimum
+                                        if (first) {
+                                            distr = distk + dtss;
+                                            first = false;
+                                        } else {
+                                            if (distk + dtss < distr)distr = distk + dtss;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if ((con && concheck == 1))// set to no data if contamination and checking
+                    {
+                        dts->setToNodata(i, j);
+                    } else {
+                        if (statmethod == 0 && sump > 0.) {
+                            dts->setData(i, j, (float) (distr / sump));
+                        } else {
+                            dts->setData(i, j, distr);
+                        }
+                    }
+                }
+                //  END UP FLOW ALGEBRA EVALUATION
+                //  Decrement neighbor dependence of downslope cell
+                flowData->getData(i, j, angle);
+                flowData->getdxdyc(j, tempdxc, tempdyc);
+                for (k = 1; k <= 8; k++) {
+                    p = prop(angle, k, tempdxc, tempdyc);
+                    if (p > 0.0) {
+                        in = i + d1[k];
+                        jn = j + d2[k];
+                        //Decrement the number of contributing neighbors in neighbor
+                        neighbor->addToData(in, jn, (short) - 1);
+                        //Check if neighbor needs to be added to que
+                        if (flowData->isInPartition(in, jn) && neighbor->getData(in, jn, tempShort) == 0) {
+                            temp.x = in;
+                            temp.y = jn;
+                            que.push(temp);
+                        }
+                    }
+                }
+            }
 
-	//Stop timer
-	double computet = MPI_Wtime();
+            //Pass information
+            dts->share();
+            neighbor->addBorders();
 
-	//Create and write TIFF file
-	float ddNodata = MISSINGFLOAT;
-	tiffIO dd(rtrfile, FLOAT_TYPE, &ddNodata, ang);
-	dd.write(xstart, ystart, ny, nx, dts->getGridPointer());
+            //If this created a cell with no contributing neighbors, put it on the queue
+            bool isTopLeftAdded = false;
+            bool isTopRightAdded = false;
+            bool isBottomLeftAdded = false;
+            bool isBottomRightAdded = false;
 
-	double writet = MPI_Wtime();
-        double dataRead, compute, write, total,tempd;
-        dataRead = readt-begint;
-        compute = computet-readt;
-        write = writet-computet;
+            for (i = 0; i < nx; i++) {
+                if (neighbor->getData(i, -1, tempShort) != 0 && neighbor->getData(i, 0, tempShort) == 0) {
+                    temp.x = i;
+                    temp.y = 0;
+                    if (i == 0 && !isTopLeftAdded) {
+                        que.push(temp);
+                        isTopLeftAdded = true;
+                    } else if (i == nx - 1 && !isTopRightAdded) {
+                        que.push(temp);
+                        isTopRightAdded = true;
+                    } else if (i != 0 && i != nx - 1) {
+                        que.push(temp);
+                    }
+
+                }
+                if (neighbor->getData(i, ny, tempShort) != 0 && neighbor->getData(i, ny - 1, tempShort) == 0) {
+                    temp.x = i;
+                    temp.y = ny - 1;
+                    if (i == 0 && !isBottomLeftAdded) {
+                        que.push(temp);
+                        isBottomLeftAdded = true;
+                    } else if (i == nx - 1 && !isBottomRightAdded) {
+                        que.push(temp);
+                        isBottomRightAdded = true;
+                    } else if (i != 0 && i != nx - 1) {
+                        que.push(temp);
+                    }
+                }
+            }
+
+            for (i = 0; i < ny; i++) {
+                if (neighbor->getData(-1, i, tempShort) != 0 && neighbor->getData(0, i, tempShort) == 0) {
+                    temp.x = 0;
+                    temp.y = i;
+                    if (i == 0 && !isTopLeftAdded) {
+                        que.push(temp);
+                        isTopLeftAdded = true;
+                    } else if (i == ny - 1 && !isBottomLeftAdded) {
+                        que.push(temp);
+                        isBottomLeftAdded = true;
+                    } else if (i != 0 && i != ny - 1) {
+                        que.push(temp);
+                    }
+                }
+                if (neighbor->getData(nx, i, tempShort) != 0 && neighbor->getData(nx - 1, i, tempShort) == 0) {
+                    temp.x = nx - 1;
+                    temp.y = i;
+                    if (i == 0 && !isTopRightAdded) {
+                        que.push(temp);
+                        isTopRightAdded = true;
+                    } else if (i == ny - 1 && !isBottomRightAdded) {
+                        que.push(temp);
+                        isBottomRightAdded = true;
+                    } else if (i != 0 && i != ny - 1) {
+                        que.push(temp);
+                    }
+                }
+            }
+
+            if (neighbor->getData(-1, -1, tempShort) != 0 && neighbor->getData(0, 0, tempShort) == 0 && !isTopLeftAdded) {
+                temp.x = 0;
+                temp.y = 0;
+                que.push(temp);
+                isTopLeftAdded = true;
+            }
+
+            if (neighbor->getData(nx, -1, tempShort) != 0 && neighbor->getData(nx - 1, 0, tempShort) == 0 && !isTopRightAdded) {
+                temp.x = nx - 1;
+                temp.y = 0;
+                que.push(temp);
+                isTopRightAdded = true;
+            }
+
+            if (neighbor->getData(-1, ny, tempShort) != 0 && neighbor->getData(0, ny - 1, tempShort) == 0 && !isBottomLeftAdded) {
+                temp.x = 0;
+                temp.y = ny - 1;
+                que.push(temp);
+                isBottomLeftAdded = true;
+            }
+
+            if (neighbor->getData(nx, ny, tempShort) != 0 && neighbor->getData(nx - 1, ny - 1, tempShort) == 0 && !isBottomRightAdded) {
+                temp.x = nx - 1;
+                temp.y = ny - 1;
+                que.push(temp);
+                isBottomRightAdded = true;
+            }
+
+            neighbor->clearBorders();
+
+            //Check if done
+            finished = que.empty();
+            finished = dts->ringTerm(finished);
+        }
+
+        //Stop timer
+        double computet = MPI_Wtime();
+
+        //Create and write TIFF file
+        float ddNodata = MISSINGFLOAT;
+        tiffIO dd(rtrfile, FLOAT_TYPE, &ddNodata, ang);
+        dd.write(xstart, ystart, ny, nx, dts->getGridPointer());
+
+        double writet = MPI_Wtime();
+        double dataRead, compute, write, total, tempd;
+        dataRead = readt - begint;
+        compute = computet - readt;
+        write = writet - computet;
         total = writet - begint;
 
-        MPI_Allreduce (&dataRead, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        dataRead = tempd/size;
-        MPI_Allreduce (&compute, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        compute = tempd/size;
-        MPI_Allreduce (&write, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        write = tempd/size;
-        MPI_Allreduce (&total, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
-        total = tempd/size;
+        MPI_Allreduce(&dataRead, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
+        dataRead = tempd / size;
+        MPI_Allreduce(&compute, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
+        compute = tempd / size;
+        MPI_Allreduce(&write, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
+        write = tempd / size;
+        MPI_Allreduce(&total, &tempd, 1, MPI_DOUBLE, MPI_SUM, MCW);
+        total = tempd / size;
 
-        if( rank == 0)
-                printf("Processors: %d\nRead time: %f\nCompute time: %f\nWrite time: %f\nTotal time: %f\n",
-                  size, dataRead, compute, write,total);
+        if (rank == 0)
+            printf("Processors: %d\nRead time: %f\nCompute time: %f\nWrite time: %f\nTotal time: %f\n",
+                size, dataRead, compute, write, total);
 
-	//Brackets force MPI-dependent objects to go out of scope before Finalize is called
-	}MPI_Finalize();
+        //Brackets force MPI-dependent objects to go out of scope before Finalize is called
+    }
+    MPI_Finalize();
 
-	return 0;
+    return 0;
 }
 
 
 
 
- 
-   
+
+

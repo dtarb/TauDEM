@@ -44,6 +44,9 @@ email:  dtarb@usu.edu
 #include <stdlib.h>
 #include "commonLib.h"
 #include "tardemlib.h"
+
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 int twigrid(char *slopefile,char *areafile,char *twifile);
 int main(int argc,char **argv)
 {
@@ -97,6 +100,24 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
+                else if(strcmp(argv[i],"-ddm")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				if(strcmp(argv[i],"row")==0) {
+                                    tdpartition::decompType = DECOMP_ROW;
+                                } else if (strcmp(argv[i],"column")==0) {
+                                    tdpartition::decompType = DECOMP_COLUMN;
+                                } else if (strcmp(argv[i],"block")==0) {
+                                    tdpartition::decompType = DECOMP_BLOCK;
+                                } else {
+                                    goto errexit;
+                                }
+				i++;
+			}
+			else goto errexit;
+		}
 		else 
 		{
 			goto errexit;
@@ -115,11 +136,12 @@ int main(int argc,char **argv)
 	errexit:
 	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
 	   printf("Usage with specific file names:\n %s -sca <areafile>\n",argv[0]);
-       printf("-slp <slopefile> -twi <twifile>\n");
+       printf("-slp <slopefile> -twi <twifile> [-ddm <ddm>]\n");
 	   printf("<basefilename> is the name of the raw digital elevation model\n");
 	   printf("<areafile> is the D-infinity specific catchment area input file.\n");
 	   printf("<slopefile> is the D-infinity slope input file.\n");
 	   printf("<twifile> is the topographic wetness index (ln(a/S) output file.\n");
+           printf("<ddm> is the data decomposition method. Either \"row\", \"column\" or \"block\".\n");
 	   printf("The following are appended to the file names\n");
        printf("before the files are opened:\n");
        printf("sca    D-infinity specific catchment area grid (input)\n");

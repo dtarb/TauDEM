@@ -48,6 +48,8 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 //#include "tardemlib.h"
 
+DecompType tdpartition::decompType = DECOMP_BLOCK;
+
 int peukerdouglas(char *felfile,char *ssfile,float *p);
 
 int main(int argc,char **argv)  
@@ -91,6 +93,24 @@ int main(int argc,char **argv)
 				}
 				else goto errexit;
 			}
+                        else if(strcmp(argv[i],"-ddm")==0)
+                        {
+            		i++;
+            		if(argc > i)
+            		{
+            			if(strcmp(argv[i],"row")==0) {
+                                    tdpartition::decompType = DECOMP_ROW;
+                                 } else if (strcmp(argv[i],"column")==0) {
+                                    tdpartition::decompType = DECOMP_COLUMN;
+                                   } else if (strcmp(argv[i],"block")==0) {
+                                        tdpartition::decompType = DECOMP_BLOCK;
+                                 } else {
+                                     goto errexit;
+                                  }
+            			i++;
+			}
+			else goto errexit;
+                        }
 		   else if(strcmp(argv[i],"-par")==0)
 			{
 				i++;
@@ -115,7 +135,7 @@ int main(int argc,char **argv)
 errexit:
    printf("Simple Use:\n %s <basefilename>\n",argv[0]);
    printf("Use with specific file names:\n %s -fel <elevationfile>\n",argv[0]);
-   printf("-ss <streamsource> [-par <weightMiddle> <weightSide> <weightDiagonal>]\n");
+   printf("-ss <streamsource> [-par <weightMiddle> <weightSide> <weightDiagonal>] [-ddm <ddm>]\n");
    printf("<basefilename> is the name of the base digital elevation model without suffixes for simple input. 'fel' will be appended. \n");
    printf("<elevationfile> is the name of the elevation input file.\n");
    printf("<streamsource> is the name of the stream source file output.\n");
@@ -124,6 +144,7 @@ errexit:
    printf("<weightSide> is the weight given to the 4 side cells in the smoothing of the input elevations.\n");
    printf("<weightDiagonal> is the weight given to the 4 diagonal cells in the smoothing of the input elevations.\n");
    printf("Default weights are 0.4 0.1 0.05 if -par is not specified.\n");
+   printf("<ddm> is the data decomposition method. Either \"row\", \"column\" or \"block\".\n");
    return 0; 
 } 
    
