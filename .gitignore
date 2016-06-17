@@ -149,7 +149,8 @@ pip-log.txt
 /slopeavedown
 /streamnet
 /threshold
-
+/gagewatershed
+/twi
 /build*
 
 # ignore folders related to installer

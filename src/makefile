@@ -74,11 +74,9 @@ TWI = TWI.o TWImn.o $(OBJFILES)
 GAGEWATERSHED = gagewatershed.o gagewatershedmn.o $(OBJFILES) $(SHAPEFILES)
 CONNECTDOWN = ConnectDown.o ConnectDownmn.o $(OBJFILES) $(SHAPEFILES)
 
-
-
 #The following are compiler flags common to all building rules
 CC = mpic++
-CFLAGS=-O2
+CFLAGS=-O2 -std=c++11
 LARGEFILEFLAG= -D_FILE_OFFSET_BITS=64
 #INCDIRS=-I/usr/lib/openmpi/include -I/usr/include/gdal
 INCDIRS=`gdal-config --cflags`
