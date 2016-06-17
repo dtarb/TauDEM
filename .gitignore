@@ -151,6 +151,7 @@ pip-log.txt
 /threshold
 /gagewatershed
 /twi
+/connectdown
 /build*
 
 # ignore folders related to installer

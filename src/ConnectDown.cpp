@@ -684,9 +684,9 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletdatasrc, ch
 		 
       // layer name is file name without extension
 	 if(strlen(outletlyr)==0){
-		char *outletlayername;
+		std::string outletlayername;
 		outletlayername=getLayername( outletdatasrc); // get layer name if the layer name is not provided
-	    hLayersh= OGR_DS_CreateLayer( hDSsh,outletlayername,hSRSRaster,wkbPoint, NULL);} 
+	    hLayersh= OGR_DS_CreateLayer( hDSsh,outletlayername.c_str(),hSRSRaster,wkbPoint, NULL);} 
 
 	 else {
 		 hLayersh= OGR_DS_CreateLayer( hDSsh, outletlyr ,hSRSRaster, wkbPoint, NULL ); }// provide same spatial reference as raster in streamnetshp fil
@@ -765,9 +765,9 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletdatasrc, ch
     //hLayer1 = OGR_DS_GetLayerByName( hDS1,layername );
     //OGR_L_ResetReading(hLayer1);
 	 if(strlen(movedoutletlyr)==0){
-		char *mvoutletlayername;
+		std::string mvoutletlayername;
 		mvoutletlayername=getLayername( movedoutletdatasrc); // get layer name if the layer name is not provided
-	     hLayershmoved= OGR_DS_CreateLayer( hDSshmoved, mvoutletlayername,hSRSRaster, wkbPoint, NULL );} 
+	     hLayershmoved= OGR_DS_CreateLayer( hDSshmoved, mvoutletlayername.c_str(),hSRSRaster, wkbPoint, NULL );} 
 
 	 else {
 		 hLayershmoved= OGR_DS_CreateLayer( hDSshmoved, movedoutletlyr,hSRSRaster, wkbPoint, NULL ); }// provide same spatial reference as raster in streamnetshp fil
