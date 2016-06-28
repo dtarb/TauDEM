@@ -305,11 +305,30 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
             eBDataType = GDT_Int32;
 
         char partition_filename[MAXLN];
-        char partition_ext[10];
-        sprintf(partition_ext, "p%d.tif", rank);
         strcpy(partition_filename, filename);
         partition_filename[strlen(partition_filename) - 4] = '\0';
-        strcat(partition_filename, partition_ext);
+
+        int isSuccess;
+        if (rank == 0) {
+            isSuccess = createDirectory(partition_filename);
+        }
+
+        MPI_Bcast(&isSuccess, 1, MPI_INT, 0, MCW);
+
+        if (isSuccess) {
+            char partition_ext[10];
+#if defined(_WIN32)
+            sprintf(partition_ext, "\\p%d.tif", rank);
+#else
+            sprintf(partition_ext, "/p%d.tif", rank);
+#endif
+
+            strcat(partition_filename, partition_ext);
+        } else {
+            char partition_ext[10];
+            sprintf(partition_ext, "p%d.tif", rank);
+            strcat(partition_filename, partition_ext);
+        }
 
         papszOptions = CSLSetNameValue(papszOptions, "COMPRESS", compression_meth[0]);
 
@@ -353,10 +372,23 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
             std::string vrtcommand = std::string("gdalbuildvrt ") + filename;
 
             for (int i = 0; i < size; ++i) {
-                sprintf(partition_ext, "p%d.tif", i);
                 strcpy(partition_filename, filename);
                 partition_filename[strlen(partition_filename) - 4] = '\0';
-                strcat(partition_filename, partition_ext);
+
+                if (isSuccess) {
+                    char partition_ext[10];
+#if defined(_WIN32)
+                    sprintf(partition_ext, "\\p%d.tif", i);
+#else
+                    sprintf(partition_ext, "/p%d.tif", i);
+#endif
+
+                    strcat(partition_filename, partition_ext);
+                } else {
+                    char partition_ext[10];
+                    sprintf(partition_ext, "p%d.tif", i);
+                    strcat(partition_filename, partition_ext);
+                }
 
                 vrtcommand += " " + std::string(partition_filename);
             }
@@ -647,3 +679,14 @@ void tiffIO::globalXYToGeo(long globalX, long globalY, double &geoX, double &geo
     geoY = ytopedge - dlat / 2. - globalY*dlat;
 }
 
+int tiffIO::createDirectory(const char* dir) {
+#if defined(_WIN32)
+    int ret = _mkdir(dir);
+#else
+    int ret = mkdir(dir, 0755);
+#endif
+    if (ret == 0)
+        return 1;
+    else
+        return 0;
+}
