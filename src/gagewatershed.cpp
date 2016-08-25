@@ -68,8 +68,7 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 	int *ids=NULL;
 	int *dsids=NULL;
 	int idnodata;
-		FILE *fidout1;
-				fidout1 = fopen(upidfile,"a");// process 0 writes 
+		
 	double begint = MPI_Wtime();
 	tiffIO p(pfile,SHORT_TYPE);
 	long totalX = p.getTotalX();
@@ -247,7 +246,7 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 						//printf("%f", wi[myid]);
 						//myid++;
 				
-				  	//fprintf(fidout1,"%f, %f\n",arr1[i],arr2[i]);
+				  //	fprintf(fidout1,"%f, %f\n",arr1[i],arr2[i]);
 				}
 				if(sdir > 0) 
 				{
@@ -306,17 +305,8 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 		finished = wshed->ringTerm(finished);
 	}
 
-	if(writeupid == 1)
-	{
-		
-			
-				for(i=0; i<arr1.size(); i++)
-				{
+	
 
-					fprintf(fidout1,"%f %f\n",arr1[i],arr2[i]);
-				}
-		
-	}
 	//  Reduce all values to the 0 process
 	int *dsidsr;	
     dsidsr=new int[numOutlets];
@@ -340,20 +330,20 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 				}
 		}
 	}
-	            
-	if(writeupid == 1)
+
+		if(writeupid == 1)
 	{
-		if(rank!=0) {
-			
-				for(i=0; i<arr1.size(); i++)
+		FILE *fidout1;
+		fidout1 = fopen(upidfile,"a");// process 0 writes 
+		for(i=0; i<arr1.size(); i++)
 				{
 
-					fprintf(fidout1,"%f %f\n",arr1[i],arr2[i]);
+					fprintf(fidout1,"%f, %f\n",arr1[i],arr2[i]);
 				}
-		
-	}
 	
 	}
+
+
 	
 	//Create and write TIFF file
 	long lNodata = MISSINGLONG;
