@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <functional>
 
 #include "commonLib.h"
 #include "linearpart.h"
