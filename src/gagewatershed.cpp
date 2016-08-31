@@ -42,6 +42,7 @@ email:  dtarb@usu.edu
 #include <mpi.h>
 #include <math.h>
 #include <iostream>
+#include<fstream>
 #include <queue>
 #include "commonLib.h"
 #include "linearpart.h"
@@ -68,7 +69,8 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 	int *ids=NULL;
 	int *dsids=NULL;
 	int idnodata;
-		
+	FILE *fidout1;
+    fidout1 = fopen(upidfile,"a");
 	double begint = MPI_Wtime();
 	tiffIO p(pfile,SHORT_TYPE);
 	long totalX = p.getTotalX();
@@ -246,7 +248,9 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 						//printf("%f", wi[myid]);
 						//myid++;
 				
-				  //	fprintf(fidout1,"%f, %f\n",arr1[i],arr2[i]);
+				  	fprintf(fidout1,"%f, %f\n",mx,my);
+					fflush(fidout1);
+						//myfile<<mx<<","<<my<<endl;
 				}
 				if(sdir > 0) 
 				{
@@ -283,7 +287,7 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 		//Pass information
 		neighbor->addBorders();
 		wshed->share();
-
+		
 		//If this created a cell with no contributing neighbors, put it on the queue
 		for(i=0; i<nx; i++){
 			if(neighbor->getData(i, -1, tempShort)!=0 && neighbor->getData(i, 0, tempShort)==0){
@@ -299,10 +303,12 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 		}
 		//Clear out borders
 		neighbor->clearBorders();
-	
+	   //
+		
 		//Check if done
 		finished = que.empty();
 		finished = wshed->ringTerm(finished);
+		
 	}
 
 	
@@ -330,20 +336,35 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 				}
 		}
 	}
-
-		if(writeupid == 1)
-	{
-		FILE *fidout1;
-		fidout1 = fopen(upidfile,"a");// process 0 writes 
-		for(i=0; i<arr1.size(); i++)
-				{
-
-					fprintf(fidout1,"%f, %f\n",arr1[i],arr2[i]);
-				}
 	
-	}
+	/*if(!rank ){
+		
+		
+				  if(arr1.size()>0){
+					
+					  for(i=0; i<arr1.size(); i++){
+					  fprintf(fidout1,"%f, %f\n",arr1[i],arr2[i]);}
+				}
+					 
+			}*/
+	//
+	//
+	//		if(!rank ){
+	//	//
+	//			//{ 
+	//				cout<<arr1.size()<<"rank is " <<rank;
+	//	
+	//			  if(arr1.size()>0){
+	//				
+	//				  for(i=0; i<arr1.size(); i++){
+	//				  fprintf(fidout1,"%f, %f\n",arr1[i],arr2[i]);}
+	//			}
+	//				 
+	//		}
+	//
+		
 
-
+		//fclose(fidout1);
 	
 	//Create and write TIFF file
 	long lNodata = MISSINGLONG;
