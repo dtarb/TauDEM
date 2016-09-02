@@ -42,7 +42,6 @@ email:  dtarb@usu.edu
 #include <mpi.h>
 #include <math.h>
 #include <iostream>
-#include<fstream>
 #include <queue>
 #include "commonLib.h"
 #include "linearpart.h"
@@ -206,9 +205,6 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 	flowData->share();
 	neighbor->clearBorders();
 	wshed->share();
-	// open upid file to write and update upstream watershed id file ( need to confirm)
-	vector<double> arr1;
-	vector<double> arr2;
 	//flowData->getData(500,600,tempShort);
 	finished = false;
 	//Ring terminating while loop
@@ -240,16 +236,8 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 					int gx,gy;  //  Global x and y (col and row) coordinates
 						flowData->localToGlobal(in,jn,gx,gy);
 						p.globalXYToGeo(gx,gy,mx,my);
-						//printf("%f, %f", mx,my);
-						//fprintf (fp1,"%f, %f\n",wi,wj);
-						arr1.push_back(mx);
-						arr2.push_back(my);
-						//wi[myid]=mx;
-						//printf("%f", wi[myid]);
-						//myid++;
-				
-				  	fprintf(fidout1,"%f, %f\n",mx,my);
-					fflush(fidout1);
+						fprintf(fidout1,"%f, %f\n",mx,my);
+					    fflush(fidout1);
 						//myfile<<mx<<","<<my<<endl;
 				}
 				if(sdir > 0) 
@@ -337,34 +325,6 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 		}
 	}
 	
-	/*if(!rank ){
-		
-		
-				  if(arr1.size()>0){
-					
-					  for(i=0; i<arr1.size(); i++){
-					  fprintf(fidout1,"%f, %f\n",arr1[i],arr2[i]);}
-				}
-					 
-			}*/
-	//
-	//
-	//		if(!rank ){
-	//	//
-	//			//{ 
-	//				cout<<arr1.size()<<"rank is " <<rank;
-	//	
-	//			  if(arr1.size()>0){
-	//				
-	//				  for(i=0; i<arr1.size(); i++){
-	//				  fprintf(fidout1,"%f, %f\n",arr1[i],arr2[i]);}
-	//			}
-	//				 
-	//		}
-	//
-		
-
-		//fclose(fidout1);
 	
 	//Create and write TIFF file
 	long lNodata = MISSINGLONG;
