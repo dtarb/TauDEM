@@ -50,23 +50,21 @@
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
-    <Import Project="common_release_32.props" />
-    <Import Project="..\AreaD8\win32_library.props" />
+    <Import Project="..\TauDEM_Build_Configurations\common_release_32.props" />
+    <Import Project="..\TauDEM_Build_Configurations\win32_library.props" />
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
-    <Import Project="common_debug_32.props" />
-    <Import Project="..\AreaD8\win32_library.props" />
+    <Import Project="..\TauDEM_Build_Configurations\common_debug_32.props" />
+    <Import Project="..\TauDEM_Build_Configurations\win32_library.props" />
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
-    <Import Project="common_release_64.props" />
-    <Import Project="..\AreaD8\win32_library.props" />
+    <Import Project="..\TauDEM_Build_Configurations\common_release_64.props" />
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
-    <Import Project="common_debug_64.props" />
-    <Import Project="..\AreaD8\win32_library.props" />
+    <Import Project="..\TauDEM_Build_Configurations\common_debug_64.props" />
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
@@ -105,7 +103,6 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>msmpi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\GDAL32\lib;C:\Program Files (x86)\Microsoft SDKs\MPI\Lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
