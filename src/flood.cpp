@@ -113,7 +113,7 @@ int flood( char* demfile, char* felfile, char *sfdrfile, int usesfdr, bool verbo
 	if(verbose)  // debug writes
 	{
 		printf("Header read\n");
-		printf("Process: %d, totalX: %d, totalY: %d\n",rank,totalX,totalY);
+		printf("Process: %d, totalX: %ld, totalY: %ld\n",rank,totalX,totalY);
 		printf("Process: %d, nx: %d, ny: %d\n",rank,nx,ny);
 		printf("Process: %d, xstart: %d, ystart: %d\n",rank,xstart,ystart);
     if (use_mask)
@@ -149,7 +149,7 @@ int flood( char* demfile, char* felfile, char *sfdrfile, int usesfdr, bool verbo
 		long nxm=nx/2;
 		long nym=ny/2;
 		elevDEM->getData(nxm,nym,tempFloat);
-		printf("Midpoint of partition: %d, nxm: %d, nym: %d, value: %f\n",rank,nxm,nym,tempFloat);
+		printf("Midpoint of partition: %d, nxm: %ld, nym: %ld, value: %f\n",rank,nxm,nym,tempFloat);
 		fflush(stdout);
 	}
 	
@@ -486,7 +486,7 @@ int flood( char* demfile, char* felfile, char *sfdrfile, int usesfdr, bool verbo
 		long nxm=nx/2;
 		long nym=ny/2;
 		planchon->getData(nxm,nym,tempFloat);
-		printf("Result midpoint of partition: %ld, nxm: %ld, nym: %d, value: %f\n",rank,nxm,nym,tempFloat);
+		printf("Result midpoint of partition: %d, nxm: %ld, nym: %ld, value: %f\n",rank,nxm,nym,tempFloat);
 		fflush(stdout);
 	}
 

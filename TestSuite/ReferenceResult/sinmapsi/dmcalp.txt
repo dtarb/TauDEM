@@ -1,4 +1,0 @@
-SiID,Tmin,Tmax,Cmin,Cmax,PHImin,PHImax,SoilDens
-3,2.708,2.708,0,.25,30,45,2000
-5,2.5,5.2,0,.25,32,43,2000
-
