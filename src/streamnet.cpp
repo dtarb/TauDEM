@@ -158,7 +158,7 @@ void createStreamNetShapefile(char *streamnetsrc,char *streamnetlyr,OGRSpatialRe
 	OGR_Fld_SetWidth( hFieldDefn1, 12);
     OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
 	
-	hFieldDefn1 = OGR_Fld_Create( "Order", OFTInteger );
+	hFieldDefn1 = OGR_Fld_Create( "strmOrder", OFTInteger );
 	OGR_Fld_SetWidth( hFieldDefn1, 6);
     OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
 	
@@ -176,7 +176,7 @@ void createStreamNetShapefile(char *streamnetsrc,char *streamnetlyr,OGRSpatialRe
 	OGR_Fld_SetPrecision(hFieldDefn1, 1);
     OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
 	
-	hFieldDefn1 = OGR_Fld_Create( "Drop", OFTReal );
+	hFieldDefn1 = OGR_Fld_Create( "strmDrop", OFTReal );
 	OGR_Fld_SetWidth( hFieldDefn1, 16);
 	OGR_Fld_SetPrecision(hFieldDefn1, 2);
     OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
@@ -498,7 +498,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 		if(verbose)  // debug writes
 		{
 			printf("Files read\n");
-			printf("Process: %d, TotalX: %d, TotalY: %d\n",rank,TotalX,TotalY);
+			printf("Process: %d, TotalX: %ld, TotalY: %ld\n",rank,TotalX,TotalY);
 			printf("Process: %d, nx: %d, ny: %d\n",rank,nx,ny);
 			printf("Process: %d, xstart: %d, ystart: %d\n",rank,xstart,ystart);
 			printf("Process: %d, numOutlets: %d\n",rank,numOutlets);
@@ -1131,7 +1131,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 			long dotinc=myNumLinks/ndots;
 
 			for(ilink=0;ilink<myNumLinks;ilink++){//only once per link
-				fprintf(fTreeOut,"\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",LinkIdU1U2DMagShapeidCoords[ilink][0],LinkIdU1U2DMagShapeidCoords[ilink][1],LinkIdU1U2DMagShapeidCoords[ilink][2],LinkIdU1U2DMagShapeidCoords[ilink][3],LinkIdU1U2DMagShapeidCoords[ilink][4],LinkIdU1U2DMagShapeidCoords[ilink][5],LinkIdU1U2DMagShapeidCoords[ilink][6],LinkIdU1U2DMagShapeidCoords[ilink][7],LinkIdU1U2DMagShapeidCoords[ilink][8]);
+				fprintf(fTreeOut,"\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\n",LinkIdU1U2DMagShapeidCoords[ilink][0],LinkIdU1U2DMagShapeidCoords[ilink][1],LinkIdU1U2DMagShapeidCoords[ilink][2],LinkIdU1U2DMagShapeidCoords[ilink][3],LinkIdU1U2DMagShapeidCoords[ilink][4],LinkIdU1U2DMagShapeidCoords[ilink][5],LinkIdU1U2DMagShapeidCoords[ilink][6],LinkIdU1U2DMagShapeidCoords[ilink][7],LinkIdU1U2DMagShapeidCoords[ilink][8]);
 				//fflush(fTreeOut);
 				long i1=LinkIdU1U2DMagShapeidCoords[ilink][1];
 				long i2=LinkIdU1U2DMagShapeidCoords[ilink][2];
@@ -1183,7 +1183,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 					nextdot=0;
 					for(ilink=0;ilink<procNumLinks;++ilink){
 						MPI_Recv(&treeBuf,9,MPI_LONG,i,1,MCW,&mystatus);
-						fprintf(fTreeOut,"\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",treeBuf[0],treeBuf[1]+numPointsPrinted,treeBuf[2]+numPointsPrinted,treeBuf[3],treeBuf[4],treeBuf[5],treeBuf[6],treeBuf[7],treeBuf[8]);
+						fprintf(fTreeOut,"\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\n",treeBuf[0],treeBuf[1]+numPointsPrinted,treeBuf[2]+numPointsPrinted,treeBuf[3],treeBuf[4],treeBuf[5],treeBuf[6],treeBuf[7],treeBuf[8]);
 
 						MPI_Recv(&procNumPoints,1,MPI_INT,i,0,MCW,&mystatus);//get points one at a time and print them to file
 				// Variables for shape
