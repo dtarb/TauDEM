@@ -158,7 +158,7 @@ void createStreamNetShapefile(char *streamnetsrc,char *streamnetlyr,OGRSpatialRe
 	OGR_Fld_SetWidth( hFieldDefn1, 12);
     OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
 	
-	hFieldDefn1 = OGR_Fld_Create( "Order", OFTInteger );
+	hFieldDefn1 = OGR_Fld_Create( "strmOrder", OFTInteger );
 	OGR_Fld_SetWidth( hFieldDefn1, 6);
     OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
 	
@@ -176,7 +176,7 @@ void createStreamNetShapefile(char *streamnetsrc,char *streamnetlyr,OGRSpatialRe
 	OGR_Fld_SetPrecision(hFieldDefn1, 1);
     OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
 	
-	hFieldDefn1 = OGR_Fld_Create( "Drop", OFTReal );
+	hFieldDefn1 = OGR_Fld_Create( "strmDrop", OFTReal );
 	OGR_Fld_SetWidth( hFieldDefn1, 16);
 	OGR_Fld_SetPrecision(hFieldDefn1, 2);
     OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
