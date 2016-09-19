@@ -110,7 +110,7 @@ mask is a flag with value 0 if there is no mask file, 1 if there is.
 outlet is a flag with value 0 if no outlet is specifies, 1 if it is.
 thresh is the mask threshold used in >= test.  */
 
-int gagewatershed(char *pfile, char *wfile, char* datasrc,char* lyrname,int uselyrname,int lyrno, char *idfile, int writeid);
+int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int uselyrname,int lyrno, char *idfile,int writeid, int writeupid,char *upidfile) ;
 
 
 int source(char *areafile,char *slopefile,char *plenfile,char *dirfile, 
