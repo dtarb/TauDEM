@@ -3,28 +3,35 @@
 ; Ref: http://stackoverflow.com/questions/4833831/inno-setup-32bit-and-64bit-in-one
 
 ; ****  REQUIREMENTS FOR COMPILING THIS INSTALLER SCRIPT  ****
-; The following files must exist in the same directory location as this script
+; The following files must exist in the directory defined by the SourceDir paramter under the [Setup] section below:
 ; GDAL-1.9.2.win32-py2.7.exe (Python GDAL)
-; gdal-111-1600-core.msi   (C++ GDAL
-; gdal-111-1600-x64-core.msi  (C++ GDAL
+; gdal-111-1600-core.msi   (C++ GDAL)
+; gdal-111-1600-x64-core.msi  (C++ GDAL)
 ; mpi_x86.msi
 ; mpi_x64.msi
 ; vcredist_x86_2010.exe
 ; vcredist_x64_2010.exe
 ; Firewall.bat
-; GDAL 32-bit library files must exist under the following directory (this directory should exists at the same level as this script): 
+; GDAL 32-bit library files must exist under the following directory (this directory should exists under the dir defined by SourceDir parameter): 
 ; GDAL_32/
-; GDAL 64-bit library files must exist under the following directory (this directory should exists at the same level as this script): 
+; GDAL 64-bit library files must exist under the following directory (this directory should exists under the dir defined by SourceDir parameter): 
 ; GDAL_64/
-; TauDEM 32-bit executables must exist under the following directory (this directory should exists at the same level as this script): 
+; TauDEM 32-bit executables must exist under the following directory (this directory should exists under the dir defined by SourceDir parameter): 
 ; TauDEM_Exe/win_32/
-; TauDEM 64-bit executables must exist under the following directory (this directory should exists at the same level as this script): 
+; TauDEM 64-bit executables must exist under the following directory (this directory should exists under the dir defined by SourceDir parameter): 
 ; TauDEM_Exe/win_64/
-; TauDEM ArcGIG toolbox related python files and the one .tbx file must exist under the following directory (this directory should exists at the same level as this script):
+; TauDEM ArcGIG toolbox related python files and the one .tbx file must exist under the following directory (this directory should exists under the dir defined by SourceDir parameter):
 ; TauDEMArcGIS/
 
+; *** SOURCE CONTROL REQUIREMENTS ****
+; All the files (as listed below) under the WindowsInstaller folder are included in source control
+; This script file (setup.ino).
+; Firewall.bat - Any time this file is updated it should be copied to the dir specified by the SoureDir param in the [Setup] section of this script
+; taudem.bmp - Any time this file is updated it should be copied to the dir specified by the SoureDir param in the [Setup] section of this script
+
+
 #define MyAppName "TauDEM"
-#define MyAppVersion "5.3.5"
+#define MyAppVersion "5.3.6"
 #define MyAppPublisher "Utah State University"
 #define MyAppURL "http://hydrology.usu.edu/taudem/taudem5/index.html"
 
@@ -54,6 +61,8 @@ WizardSmallImageFile=taudem.bmp
 ; Don't show the welcome wizard page  and ready to install page
 DisableWelcomePage=yes
 DisableReadyPage=yes
+; The following source dir should have all the files and sub directories as outlined above (REQUIREMENTS FOR COMPILING THIS INSTALLER SCRIPT)
+SourceDir=D:\SoftwareProjects\TauDEM_From_GitHub\TauDEM_Installation_Source
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
