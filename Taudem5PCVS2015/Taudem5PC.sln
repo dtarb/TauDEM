@@ -1,6 +1,8 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.24720.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AreaDinf", "AreaDinf\AreaDinf.vcxproj", "{D7080581-4679-44A8-80BC-78AC2CB34F27}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PitRemove", "PitRemove\PitRemove.vcxproj", "{F3FF8A17-E319-496D-AD0D-2778B1318C4C}"
@@ -61,6 +63,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ogrtest", "ogrtest\ogrtest.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SinmapSI", "SinmapSI\SinmapSI.vcxproj", "{4C94C630-FAFC-4EC9-8639-336E6FD7A85C}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B14788A2-B826-401F-A9AB-D84B1ED3D278}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Itanium = Debug|Itanium
@@ -96,6 +100,7 @@ Global
 		{1F719C5A-49F0-4973-9059-DC3B24A7DAC7}.Debug|Win32.Build.0 = Debug|Win32
 		{1F719C5A-49F0-4973-9059-DC3B24A7DAC7}.Debug|x64.ActiveCfg = Debug|x64
 		{1F719C5A-49F0-4973-9059-DC3B24A7DAC7}.Debug|x64.Build.0 = Debug|x64
+		{1F719C5A-49F0-4973-9059-DC3B24A7DAC7}.Debug|x64.Deploy.0 = Debug|x64
 		{1F719C5A-49F0-4973-9059-DC3B24A7DAC7}.Release|Itanium.ActiveCfg = Release|x64
 		{1F719C5A-49F0-4973-9059-DC3B24A7DAC7}.Release|Win32.ActiveCfg = Release|Win32
 		{1F719C5A-49F0-4973-9059-DC3B24A7DAC7}.Release|Win32.Build.0 = Release|Win32

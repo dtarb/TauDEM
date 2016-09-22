@@ -50,8 +50,8 @@ DecompType tdpartition::decompType = DECOMP_BLOCK;
 
 int main(int argc,char **argv)
 {
-   char pfile[MAXLN],wfile[MAXLN],datasrc[MAXLN],lyrname[MAXLN],idfile[MAXLN];
-   int err,useOutlets=0,useMask=0,uselyrname=0,lyrno=0,thresh=0,i=1,writeid=0;
+   char pfile[MAXLN],wfile[MAXLN],swfile[MAXLN],datasrc[MAXLN],lyrname[MAXLN],idfile[MAXLN],upidfile[MAXLN];
+   int err,useOutlets=0,useMask=0,uselyrname=0,lyrno=0,thresh=0,i=1,writeid=0,useswg=0,writeupid=0;
    if(argc <= 2)
     {  	
 	   goto errexit;
@@ -70,6 +70,7 @@ int main(int argc,char **argv)
 			else goto errexit;
 		}
 	
+
 		else if(strcmp(argv[i],"-o")==0)
 		{
 			i++;
@@ -123,7 +124,8 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-
+		
+		   
 		else if(strcmp(argv[i],"-gw")==0)
 		{
 			i++;
@@ -145,13 +147,27 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
+
+		else if((strcmp(argv[i],"-upid")==0))// if subwatershed grid is used as input then write list of upstream watershed in a txt file
+		{
+			i++;
+			if(argc > i)
+			{
+				strcpy(upidfile,argv[i]);
+				writeupid=1;  
+				i++;
+			}
+			else goto errexit;
+		}
+	
+
 		else 
 		{
 			goto errexit;
 		}
 	}
 
-    if( (err=gagewatershed(pfile,wfile,datasrc,lyrname,uselyrname,lyrno,idfile,writeid)) != 0)
+    if( (err=gagewatershed(pfile,wfile,datasrc,lyrname,uselyrname,lyrno,idfile,writeid,writeupid,upidfile)) != 0)
         printf("Gage watershed error %d\n",err);
 
 	return 0;
