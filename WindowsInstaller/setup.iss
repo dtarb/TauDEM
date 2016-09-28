@@ -25,7 +25,6 @@
 ; *** SOURCE CONTROL REQUIREMENTS ****
 ; All the files (as listed below) under the WindowsInstaller folder are included in source control
 ; This script file (setup.ino).
-; Firewall.bat - Any time this file is updated it should be copied to the dir specified by the SoureDir param in the [Setup] section of this script
 ; taudem.bmp - Any time this file is updated it should be copied to the dir specified by the SoureDir param in the [Setup] section of this script
 
 
@@ -98,9 +97,9 @@ Source: "TauDEMArcGIS\*"; DestDir: "{app}\TauDEM5Arc"; Flags: ignoreversion recu
 [Run]
 ; install GDAL core components
 ; TODO: Implement functions to check if GDAL needs to be installed (all got the registry keys for all these 3 installations)
-Filename: "{app}\setup_files\GDAL-2.1.0.win32-py2.7.msi"; Flags: waituntilterminated shellexec
-Filename: "{app}\setup_files\gdal-201-1800-core.msi"; Flags: waituntilterminated shellexec; Check: not Is64BitInstallMode
-Filename: "{app}\setup_files\gdal-201-1800-x64-core.msi"; Flags: waituntilterminated shellexec; Check: Is64BitInstallMode  
+Filename: "{app}\setup_files\GDAL-2.1.0.win32-py2.7.msi"; Flags: waituntilterminated shellexec; Check: NeedsToInstallGDAL_PY()
+Filename: "{app}\setup_files\gdal-201-1800-core.msi"; Flags: waituntilterminated shellexec; Check: NeedsToInstallGDAL_C(False)
+Filename: "{app}\setup_files\gdal-201-1800-x64-core.msi"; Flags: waituntilterminated shellexec; Check: NeedsToInstallGDAL_C(True) 
  
 Filename: "{app}\setup_files\vc_redist.x86_2015.exe"; Flags: waituntilterminated; Check: NeedsToInstallRedist(False)
 Filename: "{app}\setup_files\vc_redist.x64_2015.exe"; Flags: waituntilterminated; Check: NeedsToInstallRedist(True)
@@ -204,6 +203,58 @@ begin
    else
       begin
         Result := True;
+        exit;
+      end;      
+end;
+
+function NeedsToInstallGDAL_PY(): boolean;
+// check if we need to install GDAL Python module
+begin      
+      
+   if RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\Classes\Installer\Products\7DB0C91EA9BCA914AAD09A56B9B9A75B') then
+      begin
+        Result := False;
+        exit;
+      end
+   else
+      begin
+        Result := True;
+        exit;
+      end;
+end;
+
+function NeedsToInstallGDAL_C(IsInstallAppX64: boolean): boolean;
+// checks if we need to install GDAL C++ library
+begin
+    if Is64BitInstallMode and IsInstallAppX64 then
+    begin    
+       if RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\Classes\Installer\Products\7E174159D1F9EFC4AA53953383A125AA') then
+          begin
+            Result := False;
+            exit;
+          end
+       else
+          begin
+            Result := True;
+            exit;
+          end;
+    end
+    else if not Is64BitInstallMode and not IsInstallAppX64 then
+      begin      
+         if RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\Classes\Installer\Products\81785C15296278C4EB911F279D9961F5') then
+            begin
+              Result := False;
+              exit;
+            end
+         else
+            begin
+              Result := True;
+              exit;
+            end;
+      end
+    else 
+      begin
+        Result := False;
         exit;
       end;      
 end;
