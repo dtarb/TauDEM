@@ -4,14 +4,13 @@
 
 ; ****  REQUIREMENTS FOR COMPILING THIS INSTALLER SCRIPT  ****
 ; The following files must exist in the directory defined by the SourceDir paramter under the [Setup] section below:
-; GDAL-1.9.2.win32-py2.7.exe (Python GDAL)
-; gdal-111-1600-core.msi   (C++ GDAL)
-; gdal-111-1600-x64-core.msi  (C++ GDAL)
-; mpi_x86.msi
-; mpi_x64.msi
-; vcredist_x86_2010.exe
-; vcredist_x64_2010.exe
-; Firewall.bat
+; GDAL-2.1.0.win32-py2.7.msi (Python GDAL)
+; gdal-201-1800-core.msi   (C++ GDAL for x86)
+; gdal-201-1800-x64-core.msi  (C++ GDAL for x64)
+; msmpisdk.msi    (Microsoft MPI v7.1)
+; MSMpiSetup.exe  (Microsoft MPI v7.1)
+; vcredist_x86_2010.exe  (Micosoft C++ 2010 x86 redistributable)
+; vcredist_x64_2010.exe  (Micosoft C++ 2010 x64 redistributable); 
 ; GDAL 32-bit library files must exist under the following directory (this directory should exists under the dir defined by SourceDir parameter): 
 ; GDAL_32/
 ; GDAL 64-bit library files must exist under the following directory (this directory should exists under the dir defined by SourceDir parameter): 
@@ -26,12 +25,11 @@
 ; *** SOURCE CONTROL REQUIREMENTS ****
 ; All the files (as listed below) under the WindowsInstaller folder are included in source control
 ; This script file (setup.ino).
-; Firewall.bat - Any time this file is updated it should be copied to the dir specified by the SoureDir param in the [Setup] section of this script
 ; taudem.bmp - Any time this file is updated it should be copied to the dir specified by the SoureDir param in the [Setup] section of this script
 
 
 #define MyAppName "TauDEM"
-#define MyAppVersion "5.3.6"
+#define MyAppVersion "5.3.7"
 #define MyAppPublisher "Utah State University"
 #define MyAppURL "http://hydrology.usu.edu/taudem/taudem5/index.html"
 
@@ -75,16 +73,16 @@ Name: "C:\GDAL"
 
 [Files]
 ; copy files 
-Source: "GDAL-1.9.2.win32-py2.7.exe"; DestDir: "{app}\setup_files"; Flags: ignoreversion
-Source: "gdal-111-1600-core.msi"; DestDir: "{app}\setup_files"; Flags: ignoreversion; Check: not Is64BitInstallMode
-Source: "gdal-111-1600-x64-core.msi"; DestDir: "{app}\setup_files"; Flags: ignoreversion; Check: Is64BitInstallMode
+Source: "GDAL-2.1.0.win32-py2.7.msi"; DestDir: "{app}\setup_files"; Flags: ignoreversion
+Source: "gdal-201-1800-core.msi"; DestDir: "{app}\setup_files"; Flags: ignoreversion; Check: not Is64BitInstallMode
+Source: "gdal-201-1800-x64-core.msi"; DestDir: "{app}\setup_files"; Flags: ignoreversion; Check: Is64BitInstallMode
 
-Source: "mpi_x86.msi"; DestDir: "{app}\setup_files"; Flags: ignoreversion; Check: not Is64BitInstallMode
-Source: "mpi_x64.msi"; DestDir: "{app}\setup_files"; Flags: ignoreversion; Check: Is64BitInstallMode
+Source: "msmpisdk.msi"; DestDir: "{app}\setup_files"; Flags: ignoreversion
+Source: "MSMpiSetup.exe"; DestDir: "{app}\setup_files"; Flags: ignoreversion
 
 ; since for 64bit installtion we need both x86 and x64 redestributables no need to check OS architecture for copying files
-Source: "vcredist_x86_2010.exe"; DestDir: "{app}\setup_files"; Flags: ignoreversion
-Source: "vcredist_x64_2010.exe"; DestDir: "{app}\setup_files"; Flags: ignoreversion
+Source: "vc_redist.x86_2015.exe"; DestDir: "{app}\setup_files"; Flags: ignoreversion
+Source: "vc_redist.x64_2015.exe"; DestDir: "{app}\setup_files"; Flags: ignoreversion
 
 Source: "GDAL_64\*"; DestDir: "C:\GDAL"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: Is64BitInstallMode
 Source: "GDAL_32\*"; DestDir: "C:\GDAL"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: not Is64BitInstallMode
@@ -94,21 +92,19 @@ Source: "TauDEM_Exe\win_64\*"; DestDir: "{app}\TauDEM5Exe"; Flags: ignoreversion
 
 Source: "TauDEMArcGIS\*"; DestDir: "{app}\TauDEM5Arc"; Flags: ignoreversion recursesubdirs createallsubdirs
 
-Source: "Firewall.bat"; DestDir: "{app}\setup_files"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Run]
 ; install GDAL core components
-Filename: "{app}\setup_files\GDAL-1.9.2.win32-py2.7.exe"; Flags: waituntilterminated shellexec
-Filename: "{app}\setup_files\gdal-111-1600-core.msi"; Flags: waituntilterminated shellexec; Check: not Is64BitInstallMode
-Filename: "{app}\setup_files\gdal-111-1600-x64-core.msi"; Flags: waituntilterminated shellexec; Check: Is64BitInstallMode  
+; TODO: Implement functions to check if GDAL needs to be installed (all got the registry keys for all these 3 installations)
+Filename: "{app}\setup_files\GDAL-2.1.0.win32-py2.7.msi"; Flags: waituntilterminated shellexec; Check: NeedsToInstallGDAL_PY()
+Filename: "{app}\setup_files\gdal-201-1800-core.msi"; Flags: waituntilterminated shellexec; Check: NeedsToInstallGDAL_C(False)
+Filename: "{app}\setup_files\gdal-201-1800-x64-core.msi"; Flags: waituntilterminated shellexec; Check: NeedsToInstallGDAL_C(True) 
  
-Filename: "{app}\setup_files\vcredist_x86_2010.exe"; Flags: waituntilterminated; Check: NeedsToInstallRedist(False)
-Filename: "{app}\setup_files\vcredist_x64_2010.exe"; Flags: waituntilterminated; Check: NeedsToInstallRedist(True)
+Filename: "{app}\setup_files\vc_redist.x86_2015.exe"; Flags: waituntilterminated; Check: NeedsToInstallRedist(False)
+Filename: "{app}\setup_files\vc_redist.x64_2015.exe"; Flags: waituntilterminated; Check: NeedsToInstallRedist(True)
 
-Filename: "{app}\setup_files\mpi_x86.msi"; Flags: waituntilterminated shellexec; Check: NeedsToInstallMPI(False)
-Filename: "{app}\setup_files\mpi_x64.msi"; Flags: waituntilterminated shellexec; Check: NeedsToInstallMPI(True)
-Filename: "{app}\setup_files\Firewall.bat"; Flags: waituntilterminated shellexec; AfterInstall: CleanUp('{app}\setup_files')
+Filename: "{app}\setup_files\MSMpiSetup.exe"; Flags: waituntilterminated shellexec; Check: NeedsToInstallMPI()
 
 
 [Registry]
@@ -139,21 +135,21 @@ begin
       '3. When prompted to Choose Setup Type for GDAL, choose "Typical".'#13 +
       '4. The installer will also add firewall exceptions to allow TauDEM programs to run. These allow MPI interprocess communication used in the parallel computations.  This is communication within your computer and not over any external network.'#13 +
       '5. The installer will also add the following path entries:' +
-      'C:\Program Files\Microsoft HPC Pack 2012\Bin\;C:\GDAL;C:\Program Files\GDAL;C:\Program Files\TauDEM\TauDEM5Exe'; 
+      'C:\Program Files\Microsoft MPI\Bin\;C:\GDAL;C:\Program Files\GDAL;C:\Program Files\TauDEM\TauDEM5Exe'; 
 
   if Is64BitInstallMode then
   begin
     UserPage := CreateInputQueryPage(wpWelcome,
       'The following programs will be installed', '',
-      'TauDEM version 5.3.5, GDAL 1.9.2 (Python 2.7), GDAL 111 (MSVC 2010) for 64 bit Winodws PC, Microsoft Visual C++ 2010 SP1 Redistributable Package (x86), ' +
-      'Microsoft Visual C++ 2010 SP1 Redistributable Package (x64), Microsoft HPC Pack 2012 MS-MPI Redistributable Package'#13#13 +  notes_string);   
+      'TauDEM version 5.3.7, GDAL 2.1.0 (Python 2.7), GDAL 201 (MSVC 2013) for 64 bit Windows PC, Microsoft Visual C++ 2015 Redistributable Package (x86), ' +
+      'Microsoft Visual C++ 2015 Redistributable Package (x64), Microsoft MPI'#13#13 +  notes_string);   
   end
   else
     begin
       UserPage := CreateInputQueryPage(wpWelcome,
       'The following programs will be installed', '',
-      'TauDEM version 5.3.5, GDAL 1.9.2 (Python 2.7), GDAL 111 (MSVC 2010) for 32 bit Windows PC, Microsoft Visual C++ 2010 SP1 Redistributable Package (x86), ' + 
-      'Microsoft HPC Pack 2012 MS-MPI Redistributable Package'#13#13 +  notes_string);
+      'TauDEM version 5.3.7, GDAL 2.1.0 (Python 2.7), GDAL 201 (MSVC 2013) for 32 bit Windows PC, Microsoft Visual C++ 2015 Redistributable Package (x86), ' + 
+      'Microsoft MPI'#13#13 +  notes_string);
     end
 end;
 
@@ -162,8 +158,8 @@ end;
 function NeedsToInstallRedist(IsInstallAppX64: boolean): boolean;
 begin
     if Is64BitInstallMode and IsInstallAppX64 then
-    begin
-       if RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\Classes\Installer\Products\1926E8D15D0BCE53481466615F760A7F') then
+    begin    
+       if RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\WOW6432Node\Microsoft\VisualStudio\14.0\VC\Runtimes\x64') then
           begin
             Result := False;
             exit;
@@ -174,9 +170,9 @@ begin
             exit;
           end;
     end
-    else if Is64BitInstallMode and not IsInstallAppX64 then
-      begin
-         if RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\Classes\Installer\Products\1D5E3C0FEDA1E123187686FED06E995A') then
+    else if not Is64BitInstallMode and not IsInstallAppX64 then
+      begin      
+         if RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\WOW6432Node\Microsoft\VisualStudio\14.0\VC\Runtimes\x86') then
             begin
               Result := False;
               exit;
@@ -189,26 +185,50 @@ begin
       end
     else 
       begin
-         if RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\Classes\Installer\Products\1D5E3C0FEDA1E123187686FED06E995A') then
-            begin
-              Result := False;
-              exit;
-            end
-         else
-            begin
-              Result := True;
-              exit;
-            end;
-      end;
+        Result := False;
+        exit;
+      end;      
 end;
 
 // Check if we need to install MPI
-// If either a 64 or 32 bit version of MPI is already installed, then this function returns False, otherwise True
-function NeedsToInstallMPI(IsInstallAppX64: boolean): boolean;
+// If MPI is already installed, then this function returns False, otherwise True
+function NeedsToInstallMPI(): boolean;
+begin    
+   
+   if RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\WOW6432Node\Microsoft\MPI') then
+      begin
+        Result := False;
+        exit;
+      end
+   else
+      begin
+        Result := True;
+        exit;
+      end;      
+end;
+
+function NeedsToInstallGDAL_PY(): boolean;
+// check if we need to install GDAL Python module
+begin      
+      
+   if RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\Classes\Installer\Products\7DB0C91EA9BCA914AAD09A56B9B9A75B') then
+      begin
+        Result := False;
+        exit;
+      end
+   else
+      begin
+        Result := True;
+        exit;
+      end;
+end;
+
+function NeedsToInstallGDAL_C(IsInstallAppX64: boolean): boolean;
+// checks if we need to install GDAL C++ library
 begin
     if Is64BitInstallMode and IsInstallAppX64 then
-    begin
-       if RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\Classes\Installer\Products\618A082FBC0C00743A6CF9DDC808DF81') then
+    begin    
+       if RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\Classes\Installer\Products\7E174159D1F9EFC4AA53953383A125AA') then
           begin
             Result := False;
             exit;
@@ -220,8 +240,8 @@ begin
           end;
     end
     else if not Is64BitInstallMode and not IsInstallAppX64 then
-      begin
-         if RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\Classes\Installer\Products\2B417A095389B814BBF02657C04C242B') then
+      begin      
+         if RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\Classes\Installer\Products\81785C15296278C4EB911F279D9961F5') then
             begin
               Result := False;
               exit;
@@ -231,7 +251,12 @@ begin
               Result := True;
               exit;
             end;
-      end;
+      end
+    else 
+      begin
+        Result := False;
+        exit;
+      end;      
 end;
 
 function NeedsAddPath(NewPath: string; Win64: boolean; CheckOSArchitecture: boolean): boolean;

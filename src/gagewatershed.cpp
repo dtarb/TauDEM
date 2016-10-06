@@ -69,7 +69,10 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 	int *dsids=NULL;
 	int idnodata;
 	FILE *fidout1;
-    fidout1 = fopen(upidfile,"a");
+	if (writeupid == 1) {		
+		fidout1 = fopen(upidfile, "a");
+	}
+	
 	double begint = MPI_Wtime();
 	tiffIO p(pfile,SHORT_TYPE);
 	long totalX = p.getTotalX();
@@ -231,13 +234,14 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 				/* test if neighbor drains towards cell excluding boundaries */
 				short sdir = flowData->getData(in,jn,tempShort);
 		       
-				if(flowData->isNodata(in,jn))	{ 
+				if(flowData->isNodata(in,jn) && writeupid == 1)	{ 
 					 double mx,my;
 					int gx,gy;  //  Global x and y (col and row) coordinates
 						flowData->localToGlobal(in,jn,gx,gy);
 						p.globalXYToGeo(gx,gy,mx,my);
-						fprintf(fidout1,"%f, %f\n",mx,my);
-					    fflush(fidout1);
+						fprintf(fidout1, "%f, %f\n", mx, my);
+						fflush(fidout1);						
+						
 						//myfile<<mx<<","<<my<<endl;
 				}
 				if(sdir > 0) 
