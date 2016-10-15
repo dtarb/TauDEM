@@ -159,21 +159,15 @@ tiffIO::tiffIO(char *fname, DATA_TYPE newtype) {
        datatype = newtype;
 	if (datatype == SHORT_TYPE) {
 		nodata = new short;
-		*((short*) nodata) = (short) GDALGetRasterNoDataValue(bandh, NULL);
-		float noDataDiff = *((short*)nodata) - GDALGetRasterNoDataValue(bandh, NULL);  // This evaluates if the typecasting has changed the no data value.
-		if(noDataDiff > 1e-6) (*((short*)nodata))=MISSINGSHORT;  //If value was changed use the standard missing short value.  This is a hack to account for fact that file being read may be of a different data type with no data value that cannot be typecast into short
+		*((short*) nodata) = (short) GDALGetRasterNoDataValue(bandh, NULL);		
 
 	} else if (datatype == FLOAT_TYPE) {
 		nodata = new float;
-		*((float*) nodata) = (float) GDALGetRasterNoDataValue(bandh, NULL);
-		float noDataDiff = *((float*)nodata) - GDALGetRasterNoDataValue(bandh, NULL);  // This evaluates if the typecasting has changed the no data value.
-		if(noDataDiff > 1e-6) (*((float*)nodata))=MISSINGFLOAT;  //If value was changed use the standard missing short value.  This is a hack to account for fact that file being read may be of a different data type with no data value that cannot be typecast into short
+		*((float*) nodata) = (float) GDALGetRasterNoDataValue(bandh, NULL);		
 
 	} else if (datatype == LONG_TYPE) {
 		nodata = new int32_t;
-		*((int32_t*) nodata) = (int32_t) GDALGetRasterNoDataValue(bandh, NULL);
-		float noDataDiff = *((int32_t*)nodata) - GDALGetRasterNoDataValue(bandh, NULL);  // This evaluates if the typecasting has changed the no data value.
-		if(noDataDiff > 1e-6) (*((int32_t*)nodata))=MISSINGLONG;  //If value was changed use the standard missing short value.  This is a hack to account for fact that file being read may be of a different data type with no data value that cannot be typecast into short
+		*((int32_t*) nodata) = (int32_t) GDALGetRasterNoDataValue(bandh, NULL);		
 
 	}
 
