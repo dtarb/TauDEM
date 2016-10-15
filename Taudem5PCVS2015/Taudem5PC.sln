@@ -63,8 +63,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ogrtest", "ogrtest\ogrtest.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SinmapSI", "SinmapSI\SinmapSI.vcxproj", "{4C94C630-FAFC-4EC9-8639-336E6FD7A85C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FlowdirCond", "FlowdirCond\FlowdirCond.vcxproj", "{0799D1C7-57FD-4CBB-BEB0-65477E9E8B86}"
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B14788A2-B826-401F-A9AB-D84B1ED3D278}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FlowDirCond", "FlowDirCond\FlowDirCond.vcxproj", "{0799D1C7-57FD-4CBB-BEB0-65477E9E8B86}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

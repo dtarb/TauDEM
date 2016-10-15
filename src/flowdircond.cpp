@@ -94,6 +94,7 @@ int flowdircond( char *pfile, char *zfile, char *zfdcfile)
 	tiffIO zIO(zfile,FLOAT_TYPE);
 	if(!p.compareTiff(zIO)) {
 		printf("File sizes do not match\n%s\n",zfile);
+		fflush(stdout);
 		MPI_Abort(MCW,5);
 		return 1;  
 	}
