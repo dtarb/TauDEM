@@ -1,4 +1,4 @@
-__author__ = 'Pabitra'
+# Created by: Pabitra Dash
 
 import os
 import subprocess
@@ -70,5 +70,8 @@ arcpy.AddMessage('\nProcess started:\n')
 start_message = "Please wait a few seconds. Computation is in progress ..."
 arcpy.AddMessage('\n' + start_message + '\n')
 for line in process.stdout.readlines():
-    if not start_message in line:
+    if isinstance(line, bytes):	    # true in Python 3
+        line = line.decode()
+
+    if start_message not in line:
         arcpy.AddMessage(line)
