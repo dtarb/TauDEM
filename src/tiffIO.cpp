@@ -159,13 +159,16 @@ tiffIO::tiffIO(char *fname, DATA_TYPE newtype) {
        datatype = newtype;
 	if (datatype == SHORT_TYPE) {
 		nodata = new short;
-		*((short*) nodata) = (short) GDALGetRasterNoDataValue(bandh, NULL);
+		*((short*) nodata) = (short) GDALGetRasterNoDataValue(bandh, NULL);		
+
 	} else if (datatype == FLOAT_TYPE) {
 		nodata = new float;
-		*((float*) nodata) = (float) GDALGetRasterNoDataValue(bandh, NULL);
+		*((float*) nodata) = (float) GDALGetRasterNoDataValue(bandh, NULL);		
+
 	} else if (datatype == LONG_TYPE) {
 		nodata = new int32_t;
-		*((int32_t*) nodata) = (int32_t) GDALGetRasterNoDataValue(bandh, NULL);
+		*((int32_t*) nodata) = (int32_t) GDALGetRasterNoDataValue(bandh, NULL);		
+
 	}
 
 }
