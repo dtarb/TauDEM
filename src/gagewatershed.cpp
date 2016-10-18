@@ -41,17 +41,19 @@ email:  dtarb@usu.edu
 
 #include <mpi.h>
 #include <math.h>
+#include <iostream>
 #include <queue>
 #include "commonLib.h"
 #include "linearpart.h"
 #include "createpart.h"
 #include "tiffIO.h"
+#include "ogrsf_frmts.h"
 using namespace std;
 
 
 
 
-int gagewatershed( char *pfile, char *wfile, char* datasrc,char* lyrname,int uselyrname,int lyrno, char *idfile, int writeid) 
+int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int uselyrname,int lyrno, char *idfile,int writeid, int writeupid,char *upidfile) 
 {//1
 
 	MPI_Init(NULL,NULL);{
@@ -66,7 +68,11 @@ int gagewatershed( char *pfile, char *wfile, char* datasrc,char* lyrname,int use
 	int *ids=NULL;
 	int *dsids=NULL;
 	int idnodata;
-
+	FILE *fidout1;
+	if (writeupid == 1) {		
+		fidout1 = fopen(upidfile, "a");
+	}
+	
 	double begint = MPI_Wtime();
 	tiffIO p(pfile,SHORT_TYPE);
 	long totalX = p.getTotalX();
@@ -145,13 +151,14 @@ int gagewatershed( char *pfile, char *wfile, char* datasrc,char* lyrname,int use
 	double readt = MPI_Wtime();
 	//printf("Read time %lf\n",readt);
 	//fflush(stdout);
-
+	 // writing upstream coordinates
+	
 	//Create empty partition to store new information
 	tdpartition *wshed;
 	wshed = CreateNewPartition(LONG_TYPE, totalX, totalY, dxA, dyA, MISSINGLONG);
 
 	//Convert geo coords to grid coords
-	int *outletsX, *outletsY;
+	int *outletsX, *outletsY; short outletpointswgrid; long tempSubwgrid; 
 	outletsX = new int[numOutlets];
 	outletsY = new int[numOutlets];
 
@@ -182,7 +189,7 @@ int gagewatershed( char *pfile, char *wfile, char* datasrc,char* lyrname,int use
 	float tempFloat=0.0;
 	short tempShort=0;
 	int32_t tempLong=0;
-
+	int myid=0;
 	tdpartition *neighbor;
 	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, MISSINGSHORT);
 
@@ -201,7 +208,6 @@ int gagewatershed( char *pfile, char *wfile, char* datasrc,char* lyrname,int use
 	flowData->share();
 	neighbor->clearBorders();
 	wshed->share();
-
 	//flowData->getData(500,600,tempShort);
 	finished = false;
 	//Ring terminating while loop
@@ -227,6 +233,17 @@ int gagewatershed( char *pfile, char *wfile, char* datasrc,char* lyrname,int use
 				jn=j+d2[k];
 				/* test if neighbor drains towards cell excluding boundaries */
 				short sdir = flowData->getData(in,jn,tempShort);
+		       
+				if(flowData->isNodata(in,jn) && writeupid == 1)	{ 
+					 double mx,my;
+					int gx,gy;  //  Global x and y (col and row) coordinates
+						flowData->localToGlobal(in,jn,gx,gy);
+						p.globalXYToGeo(gx,gy,mx,my);
+						fprintf(fidout1, "%f, %f\n", mx, my);
+						fflush(fidout1);						
+						
+						//myfile<<mx<<","<<my<<endl;
+				}
 				if(sdir > 0) 
 				{
 					if((sdir-k==4 || sdir-k==-4))
@@ -262,7 +279,7 @@ int gagewatershed( char *pfile, char *wfile, char* datasrc,char* lyrname,int use
 		//Pass information
 		neighbor->addBorders();
 		wshed->share();
-
+		
 		//If this created a cell with no contributing neighbors, put it on the queue
 		for(i=0; i<nx; i++){
 			if(neighbor->getData(i, -1, tempShort)!=0 && neighbor->getData(i, 0, tempShort)==0){
@@ -278,15 +295,20 @@ int gagewatershed( char *pfile, char *wfile, char* datasrc,char* lyrname,int use
 		}
 		//Clear out borders
 		neighbor->clearBorders();
-	
+	   //
+		
 		//Check if done
 		finished = que.empty();
 		finished = wshed->ringTerm(finished);
+		
 	}
+
+	
+
 	//  Reduce all values to the 0 process
 	int *dsidsr;	
     dsidsr=new int[numOutlets];
-	MPI_Reduce(dsids, dsidsr,numOutlets,MPI_INT, MPI_MAX,0, MCW);
+	MPI_Reduce(dsids,dsidsr,numOutlets,MPI_INT, MPI_MAX,0, MCW);
 
 	//Stop timer
 	double computet = MPI_Wtime();
@@ -301,11 +323,13 @@ int gagewatershed( char *pfile, char *wfile, char* datasrc,char* lyrname,int use
 				fprintf(fidout,"id iddown\n");
 				for(i=0; i<numOutlets; i++)
 				{
+
 					fprintf(fidout,"%d %d\n",ids[i],dsidsr[i]);
 				}
 		}
 	}
-
+	
+	
 	//Create and write TIFF file
 	long lNodata = MISSINGLONG;
 	tiffIO wshedIO(wfile, LONG_TYPE, &lNodata, p);
@@ -316,12 +340,14 @@ int gagewatershed( char *pfile, char *wfile, char* datasrc,char* lyrname,int use
 		printf("Size: %d\nRead time: %f\nCompute time: %f\nWrite time: %f\nTotal time: %f\n",
 		  size,readt-begint, computet-readt, writet-computet,writet-begint);
 
+	
+
+	
 	//Brackets force MPI-dependent objects to go out of scope before Finalize is called
 	}MPI_Finalize();
 
 	return 0;
 }
-
 
 
 
