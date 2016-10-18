@@ -83,9 +83,10 @@ CFLAGS=-g -Wall
 CFLAGS=-g
 LARGEFILEFLAG= -D_FILE_OFFSET_BITS=64
 #INCDIRS=-I/usr/lib/openmpi/include -I/usr/include/gdal
+INCDIRS=`gdal-config --cflags`
 #LIBDIRS=-lgdal
-LDLIBS=-L/usr/local/lib -lgdal
-
+#LDLIBS=-L/usr/local/lib -lgdal
+LDLIBS=`gdal-config --libs`
 
 #Rules: when and how to make a file
 all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ../gridnet ../dinfflowdir ../d8flowdir ../d8flowpathextremeup ../d8hdisttostrm ../dinfavalanche ../dinfconclimaccum ../dinfdecayaccum ../dinfdistdown ../dinfdistup ../dinfrevaccum ../dinftranslimaccum ../dinfupdependence ../lengtharea ../peukerdouglas ../pitremove ../slopearea ../slopearearatio ../slopeavedown ../threshold ../twi ../gagewatershed ../connectdown clean 
