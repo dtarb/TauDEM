@@ -61,7 +61,10 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 	int rank,size;
 	MPI_Comm_rank(MCW,&rank);//returns the rank of the calling processes in a communicator
 	MPI_Comm_size(MCW,&size);//returns the number of processes in a communicator
-	if(rank==0)printf("Gage Watershed version %s\n",TDVERSION);
+	if (rank == 0) {
+		printf("Gage Watershed version %s\n", TDVERSION);
+		fflush(stdout);
+	}
 		
 	double *x=NULL, *y=NULL;
 	int numOutlets=0;
