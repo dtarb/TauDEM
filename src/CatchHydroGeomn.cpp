@@ -50,7 +50,7 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)  
 {
-   char handfile[MAXLN], catchfile[MAXLN], slpfile[MAXLN], hfile[MAXLN], hpfile[MAXLN];
+   char handfile[MAXLN], catchfile[MAXLN], catchlistfile[MAXLN], slpfile[MAXLN], hfile[MAXLN], hpfile[MAXLN];
    int err, nmax;
       
    if(argc < 2) goto errexit;
@@ -87,6 +87,16 @@ int main(int argc,char **argv)
 				}
 				else goto errexit;
 			}
+			else if(strcmp(argv[i],"-catchlist")==0)
+			{
+				i++;
+				if(argc > i)
+				{
+					strcpy(catchlistfile,argv[i]);
+					i++;
+				}
+				else goto errexit;
+			}
 			else if(strcmp(argv[i],"-slp")==0)
 			{
 				i++;
@@ -117,6 +127,7 @@ int main(int argc,char **argv)
 				}
 				else goto errexit;
 			}
+/*
 			else if (strcmp(argv[i], "-nmax") == 0)
 			{
 				i++;
@@ -127,24 +138,24 @@ int main(int argc,char **argv)
 				}
 				else goto errexit;
 			}
+*/
 		    else goto errexit;
 		}
    }
-    if((err=catchhydrogeo(handfile, catchfile, slpfile, hfile, hpfile, nmax)) != 0)
+    if((err=catchhydrogeo(handfile, catchfile, catchlistfile, slpfile, hfile, hpfile)) != 0)
         printf("Catchment Hydraulic Property Error %d\n",err);
 
 	return 0;
 errexit:
 //   printf("Simple Use:\n %s <basefilename>\n",argv[0]);
    printf("Use with specific file names:\n %s -hand <handfile>\n",argv[0]);
-   printf("-catch <catchfile> -slp <slpfile> -h <hfile> -table <hpfile> -nmax <nmax> \n");
+   printf("-catch <catchfile> -catchlist <catchidlistfile> -slp <slpfile> -h <hfile> -table <hpfile> \n");
 //   printf("<basefilename> is the name of the base digital elevation model without suffixes for simple input. Suffixes 'plen', 'ad8' and 'ss' will be appended. \n");
    printf("<handfile> is the name of the input hand raster file.\n");
    printf("<catchfile> is the name of the input catchment raster file.\n");
    printf("<slpfile> is the name of the input D-inf slope file.\n");
    printf("<hfile> is the name of the input stage table.\n");
    printf("<hpfile> is the name of the output hydraulic property file.\n");
-   printf("<nmax> is the number of input catchments.\n");
    return 0; 
 } 
    

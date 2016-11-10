@@ -1,7 +1,6 @@
 /*  CatchHydroGeo function evaluates channel hydraulic properties
   based on HAND(Height Above Nearest Drainage), D-inf slope, 
-  and catchment grid inputs, a stage height text file, and 
-  a parameter nmax.
+  and catchment grid inputs, reachid list file, and a stage height text file.
 
   David Tarboton, Xing Zheng
   Utah State University, University of Texas at Austin
@@ -41,7 +40,7 @@ email:  dtarb@usu.edu
 
 //  This software is distributed from http://hydrology.usu.edu/taudem/
 
-#include <vector>
+#include <unordered_map>
 #include <mpi.h>
 #include <math.h>
 #include "commonLib.h"
@@ -67,7 +66,7 @@ int readline(FILE *fp, char *fline)
 	return(1);
 }
 
-int catchhydrogeo(char *handfile, char*catchfile, char *slpfile, char *hfile, char *hpfile, int nmax)
+int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpfile, char *hfile, char *hpfile)
 {
 	MPI_Init(NULL, NULL); {
 
@@ -119,23 +118,48 @@ int catchhydrogeo(char *handfile, char*catchfile, char *slpfile, char *hfile, ch
 		slpData = CreateNewPartition(slp.getDatatype(), totalX, totalY, dxA, dyA, slp.getNodata());
 		slp.read(xstart, ystart, slpData->getny(), slpData->getnx(), slpData->getGridPointer());
 
+		FILE *fp;
+		char headers[MAXLN];
+		// get catch list and build hash table
+		int ncatch; int * catchlist;
+		if (rank == 0) {
+			ncatch=0;
+			fp = fopen(catchlistfile, "r");
+			int v; int countLine = 1, i=0;
+			while (fscanf(fp, "%d\n", &v) != EOF) {
+				if (countLine == 1) {
+					ncatch = v; 
+					catchlist = (int *) malloc(sizeof(int) * ncatch);
+					countLine=0; continue;
+				}
+				catchlist[i++] = v;
+			}
+			fclose(fp);
+		}
+		MPI_Bcast(&ncatch, 1, MPI_INT, 0, MCW);
+		if (rank != 0) catchlist = (int *) malloc(sizeof(int) * ncatch);
+		MPI_Bcast(catchlist, ncatch, MPI_INT, 0, MCW);
+		unordered_map<int, int> catchhash;
+		for (int i=0; i<ncatch; i++) catchhash[catchlist[i]] = i;
+
 		//Read stage table
-		int nheight = 0;
-		double *height; 
+		int nheight;
 		//vector<float> h(nheight);  //DGT this does not work because nheight is still 0 here
 		if (rank == 0) {
-			FILE *fp;
+			nheight = 0;
 			fp = fopen(hfile, "r");
-			char headers[MAXLN];
 			//Count the number of lines 
 			while (fgets(headers, sizeof headers, fp) != NULL)
 			{
 				nheight++;
 			}
 			fclose(fp);
-			//Read stage into vector
 			nheight = nheight - 1;  // First line is header
-			height = new double[nheight];
+		}
+		//Read stage into vector
+		MPI_Bcast(&nheight, 1, MPI_INT, 0, MCW);
+		double *height = (double *) malloc(sizeof(double) * nheight); 
+		if (rank == 0) {
 			fp = fopen(hfile, "r");
 			readline(fp, headers);
 			for(int j=0; j<nheight; j++)
@@ -144,13 +168,24 @@ int catchhydrogeo(char *handfile, char*catchfile, char *slpfile, char *hfile, ch
 			} 
 			fclose(fp);
 		}
-		//TODO - Here need to push nheight and height to other processes for parallel
+		MPI_Bcast(height, nheight, MPI_DOUBLE, 0, MCW);
+#ifdef DEBUG
+		printf("CatchHydroGeo %d: startx=%d starty=%d nx=%d ny=%d; nheight=%d, [0]=%.3lf; ncatch=%d\n", rank, xstart, ystart, nx, ny, nheight, height[0], catchhash.size());
+#endif
 
 		//Create output vectors
-		vector< vector<int> > CellCount(nmax, vector<int>(nheight, 0));
-		vector< vector<float> > SurfaceArea(nmax, vector<float>(nheight, 0.0));
-		vector< vector<float> > BedArea(nmax, vector<float>(nheight, 0.0));
-		vector< vector<float> > Volume(nmax, vector<float>(nheight, 0.0));
+		int CellCount[nheight * ncatch]; // row - height; column - catchid
+		float SurfaceArea[nheight * ncatch];
+		float BedArea[nheight * ncatch];
+		float Volume[nheight * ncatch];
+		for (int i=0; i<nheight; i++) {
+			for (int j=0; j<ncatch; j++) {
+				CellCount[i*ncatch + j] = 0;
+				SurfaceArea[i*ncatch + j] = 0.0;
+				BedArea[i*ncatch + j] = 0.0;
+				Volume[i*ncatch + j] = 0.0;
+			}
+		}
 
 		long i, j, k;
 		float temphand = 0.0;
@@ -171,13 +206,13 @@ int catchhydrogeo(char *handfile, char*catchfile, char *slpfile, char *hfile, ch
 					slpData->getData(i, j, tempslp);
 					for (k = 0; k < nheight; k++) {
 						if (temphand < height[k]) {  // DGT prefers strictly less than here.  If the depth is 0, I treat it as dry
-							CellCount[tempcatch][k] = CellCount[tempcatch][k] + 1;
+							CellCount[k*ncatch + catchhash[tempcatch]] += 1;
 							double dxc, dyc, cellArea;
 							handData->getdxdyc(j, dxc, dyc);  // This function gets latitude dependent dx and dy for each cell, better than averages
 							cellArea = dxc*dyc;
-							SurfaceArea[tempcatch][k] = SurfaceArea[tempcatch][k] + cellArea;
-							BedArea[tempcatch][k] = BedArea[tempcatch][k] + cellArea*sqrt(1 + tempslp*tempslp);
-							Volume[tempcatch][k] = Volume[tempcatch][k] + (height[k] - temphand)*cellArea;
+							SurfaceArea[k*ncatch + catchhash[tempcatch]] += cellArea;
+							BedArea[k*ncatch + catchhash[tempcatch]] += cellArea*sqrt(1 + tempslp*tempslp);
+							Volume[k*ncatch + catchhash[tempcatch]] +=  (height[k] - temphand)*cellArea;
 						}
 					}
 				}
@@ -185,36 +220,35 @@ int catchhydrogeo(char *handfile, char*catchfile, char *slpfile, char *hfile, ch
 		}
 
 		//MPI output reduce
-		vector< vector<int> > GCellCount(nmax, vector<int>(nheight, 0));
-		vector< vector<float> > GSurfaceArea(nmax, vector<float>(nheight, 0.0));
-		vector< vector<float> > GBedArea(nmax, vector<float>(nheight, 0.0));
-		vector< vector<float> > GVolume(nmax, vector<float>(nheight, 0.0));
+		int GCellCount[nheight * ncatch]; // row - height; column - catchid
+		float GSurfaceArea[nheight * ncatch];
+		float GBedArea[nheight * ncatch];
+		float GVolume[nheight * ncatch];
 		// TODO may be able to do Reduce as a vector operation without loops
-		for (i = 0; i < nmax; i++) {
-			for (j = 0; j < nheight; j++) {
-				MPI_Reduce(&CellCount[i][j], &GCellCount[i][j], 1, MPI_INT, MPI_SUM, 0, MCW);
-				MPI_Reduce(&SurfaceArea[i][j], &GSurfaceArea[i][j], 1, MPI_FLOAT, MPI_SUM, 0, MCW);
-				MPI_Reduce(&BedArea[i][j], &GBedArea[i][j], 1, MPI_FLOAT, MPI_SUM, 0, MCW);
-				MPI_Reduce(&Volume[i][j], &GVolume[i][j], 1, MPI_FLOAT, MPI_SUM, 0, MCW);
-			}
-		}
+		MPI_Reduce(CellCount, GCellCount, nheight * ncatch, MPI_INT, MPI_SUM, 0, MCW);
+		MPI_Reduce(SurfaceArea, GSurfaceArea, nheight * ncatch, MPI_FLOAT, MPI_SUM, 0, MCW);
+		MPI_Reduce(BedArea, GBedArea, nheight * ncatch, MPI_FLOAT, MPI_SUM, 0, MCW);
+		MPI_Reduce(Volume, GVolume, nheight * ncatch, MPI_FLOAT, MPI_SUM, 0, MCW);
 		//Write results
 		if (rank == 0) {
 			FILE *fp;
 			fp = fopen(hpfile, "w");
 			fprintf(fp, "CatchId, Stage, Number of Cells, SurfaceArea (m2), BedArea (m2), Volume (m3)\n");
 			int i, j;
-			for (i = 0; i < nmax; i++) {
+			for (i = 0; i < ncatch; i++) {
 				for (j = 0; j < nheight; j++) {
 					fprintf(fp, "%d, ", i);
 					fprintf(fp, "%f, ", height[j]);
-					fprintf(fp, "%d, ", GCellCount[i][j]);
-					fprintf(fp, "%f, ", GSurfaceArea[i][j]);
-					fprintf(fp, "%f, ", GBedArea[i][j]);
-					fprintf(fp, "%f\n", GVolume[i][j]);
+					fprintf(fp, "%d, ", GCellCount[j * ncatch + i]);
+					fprintf(fp, "%f, ", GSurfaceArea[j * ncatch + i]);
+					fprintf(fp, "%f, ", GBedArea[j * ncatch + i]);
+					fprintf(fp, "%f\n", GVolume[j * ncatch + i]);
 				}
 			}
 		}
+
+		free(catchlist);
+		free(height);
 
 		//Stop timer
 		end = MPI_Wtime();
