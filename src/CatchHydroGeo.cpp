@@ -237,7 +237,7 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 			int i, j;
 			for (i = 0; i < ncatch; i++) {
 				for (j = 0; j < nheight; j++) {
-					fprintf(fp, "%d, ", i);
+					fprintf(fp, "%d, ", catchlist[i]);
 					fprintf(fp, "%f, ", height[j]);
 					fprintf(fp, "%d, ", GCellCount[j * ncatch + i]);
 					fprintf(fp, "%f, ", GSurfaceArea[j * ncatch + i]);
