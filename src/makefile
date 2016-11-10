@@ -73,14 +73,15 @@ THRESHOLD = Threshold.o Thresholdmn.o $(OBJFILES)
 TWI = TWI.o TWImn.o $(OBJFILES)
 GAGEWATERSHED = gagewatershed.o gagewatershedmn.o $(OBJFILES) $(SHAPEFILES)
 CONNECTDOWN = ConnectDown.o ConnectDownmn.o $(OBJFILES) $(SHAPEFILES)
+CATCHHYDROGEO = CatchHydroGeo.o CatchHydroGeomn.o $(OBJFILES) $(SHAPEFILES)
 
 
 
 #The following are compiler flags common to all building rules
-CC = mpic++
-CFLAGS=-O2
-CFLAGS=-g -Wall
-CFLAGS=-g
+#CC = mpic++
+CC = mpicxx
+CFLAGS=-g -DDEBUG -std=c++11
+CFLAGS=-O2 -std=c++11
 LARGEFILEFLAG= -D_FILE_OFFSET_BITS=64
 #INCDIRS=-I/usr/lib/openmpi/include -I/usr/include/gdal
 INCDIRS=`gdal-config --cflags`
@@ -89,7 +90,7 @@ INCDIRS=`gdal-config --cflags`
 LDLIBS=`gdal-config --libs`
 
 #Rules: when and how to make a file
-all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ../gridnet ../dinfflowdir ../d8flowdir ../d8flowpathextremeup ../d8hdisttostrm ../dinfavalanche ../dinfconclimaccum ../dinfdecayaccum ../dinfdistdown ../dinfdistup ../dinfrevaccum ../dinftranslimaccum ../dinfupdependence ../lengtharea ../peukerdouglas ../pitremove ../slopearea ../slopearearatio ../slopeavedown ../threshold ../twi ../gagewatershed ../connectdown clean 
+all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ../gridnet ../dinfflowdir ../d8flowdir ../d8flowpathextremeup ../d8hdisttostrm ../dinfavalanche ../dinfconclimaccum ../dinfdecayaccum ../dinfdistdown ../dinfdistup ../dinfrevaccum ../dinftranslimaccum ../dinfupdependence ../lengtharea ../peukerdouglas ../pitremove ../slopearea ../slopearearatio ../slopeavedown ../threshold ../twi ../gagewatershed ../connectdown ../catchhydrogeo clean 
 
 ../aread8 : $(D8FILES)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(D8FILES) $(LDLIBS) $(LDFLAGS)
@@ -174,6 +175,9 @@ all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ..
 
 ../connectdown : $(CONNECTDOWN)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(CONNECTDOWN) $(LDLIBS) $(LDFLAGS)
+	
+../catchhydrogeo : $(CATCHHYDROGEO)
+	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(CATCHHYDROGEO) $(LDLIBS) $(LDFLAGS)
 	
 #Inference rule - states a general rule for compiling .o files
 %.o : %.cpp
