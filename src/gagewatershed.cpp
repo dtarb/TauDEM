@@ -70,6 +70,8 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 	int numOutlets=0;
 	int *ids=NULL;
 	int *dsids=NULL;
+	bool *idsout = NULL;
+	int numOutletsout;
 	int idnodata;
 	FILE *fidout1;
 	if (writeupid == 1) {		
@@ -123,6 +125,7 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 		MPI_Bcast(ids, numOutlets, MPI_INT, 0, MCW);
 		MPI_Bcast(&idnodata,1,MPI_INT,0,MCW);
 	}
+	idsout = new bool[numOutlets];  // Keep track of outlets that are output to avoid same grid cell outlets
 	dsids=new int[numOutlets];
 
 	//printf("Rank: %d, Numoutlets: %d\n",rank,numOutlets); fflush(stdout);
@@ -169,19 +172,25 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 	node temp;
 	queue<node> que;
 
-	for( int i=0; i<numOutlets; i++)
+	for (int i = 0; i < numOutlets; i++)
 	{
 		p.geoToGlobalXY(x[i], y[i], outletsX[i], outletsY[i]);
 		int xlocal, ylocal;
-		wshed->globalToLocal(outletsX[i], outletsY[i],xlocal,ylocal);
-		if(wshed->isInPartition(xlocal,ylocal)){   //xOutlets[i], yOutlets[i])){
-			wshed->setData(xlocal,ylocal,(int32_t)ids[i]);  //xOutlets[i], yOutlets[i], (long)ids[i]);
-							//Push outlet cells on to que
-						temp.x = xlocal;
-						temp.y = ylocal;
-						que.push(temp);	
+		wshed->globalToLocal(outletsX[i], outletsY[i], xlocal, ylocal);
+
+		dsids[i] = idnodata;  //  Set down id
+		idsout[i] = false;  // Set indicator of whether to output
+		if (wshed->isInPartition(xlocal, ylocal)) {   //xOutlets[i], yOutlets[i])){
+			if (wshed->isNodata(xlocal, ylocal)) {  // Only define outlet grid cell if not already defined to check for duplicate outlet points
+				wshed->setData(xlocal, ylocal, (int32_t)ids[i]);  //xOutlets[i], yOutlets[i], (long)ids[i]);
+																  //Push outlet cells on to que
+				temp.x = xlocal;
+				temp.y = ylocal;
+				que.push(temp);				
+				idsout[i] = true;
+			}
 		}
-		dsids[i]= idnodata;  
+		
 	}
 
 
@@ -272,7 +281,7 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 							int iidex;
 							for(iidex=0; iidex<numOutlets; iidex++)
 							{
-								if(ids[iidex]==idup)break;
+								if(idsout[iidex]==idup)break;
 							}
 							dsids[iidex]=idme;
 						}
@@ -311,8 +320,11 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 
 	//  Reduce all values to the 0 process
 	int *dsidsr;	
+	bool *dsiout;
     dsidsr=new int[numOutlets];
+	dsiout = new bool[numOutlets];
 	MPI_Reduce(dsids,dsidsr,numOutlets,MPI_INT, MPI_MAX,0, MCW);
+	MPI_Reduce(idsout, dsiout, numOutlets, MPI_LOGICAL, MPI_LOR, 0, MCW);
 
 	//Stop timer
 	double computet = MPI_Wtime();
@@ -327,8 +339,8 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 				fprintf(fidout,"id iddown\n");
 				for(i=0; i<numOutlets; i++)
 				{
-
-					fprintf(fidout,"%d %d\n",ids[i],dsidsr[i]);
+					if(dsiout[i])   // Only print connectivity for outlets that have a gage watershed
+						fprintf(fidout,"%d %d\n",ids[i],dsidsr[i]);
 				}
 		}
 	}

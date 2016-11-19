@@ -133,7 +133,7 @@ int aread8( char* pfile, char* afile, char *datasrc, char *lyrname,int uselyrnam
 	
 
 	//Convert geo coords to grid coords
-	int *outletsX; int *outletsY;
+	int *outletsX=NULL; int *outletsY=NULL;
 	if(usingShapeFile) {
 		outletsX = new int[numOutlets];
 		outletsY = new int[numOutlets];
