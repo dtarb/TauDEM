@@ -91,12 +91,13 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 			MPI_Bcast(y, numOutlets, MPI_DOUBLE, 0, MCW);
 			MPI_Bcast(ids, numOutlets, MPI_INT, 0, MCW);
 			//  Find the minimum id to use it - 1 for no data 
-			idnodata=ids[0];
-			for(int i=1; i<numOutlets; i++)
-			{
-				if(ids[i]<idnodata)idnodata=ids[i];
-			}
-			idnodata=idnodata-1;
+			//idnodata=ids[0];
+			//for(int i=1; i<numOutlets; i++)
+			//{
+			//	if(ids[i]<idnodata)idnodata=ids[i];
+			//}
+			//idnodata=idnodata-1;
+			idnodata = -1;  // Use - 1 for no data
 			MPI_Bcast(&idnodata,1,MPI_INT,0,MCW);
 		
 			//printf("after bcast\n"); fflush(stdout);
