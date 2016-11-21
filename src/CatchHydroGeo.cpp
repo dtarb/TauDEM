@@ -175,9 +175,9 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 
 		//Create output vectors
 		int CellCount[nheight * ncatch]; // row - height; column - catchid
-		float SurfaceArea[nheight * ncatch];
-		float BedArea[nheight * ncatch];
-		float Volume[nheight * ncatch];
+		double SurfaceArea[nheight * ncatch];
+		double BedArea[nheight * ncatch];
+		double Volume[nheight * ncatch];
 		for (int i=0; i<nheight; i++) {
 			for (int j=0; j<ncatch; j++) {
 				CellCount[i*ncatch + j] = 0;
@@ -221,14 +221,14 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 
 		//MPI output reduce
 		int GCellCount[nheight * ncatch]; // row - height; column - catchid
-		float GSurfaceArea[nheight * ncatch];
-		float GBedArea[nheight * ncatch];
-		float GVolume[nheight * ncatch];
+		double GSurfaceArea[nheight * ncatch];
+		double GBedArea[nheight * ncatch];
+		double GVolume[nheight * ncatch];
 		// TODO may be able to do Reduce as a vector operation without loops
 		MPI_Reduce(CellCount, GCellCount, nheight * ncatch, MPI_INT, MPI_SUM, 0, MCW);
-		MPI_Reduce(SurfaceArea, GSurfaceArea, nheight * ncatch, MPI_FLOAT, MPI_SUM, 0, MCW);
-		MPI_Reduce(BedArea, GBedArea, nheight * ncatch, MPI_FLOAT, MPI_SUM, 0, MCW);
-		MPI_Reduce(Volume, GVolume, nheight * ncatch, MPI_FLOAT, MPI_SUM, 0, MCW);
+		MPI_Reduce(SurfaceArea, GSurfaceArea, nheight * ncatch, MPI_DOUBLE, MPI_SUM, 0, MCW);
+		MPI_Reduce(BedArea, GBedArea, nheight * ncatch, MPI_DOUBLE, MPI_SUM, 0, MCW);
+		MPI_Reduce(Volume, GVolume, nheight * ncatch, MPI_DOUBLE, MPI_SUM, 0, MCW);
 		//Write results
 		if (rank == 0) {
 			FILE *fp;
@@ -238,11 +238,11 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 			for (i = 0; i < ncatch; i++) {
 				for (j = 0; j < nheight; j++) {
 					fprintf(fp, "%d, ", catchlist[i]);
-					fprintf(fp, "%f, ", height[j]);
+					fprintf(fp, "%.6lf, ", height[j]);
 					fprintf(fp, "%d, ", GCellCount[j * ncatch + i]);
-					fprintf(fp, "%f, ", GSurfaceArea[j * ncatch + i]);
-					fprintf(fp, "%f, ", GBedArea[j * ncatch + i]);
-					fprintf(fp, "%f\n", GVolume[j * ncatch + i]);
+					fprintf(fp, "%.6lf, ", GSurfaceArea[j * ncatch + i]);
+					fprintf(fp, "%.6lf, ", GBedArea[j * ncatch + i]);
+					fprintf(fp, "%.6lf\n", GVolume[j * ncatch + i]);
 				}
 			}
 		}
