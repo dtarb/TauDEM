@@ -61,7 +61,10 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 	int rank,size;
 	MPI_Comm_rank(MCW,&rank);//returns the rank of the calling processes in a communicator
 	MPI_Comm_size(MCW,&size);//returns the number of processes in a communicator
-	if(rank==0)printf("Gage Watershed version %s\n",TDVERSION);
+	if (rank == 0) {
+		printf("Gage Watershed version %s\n", TDVERSION);
+		fflush(stdout);
+	}
 		
 	double *x=NULL, *y=NULL;
 	int numOutlets=0;
@@ -88,12 +91,13 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 			MPI_Bcast(y, numOutlets, MPI_DOUBLE, 0, MCW);
 			MPI_Bcast(ids, numOutlets, MPI_INT, 0, MCW);
 			//  Find the minimum id to use it - 1 for no data 
-			idnodata=ids[0];
-			for(int i=1; i<numOutlets; i++)
-			{
-				if(ids[i]<idnodata)idnodata=ids[i];
-			}
-			idnodata=idnodata-1;
+			//idnodata=ids[0];
+			//for(int i=1; i<numOutlets; i++)
+			//{
+			//	if(ids[i]<idnodata)idnodata=ids[i];
+			//}
+			//idnodata=idnodata-1;
+			idnodata = -1;  // Use - 1 for no data
 			MPI_Bcast(&idnodata,1,MPI_INT,0,MCW);
 		
 			//printf("after bcast\n"); fflush(stdout);
@@ -164,18 +168,23 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 
 	node temp;
 	queue<node> que;
-
+	int *towriteids;
+	towriteids = new int[numOutlets];
 	for( int i=0; i<numOutlets; i++)
 	{
 		p.geoToGlobalXY(x[i], y[i], outletsX[i], outletsY[i]);
 		int xlocal, ylocal;
 		wshed->globalToLocal(outletsX[i], outletsY[i],xlocal,ylocal);
+		towriteids[i] = 0;
 		if(wshed->isInPartition(xlocal,ylocal)){   //xOutlets[i], yOutlets[i])){
-			wshed->setData(xlocal,ylocal,(int32_t)ids[i]);  //xOutlets[i], yOutlets[i], (long)ids[i]);
-							//Push outlet cells on to que
-						temp.x = xlocal;
-						temp.y = ylocal;
-						que.push(temp);	
+			if (wshed->isNodata(xlocal, ylocal)) {
+				wshed->setData(xlocal, ylocal, (int32_t)ids[i]);  //xOutlets[i], yOutlets[i], (long)ids[i]);
+								//Push outlet cells on to que
+				temp.x = xlocal;
+				temp.y = ylocal;
+				que.push(temp);
+				towriteids[i] = 1;  // Indicator that this gageid needs to be output
+			}
 		}
 		dsids[i]= idnodata;  
 	}
@@ -306,9 +315,11 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 	
 
 	//  Reduce all values to the 0 process
-	int *dsidsr;	
+	int *dsidsr, *towriteidsr;	
     dsidsr=new int[numOutlets];
+	towriteidsr = new int[numOutlets];
 	MPI_Reduce(dsids,dsidsr,numOutlets,MPI_INT, MPI_MAX,0, MCW);
+	MPI_Reduce(towriteids, towriteidsr, numOutlets, MPI_INT, MPI_MAX, 0, MCW);
 
 	//Stop timer
 	double computet = MPI_Wtime();
@@ -323,8 +334,8 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 				fprintf(fidout,"id iddown\n");
 				for(i=0; i<numOutlets; i++)
 				{
-
-					fprintf(fidout,"%d %d\n",ids[i],dsidsr[i]);
+					if(towriteidsr[i]>0)
+						fprintf(fidout,"%d %d\n",ids[i],dsidsr[i]);
 				}
 		}
 	}
