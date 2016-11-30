@@ -122,17 +122,25 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 		char headers[MAXLN];
 		// get catch list and build hash table
 		int ncatch; int * catchlist;
+        double *slopelist; double *linelenlist;
 		if (rank == 0) {
 			ncatch=0;
 			fp = fopen(catchlistfile, "r");
-			int v; int countLine = 1, i=0;
-			while (fscanf(fp, "%d\n", &v) != EOF) {
-				if (countLine == 1) {
-					ncatch = v; 
-					catchlist = (int *) malloc(sizeof(int) * ncatch);
-					countLine=0; continue;
-				}
-				catchlist[i++] = v;
+			int v1; double v2; double v3;
+            int i=0;
+			fscanf(fp, "%d\n", &ncatch);
+			if (ncatch <= 0) {
+				fprintf(stderr, "ERROR: catch list empty!\n");
+				exit(1);
+			} 
+			catchlist = (int *) malloc(sizeof(int) * ncatch);
+			slopelist = (double *) malloc(sizeof(double) * ncatch);
+			linelenlist = (double *) malloc(sizeof(double) * ncatch);
+			while (fscanf(fp, "%d %lf %lf\n", &v1, &v2, &v3) != EOF) {
+				catchlist[i] = v1;
+				slopelist[i] = v2;
+				linelenlist[i] = v3;
+				i++;
 			}
 			fclose(fp);
 		}
@@ -233,7 +241,7 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 		if (rank == 0) {
 			FILE *fp;
 			fp = fopen(hpfile, "w");
-			fprintf(fp, "CatchId, Stage, Number of Cells, SurfaceArea (m2), BedArea (m2), Volume (m3)\n");
+			fprintf(fp, "CatchId, Stage, Number of Cells, SurfaceArea (m2), BedArea (m2), Volume (m3), SLOPE, LENGTHKM\n");
 			int i, j;
 			for (i = 0; i < ncatch; i++) {
 				for (j = 0; j < nheight; j++) {
@@ -242,12 +250,16 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 					fprintf(fp, "%d, ", GCellCount[j * ncatch + i]);
 					fprintf(fp, "%.6lf, ", GSurfaceArea[j * ncatch + i]);
 					fprintf(fp, "%.6lf, ", GBedArea[j * ncatch + i]);
-					fprintf(fp, "%.6lf\n", GVolume[j * ncatch + i]);
+					fprintf(fp, "%.6lf, ", GVolume[j * ncatch + i]);
+					fprintf(fp, "%.10lf, ", slopelist[i]);
+					fprintf(fp, "%.6lf\n", linelenlist[i]);
 				}
 			}
 		}
 
 		free(catchlist);
+		free(slopelist);
+		free(linelenlist);
 		free(height);
 
 		//Stop timer
