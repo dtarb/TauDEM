@@ -80,7 +80,7 @@ CATCHHYDROGEO = CatchHydroGeo.o CatchHydroGeomn.o $(OBJFILES) $(SHAPEFILES)
 #The following are compiler flags common to all building rules
 #CC = mpic++
 CC = mpicxx
-CFLAGS=-g -DDEBUG -std=c++11
+CFLAGS=-g -Wall -DDEBUG -std=c++11
 CFLAGS=-O2 -std=c++11
 LARGEFILEFLAG= -D_FILE_OFFSET_BITS=64
 #INCDIRS=-I/usr/lib/openmpi/include -I/usr/include/gdal

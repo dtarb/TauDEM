@@ -178,7 +178,7 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 		}
 		MPI_Bcast(height, nheight, MPI_DOUBLE, 0, MCW);
 #ifdef DEBUG
-		printf("CatchHydroGeo %d: startx=%d starty=%d nx=%d ny=%d; nheight=%d, [0]=%.6lf; ncatch=%d\n", rank, xstart, ystart, nx, ny, nheight, height[0], catchhash.size());
+		printf("CatchHydroGeo %d: startx=%d starty=%d nx=%d ny=%d; nheight=%d, [0]=%.6lf; ncatch=%ld\n", rank, xstart, ystart, nx, ny, nheight, height[0], catchhash.size());
 #endif
 
 		//Create output vectors
