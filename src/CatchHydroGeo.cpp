@@ -178,14 +178,14 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 		}
 		MPI_Bcast(height, nheight, MPI_DOUBLE, 0, MCW);
 #ifdef DEBUG
-		printf("CatchHydroGeo %d: startx=%d starty=%d nx=%d ny=%d; nheight=%d, [0]=%.3lf; ncatch=%d\n", rank, xstart, ystart, nx, ny, nheight, height[0], catchhash.size());
+		printf("CatchHydroGeo %d: startx=%d starty=%d nx=%d ny=%d; nheight=%d, [0]=%.6lf; ncatch=%d\n", rank, xstart, ystart, nx, ny, nheight, height[0], catchhash.size());
 #endif
 
 		//Create output vectors
-		int CellCount[nheight * ncatch]; // row - height; column - catchid
-		double SurfaceArea[nheight * ncatch];
-		double BedArea[nheight * ncatch];
-		double Volume[nheight * ncatch];
+		int *CellCount = new int[nheight * ncatch]; // row - height; column - catchid
+		double *SurfaceArea = new double[nheight * ncatch];
+		double *BedArea = new double[nheight * ncatch];
+		double *Volume = new double[nheight * ncatch];
 		for (int i=0; i<nheight; i++) {
 			for (int j=0; j<ncatch; j++) {
 				CellCount[i*ncatch + j] = 0;
@@ -228,10 +228,10 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 		}
 
 		//MPI output reduce
-		int GCellCount[nheight * ncatch]; // row - height; column - catchid
-		double GSurfaceArea[nheight * ncatch];
-		double GBedArea[nheight * ncatch];
-		double GVolume[nheight * ncatch];
+		int *GCellCount = new int[nheight * ncatch]; // row - height; column - catchid
+		double *GSurfaceArea = new double[nheight * ncatch];
+		double *GBedArea = new double[nheight * ncatch];
+		double *GVolume = new double[nheight * ncatch];
 		// TODO may be able to do Reduce as a vector operation without loops
 		MPI_Reduce(CellCount, GCellCount, nheight * ncatch, MPI_INT, MPI_SUM, 0, MCW);
 		MPI_Reduce(SurfaceArea, GSurfaceArea, nheight * ncatch, MPI_DOUBLE, MPI_SUM, 0, MCW);
@@ -256,7 +256,14 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 				}
 			}
 		}
-
+        delete[] CellCount;
+        delete[] SurfaceArea;
+        delete[] BedArea;
+        delete[] Volume;
+        delete[] GCellCount;
+        delete[] GSurfaceArea;
+        delete[] GBedArea;
+        delete[] GVolume;
 		free(catchlist);
 		free(slopelist);
 		free(linelenlist);
