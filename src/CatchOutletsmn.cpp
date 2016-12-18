@@ -58,6 +58,7 @@ int main(int argc,char **argv)
 {
    char pfile[MAXLN],streamnetsrc[MAXLN], streamnetlyr[MAXLN]="",outletsdatasrc[MAXLN],outletslayer[MAXLN]="";
    double mindist = 0.0;
+   double minarea = 0.0;
    int err,i,uselyrname=0,lyrno=0,gwstartno=1;
    
    if(argc < 7)
@@ -151,12 +152,22 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
+		else if (strcmp(argv[i], "-minarea") == 0)
+		{
+			i++;
+			if (argc > i)
+			{
+				sscanf(argv[i], "%lf", &minarea);
+				i++;
+			}
+			else goto errexit;
+		}
 		else 
 		{
 			goto errexit;
 		}
 	}
-    if(err=catchoutlets(pfile,streamnetsrc,outletsdatasrc,mindist,gwstartno) != 0)
+    if(err=catchoutlets(pfile,streamnetsrc,outletsdatasrc,mindist,gwstartno,minarea) != 0)
        printf("Catchment Outlets error %d\n",err);
 
 	return 0;
