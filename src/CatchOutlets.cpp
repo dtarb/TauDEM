@@ -75,6 +75,7 @@ struct netlink {
 	int32_t uslinkno1;
 	int32_t uslinkno2;
 	double doutend;
+	double uscontarea;
 	double x, y;
 };
 OGRLayerH hLayer, hLayerpt;
@@ -83,7 +84,7 @@ OGRGeometryH hGeometry, hGeometrypt;
 
 netlink* allinks;
 
-void CheckPoint(int thelink, double downout, double mindist)
+void CheckPoint(int thelink, double downout, double mindist, double minarea)
 {
 	int istream=0;
 	while (linknos[istream] != thelink && istream < nstreams) {
@@ -92,33 +93,37 @@ void CheckPoint(int thelink, double downout, double mindist)
 	if (istream < nstreams) // Here a stream was found.  This traps the passing over streams with none upstream
 	{
 		if (allinks[istream].doutend - downout > mindist) {
-			//printf("%d, %g, %g\n", linknos[istream], allinks[istream].x, allinks[istream].y);
-			hGeometrypt = OGR_G_CreateGeometry(wkbPoint);// create geometry
-			OGRFeatureH hFeaturept = OGR_F_Create(OGR_L_GetLayerDefn(hLayerpt)); // create new feature with null fields and no geometry
-			OGR_F_SetFieldInteger(hFeaturept, 0, linknos[istream]);
-			OGR_F_SetFieldInteger(hFeaturept, 1, allinks[istream].dslinkno);
-			OGR_F_SetFieldInteger(hFeaturept, 2, allinks[istream].uslinkno1);
-			OGR_F_SetFieldInteger(hFeaturept, 3, allinks[istream].uslinkno2);
-			OGR_F_SetFieldDouble(hFeaturept, 4, allinks[istream].doutend);
-			OGR_F_SetFieldInteger(hFeaturept, 5, gwcount);
-			gwcount = gwcount + 1;
-			OGR_G_SetPoint_2D(hGeometrypt, 0, allinks[istream].x, allinks[istream].y);
-			OGR_F_SetGeometry(hFeaturept, hGeometrypt);
-			OGR_G_DestroyGeometry(hGeometrypt);
-			OGR_L_CreateFeature(hLayerpt, hFeaturept);
-			OGR_F_Destroy(hFeaturept);
+			if (allinks[istream].uscontarea > minarea) {  // Only write if min area is exceeded
+				//printf("%d, %g, %g\n", linknos[istream], allinks[istream].x, allinks[istream].y);
+				hGeometrypt = OGR_G_CreateGeometry(wkbPoint);// create geometry
+				OGRFeatureH hFeaturept = OGR_F_Create(OGR_L_GetLayerDefn(hLayerpt)); // create new feature with null fields and no geometry
+				OGR_F_SetFieldInteger(hFeaturept, 0, linknos[istream]);
+				OGR_F_SetFieldInteger(hFeaturept, 1, allinks[istream].dslinkno);
+				OGR_F_SetFieldInteger(hFeaturept, 2, allinks[istream].uslinkno1);
+				OGR_F_SetFieldInteger(hFeaturept, 3, allinks[istream].uslinkno2);
+				OGR_F_SetFieldDouble(hFeaturept, 4, allinks[istream].doutend);
+				OGR_F_SetFieldInteger(hFeaturept, 5, gwcount);
+				gwcount = gwcount + 1;
+				OGR_G_SetPoint_2D(hGeometrypt, 0, allinks[istream].x, allinks[istream].y);
+				OGR_F_SetGeometry(hFeaturept, hGeometrypt);
+				OGR_G_DestroyGeometry(hGeometrypt);
+				OGR_L_CreateFeature(hLayerpt, hFeaturept);
+				OGR_F_Destroy(hFeaturept);
 
-			downout = allinks[istream].doutend;
+				downout = allinks[istream].doutend;
+			}
 		}
-		if (allinks[istream].uslinkno1 >= 0) CheckPoint(allinks[istream].uslinkno1, downout, mindist);
-		if (allinks[istream].uslinkno2 >= 0) CheckPoint(allinks[istream].uslinkno2, downout, mindist);
+		if (allinks[istream].uscontarea > minarea) {  // Only recurse up if minarea is satisified
+			if (allinks[istream].uslinkno1 >= 0) CheckPoint(allinks[istream].uslinkno1, downout, mindist, minarea);
+			if (allinks[istream].uslinkno2 >= 0) CheckPoint(allinks[istream].uslinkno2, downout, mindist, minarea);
+		}
 	}
 }
 
 
 // int catchoutlets(char *pfile, char *streamnetsrc, char *streamnetlyr, char *outletsdatasrc, char *outletslayer, int  lyrno, float maxdist)
 
-int catchoutlets(char *pfile, char *streamnetsrc, char *outletsdatasrc, double mindist, int gwstartno)
+int catchoutlets(char *pfile, char *streamnetsrc, char *outletsdatasrc, double mindist, int gwstartno, double minarea)
 {
 
 	MPI_Init(NULL,NULL);{
@@ -257,8 +262,9 @@ int catchoutlets(char *pfile, char *streamnetsrc, char *outletsdatasrc, double m
 			OGR_Fld_SetWidth(hFieldDefn, 10); // set field width
 			OGR_L_CreateField(hLayerpt, hFieldDefn, 0);
 
+			//  Fields we use but do not add to new feature class
 			int32_t doutstartfield = OGR_FD_GetFieldIndex(hFDefn, "DOUTSTART");
-			//  Dont need to create new field for this
+			int32_t uscontareafield = OGR_FD_GetFieldIndex(hFDefn, "USContArea");	
 
 			int32_t istream = 0;
 			gwcount = gwstartno;  // Initialize count
@@ -293,6 +299,7 @@ int catchoutlets(char *pfile, char *streamnetsrc, char *outletsdatasrc, double m
 						OGR_G_GetPoint(hGeometry, num_points-1, &X1, &Y1, &Z1);  
 						allinks[istream].doutend = OGR_F_GetFieldAsDouble(hFeature, doutstartfield); // Note here start field
 					}
+					allinks[istream].uscontarea = OGR_F_GetFieldAsDouble(hFeature, uscontareafield);
 					allinks[istream].x = X1;
 					allinks[istream].y = Y1;
 					//printf("%d, %lf, %lf,%lf\n", istream, X1, Y1, Z1);
@@ -342,8 +349,8 @@ int catchoutlets(char *pfile, char *streamnetsrc, char *outletsdatasrc, double m
 							OGR_F_Destroy(hFeaturept);
 							double downout = 0.0;
 							// Recursive calls to traverse up
-							if (allinks[istream].uslinkno1 >= 0) CheckPoint(allinks[istream].uslinkno1, downout,mindist);
-							if (allinks[istream].uslinkno2 >= 0) CheckPoint(allinks[istream].uslinkno2, downout,mindist);
+							if (allinks[istream].uslinkno1 >= 0) CheckPoint(allinks[istream].uslinkno1, downout,mindist,minarea);
+							if (allinks[istream].uslinkno2 >= 0) CheckPoint(allinks[istream].uslinkno2, downout,mindist,minarea);
 						}
 					}
 				}
