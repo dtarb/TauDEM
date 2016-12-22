@@ -1,8 +1,8 @@
-/*  TauDEM D8FlowDir main program to compute flow direction based on d8 flow model.
-     
-  David G Tarboton, Teklu K Tesfa
-  Utah State University     
-  May 23, 2010
+/*  TauDEM Flow direction conditioning main program to condition DEM based on input flow directions
+      
+  David Tarboton, Nazmus Sazib
+  Utah State University  
+  May 10, 2016 
   
 */
 
