@@ -74,6 +74,7 @@ TWI = TWI.o TWImn.o $(OBJFILES)
 GAGEWATERSHED = gagewatershed.o gagewatershedmn.o $(OBJFILES) $(SHAPEFILES)
 CONNECTDOWN = ConnectDown.o ConnectDownmn.o $(OBJFILES) $(SHAPEFILES)
 CATCHHYDROGEO = CatchHydroGeo.o CatchHydroGeomn.o $(OBJFILES) $(SHAPEFILES)
+INUNMAP = InunMap.o InunMapmn.o $(OBJFILES) $(SHAPEFILES)
 
 
 
@@ -85,12 +86,14 @@ CFLAGS=-O2 -std=c++11
 LARGEFILEFLAG= -D_FILE_OFFSET_BITS=64
 #INCDIRS=-I/usr/lib/openmpi/include -I/usr/include/gdal
 INCDIRS=`gdal-config --cflags`
+INCDIRS+=`nc-config --cflags`
 #LIBDIRS=-lgdal
 #LDLIBS=-L/usr/local/lib -lgdal
 LDLIBS=`gdal-config --libs`
+LDLIBS+=`nc-config --libs`
 
 #Rules: when and how to make a file
-all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ../gridnet ../dinfflowdir ../d8flowdir ../d8flowpathextremeup ../d8hdisttostrm ../dinfavalanche ../dinfconclimaccum ../dinfdecayaccum ../dinfdistdown ../dinfdistup ../dinfrevaccum ../dinftranslimaccum ../dinfupdependence ../lengtharea ../peukerdouglas ../pitremove ../slopearea ../slopearearatio ../slopeavedown ../threshold ../twi ../gagewatershed ../connectdown ../catchhydrogeo clean 
+all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ../gridnet ../dinfflowdir ../d8flowdir ../d8flowpathextremeup ../d8hdisttostrm ../dinfavalanche ../dinfconclimaccum ../dinfdecayaccum ../dinfdistdown ../dinfdistup ../dinfrevaccum ../dinftranslimaccum ../dinfupdependence ../lengtharea ../peukerdouglas ../pitremove ../slopearea ../slopearearatio ../slopeavedown ../threshold ../twi ../gagewatershed ../connectdown ../catchhydrogeo ../inunmap clean 
 
 ../aread8 : $(D8FILES)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(D8FILES) $(LDLIBS) $(LDFLAGS)
@@ -178,6 +181,9 @@ all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ..
 	
 ../catchhydrogeo : $(CATCHHYDROGEO)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(CATCHHYDROGEO) $(LDLIBS) $(LDFLAGS)
+	
+../inunmap : $(INUNMAP)
+	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(INUNMAP) $(LDLIBS) $(LDFLAGS)
 	
 #Inference rule - states a general rule for compiling .o files
 %.o : %.cpp
