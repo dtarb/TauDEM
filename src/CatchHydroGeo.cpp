@@ -2,8 +2,8 @@
   based on HAND(Height Above Nearest Drainage), D-inf slope, 
   and catchment grid inputs, reachid list file, and a stage height text file.
 
-  David Tarboton, Xing Zheng
-  Utah State University, University of Texas at Austin
+  David Tarboton, Xing Zheng, Yan Liu
+  Utah State University, University of Texas at Austin, NCSA/UIUC
   Nov 01, 2016 
   
 */
