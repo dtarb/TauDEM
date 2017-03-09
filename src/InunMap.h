@@ -1,2 +1,2 @@
 
-int inunmap(char *handfile, char*catchfile, char*fcfile, char *mapfile);
+int inunmap(char *handfile, char*catchfile, char*maskfile, char*fcfile, int maskpits, char*hpfile, char *mapfile);
