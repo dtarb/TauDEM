@@ -122,11 +122,11 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 		char headers[MAXLN];
 		// get catch list and build hash table
 		int ncatch; int * catchlist;
-        double *slopelist; double *linelenlist;
+		double *slopelist; double *linelenlist; double *areasqkmlist;
 		if (rank == 0) {
 			ncatch=0;
 			fp = fopen(catchlistfile, "r");
-			int v1; double v2; double v3;
+			int v1; double v2; double v3; double v4;
             int i=0;
 			fscanf(fp, "%d\n", &ncatch);
 			if (ncatch <= 0) {
@@ -136,10 +136,12 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 			catchlist = (int *) malloc(sizeof(int) * ncatch);
 			slopelist = (double *) malloc(sizeof(double) * ncatch);
 			linelenlist = (double *) malloc(sizeof(double) * ncatch);
-			while (fscanf(fp, "%d %lf %lf\n", &v1, &v2, &v3) != EOF) {
+			areasqkmlist = (double *) malloc(sizeof(double) * ncatch);
+			while (fscanf(fp, "%d %lf %lf %lf\n", &v1, &v2, &v3, &v4) != EOF) {
 				catchlist[i] = v1;
 				slopelist[i] = v2;
 				linelenlist[i] = v3;
+				areasqkmlist[i] = v4;
 				i++;
 			}
 			fclose(fp);
@@ -241,7 +243,7 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 		if (rank == 0) {
 			FILE *fp;
 			fp = fopen(hpfile, "w");
-			fprintf(fp, "CatchId, Stage, Number of Cells, SurfaceArea (m2), BedArea (m2), Volume (m3), SLOPE, LENGTHKM\n");
+			fprintf(fp, "CatchId, Stage, Number of Cells, SurfaceArea (m2), BedArea (m2), Volume (m3), SLOPE, LENGTHKM, AREASQKM\n");
 			int i, j;
 			for (i = 0; i < ncatch; i++) {
 				for (j = 0; j < nheight; j++) {
@@ -252,7 +254,8 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 					fprintf(fp, "%.6lf, ", GBedArea[j * ncatch + i]);
 					fprintf(fp, "%.6lf, ", GVolume[j * ncatch + i]);
 					fprintf(fp, "%.10lf, ", slopelist[i]);
-					fprintf(fp, "%.6lf\n", linelenlist[i]);
+					fprintf(fp, "%.6lf, ", linelenlist[i]);
+					fprintf(fp, "%.6lf\n", areasqkmlist[i]);
 				}
 			}
 		}
@@ -267,6 +270,7 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 		free(catchlist);
 		free(slopelist);
 		free(linelenlist);
+		free(areasqkmlist);
 		free(height);
 
 		//Stop timer
