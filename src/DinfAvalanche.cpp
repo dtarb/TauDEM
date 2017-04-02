@@ -108,8 +108,9 @@ int avalancherunoutgrd(char *angfile, char *felfile, char *assfile, char *rzfile
 	tdpartition *felData;
 	tiffIO fel(felfile, FLOAT_TYPE);
 	if(!ang.compareTiff(fel)) {
-		printf("File sizes do not match\n%s\n",felfile);
-		MPI_Abort(MCW,5);
+		printf("File sizes do not match\n%s\n%s\n",felfile, angfile);
+		fflush(stdout);
+		//MPI_Abort(MCW,5);
 		return 1; 
 	}
 	felData = CreateNewPartition(fel.getDatatype(), totalX, totalY, dxA, dyA, fel.getNodata());
@@ -118,8 +119,9 @@ int avalancherunoutgrd(char *angfile, char *felfile, char *assfile, char *rzfile
 	tdpartition *assData;
 	tiffIO ass(assfile, SHORT_TYPE);
 	if(!ang.compareTiff(ass)) {
-		printf("File sizes do not match\n%s\n",assfile);
-		MPI_Abort(MCW,5);
+		printf("File sizes do not match\n%s\n%s\n",assfile, angfile);
+		fflush(stdout);
+		//MPI_Abort(MCW,5);
 		return 1; 
 	}
 	assData = CreateNewPartition(ass.getDatatype(), totalX, totalY, dxA, dyA, ass.getNodata());

@@ -162,7 +162,7 @@ int main(int argc,char **argv)
 	}   
 
    if(err=avalancherunoutgrd(angfile,felfile,assfile,rzfile,dmfile,thresh,alpha,path) != 0)
-         printf("area error %d\n",err);
+         printf("DinfAvalanche error %d\n",err);
 
 
 	return 0;
