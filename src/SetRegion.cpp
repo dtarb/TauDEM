@@ -4,6 +4,15 @@ David Tarboton
 Utah State University
 Jan 15, 2017
 
+This function takes as input a file defining regions (gwfile) and a flow direction grid
+The output is a new region grid that adds downstream grid cells with flow direction nodata that the region drains into.
+The logic is
+   if  gwData is nodata
+     if pData is notata
+	   if neighbor drains to cell set region to region of neighbor
+   else
+     use existing gwdata
+
 */
 
 /*  Copyright (C) 2017  David Tarboton, Utah State University
@@ -146,7 +155,7 @@ int setregion(char *fdrfile, char *regiongwfile, char *newfile, long regionID)
 						}
 					}
 				}
-				else 
+				else
 					newvals->setData(i, j, regionID);
 			}
 			else {
