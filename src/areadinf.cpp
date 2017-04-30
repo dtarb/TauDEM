@@ -50,7 +50,7 @@ email:  dtarb@usu.edu
 
 using namespace std;
 
-int area( char* angfile, char* scafile, char* datasrc,char* lyrname,int uselyrname,int lyrno, char *wfile, int useOutlets, int usew, int contcheck) {
+int area( char* angfile, char* scafile, char* datasrc,char* lyrname,int uselyrname,int lyrno, char *wfile, int useOutlets, int areamode, int contcheck) {
 
 	MPI_Init(NULL,NULL);{
 
@@ -126,7 +126,7 @@ int area( char* angfile, char* scafile, char* datasrc,char* lyrname,int uselyrna
 
 	//if using weightData, get information from file
 	tdpartition *weightData;
-	if( usew == 1){
+	if( areamode == 1){
 		tiffIO w(wfile,FLOAT_TYPE);
 		if(!ang.compareTiff(w)) return 1;  //And maybe an unhappy error message
 		weightData = CreateNewPartition(w.getDatatype(), totalX, totalY, dxA, dyA, w.getNodata()); 
@@ -162,7 +162,7 @@ int area( char* angfile, char* scafile, char* datasrc,char* lyrname,int uselyrna
 	
 	//Share information and set borders to zero
 	flowData->share();
-	if(usew==1) weightData->share();
+	if(areamode==1) weightData->share();
 	areadinf->share();
 	neighbor->clearBorders();
 
@@ -206,10 +206,12 @@ int area( char* angfile, char* scafile, char* datasrc,char* lyrname,int uselyrna
 					}
 				}
 				//  Local inputs
-				if( usew==1) areares=areares+weightData->getData(i,j,tempFloat);
-				else {
-					flowData->getdxdyc(j,tempdxc,tempdyc);
-					areares=areares+tempdxc;} 
+				if( areamode==1) areares=areares+weightData->getData(i,j,tempFloat);
+				else if( areamode==2) areares=areares+1.0; 
+				else{  // Here we are in mode 0 or 3 that require summing the cell area
+					         flowData->getdxdyc(j,tempdxc,tempdyc);
+					         areares=areares+tempdxc*tempdyc;
+				}
 				if(con && contcheck==1)
 					areadinf->setToNodata(i,j);
 				else 
@@ -262,6 +264,21 @@ int area( char* angfile, char* scafile, char* datasrc,char* lyrname,int uselyrna
 		finished = que.empty();
 		finished = areadinf->ringTerm(finished);
 	}
+	// Adjustment for specific catchment area
+	float temparea;
+	if(areamode==3){
+	for(i=0; i<nx; i++)
+		for(j=0; j<ny; j++){
+
+			areadinf->getData(i,j,temparea); //get area
+			flowData->getData(i, j, angle); //  get the flow directions
+		    flowData->getdxdyc(j,tempdxc,tempdyc) //  get dx and dy
+			                                    //  from flow direction figure out theta and d (dx or dy)
+			//  apply the formula =(A-0.5*dx*dy)/b
+		}
+	}
+	int ny = flowData->getny();
+
 
 	//Stop timer
 	double computet = MPI_Wtime();
