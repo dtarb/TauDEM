@@ -215,7 +215,7 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 					catchData->getData(i, j, tempcatch);
 					slpData->getData(i, j, tempslp);
 					for (k = 0; k < nheight; k++) {
-						if (temphand < height[k]) {  // DGT prefers strictly less than here.  If the depth is 0, I treat it as dry
+						if (temphand < height[k] || fabs(temphand - 0.0)<0.000001) {  // DGT prefers strictly less than here.  If the depth is 0, treat it as wet, too 
 							CellCount[k*ncatch + catchhash[tempcatch]] += 1;
 							double dxc, dyc, cellArea;
 							handData->getdxdyc(j, dxc, dyc);  // This function gets latitude dependent dx and dy for each cell, better than averages
