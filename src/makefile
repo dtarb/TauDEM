@@ -50,6 +50,7 @@ DINFFILES = areadinfmn.o areadinf.o $(OBJFILES) $(SHAPEFILES)
 D8 = D8FlowDirmn.o d8.o Node.o $(OBJFILES) $(SHAPEFILES)
 D8EXTREAMUP = D8flowpathextremeup.o D8FlowPathExtremeUpmn.o  $(OBJFILES) $(SHAPEFILES)
 D8HDIST = D8HDistToStrm.o D8HDistToStrmmn.o  $(OBJFILES) 
+D8VDIST = D8VDistToStrm.o D8VDistToStrmmn.o  $(OBJFILES) 
 DINFAVA = DinfAvalanche.o DinfAvalanchemn.o $(OBJFILES)
 DINFCONCLIM = DinfConcLimAccum.o DinfConcLimAccummn.o $(OBJFILES) $(SHAPEFILES)
 DINFDECAY = dinfdecayaccum.o DinfDecayAccummn.o $(OBJFILES) $(SHAPEFILES)
@@ -81,7 +82,7 @@ INUNMAP = InunMap.o InunMapmn.o $(OBJFILES) $(SHAPEFILES)
 #The following are compiler flags common to all building rules
 #CC = mpic++
 CC = mpicxx
-CFLAGS=-g -Wall -DDEBUG -std=c++11
+#CFLAGS=-g -Wall -DDEBUG -std=c++11
 CFLAGS=-O2 -std=c++11
 LARGEFILEFLAG= -D_FILE_OFFSET_BITS=64
 #INCDIRS=-I/usr/lib/openmpi/include -I/usr/include/gdal
@@ -93,7 +94,7 @@ LDLIBS=`gdal-config --libs`
 LDLIBS+=`nc-config --libs`
 
 #Rules: when and how to make a file
-all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ../gridnet ../dinfflowdir ../d8flowdir ../d8flowpathextremeup ../d8hdisttostrm ../dinfavalanche ../dinfconclimaccum ../dinfdecayaccum ../dinfdistdown ../dinfdistup ../dinfrevaccum ../dinftranslimaccum ../dinfupdependence ../lengtharea ../peukerdouglas ../pitremove ../slopearea ../slopearearatio ../slopeavedown ../threshold ../twi ../gagewatershed ../connectdown ../catchhydrogeo ../inunmap clean 
+all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ../gridnet ../dinfflowdir ../d8flowdir ../d8flowpathextremeup ../d8hdisttostrm ../d8vdisttostrm ../dinfavalanche ../dinfconclimaccum ../dinfdecayaccum ../dinfdistdown ../dinfdistup ../dinfrevaccum ../dinftranslimaccum ../dinfupdependence ../lengtharea ../peukerdouglas ../pitremove ../slopearea ../slopearearatio ../slopeavedown ../threshold ../twi ../gagewatershed ../connectdown ../catchhydrogeo ../inunmap clean 
 
 ../aread8 : $(D8FILES)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(D8FILES) $(LDLIBS) $(LDFLAGS)
@@ -109,6 +110,9 @@ all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ..
 
 ../d8hdisttostrm : $(D8HDIST)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(D8HDIST) $(LDLIBS) $(LDFLAGS)
+
+../d8vdisttostrm : $(D8VDIST)
+	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(D8VDIST) $(LDLIBS) $(LDFLAGS)
 
 ../dinfavalanche : $(DINFAVA)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(DINFAVA) $(LDLIBS) $(LDFLAGS)
