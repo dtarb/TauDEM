@@ -122,8 +122,11 @@ void createStreamNetShapefile(char *streamnetsrc,char *streamnetlyr,OGRSpatialRe
 
       // layer name is file name without extension
 	 if(strlen(streamnetlyr)==0){
-		char *streamnetlayername;
-		streamnetlayername=getLayername(streamnetsrc); // get layer name if the layer name is not provided
+	 // Chris George suggestion
+	        char streamnetlayername[MAXLN];
+	        getLayername(streamnetsrc, streamnetlayername); // get layer name if the layer name is not provided		  
+		//char *streamnetlayername;
+		//streamnetlayername=getLayername(streamnetsrc); // get layer name if the layer name is not provided
 	    hLayer1= OGR_DS_CreateLayer( hDS1,streamnetlayername,hSRSraster, wkbLineString, NULL );} 
 
 	 else {

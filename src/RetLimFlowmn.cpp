@@ -63,11 +63,11 @@ int main(int argc,char **argv)
    else if(argc > 2)
 	{
 		i = 1;
-		printf("You are running %s with the Specific File Names Usage option.\n", argv[0]);
+		//printf("You are running %s with the Specific File Names Usage option.\n", argv[0]);
 	}
 	else {
 		i = 2;
-		printf("You are running %s with the Simple Usage option.\n", argv[0]);
+		//printf("You are running %s with the Simple Usage option.\n", argv[0]);
 	}
 	while(argc > i)
 	{

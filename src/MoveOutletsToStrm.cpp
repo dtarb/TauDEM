@@ -235,8 +235,11 @@ int outletstosrc(char *pfile, char *srcfile, char *outletsdatasrc, char *outlets
 
 					//hLayershmoved = OGR_DS_CreateLayer( hDSshmoved, outletmovedlayer, hSRSRaster, wkbPoint, NULL ); // create layer for moved outlet, where raster layer spatial reference is used fro shapefile
 					if (strlen(outletmovedlayer) == 0) {
-						char * layernameshmoved;
-						layernameshmoved = getLayername(outletmoveddatasrc); // get layer name which is file name without extension
+					// Chris George
+						char layernameshmoved[MAXLN];
+						getLayername(outletmoveddatasrc,layernameshmoved); // get layer name which is file name without extension
+						//char * layernameshmoved;
+						//layernameshmoved = getLayername(outletmoveddatasrc); // get layer name which is file name without extension
 						hLayershmoved = OGR_DS_CreateLayer(hDSshmoved, layernameshmoved, hSRSRaster, wkbPoint, NULL);
 					}
 
