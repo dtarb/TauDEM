@@ -395,7 +395,9 @@ bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData){
 
 //get extension from OGR vector file
 //get layername if not provided by user
-  char *getLayername(char *inputogrfile)
+// Chris George suggestion for layername handling
+  //char *getLayername(char *inputogrfile)
+  void getLayername(char *inputogrfile, char *layername)
 {  
     std::string filenamewithpath;
 	filenamewithpath=inputogrfile;
@@ -405,13 +407,14 @@ bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData){
 	const char *filename = filenamewithoutpath.c_str(); // convert string to char
     const char *ext; 
     ext = strrchr(filename, '.'); // getting extension
-    char layername[MAXLN];
+    //char layername[MAXLN];
     size_t len = strlen(filename);
 	size_t len1 = strlen(ext);
 	memcpy(layername, filename, len-len1);
 	layername[len - len1] = 0; 
     printf("%s ", layername);
-    return layername;
+	return;
+    //return layername;
 }
 //
 

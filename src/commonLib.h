@@ -91,7 +91,9 @@ const int d2[9] = { 0,0,-1,-1,-1, 0, 1,1,1};
 
 int nameadd( char*,char*,const char*);
 double prop( float a, int k, double dx1 , double dy1);
-char *getLayername(char *inputogrfile);
+//char *getLayername(char *inputogrfile);
+// Chris George Suggestion
+void getLayername(char *inputogrfile, char *layername);
 const char *getOGRdrivername(char *datasrcnew);
 void getlayerfail(OGRDataSourceH hDS1,char * outletsds, int outletslyr);
 int readoutlets(char *outletsds,char *lyrname,int uselayername, int outletslyr, OGRSpatialReferenceH hSRSRaster, int *noutlets, double*& x, double*& y);

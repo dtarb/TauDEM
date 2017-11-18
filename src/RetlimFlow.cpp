@@ -60,7 +60,11 @@ int retlimro(char *angfile, char *wgfile, char * rcfile, char *qrlfile)
 	float p;
 	MPI_Comm_rank(MCW,&rank);
 	MPI_Comm_size(MCW,&size);
-	if(rank==0)printf("Retention limited flow accumulation version %s\n",TDVERSION);
+	if (rank == 0) {
+		printf("Retention limited flow accumulation version %s\n", TDVERSION);
+		fflush(stdout);
+	}
+	
 
 	//Create tiff object, read and store header info for angle file
 	tiffIO angIO(angfile, FLOAT_TYPE);
@@ -78,7 +82,7 @@ int retlimro(char *angfile, char *wgfile, char * rcfile, char *qrlfile)
 	ang->localToGlobal(0, 0, xstart, ystart);
 	ang->savedxdyc(angIO);  // copy dxc, dyc from io object into partion object
 	angIO.read(xstart, ystart, ny, nx, ang->getGridPointer());
-	printf("Rank %d, nx %d, ny %d, xstart %d, ystart %d\n",rank,nx,ny,xstart,ystart);
+	//printf("Rank %d, nx %d, ny %d, xstart %d, ystart %d\n",rank,nx,ny,xstart,ystart);
 
 	// Weight grid, get information from file
 	tdpartition *wg;
@@ -219,7 +223,7 @@ int retlimro(char *angfile, char *wgfile, char * rcfile, char *qrlfile)
 
 
 	float qrlNodata = MISSINGFLOAT;
-	tiffIO qrlIO(qrlfile,FLOAT_TYPE,&qrlNodata,rcgIO);
+	tiffIO qrlIO(qrlfile,FLOAT_TYPE,qrlNodata,rcgIO);
 	qrlIO.write(xstart,ystart,ny,nx,qrl->getGridPointer());
 
 	}MPI_Finalize();
