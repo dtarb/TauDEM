@@ -142,7 +142,7 @@ int slopearea(char *slopefile, char*scafile, char *safile, float *p)
 
 	//Create and write TIFF file
 	float aNodata = -1.0f;
-	tiffIO saa(safile, FLOAT_TYPE, &aNodata, slp);
+	tiffIO saa(safile, FLOAT_TYPE, aNodata, slp);
 	saa.write(xstart, ystart, ny, nx, sa->getGridPointer());
 
 	//Brackets force MPI-dependent objects to go out of scope before Finalize is called

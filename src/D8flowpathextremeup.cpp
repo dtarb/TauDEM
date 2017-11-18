@@ -155,7 +155,7 @@ MPI_Init(NULL,NULL);
 	short tempShort=0;
 
 	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -32768);
+	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, (int16_t)-32768);
 	
 	//Share information and set borders to zero
 	flowData->share();
@@ -255,7 +255,7 @@ MPI_Init(NULL,NULL);
 
 	//Create and write TIFF file
 	float aNodata = MISSINGFLOAT;
-	tiffIO a(ssafile, FLOAT_TYPE, &aNodata, p);
+	tiffIO a(ssafile, FLOAT_TYPE, aNodata, p);
 	a.write(xstart, ystart, ny, nx, ssa->getGridPointer());
 	double writet = MPI_Wtime();
  	double dataRead, compute, write, total,tempd;

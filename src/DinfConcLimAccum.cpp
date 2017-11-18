@@ -311,7 +311,7 @@ int dsllArea(char* angfile,char* ctptfile,char* dmfile,char* datasrc,char* lyrna
 
 	//Create and write TIFF file
 	float scaNodata = MISSINGFLOAT;
-	tiffIO cctpt(ctptfile, FLOAT_TYPE, &scaNodata, ang);
+	tiffIO cctpt(ctptfile, FLOAT_TYPE, scaNodata, ang);
 	cctpt.write(xstart, ystart, ny, nx, ctpt->getGridPointer());
 
 	double writet = MPI_Wtime();

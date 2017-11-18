@@ -167,7 +167,7 @@ int setregion(char *fdrfile, char *regiongwfile, char *newfile, long regionID)
 
 	//Create and write TIFF file
 	long aNodata = MISSINGLONG;
-	tiffIO newIO(newfile, LONG_TYPE, &aNodata, gwIO);
+	tiffIO newIO(newfile, LONG_TYPE, aNodata, gwIO);
 	newIO.write(xstart, ystart, ny, nx, newvals->getGridPointer());
 
 

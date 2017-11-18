@@ -189,7 +189,7 @@ int avalancherunoutgrd(char *angfile, char *felfile, char *assfile, char *rzfile
 	short tempShort=0;
 
 	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -32768);
+	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, (int16_t)-32768);
 	
 	//Share information and set borders to zero
 	flowData->share();
@@ -350,10 +350,10 @@ int avalancherunoutgrd(char *angfile, char *felfile, char *assfile, char *rzfile
 
 	//Create and write TIFF file
 	float scaNodata = MISSINGFLOAT;
-	tiffIO rrz(rzfile, FLOAT_TYPE, &scaNodata, ang);
+	tiffIO rrz(rzfile, FLOAT_TYPE, scaNodata, ang);
 	rrz.write(xstart, ystart, ny, nx, rz->getGridPointer());
 
-	tiffIO ddm(dmfile, FLOAT_TYPE, &scaNodata, ang);
+	tiffIO ddm(dmfile, FLOAT_TYPE, scaNodata, ang);
 	ddm.write(xstart, ystart, ny, nx, dm->getGridPointer());
 
 	double writet = MPI_Wtime();

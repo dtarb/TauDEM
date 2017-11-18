@@ -318,7 +318,7 @@ int hdisttoridgegrd(char *angfile, char *wfile, char *rtrfile, int statmethod,
 
 	//Create and write TIFF file
 	float ddNodata = MISSINGFLOAT;
-	tiffIO dd(rtrfile, FLOAT_TYPE, &ddNodata, ang);
+	tiffIO dd(rtrfile, FLOAT_TYPE, ddNodata, ang);
 	dd.write(xstart, ystart, ny, nx, dts->getGridPointer());
 
 	double writet = MPI_Wtime();
@@ -562,7 +562,7 @@ int vrisetoridgegrd(char *angfile, char *felfile, char *rtrfile, int statmethod,
 
 	//Create and write TIFF file
 	float ddNodata = MISSINGFLOAT;
-	tiffIO dd(rtrfile, FLOAT_TYPE, &ddNodata, ang);
+	tiffIO dd(rtrfile, FLOAT_TYPE, ddNodata, ang);
 	dd.write(xstart, ystart, ny, nx, dts->getGridPointer());
 
 	double writet = MPI_Wtime();
@@ -882,7 +882,7 @@ int pdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 
 	//Create and write TIFF file
 	float ddNodata = MISSINGFLOAT;
-	tiffIO dd(rtrfile, FLOAT_TYPE, &ddNodata, ang);
+	tiffIO dd(rtrfile, FLOAT_TYPE, ddNodata, ang);
 	dd.write(xstart, ystart, ny, nx, dtsh->getGridPointer());
 
 	double writet = MPI_Wtime();
@@ -1172,7 +1172,7 @@ int sdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 
 	//Create and write TIFF file
 	float ddNodata = MISSINGFLOAT;
-	tiffIO dd(rtrfile, FLOAT_TYPE, &ddNodata, ang);
+	tiffIO dd(rtrfile, FLOAT_TYPE, ddNodata, ang);
 	dd.write(xstart, ystart, ny, nx, dts->getGridPointer());
 
 	double writet = MPI_Wtime();

@@ -64,8 +64,7 @@ int peukerdouglas(char *felfile, char *ssfile,float *p)
 
 	long x,y;
 	int k,ik,jk,jomax,iomax,bound;
-	float ndve,emax;
-	float* ndveptr;
+	float emax;
 								/* Read elevation headers */
 	tiffIO felev(felfile, FLOAT_TYPE);			//input	 elevation	
 	long totalX = felev.getTotalX();			//Globabl x and y
@@ -80,10 +79,7 @@ int peukerdouglas(char *felfile, char *ssfile,float *p)
 			fflush(stderr);
 		}
 
-
-	ndveptr =  (float*)felev.getNodata();
-	ndve = *ndveptr;
-								//Create partition and read data
+	//Create partition and read data
 	tdpartition *elev;
 	elev = CreateNewPartition(felev.getDatatype(), totalX, totalY, dxA, dyA, felev.getNodata());
 	int elevnx = elev->getnx();
@@ -102,7 +98,7 @@ int peukerdouglas(char *felfile, char *ssfile,float *p)
 
 //Create empty partition to store new information
 	tdpartition *ss;
-	short ssnodata =-2;
+	int16_t ssnodata =-2;
 	ss = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, ssnodata);//-2 nodata value
 	
 // SHARE elev to populate the borders
@@ -216,7 +212,7 @@ int peukerdouglas(char *felfile, char *ssfile,float *p)
 	}															
 	//Stop timer
 	double computet = MPI_Wtime();
-	tiffIO outelev(ssfile,SHORT_TYPE,&ssnodata, felev);
+	tiffIO outelev(ssfile,SHORT_TYPE,ssnodata, felev);
 	
 	outelev.write((long)globalxstart, (long)globalystart, (long)elevny, (long)elevnx, ss->getGridPointer());
 	double writet = MPI_Wtime();

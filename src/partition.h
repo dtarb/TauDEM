@@ -90,12 +90,14 @@ class tdpartition{
 		virtual void* getGridPointer(){return (void*)NULL;}
 		virtual void setToNodata(long x, long y) = 0;
 
+		//virtual void init(long totalx, long totaly, double dx_in, double dy_in, MPI_Datatype MPIt, double nd) {}  // noDatarefactor 11/18/17
 		virtual void init(long totalx, long totaly, double dx_in, double dy_in, MPI_Datatype MPIt, short nd){}
 		virtual void init(long totalx, long totaly, double dx_in, double dy_in ,MPI_Datatype MPIt, int32_t nd){}
 		virtual void init(long totalx, long totaly, double dx_in, double dy_in, MPI_Datatype MPIt, float nd){}
+		
 
-
-		virtual short getData(long, long, short&){
+		// noDatarefactor 11/18/17 changed below to int16_t
+		virtual int16_t getData(long, long, int16_t&){
 			printf("Attempt to access short grid with incorrect data type\n");
 			MPI_Abort(MCW,41);return 0;
 		}
@@ -111,11 +113,13 @@ class tdpartition{
 
 		virtual void savedxdyc(tiffIO &obj ){}
 		virtual void getdxdyc(long, double&, double&){}
-	    virtual void setData(long, long, short){}
+		// noDatarefactor 11/18/17 changed below to int16_t
+	    virtual void setData(long, long, int16_t){}
 		virtual void setData(long, long, int32_t){}
 		virtual void setData(long, long, float){}
 
-		virtual void addToData(long, long, short){}
+		// noDatarefactor 11/18/17 changed below to int16_t
+		virtual void addToData(long, long, int16_t){}
 		virtual void addToData(long, long, int32_t){}
 		virtual void addToData(long, long, float){}
 };
