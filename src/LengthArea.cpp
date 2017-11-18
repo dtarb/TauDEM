@@ -94,7 +94,7 @@ int lengtharea(char *plenfile, char*ad8file, char *ssfile, float *p)
 
 	//Create empty partition to store new information
 	tdpartition *ss;
-	ss = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -32768);
+	ss = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, (int16_t)-32768);
 
 	long i,j;
 	float tempplen=0.0;
@@ -139,7 +139,7 @@ int lengtharea(char *plenfile, char*ad8file, char *ssfile, float *p)
 
 	//Create and write TIFF file
 	short aNodata = -32768;
-	tiffIO sss(ssfile, SHORT_TYPE, &aNodata, ad8);
+	tiffIO sss(ssfile, SHORT_TYPE, aNodata, ad8);
 	sss.write(xstart, ystart, ny, nx, ss->getGridPointer());
 
 	//Brackets force MPI-dependent objects to go out of scope before Finalize is called

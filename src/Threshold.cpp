@@ -95,7 +95,7 @@ int threshold(char *ssafile,char *srcfile,char *maskfile, float thresh, int usem
 
 	//Create empty partition to store new information
 	tdpartition *src;
-	src = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -32768);
+	src = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, (int16_t)-32768);
 
 	long i,j;
 	float tempssa=0;
@@ -151,7 +151,7 @@ int threshold(char *ssafile,char *srcfile,char *maskfile, float thresh, int usem
 
 	//Create and write TIFF file
 	short aNodata = -32768;
-	tiffIO srcc(srcfile, SHORT_TYPE, &aNodata, ssa);
+	tiffIO srcc(srcfile, SHORT_TYPE, aNodata, ssa);
 	srcc.write(xstart, ystart, ny, nx, src->getGridPointer());
 
 	//Brackets force MPI-dependent objects to go out of scope before Finalize is called

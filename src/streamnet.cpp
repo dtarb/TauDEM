@@ -1416,8 +1416,8 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 	
 
 		int32_t wsGridNodata=MISSINGLONG;
-		short ordNodata=MISSINGSHORT;
-		tiffIO wsIO(wfile, LONG_TYPE,&wsGridNodata,ad8IO);
+		int16_t ordNodata=MISSINGSHORT;
+		tiffIO wsIO(wfile, LONG_TYPE,wsGridNodata,ad8IO);
 		wsIO.write(xstart, ystart, ny, nx, wsGrid->getGridPointer());
 		if(verbose)
 		{
@@ -1438,7 +1438,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 		{
 			cout << rank << " Writing order file"  << endl;
 		}
-		tiffIO ordIO(ordfile, SHORT_TYPE,&ordNodata,ad8IO);
+		tiffIO ordIO(ordfile, SHORT_TYPE,ordNodata,ad8IO);
 		ordIO.write(xstart, ystart, ny, nx, contribs->getGridPointer());
 		
 		// Timer - write time

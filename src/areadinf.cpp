@@ -158,7 +158,7 @@ int area( char* angfile, char* scafile, char* datasrc,char* lyrname,int uselyrna
 	short tempShort=0;
 	double tempdxc,tempdyc;
 	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -32768);
+	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, (int16_t)-32768);
 	
 	//Share information and set borders to zero
 	flowData->share();
@@ -268,7 +268,7 @@ int area( char* angfile, char* scafile, char* datasrc,char* lyrname,int uselyrna
 
 	//Create and write TIFF file
 	float scaNodata = -1.0f;
-	tiffIO sca(scafile, FLOAT_TYPE, &scaNodata, ang);
+	tiffIO sca(scafile, FLOAT_TYPE, scaNodata, ang);
 	sca.write(xstart, ystart, ny, nx, areadinf->getGridPointer());
 
 	double writet = MPI_Wtime();
