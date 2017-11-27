@@ -1,9 +1,15 @@
 Linux Compilation Instructions
 ==============================
 
-Type `make` on the command line to initiate compilation.
+Install prereqs:
 
-It may be necessary to modify `makefile`:
+1. GDAL
+2. MPI
+3. CMAKE
 
- * Uncomment the line `INCDIRS=-I/usr/lib/openmpi/include -I/usr/include/gdal`
- * On the line beginning with `all :` remove the `clean` target from the end
+Installation Steps:
+```
+$ cd TauDEM/src
+$ cmake .
+$ make
+```
