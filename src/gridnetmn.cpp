@@ -195,7 +195,10 @@ errexit:
 	   printf("<tlenfile> is the total path length upstream of each point output file.\n");
 	   printf("<gordfile> is the grid of strahler order output file.\n");
 	   printf("[-o <outletfile>] is the optional outlet shape input file.\n");
-       printf("[-mask <maskfile>] is the optional weight grid input file.\n");
+       printf("[-mask <maskfile> [-thresh <threshold>]].  maskfile is an optional mask grid input file.\n");
+	   printf("Where a maskfile is input, there is an additional option to specify a threshold.  This has to");
+	   printf("be immediately following the maskfile on the argument list.  The grid network is evaluated for");
+	   printf("grid cells where values of the maskfile grid read as 4 byte integers are >= threshold.");
 	   printf("The following are appended to the file names\n");
        printf("before the files are opened:\n");
        printf("p   D8 flow direction output file\n");
