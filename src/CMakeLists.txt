@@ -42,6 +42,7 @@ set (GAGEWATERSHED gagewatershedmn.cpp gagewatershed.cpp ${common_srcs} ${shape_
 set (TWI TWImn.cpp TWI.cpp ${common_srcs})
 set (CONNECTDOWN ConnectDownmn.cpp ConnectDown.cpp ${common_srcs} ${shape_srcs})
 set (CATCHOUTLETS CatchOutletsmn.cpp CatchOutlets.cpp ${common_srcs} ${shape_srcs})
+set (CREATEOUTLET create_outletmn.cpp create_outlet.cpp ${common_srcs})
 
 # MPI is required
 find_package(MPI REQUIRED)
@@ -82,6 +83,7 @@ add_executable (gagewatershed ${GAGEWATERSHED})
 add_executable (twi ${TWI})
 add_executable (connectdown ${CONNECTDOWN})
 add_executable (catchoutlets ${CATCHOUTLETS})
+add_executable (createoutlet ${CREATEOUTLET})
 
 set (MY_TARGETS aread8
                 areadinf
@@ -111,7 +113,8 @@ set (MY_TARGETS aread8
                 gagewatershed
                 twi
                 connectdown
-                catchoutlets)
+                catchoutlets
+                createoutlet)
 
 foreach( c_target ${MY_TARGETS} )
     target_link_libraries(${c_target} ${MPI_LIBRARIES} ${GDAL_LIBRARY})
