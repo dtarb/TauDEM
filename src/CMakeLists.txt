@@ -45,6 +45,7 @@ set (CATCHOUTLETS CatchOutletsmn.cpp CatchOutlets.cpp ${common_srcs} ${shape_src
 set (CREATEOUTLET create_outletmn.cpp create_outlet.cpp ${common_srcs})
 set (EDITRASTER EditRastermn.cpp EditRaster.cpp ${common_srcs})
 set (FLOWDIRCOND flowdirconditionmn.cpp flowdircond.cpp ${common_srcs})
+set (RETLIMFLOW RetLimFlowmn.cpp RetlimFlow.cpp ${common_srcs})
 
 # MPI is required
 find_package(MPI REQUIRED)
@@ -88,6 +89,7 @@ add_executable (catchoutlets ${CATCHOUTLETS})
 add_executable (createoutlet ${CREATEOUTLET})
 add_executable (editraster ${EDITRASTER})
 add_executable (flowdircond ${FLOWDIRCOND})
+add_executable (retlimflow ${RETLIMFLOW})
 
 set (MY_TARGETS aread8
                 areadinf
@@ -120,7 +122,8 @@ set (MY_TARGETS aread8
                 catchoutlets
                 createoutlet
                 editraster
-                flowdircond)
+                flowdircond
+                retlimflow)
 
 foreach( c_target ${MY_TARGETS} )
     target_link_libraries(${c_target} ${MPI_LIBRARIES} ${GDAL_LIBRARY})
