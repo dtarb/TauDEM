@@ -4,8 +4,8 @@ project(TauDEM)
 set (shape_srcs ReadOutlets.cpp)
 set (common_srcs commonLib.cpp tiffIO.cpp)
 
-set (D8FILES aread8mn.cpp aread8.cpp ${common_srcs} ${shape_srcs})
-set (DINFFILES areadinfmn.cpp areadinf.cpp ${common_srcs} ${shape_srcs})
+set (AREAD8 aread8mn.cpp aread8.cpp ${common_srcs} ${shape_srcs})
+set (AREADINF areadinfmn.cpp areadinf.cpp ${common_srcs} ${shape_srcs})
 set (D8 D8FlowDirmn.cpp d8.cpp Node.cpp ${common_srcs} ${shape_srcs})
 set (D8EXTREAMUP D8flowpathextremeup.cpp D8FlowPathExtremeUpmn.cpp
      ${common_srcs} ${shape_srcs})
@@ -23,12 +23,12 @@ set (DINFREVACCUM DinfRevAccum.cpp DinfRevAccummn.cpp ${common_srcs})
 set (DINFTRANSLIMACCUM DinfTransLimAccum.cpp DinfTransLimAccummn.cpp
      ${common_srcs} ${shape_srcs})
 set (DINFUPDEPEND DinfUpDependence.cpp DinfUpDependencemn.cpp ${common_srcs})
-set (DROPANALYSISFILES DropAnalysis.cpp DropAnalysismn.cpp
+set (DROPANALYSIS DropAnalysis.cpp DropAnalysismn.cpp
      ${common_srcs} ${shape_srcs})
 set (GRIDNET gridnetmn.cpp gridnet.cpp
      ${common_srcs} ${shape_srcs})
 set (LENGTHAREA LengthArea.cpp LengthAreamn.cpp ${common_srcs})
-set (MVOUTLETSTOSTRMFILES MoveOutletsToStrm.cpp MoveOutletsToStrmmn.cpp
+set (MVOUTLETSTOSTRM MoveOutletsToStrm.cpp MoveOutletsToStrmmn.cpp
      ${common_srcs} ${shape_srcs})
 set (PEUKERDOUGLAS PeukerDouglas.cpp PeukerDouglasmn.cpp ${common_srcs})
 set (PITREMOVE flood.cpp PitRemovemn.cpp ${common_srcs})
@@ -39,6 +39,15 @@ set (STREAMNET streamnetmn.cpp streamnet.cpp
      ${common_srcs} ${shape_srcs})
 set (THRESHOLD Threshold.cpp Thresholdmn.cpp ${common_srcs})
 set (GAGEWATERSHED gagewatershedmn.cpp gagewatershed.cpp ${common_srcs} ${shape_srcs})
+set (TWI TWImn.cpp TWI.cpp ${common_srcs})
+set (CONNECTDOWN ConnectDownmn.cpp ConnectDown.cpp ${common_srcs} ${shape_srcs})
+set (CATCHOUTLETS CatchOutletsmn.cpp CatchOutlets.cpp ${common_srcs} ${shape_srcs})
+set (CREATEOUTLET create_outletmn.cpp create_outlet.cpp ${common_srcs})
+set (EDITRASTER EditRastermn.cpp EditRaster.cpp ${common_srcs})
+set (FLOWDIRCOND flowdirconditionmn.cpp flowdircond.cpp ${common_srcs})
+set (RETLIMFLOW RetLimFlowmn.cpp RetlimFlow.cpp ${common_srcs})
+set (SETREGION SetRegionmn.cpp SetRegion.cpp ${common_srcs})
+set (SINMAPSI SinmapSImn.cpp SinmapSI.cpp ${common_srcs})
 
 # MPI is required
 find_package(MPI REQUIRED)
@@ -50,8 +59,8 @@ set(CMAKE_CXX_LINK_FLAGS ${CMAKE_CXX_LINK_FLAGS} ${MPI_LINK_FLAGS})
 find_package(GDAL REQUIRED)
 include_directories(${GDAL_INCLUDE_DIR})
 
-add_executable (aread8 ${D8FILES})
-add_executable (areadinf ${DINFFILES})
+add_executable (aread8 ${AREAD8})
+add_executable (areadinf ${AREADINF})
 add_executable (d8flowdir ${D8})
 add_executable (d8flowpathextremeup ${D8EXTREAMUP})
 add_executable (d8hdisttostrm ${D8HDIST})
@@ -64,10 +73,10 @@ add_executable (dinfflowdir ${DINF})
 add_executable (dinfrevaccum ${DINFREVACCUM})
 add_executable (dinftranslimaccum ${DINFTRANSLIMACCUM})
 add_executable (dinfupdependence ${DINFUPDEPEND})
-add_executable (dropanalysis ${DROPANALYSISFILES})
+add_executable (dropanalysis ${DROPANALYSIS})
 add_executable (gridnet ${GRIDNET})
 add_executable (lengtharea ${LENGTHAREA})
-add_executable (moveoutletstostrm ${MVOUTLETSTOSTRMFILES})
+add_executable (moveoutletstostrm ${MVOUTLETSTOSTRM})
 add_executable (peukerdouglas ${PEUKERDOUGLAS})
 add_executable (pitremove ${PITREMOVE})
 add_executable (slopearea ${SLOPEAREA})
@@ -76,8 +85,17 @@ add_executable (slopeavedown ${SLOPEAVEDOWN})
 add_executable (streamnet ${STREAMNET})
 add_executable (threshold ${THRESHOLD})
 add_executable (gagewatershed ${GAGEWATERSHED})
+add_executable (twi ${TWI})
+add_executable (connectdown ${CONNECTDOWN})
+add_executable (catchoutlets ${CATCHOUTLETS})
+add_executable (createoutlet ${CREATEOUTLET})
+add_executable (editraster ${EDITRASTER})
+add_executable (flowdircond ${FLOWDIRCOND})
+add_executable (retlimflow ${RETLIMFLOW})
+add_executable (setregion ${SETREGION})
+add_executable (sinmapsi ${SINMAPSI})
 
-set (MY_TARGETS aread8 
+set (MY_TARGETS aread8
                 areadinf
                 d8flowdir
                 d8flowpathextremeup
@@ -102,7 +120,16 @@ set (MY_TARGETS aread8
                 slopeavedown
                 streamnet
                 threshold
-		gagewatershed)
+                gagewatershed
+                twi
+                connectdown
+                catchoutlets
+                createoutlet
+                editraster
+                flowdircond
+                retlimflow
+                setregion
+                sinmapsi)
 
 foreach( c_target ${MY_TARGETS} )
     target_link_libraries(${c_target} ${MPI_LIBRARIES} ${GDAL_LIBRARY})
