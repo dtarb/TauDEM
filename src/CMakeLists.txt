@@ -43,6 +43,8 @@ set (TWI TWImn.cpp TWI.cpp ${common_srcs})
 set (CONNECTDOWN ConnectDownmn.cpp ConnectDown.cpp ${common_srcs} ${shape_srcs})
 set (CATCHOUTLETS CatchOutletsmn.cpp CatchOutlets.cpp ${common_srcs} ${shape_srcs})
 set (CREATEOUTLET create_outletmn.cpp create_outlet.cpp ${common_srcs})
+set (EDITRASTER EditRastermn.cpp EditRaster.cpp ${common_srcs})
+set (FLOWDIRCOND flowdirconditionmn.cpp flowdircond.cpp ${common_srcs})
 
 # MPI is required
 find_package(MPI REQUIRED)
@@ -84,6 +86,8 @@ add_executable (twi ${TWI})
 add_executable (connectdown ${CONNECTDOWN})
 add_executable (catchoutlets ${CATCHOUTLETS})
 add_executable (createoutlet ${CREATEOUTLET})
+add_executable (editraster ${EDITRASTER})
+add_executable (flowdircond ${FLOWDIRCOND})
 
 set (MY_TARGETS aread8
                 areadinf
@@ -114,7 +118,9 @@ set (MY_TARGETS aread8
                 twi
                 connectdown
                 catchoutlets
-                createoutlet)
+                createoutlet
+                editraster
+                flowdircond)
 
 foreach( c_target ${MY_TARGETS} )
     target_link_libraries(${c_target} ${MPI_LIBRARIES} ${GDAL_LIBRARY})
