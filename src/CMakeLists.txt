@@ -46,6 +46,8 @@ set (CREATEOUTLET create_outletmn.cpp create_outlet.cpp ${common_srcs})
 set (EDITRASTER EditRastermn.cpp EditRaster.cpp ${common_srcs})
 set (FLOWDIRCOND flowdirconditionmn.cpp flowdircond.cpp ${common_srcs})
 set (RETLIMFLOW RetLimFlowmn.cpp RetlimFlow.cpp ${common_srcs})
+set (SETREGION SetRegionmn.cpp SetRegion.cpp ${common_srcs})
+set (SINMAPSI SinmapSImn.cpp SinmapSI.cpp ${common_srcs})
 
 # MPI is required
 find_package(MPI REQUIRED)
@@ -90,6 +92,8 @@ add_executable (createoutlet ${CREATEOUTLET})
 add_executable (editraster ${EDITRASTER})
 add_executable (flowdircond ${FLOWDIRCOND})
 add_executable (retlimflow ${RETLIMFLOW})
+add_executable (setregion ${SETREGION})
+add_executable (sinmapsi ${SINMAPSI})
 
 set (MY_TARGETS aread8
                 areadinf
@@ -123,7 +127,9 @@ set (MY_TARGETS aread8
                 createoutlet
                 editraster
                 flowdircond
-                retlimflow)
+                retlimflow
+                setregion
+                sinmapsi)
 
 foreach( c_target ${MY_TARGETS} )
     target_link_libraries(${c_target} ${MPI_LIBRARIES} ${GDAL_LIBRARY})
