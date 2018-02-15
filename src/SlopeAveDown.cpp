@@ -268,7 +268,7 @@ int sloped(char *pfile,char* felfile,char* slpdfile, double dn)
 
 	//Create and write TIFF file
 	float slpnd = MISSINGFLOAT;
-	tiffIO slpIO(slpdfile, FLOAT_TYPE, &slpnd, pIO);
+	tiffIO slpIO(slpdfile, FLOAT_TYPE, slpnd, pIO);
 	slpIO.write(xstart, ystart, ny, nx, sd->getGridPointer());
 
 	double writet = MPI_Wtime();

@@ -203,7 +203,7 @@ int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *de
 	short tempShort=0;
 
 	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -32768);
+	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, (int16_t)-32768);
 	
 	//Share information and set borders to zero
 	flowData->share();
@@ -350,14 +350,14 @@ int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *de
 
 	//Create and write TIFF file
 	float scaNodata = MISSINGFLOAT;
-	tiffIO ttla(tlafile, FLOAT_TYPE, &scaNodata, ang);
+	tiffIO ttla(tlafile, FLOAT_TYPE, scaNodata, ang);
 	ttla.write(xstart, ystart, ny, nx, tla->getGridPointer());
 
-	tiffIO ddep(depfile, FLOAT_TYPE, &scaNodata, ang);
+	tiffIO ddep(depfile, FLOAT_TYPE, scaNodata, ang);
 	ddep.write(xstart, ystart, ny, nx, dep->getGridPointer());
 
 	if(usec == 1){
-		tiffIO ccsout(coutfile, FLOAT_TYPE, &scaNodata, ang);
+		tiffIO ccsout(coutfile, FLOAT_TYPE, scaNodata, ang);
 		ccsout.write(xstart, ystart, ny, nx, csout->getGridPointer());
 	}
 

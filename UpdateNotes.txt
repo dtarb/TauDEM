@@ -1,0 +1,45 @@
+11/10/17
+
+Identified a problem with flow direction conditioning not working due to no data values not being robustly handled.
+
+NoData and Type Fixes
+11/18/17
+A problem occurred in flowdircond due to incorrect recognition of grid no data values.
+
+Implemented the following strategy
+-	Store nodata as a double when associated with files and TiffIO because that is how it comes from GDAL
+-	Store nodata as partition type when associated with a partition, one of int16_t (short) int32_t (long), float
+-	Change short grid storage to int16_t storage because that is how it comes from GDAL (short implementations may be machine dependent)
+-	In check for nodata use (double) typecast because nodata is double
+
+With new approach all files need to have no data type properly set in CreateNewPartition
+e.g. CreateNewPartition(SHORT_TYPE, totalx, totaly, dxA, dyA, (int16_t)0);
+
+Significant changes
+File related
+-	tiffIO.cpp
+  o	  nodata to double
+  o	  short’s to int16_t
+  o	  nodata no longer pointer
+-	tiffio.h
+  o	  tiffIO copy class nd from void* to double*
+  o	  getNodata function to double*
+  o	  *nodata from void to double
+  o	  nodata from void to double
+Partition related
+-	createpart.h
+  o	  Set nodata to type and made first function a template class to take multiple nodata pointer types as input
+  o	  Changed short’s to int16_t
+  o	  Changed MPI_SHORT to MPI_INT16_T
+-	commonlib.h
+  o	  removed unused type enumerations
+  o	  set MISSINGSHORT as int16_t
+  o	  set MISSINGLONG as int32_t
+-	linearpart.h (does the work of the init function)
+  o	  no changes
+-	partition.h
+  o	  changed short’s to int16_t
+-	flowdircond.cpp
+  o	  change fNodata to MISSINGFLOAT
+
+

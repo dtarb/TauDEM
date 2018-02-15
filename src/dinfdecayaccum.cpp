@@ -292,7 +292,7 @@ int dmarea(char* angfile,char* adecfile,char* dmfile,char* datasrc,char* lyrname
 
 	//Create and write TIFF file
 	float scaNodata = MISSINGFLOAT;
-	tiffIO dsca(adecfile, FLOAT_TYPE, &scaNodata, ang);
+	tiffIO dsca(adecfile, FLOAT_TYPE, scaNodata, ang);
 	dsca.write(xstart, ystart, ny, nx, daccum->getGridPointer());
 
 	double writet = MPI_Wtime();

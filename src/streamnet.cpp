@@ -122,8 +122,11 @@ void createStreamNetShapefile(char *streamnetsrc,char *streamnetlyr,OGRSpatialRe
 
       // layer name is file name without extension
 	 if(strlen(streamnetlyr)==0){
-		char *streamnetlayername;
-		streamnetlayername=getLayername(streamnetsrc); // get layer name if the layer name is not provided
+	 // Chris George suggestion
+	        char streamnetlayername[MAXLN];
+	        getLayername(streamnetsrc, streamnetlayername); // get layer name if the layer name is not provided		  
+		//char *streamnetlayername;
+		//streamnetlayername=getLayername(streamnetsrc); // get layer name if the layer name is not provided
 	    hLayer1= OGR_DS_CreateLayer( hDS1,streamnetlayername,hSRSraster, wkbLineString, NULL );} 
 
 	 else {
@@ -1416,8 +1419,8 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 	
 
 		int32_t wsGridNodata=MISSINGLONG;
-		short ordNodata=MISSINGSHORT;
-		tiffIO wsIO(wfile, LONG_TYPE,&wsGridNodata,ad8IO);
+		int16_t ordNodata=MISSINGSHORT;
+		tiffIO wsIO(wfile, LONG_TYPE,wsGridNodata,ad8IO);
 		wsIO.write(xstart, ystart, ny, nx, wsGrid->getGridPointer());
 		if(verbose)
 		{
@@ -1438,7 +1441,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 		{
 			cout << rank << " Writing order file"  << endl;
 		}
-		tiffIO ordIO(ordfile, SHORT_TYPE,&ordNodata,ad8IO);
+		tiffIO ordIO(ordfile, SHORT_TYPE,ordNodata,ad8IO);
 		ordIO.write(xstart, ystart, ny, nx, contribs->getGridPointer());
 		
 		// Timer - write time

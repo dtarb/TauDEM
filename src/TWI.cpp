@@ -143,7 +143,7 @@ int twigrid(char *slopefile,char *areafile,char *twifile)
 	//Create and write TIFF file
 	float aNodata = -1.0f;
 	char prefix[5] = "twi";
-	tiffIO sarr(twifile, FLOAT_TYPE, &aNodata, slp);
+	tiffIO sarr(twifile, FLOAT_TYPE, aNodata, slp);
 	sarr.write(xstart, ystart, ny, nx, sar->getGridPointer());
 
 	//Brackets force MPI-dependent objects to go out of scope before Finalize is called

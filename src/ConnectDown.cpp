@@ -684,8 +684,11 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletdatasrc, ch
 		 
       // layer name is file name without extension
 	 if(strlen(outletlyr)==0){
-		char *outletlayername;
-		outletlayername=getLayername( outletdatasrc); // get layer name if the layer name is not provided
+	 // Chris George Suggestion
+		char outletlayername[MAXLN];
+		getLayername( outletdatasrc, outletlayername); // get layer name if the layer name is not provided
+		// char *outletlayername;
+		// outletlayername=getLayername( outletdatasrc); // get layer name if the layer name is not provided
 	    hLayersh= OGR_DS_CreateLayer( hDSsh,outletlayername,hSRSRaster,wkbPoint, NULL);} 
 
 	 else {
@@ -765,8 +768,11 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletdatasrc, ch
     //hLayer1 = OGR_DS_GetLayerByName( hDS1,layername );
     //OGR_L_ResetReading(hLayer1);
 	 if(strlen(movedoutletlyr)==0){
-		char *mvoutletlayername;
-		mvoutletlayername=getLayername( movedoutletdatasrc); // get layer name if the layer name is not provided
+	 // Chris George Suggestion
+		char mvoutletlayername[MAXLN];
+		getLayername( movedoutletdatasrc, mvoutletlayername); // get layer name if the layer name is not provided
+	    //char *mvoutletlayername;
+		//mvoutletlayername=getLayername( movedoutletdatasrc); // get layer name if the layer name is not provided
 	     hLayershmoved= OGR_DS_CreateLayer( hDSshmoved, mvoutletlayername,hSRSRaster, wkbPoint, NULL );} 
 
 	 else {

@@ -59,15 +59,12 @@ email:  dtarb@usu.edu
 #define NOTFINISHED 0
 #define FINISHED 1
 
-#define TDVERSION "5.3.7"
+#define TDVERSION "5.3.9"
 
 enum DATA_TYPE
 	{ SHORT_TYPE,
 	  LONG_TYPE,
-	  FLOAT_TYPE,
-	  DOUBLE_TYPE,
-	  UNKNOWN_TYPE,
-	  INVALID_DATA_TYPE = -1
+	  FLOAT_TYPE
 	};
 
 //TODO: revisit this structure to see where it is used
@@ -77,9 +74,9 @@ struct node {
 };
 
 const double PI =  3.14159265359;
-const short MISSINGSHORT = -32768;
+const int16_t MISSINGSHORT = -32768;
 
-const long MISSINGLONG = -2147483647;
+const int32_t MISSINGLONG = -2147483647;
 const float MISSINGFLOAT = -1*FLT_MAX;
 const float MINEPS = 1E-5f;
 
@@ -94,7 +91,9 @@ const int d2[9] = { 0,0,-1,-1,-1, 0, 1,1,1};
 
 int nameadd( char*,char*,const char*);
 double prop( float a, int k, double dx1 , double dy1);
-char *getLayername(char *inputogrfile);
+//char *getLayername(char *inputogrfile);
+// Chris George Suggestion
+void getLayername(char *inputogrfile, char *layername);
 const char *getOGRdrivername(char *datasrcnew);
 void getlayerfail(OGRDataSourceH hDS1,char * outletsds, int outletslyr);
 int readoutlets(char *outletsds,char *lyrname,int uselayername, int outletslyr, OGRSpatialReferenceH hSRSRaster, int *noutlets, double*& x, double*& y);

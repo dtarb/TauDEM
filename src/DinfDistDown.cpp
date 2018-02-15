@@ -360,7 +360,7 @@ int hdisttostreamgrd(char *angfile, char *wfile, char *srcfile, char *dtsfile, i
 
 	//Create and write TIFF file
 	float ddNodata = MISSINGFLOAT;
-	tiffIO dd(dtsfile, FLOAT_TYPE, &ddNodata, ang);
+	tiffIO dd(dtsfile, FLOAT_TYPE, ddNodata, ang);
 	dd.write(xstart, ystart, ny, nx, dts->getGridPointer());
 
 	double writet = MPI_Wtime();
@@ -656,7 +656,7 @@ int vdroptostreamgrd(char *angfile, char *felfile, char *srcfile, char *dtsfile,
 
 	//Create and write TIFF file
 	float ddNodata = MISSINGFLOAT;
-	tiffIO dd(dtsfile, FLOAT_TYPE, &ddNodata, ang);
+	tiffIO dd(dtsfile, FLOAT_TYPE, ddNodata, ang);
 	dd.write(xstart, ystart, ny, nx, dts->getGridPointer());
 
 	double writet = MPI_Wtime();
@@ -1023,7 +1023,7 @@ int pdisttostreamgrd(char *angfile, char *felfile, char *wfile, char *srcfile, c
 
 	//Create and write TIFF file
 	float ddNodata = MISSINGFLOAT;
-	tiffIO dd(dtsfile, FLOAT_TYPE, &ddNodata, ang);
+	tiffIO dd(dtsfile, FLOAT_TYPE, ddNodata, ang);
 	dd.write(xstart, ystart, ny, nx, dtsh->getGridPointer());
 
 	double writet = MPI_Wtime();
@@ -1359,7 +1359,7 @@ int sdisttostreamgrd(char *angfile, char *felfile, char *wfile,  char *srcfile, 
 
 	//Create and write TIFF file
 	float ddNodata = MISSINGFLOAT;
-	tiffIO dd(dtsfile, FLOAT_TYPE, &ddNodata, ang);
+	tiffIO dd(dtsfile, FLOAT_TYPE, ddNodata, ang);
 	dd.write(xstart, ystart, ny, nx, dts->getGridPointer());
 
 	double writet = MPI_Wtime();
