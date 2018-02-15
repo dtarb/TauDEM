@@ -143,7 +143,7 @@ int sindexcombined(char *slopefile,  char *scaterrainfile, char *scarminroadfile
 	FILE *fp;
 	int i, j, mter, err, filetype, index, rno, nx, ny;
 	float ndva, ndvs;
-	short *ndvter;
+	short ndvter;
 	int nor;
 	double X1, X2, cellsat, dx, dy;
 	float rs, rw, g;
@@ -275,7 +275,7 @@ int sindexcombined(char *slopefile,  char *scaterrainfile, char *scarminroadfile
 	slpData = CreateNewPartition(slp.getDatatype(), totalX, totalY, dx, dy, slp.getNodata());
 	nx = slpData->getnx();
 	ny = slpData->getny();
-	ndvs = *(float*)slp.getNodata();	
+	ndvs = (float)slp.getNodata();	
 	int xstart, ystart;
 	slpData->localToGlobal(0, 0, xstart, ystart);
 	// TODO: put similar comments for the other savedxdyc() function used in this function
@@ -287,12 +287,12 @@ int sindexcombined(char *slopefile,  char *scaterrainfile, char *scarminroadfile
 
 	//Create partition and read data from clibration grid file
 	tdpartition *calData;
-	calData = CreateNewPartition(cal.getDatatype(), totalX, totalY, dx, dy, -1);
+	calData = CreateNewPartition(cal.getDatatype(), totalX, totalY, dx, dy, cal.getNodata());
 	calData->localToGlobal(0, 0, xstart, ystart);
 	calData->savedxdyc(cal);
 	cal.read(xstart, ystart, ny, nx, calData->getGridPointer());
 			
-	ndvter = (short*)cal.getNodata();	
+	ndvter = (short)cal.getNodata();	
 			
 	//Create partition and read data from sca grid file
 	tdpartition *scaData;
@@ -370,9 +370,9 @@ int sindexcombined(char *slopefile,  char *scaterrainfile, char *scarminroadfile
 				scaMaxData->getData(i, j, sca_max_cell_value);
 			}
 			
-			region_index = findRegIndex(cal_cell_value, nor, *ndvter);
+			region_index = findRegIndex(cal_cell_value, nor, ndvter);
 			
-			//  DGT 12/31/14.  Changed the logic below from region_index < *ndvter to region_index < 0 to allow for *ndvter to be positive
+			//  DGT 12/31/14.  Changed the logic below from region_index < ndvter to region_index < 0 to allow for ndvter to be positive
 			if (region_index < 0 || sca_cell_value < 0 || sca_min_cell_value < 0 || sca_max_cell_value < 0 || slope_cell_value == ndvs){
 				csiData->setToNodata(i, j);
 				satData->setToNodata(i, j);				
@@ -420,10 +420,10 @@ int sindexcombined(char *slopefile,  char *scaterrainfile, char *scarminroadfile
 
 	//Create and write to the csi TIFF file
 	float aNodata = -1.0f;
-	tiffIO csi(sincombinedfile, FLOAT_TYPE, &aNodata, slp);
+	tiffIO csi(sincombinedfile, FLOAT_TYPE, aNodata, slp);
 	csi.write(xstart, ystart, ny, nx, csiData->getGridPointer());
 	//Create and write to the sat TIFF file
-	tiffIO sat(satfile, FLOAT_TYPE, &aNodata, slp);
+	tiffIO sat(satfile, FLOAT_TYPE, aNodata, slp);
 	sat.write(xstart, ystart, ny, nx, satData->getGridPointer());
 
 	double writetime=MPI_Wtime()-end;

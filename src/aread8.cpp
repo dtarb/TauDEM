@@ -133,7 +133,7 @@ int aread8( char* pfile, char* afile, char *datasrc, char *lyrname,int uselyrnam
 	
 
 	//Convert geo coords to grid coords
-	int *outletsX; int *outletsY;
+	int *outletsX=NULL; int *outletsY=NULL;
 	if(usingShapeFile) {
 		outletsX = new int[numOutlets];
 		outletsY = new int[numOutlets];
@@ -265,7 +265,7 @@ int aread8( char* pfile, char* afile, char *datasrc, char *lyrname,int uselyrnam
 
 	//Create and write TIFF file
 	float aNodata = -1.0f;
-	tiffIO a(afile, FLOAT_TYPE, &aNodata, p);
+	tiffIO a(afile, FLOAT_TYPE, aNodata, p);
 	a.write(xstart, ystart, ny, nx, aread8->getGridPointer());
 	double writet = MPI_Wtime();
 	if( rank == 0) 

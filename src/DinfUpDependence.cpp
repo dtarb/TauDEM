@@ -109,7 +109,7 @@ int depgrd(char* angfile, char* dgfile, char* depfile)
 
 	//  Create neighbor partition
 	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -32768);
+	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, (int16_t)-32768);
 	
 	//Share information and set borders to zero
 	flowData->share();
@@ -240,7 +240,7 @@ int depgrd(char* angfile, char* dgfile, char* depfile)
 	double computet = MPI_Wtime();
 
 	//Create and write TIFF file
-	tiffIO ddep(depfile, FLOAT_TYPE, &depNodata, ang);
+	tiffIO ddep(depfile, FLOAT_TYPE, depNodata, ang);
 	ddep.write(xstart, ystart, ny, nx, dep->getGridPointer());
 
 	double writet = MPI_Wtime();

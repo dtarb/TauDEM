@@ -1,12 +1,13 @@
-/*  TauDEM Flow direction conditioning main program to condition DEM based on input flow directions
-      
-  David Tarboton, Nazmus Sazib
+/*  Retention Limited Flow main program to compute retention limited Flow based on 
+    D-infinity flow model.
+
+  David Tarboton and Group
   Utah State University  
-  May 10, 2016 
+  Febuary 24, 2013
   
 */
 
-/*  Copyright (C) 2010  David Tarboton, Utah State University
+/*  Copyright (C) 2013  David Tarboton, Utah State University
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License 
@@ -38,101 +39,108 @@ email:  dtarb@usu.edu
 
 //  This software is distributed from http://hydrology.usu.edu/taudem/
 
+
+  
 #include <time.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "commonLib.h"
-#include "d8.h"
+#include "retlimro.h"
 
- int flowdircond( char *pfile, char *zfile, char *zfdcfile);
 int main(int argc,char **argv)
 {
-  char pfile[MAXLN], zfile[MAXLN], zfdcfile[MAXLN];
-  int err, i;
-    short useflowfile=0;
-
+   char angfile[MAXLN],wgfile[MAXLN],rcfile[MAXLN],qrlfile[MAXLN];
+   int err,i;
+   
    if(argc < 2)
     {  
        printf("Error: To run this program, use either the Simple Usage option or\n");
 	   printf("the Usage with Specific file names option\n");
-	   goto errexit; 
+	   goto errexit;
     }
+
    else if(argc > 2)
 	{
 		i = 1;
-//		printf("You are running %s with the Specific File Names Usage option.\n", argv[0]);
+		//printf("You are running %s with the Specific File Names Usage option.\n", argv[0]);
 	}
 	else {
 		i = 2;
-//		printf("You are running %s with the Simple Usage option.\n", argv[0]);
+		//printf("You are running %s with the Simple Usage option.\n", argv[0]);
 	}
 	while(argc > i)
 	{
-		if(strcmp(argv[i],"-z")==0)
+		if(strcmp(argv[i],"-ang")==0)
 		{
 			i++;
 			if(argc > i)
 			{
-				strcpy(zfile,argv[i]);
+				strcpy(angfile,argv[i]);
 				i++;
 			}
 			else goto errexit;
 		}
-		else if(strcmp(argv[i],"-p")==0)
+		else if(strcmp(argv[i],"-wg")==0)
 		{
 			i++;
 			if(argc > i)
 			{
-				strcpy(pfile,argv[i]);
+				strcpy(wgfile,argv[i]);
 				i++;
 			}
 			else goto errexit;
 		}
-		
-		else if(strcmp(argv[i],"-zfdc")==0)
+		else if(strcmp(argv[i],"-rc")==0)
 		{
 			i++;
 			if(argc > i)
 			{
-				strcpy(zfdcfile,argv[i]);
+				strcpy(rcfile,argv[i]);
 				i++;
-				useflowfile=1;
 			}
 			else goto errexit;
 		}
-
+		else if(strcmp(argv[i],"-qrl")==0)
+		{
+			i++;
+			if(argc > i)
+			{
+				strcpy(qrlfile,argv[i]);
+				i++;
+			}
+			else goto errexit;
+		}
 		else 
 		{
 			goto errexit;
 		}
 	}
 	if( argc == 2) {
-		nameadd(zfile,argv[1],"z");
-		nameadd(pfile,argv[1],"p");
-		nameadd(zfdcfile,argv[1],"zfdc");	
-	}
-
-    if((err=flowdircond( pfile, zfile, zfdcfile)) != 0)
-        printf("flowdiircond error %d\n",err);
+		nameadd(angfile,argv[1],"ang");
+		nameadd(rcfile,argv[1],"rc");
+		nameadd(qrlfile,argv[1],"qrl");
+		nameadd(wgfile,argv[1],"wg");
+	}  
+	if(err=retlimro(angfile, wgfile, rcfile, qrlfile) != 0)
+        printf("RetlimFlow error %d\n",err);
 
 	return 0;
 
-errexit:
-	   printf("Usage TODO\n",argv[0]);
-	  /* printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
-	   printf("Usage with specific file names:\n %s -fel <demfile>\n",argv[0]);
-       printf("-sd8 <slopefile> -p <angfile> [-sfdr <flowfile>]\n");
+	errexit:
+	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
+	   printf("Usage with specific file names:\n %s -ang <angfile>",argv[0]);
+       printf("-rc <rcfile> -wg <wgfile> -qrl <qrlfile>\n");
 	   printf("<basefilename> is the name of the raw digital elevation model\n");
-	   printf("<demfile> is the pit filled or carved DEM input file.\n");
-	   printf("<slopefile> is the slope output file.\n");
-	   printf("<pointfile> is the output d8 flow direction file.\n");
-       printf("[-sfdr <flowfile>] is the optional user imposed stream flow direction file.\n");
-       printf("The following are appended to the file names\n");
+	   printf("<angfile> is the D-infinity flow direction input file.\n");
+	   printf("<rcfile> retention capacity file.\n");
+	   printf("<wgfile> is the input weight at each grid cell.\n");
+	   printf("<qrlfile> is retention limited runoff that is output.\n");
+	   printf("With simple use the following are appended to the file names\n");
        printf("before the files are opened:\n");
-       printf("fel    carved or pit filled input elevation file\n");
-       printf("sd8    D8 slope file (output)\n");
-	   printf("p   D8 flow direction output file\n");*/
-       exit(0);
-}    
-
+       printf("ang    D-infinity flow direction input file\n");
+	   printf("rc    retention capacity (input)\n");
+	   printf("wg     weight grid (input)\n");
+	   printf("qrl   retention limited runoff (output)\n");
+       exit(0); 
+}

@@ -59,7 +59,10 @@ int flowdircond( char *pfile, char *zfile, char *zfdcfile)
 	int rank,size;
 	MPI_Comm_rank(MCW,&rank);//returns the rank of the calling processes in a communicator
 	MPI_Comm_size(MCW,&size);//returns the number of processes in a communicator
-	if(rank==0)printf("FlowDirCond version %s\n",TDVERSION);
+	if (rank == 0) {
+		printf("FlowDirCond version %s\n", TDVERSION);
+		fflush(stdout);
+	}
 		
 	double begint = MPI_Wtime();
 	tiffIO p(pfile,SHORT_TYPE);
@@ -84,7 +87,10 @@ int flowdircond( char *pfile, char *zfile, char *zfdcfile)
 	int nx = flowData->getnx();
 	int ny = flowData->getny();
 	int xstart, ystart;
-	flowData->localToGlobal(0, 0, xstart, ystart);
+	//int pnd;
+	/*pnd = (int)p.getNodata();
+	printf("P ND: %d\n", pnd); 	fflush(stdout);
+	*/flowData->localToGlobal(0, 0, xstart, ystart);
 	flowData->savedxdyc(p);
 	p.read(xstart, ystart, ny, nx, flowData->getGridPointer());
 	//printf("Pfile read");  fflush(stdout);
@@ -118,7 +124,8 @@ int flowdircond( char *pfile, char *zfile, char *zfdcfile)
 	outletsX = new int[numOutlets];
 		outletsY = new int[numOutlets];
 	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -32768);
+	double sNoData = (double)MISSINGSHORT;
+	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, MISSINGSHORT);
 	
 	//Share information and set borders to zero
 	flowData->share();
@@ -129,7 +136,6 @@ int flowdircond( char *pfile, char *zfile, char *zfdcfile)
 	queue<node> que;
 
 	initNeighborD8up(neighbor,flowData,&que,nx, ny, useOutlets, outletsX, outletsY, numOutlets);
-//TODO  Assumption - need to check that this handles no data flow directions OK for how we are using it	
 	
 	finished = false;
 	//Ring terminating while loop
@@ -141,6 +147,7 @@ int flowdircond( char *pfile, char *zfile, char *zfdcfile)
 			i = temp.x;
 			j = temp.y;	
 			//  Start of flow algebra evaluation
+			// printf("i: %d, j: %d,\n", i,j); 	fflush(stdout);
 			if (!zData->isNodata(i,j))
 			{
 				float zval=zData->getData(i,j,tempFloat);
@@ -150,7 +157,7 @@ int flowdircond( char *pfile, char *zfile, char *zfdcfile)
 					jn=j+d2[k];
 					/* test if neighbor drains towards cell excluding boundaries */
 					short sdir = flowData->getData(in,jn,tempShort);
-					if(sdir > 0)
+					if(sdir >=1 && sdir <= 8)  // Only do for valid neighbor flow directions
 					{
 						if(!zData->isNodata(in,jn))
 						{
@@ -163,21 +170,25 @@ int flowdircond( char *pfile, char *zfile, char *zfdcfile)
 					}
 				}
 			}
-			//  End of evaluation of flow algebra
+						//  End of evaluation of flow algebra
 			// Drain cell into surrounding neighbors
 			flowData->getData(i,j,k);
 			in = i+d1[k];
 			jn = j+d2[k];
+			// debug writes printf("B in: %d, jn: %d,\n", in, jn); 	fflush(stdout);
 			if(flowData->hasAccess(in,jn) && !flowData->isNodata(in,jn))
 			{
-				//Decrement the number of contributing neighbors in neighbor
-				neighbor->addToData(in,jn,(short)-1);		
-				//Check if neighbor needs to be added to que
-				if(flowData->isInPartition(in,jn) && neighbor->getData(in, jn, tempShort) == 0 )
-				{
-					temp.x=in;
-					temp.y=jn;
-					que.push(temp);
+				flowData->getData(in, jn, tempShort); 
+				if (tempShort >= 0 && tempShort <= 8) { // Flow direction data outside the range 1 to 8 effectively no data
+					//Decrement the number of contributing neighbors in neighbor
+					neighbor->addToData(in, jn, (short)-1);
+					//Check if neighbor needs to be added to que
+					if (flowData->isInPartition(in, jn) && neighbor->getData(in, jn, tempShort) == 0)
+					{
+						temp.x = in;
+						temp.y = jn;
+						que.push(temp);
+					}
 				}
 			}
 		}
@@ -210,8 +221,7 @@ int flowdircond( char *pfile, char *zfile, char *zfdcfile)
 	double computet = MPI_Wtime();
 	
 	//Create and write TIFF file
-	float fNodata =-1.0f;
-	tiffIO zfdcIO(zfdcfile, FLOAT_TYPE, &fNodata, p);
+	tiffIO zfdcIO(zfdcfile, FLOAT_TYPE, zIO.getNodata(), zIO);
 	zfdcIO.write(xstart, ystart, ny, nx, zData->getGridPointer());
 
 	double writet = MPI_Wtime();

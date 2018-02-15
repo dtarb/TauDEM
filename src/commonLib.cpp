@@ -251,24 +251,30 @@ void initNeighborD8up(tdpartition* neighbor,tdpartition* flowData,queue<node> *q
 				//Initialize neighbor count to no data, but then 0 if flow direction is defined
 				neighbor->setToNodata(i,j);
 				if(!flowData->isNodata(i,j)) {
-					//Set contributing neighbors to 0 
-					neighbor->setData(i,j,(short)0);
-					//Count number of contributing neighbors
-					for(k=1; k<=8; k++){
-						in = i+d1[k];
-						jn = j+d2[k];
-						if(flowData->hasAccess(in,jn) && !flowData->isNodata(in,jn)){
-							flowData->getData(in, jn, tempShort);
-							if(tempShort-k == 4 || tempShort-k == -4)
-								neighbor->addToData(i,j,(short)1);
+					flowData->getData(i, j, tempShort);
+					if (tempShort >= 0 && tempShort <= 8) { // Flow direction data outside the range 1 to 8 effectively no data
+						//Set contributing neighbors to 0 
+						neighbor->setData(i, j, (short)0);
+						//Count number of contributing neighbors
+						for (k = 1; k <= 8; k++) {
+							in = i + d1[k];
+							jn = j + d2[k];
+							if (flowData->hasAccess(in, jn) && !flowData->isNodata(in, jn)) {
+								flowData->getData(in, jn, tempShort);
+								if (tempShort >= 0 && tempShort <= 8) {// Flow direction data outside the range 1 to 8 effectively no data
+									if (tempShort - k == 4 || tempShort - k == -4)
+										neighbor->addToData(i, j, (short)1);
+								}
+							}
+						}
+						if (neighbor->getData(i, j, tempShort) == 0) {
+							//Push nodes with no contributing neighbors on queue
+							temp.x = i;
+							temp.y = j;
+							que->push(temp);
 						}
 					}
-					if(neighbor->getData(i, j, tempShort) == 0){
-						//Push nodes with no contributing neighbors on queue
-						temp.x = i;
-						temp.y = j;
-						que->push(temp);
-					}
+					
 				}
 			}
 		} 
@@ -318,22 +324,25 @@ void initNeighborD8up(tdpartition* neighbor,tdpartition* flowData,queue<node> *q
 						jn = j+d2[k];
 						if(flowData->hasAccess(in,jn) && !flowData->isNodata(in,jn)){
 							flowData->getData(in, jn, tempShort);
+							if (tempShort >= 0 && tempShort <= 8) {// Flow direction data outside the range 1 to 8 effectively no data
+
 							//  Does neighbor drain to me
-							if(tempShort-k == 4 || tempShort-k == -4){
-								if( jn == -1 ) {
-									bufferAbove[countA] = in;
-									countA +=1;
+								if (tempShort - k == 4 || tempShort - k == -4) {
+									if (jn == -1) {
+										bufferAbove[countA] = in;
+										countA += 1;
+									}
+									else if (jn == ny) {
+										bufferBelow[countB] = in;
+										countB += 1;
+									}
+									else {
+										temp.x = in;
+										temp.y = jn;
+										toBeEvaled.push(temp);
+									}
+									neighbor->addToData(i, j, (short)1);
 								}
-								else if( jn == ny ) {
-									bufferBelow[countB] = in;
-									countB += 1;
-								}
-								else {
-									temp.x = in;
-									temp.y = jn;
-									toBeEvaled.push(temp);
-								}
-								neighbor->addToData(i,j,(short)1);
 							}
 						}
 					}					
@@ -386,7 +395,9 @@ bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData){
 
 //get extension from OGR vector file
 //get layername if not provided by user
-  char *getLayername(char *inputogrfile)
+// Chris George suggestion for layername handling
+  //char *getLayername(char *inputogrfile)
+  void getLayername(char *inputogrfile, char *layername)
 {  
     std::string filenamewithpath;
 	filenamewithpath=inputogrfile;
@@ -396,13 +407,14 @@ bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData){
 	const char *filename = filenamewithoutpath.c_str(); // convert string to char
     const char *ext; 
     ext = strrchr(filename, '.'); // getting extension
-    char layername[MAXLN];
+    //char layername[MAXLN];
     size_t len = strlen(filename);
 	size_t len1 = strlen(ext);
 	memcpy(layername, filename, len-len1);
 	layername[len - len1] = 0; 
     printf("%s ", layername);
-    return layername;
+	return;
+    //return layername;
 }
 //
 

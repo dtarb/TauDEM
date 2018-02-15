@@ -113,7 +113,8 @@ class tiffIO{
 		double xleftedge;		//horizontal coordinate of left edge of grid in geographic coordinates, not grid coordinates
 		double ytopedge;		//vertical coordinate of top edge of grid in geographic coordinates, not grid coordinates
 		DATA_TYPE datatype;		//datatype of the grid values and the nodata value: short, long, or float
-		void *nodata;			//pointer to the nodata value, the nodata value type is indicated by datatype
+		//void *nodata;    //pointer to the nodata value, the nodata value type is indicated by datatype
+		double nodata;	// noDatarefactor 11/18/17		
 		void *filenodata;       //pointer to no data value from the file.  This may be different from nodata because filedatatype and datatype are not equivalent 
 		char filename[MAXLN];  //  Save filename for error or warning writes
 		const char *valueUnit; //value units
@@ -128,7 +129,8 @@ class tiffIO{
 
 	public:
 		tiffIO(char *fname, DATA_TYPE newtype);
-		tiffIO(char *fname, DATA_TYPE newtype, void* nd, const tiffIO &copy);
+		tiffIO(char *fname, DATA_TYPE newtype, double nodata, const tiffIO &copy); // noDatarefactor 11/18/17
+		//tiffIO(char *fname, DATA_TYPE newtype, void* nd, const tiffIO &copy); 
 		~tiffIO();
 
 		//BT void read(unsigned long long xstart, unsigned long long ystart, unsigned long long numRows, unsigned long long numCols, void* dest);
@@ -178,8 +180,13 @@ class tiffIO{
 		OGRSpatialReferenceH getspatialref(){return hSRS;} // return projection information for raster file
 		double getXLeftEdge(){return xleftedge;}
 		double getYTopEdge(){return ytopedge;}
-	    DATA_TYPE getDatatype(){return datatype;}
-		void* getNodata(){return nodata;}
+	    DATA_TYPE getDatatype(){
+			return datatype;
+		}
+		double getNodata() { 
+			return nodata; 
+		}  // noDatarefactor 11/18/17
+		//void* getNodata(){return nodata;}
 };
 
 #endif
