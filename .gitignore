@@ -158,5 +158,6 @@ WindowsInstaller/TauDEMArcGIS/
 *.exe
 
 Taudem5PCVS2015/Taudem5PC.VC.opendb
-*.db
+*.opendb
+Taudem5PCVS2015/Taudem5PC.VC.db
 pyfiles/.idea/
