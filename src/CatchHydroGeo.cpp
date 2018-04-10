@@ -128,7 +128,9 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 			fp = fopen(catchlistfile, "r");
 			int v1; double v2; double v3; double v4;
             int i=0;
-			fscanf(fp, "%d\n", &ncatch);
+			char line1[80];
+			readline(fp, line1);
+			sscanf(line1, "%d", &ncatch);
 			if (ncatch <= 0) {
 				fprintf(stderr, "ERROR: catch list empty!\n");
 				exit(1);
