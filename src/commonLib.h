@@ -67,7 +67,6 @@ enum DATA_TYPE
 	  FLOAT_TYPE
 	};
 
-//TODO: revisit this structure to see where it is used
 struct node {
 	int x;
 	int y;
