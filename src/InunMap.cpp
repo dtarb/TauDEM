@@ -297,7 +297,7 @@ int inunmap(char *handfile, char*catchfile, char *maskfile, char*fcfile, int mas
 		}
 
 		//Create and write TIFF file
-		tiffIO inunmapraster(mapfile, FLOAT_TYPE, &felNodata, hand);
+		tiffIO inunmapraster(mapfile, FLOAT_TYPE, felNodata, hand);
 		inunmapraster.write(xstart, ystart, ny, nx, inunp->getGridPointer());
 
 		//Stop timer

@@ -247,7 +247,7 @@ MPI_Init(NULL,NULL);
 
 	//Create and write TIFF file
 	float aNodata = MISSINGFLOAT;
-	tiffIO a(distfile, FLOAT_TYPE, &aNodata, pf);
+	tiffIO a(distfile, FLOAT_TYPE, aNodata, pf);
 	a.write(xstart, ystart, ny, nx, fdarr->getGridPointer());
 	double writet = MPI_Wtime();
         double dataRead, compute, write, total,tempd;

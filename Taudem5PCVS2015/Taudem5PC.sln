@@ -77,6 +77,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RetLimFlow", "RetLimFlow\Re
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CatchHydroGeo", "CatchHydroGeo\CatchHydroGeo.vcxproj", "{70766D2D-5325-4A13-B2D7-97F2B42E2571}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "D8VDistToStrm", "D8VDistToStrm\D8VDistToStrm.vcxproj", "{D390B472-DEB9-4C26-923B-36BA51A23DE1}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Inunmap", "Inunmap\Inunmap.vcxproj", "{70C7E2B0-D60E-4EFF-B296-F18876870EC4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Itanium = Debug|Itanium
@@ -446,6 +450,26 @@ Global
 		{70766D2D-5325-4A13-B2D7-97F2B42E2571}.Release|Win32.Build.0 = Release|Win32
 		{70766D2D-5325-4A13-B2D7-97F2B42E2571}.Release|x64.ActiveCfg = Release|x64
 		{70766D2D-5325-4A13-B2D7-97F2B42E2571}.Release|x64.Build.0 = Release|x64
+		{D390B472-DEB9-4C26-923B-36BA51A23DE1}.Debug|Itanium.ActiveCfg = Debug|Win32
+		{D390B472-DEB9-4C26-923B-36BA51A23DE1}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D390B472-DEB9-4C26-923B-36BA51A23DE1}.Debug|Win32.Build.0 = Debug|Win32
+		{D390B472-DEB9-4C26-923B-36BA51A23DE1}.Debug|x64.ActiveCfg = Debug|x64
+		{D390B472-DEB9-4C26-923B-36BA51A23DE1}.Debug|x64.Build.0 = Debug|x64
+		{D390B472-DEB9-4C26-923B-36BA51A23DE1}.Release|Itanium.ActiveCfg = Release|Win32
+		{D390B472-DEB9-4C26-923B-36BA51A23DE1}.Release|Win32.ActiveCfg = Release|Win32
+		{D390B472-DEB9-4C26-923B-36BA51A23DE1}.Release|Win32.Build.0 = Release|Win32
+		{D390B472-DEB9-4C26-923B-36BA51A23DE1}.Release|x64.ActiveCfg = Release|x64
+		{D390B472-DEB9-4C26-923B-36BA51A23DE1}.Release|x64.Build.0 = Release|x64
+		{70C7E2B0-D60E-4EFF-B296-F18876870EC4}.Debug|Itanium.ActiveCfg = Debug|Win32
+		{70C7E2B0-D60E-4EFF-B296-F18876870EC4}.Debug|Win32.ActiveCfg = Debug|Win32
+		{70C7E2B0-D60E-4EFF-B296-F18876870EC4}.Debug|Win32.Build.0 = Debug|Win32
+		{70C7E2B0-D60E-4EFF-B296-F18876870EC4}.Debug|x64.ActiveCfg = Debug|x64
+		{70C7E2B0-D60E-4EFF-B296-F18876870EC4}.Debug|x64.Build.0 = Debug|x64
+		{70C7E2B0-D60E-4EFF-B296-F18876870EC4}.Release|Itanium.ActiveCfg = Release|Win32
+		{70C7E2B0-D60E-4EFF-B296-F18876870EC4}.Release|Win32.ActiveCfg = Release|Win32
+		{70C7E2B0-D60E-4EFF-B296-F18876870EC4}.Release|Win32.Build.0 = Release|Win32
+		{70C7E2B0-D60E-4EFF-B296-F18876870EC4}.Release|x64.ActiveCfg = Release|x64
+		{70C7E2B0-D60E-4EFF-B296-F18876870EC4}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
