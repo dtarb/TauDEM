@@ -76,6 +76,10 @@ GAGEWATERSHED = gagewatershed.o gagewatershedmn.o $(OBJFILES) $(SHAPEFILES)
 CONNECTDOWN = ConnectDown.o ConnectDownmn.o $(OBJFILES) $(SHAPEFILES)
 CATCHHYDROGEO = CatchHydroGeo.o CatchHydroGeomn.o $(OBJFILES) $(SHAPEFILES)
 INUNMAP = InunMap.o InunMapmn.o $(OBJFILES) $(SHAPEFILES)
+EDITRASTER = EditRaster.o EditRastermn.o $(OBJFILES)
+CATCHOUTLETS = CatchOutlets.o CatchOutletsmn.o $(OBJFILES) $(SHAPEFILES)
+FLOWDIRCOND = flowdircond.o flowdirconditionmn.o $(OBJFILES) 
+RETLIMFLOW = RetlimFlow.o RetLimFlowmn.o $(OBJFILES) 
 
 
 
@@ -189,6 +193,18 @@ all : ../bin/areadinf ../bin/aread8 ../bin/moveoutletstostrm ../bin/dropanalysis
 ../bin/inunmap : $(INUNMAP)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(INUNMAP) $(LDLIBS) $(LDFLAGS)
 	
+../bin/editraster : $(EDITRASTER)
+	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(EDITRASTER) $(LDLIBS) $(LDFLAGS)
+
+../bin/catchoutlets : $(CATCHOUTLETS)
+	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(CATCHOUTLETS) $(LDLIBS) $(LDFLAGS)
+
+../bin/flowdircond : $(FLOWDIRCOND)
+	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(FLOWDIRCOND) $(LDLIBS) $(LDFLAGS)
+
+../bin/retlimlow : $(RETLIMFLOW)
+	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(RETLIMFLOW) $(LDLIBS) $(LDFLAGS)
+
 #Inference rule - states a general rule for compiling .o files
 %.o : %.cpp
 	$(CC) $(CFLAGS) $(INCDIRS) -c $< -o $@
