@@ -94,99 +94,99 @@ LDLIBS=`gdal-config --libs`
 LDLIBS+=`nc-config --libs`
 
 #Rules: when and how to make a file
-all : ../areadinf ../aread8 ../moveoutletstostrm ../dropanalysis ../streamnet ../gridnet ../dinfflowdir ../d8flowdir ../d8flowpathextremeup ../d8hdisttostrm ../d8vdisttostrm ../dinfavalanche ../dinfconclimaccum ../dinfdecayaccum ../dinfdistdown ../dinfdistup ../dinfrevaccum ../dinftranslimaccum ../dinfupdependence ../lengtharea ../peukerdouglas ../pitremove ../slopearea ../slopearearatio ../slopeavedown ../threshold ../twi ../gagewatershed ../connectdown ../catchhydrogeo ../inunmap clean 
+all : ../bin/areadinf ../bin/aread8 ../bin/moveoutletstostrm ../bin/dropanalysis ../bin/streamnet ../bin/gridnet ../bin/dinfflowdir ../bin/d8flowdir ../bin/d8flowpathextremeup ../bin/d8hdisttostrm ../bin/d8vdisttostrm ../bin/dinfavalanche ../bin/dinfconclimaccum ../bin/dinfdecayaccum ../bin/dinfdistdown ../bin/dinfdistup ../bin/dinfrevaccum ../bin/dinftranslimaccum ../bin/dinfupdependence ../bin/lengtharea ../bin/peukerdouglas ../bin/pitremove ../bin/slopearea ../bin/slopearearatio ../bin/slopeavedown ../bin/threshold ../bin/twi ../bin/gagewatershed ../bin/connectdown ../bin/catchhydrogeo ../bin/inunmap clean 
 
-../aread8 : $(D8FILES)
+../bin/aread8 : $(D8FILES)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(D8FILES) $(LDLIBS) $(LDFLAGS)
 
-../areadinf : $(DINFFILES)
+../bin/areadinf : $(DINFFILES)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(DINFFILES) $(LDLIBS) $(LDFLAGS)
 
-../d8flowdir : $(D8)
+../bin/d8flowdir : $(D8)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(D8) $(LDLIBS) $(LDFLAGS)
 
-../d8flowpathextremeup : $(D8EXTREAMUP)
+../bin/d8flowpathextremeup : $(D8EXTREAMUP)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(D8EXTREAMUP) $(LDLIBS) $(LDFLAGS)
 
-../d8hdisttostrm : $(D8HDIST)
+../bin/d8hdisttostrm : $(D8HDIST)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(D8HDIST) $(LDLIBS) $(LDFLAGS)
 
-../d8vdisttostrm : $(D8VDIST)
+../bin/d8vdisttostrm : $(D8VDIST)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(D8VDIST) $(LDLIBS) $(LDFLAGS)
 
-../dinfavalanche : $(DINFAVA)
+../bin/dinfavalanche : $(DINFAVA)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(DINFAVA) $(LDLIBS) $(LDFLAGS)
 
-../dinfconclimaccum : $(DINFCONCLIM)
+../bin/dinfconclimaccum : $(DINFCONCLIM)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(DINFCONCLIM) $(LDLIBS) $(LDFLAGS)
 
-../dinfdecayaccum : $(DINFDECAY)
+../bin/dinfdecayaccum : $(DINFDECAY)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(DINFDECAY) $(LDLIBS) $(LDFLAGS)
 
-../dinfdistdown : $(DINFDISTDOWN)
+../bin/dinfdistdown : $(DINFDISTDOWN)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(DINFDISTDOWN) $(LDLIBS) $(LDFLAGS)
 
-../dinfdistup : $(DINFDISTUP)
+../bin/dinfdistup : $(DINFDISTUP)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(DINFDISTUP) $(LDLIBS) $(LDFLAGS)
 
-../dinfflowdir : $(DINF)
+../bin/dinfflowdir : $(DINF)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(DINF) $(LDLIBS) $(LDFLAGS) 
 
-../dinfrevaccum : $(DINFREVACCUM)
+../bin/dinfrevaccum : $(DINFREVACCUM)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(DINFREVACCUM) $(LDLIBS) $(LDFLAGS) 
 
-../dinftranslimaccum : $(DINFTRANSLIMACCUM)
+../bin/dinftranslimaccum : $(DINFTRANSLIMACCUM)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(DINFTRANSLIMACCUM) $(LDLIBS) $(LDFLAGS) 
 
-../dinfupdependence : $(DINFUPDEPEND)
+../bin/dinfupdependence : $(DINFUPDEPEND)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(DINFUPDEPEND) $(LDLIBS) $(LDFLAGS) 
 
-../dropanalysis : $(DROPANALYSISFILES)
+../bin/dropanalysis : $(DROPANALYSISFILES)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(DROPANALYSISFILES) $(LDLIBS) $(LDFLAGS)
 
-../gridnet : $(GRIDNET)
+../bin/gridnet : $(GRIDNET)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(GRIDNET) $(LDLIBS) $(LDFLAGS) 
 
-../lengtharea : $(LENGTHAREA)
+../bin/lengtharea : $(LENGTHAREA)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(LENGTHAREA) $(LDLIBS) $(LDFLAGS) 
 
-../moveoutletstostrm : $(MVOUTLETSTOSTRMFILES)
+../bin/moveoutletstostrm : $(MVOUTLETSTOSTRMFILES)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(MVOUTLETSTOSTRMFILES) $(LDLIBS) $(LDFLAGS)
 
-../peukerdouglas : $(PEUKERDOUGLAS)
+../bin/peukerdouglas : $(PEUKERDOUGLAS)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(PEUKERDOUGLAS) $(LDLIBS) $(LDFLAGS)
 
-../pitremove : $(PITREMOVE)
+../bin/pitremove : $(PITREMOVE)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(PITREMOVE) $(LDLIBS) $(LDFLAGS)
 
-../slopearea : $(SLOPEAREA)
+../bin/slopearea : $(SLOPEAREA)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(SLOPEAREA) $(LDLIBS) $(LDFLAGS)
 
-../slopearearatio : $(SLOPEAREARATIO)
+../bin/slopearearatio : $(SLOPEAREARATIO)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(SLOPEAREARATIO) $(LDLIBS) $(LDFLAGS)
 
-../slopeavedown : $(SLOPEAVEDOWN)
+../bin/slopeavedown : $(SLOPEAVEDOWN)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(SLOPEAVEDOWN) $(LDLIBS) $(LDFLAGS)
 
-../streamnet : $(STREAMNET)
+../bin/streamnet : $(STREAMNET)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(STREAMNET) $(LDLIBS) $(LDFLAGS) 
 
-../threshold : $(THRESHOLD)
+../bin/threshold : $(THRESHOLD)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(THRESHOLD) $(LDLIBS) $(LDFLAGS) 
 
-../twi : $(TWI)
+../bin/twi : $(TWI)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(TWI) $(LDLIBS) $(LDFLAGS)
 
-../gagewatershed : $(GAGEWATERSHED)
+../bin/gagewatershed : $(GAGEWATERSHED)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(GAGEWATERSHED) $(LDLIBS) $(LDFLAGS)
 
-../connectdown : $(CONNECTDOWN)
+../bin/connectdown : $(CONNECTDOWN)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(CONNECTDOWN) $(LDLIBS) $(LDFLAGS)
 	
-../catchhydrogeo : $(CATCHHYDROGEO)
+../bin/catchhydrogeo : $(CATCHHYDROGEO)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(CATCHHYDROGEO) $(LDLIBS) $(LDFLAGS)
 	
-../inunmap : $(INUNMAP)
+../bin/inunmap : $(INUNMAP)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(INUNMAP) $(LDLIBS) $(LDFLAGS)
 	
 #Inference rule - states a general rule for compiling .o files
