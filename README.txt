@@ -7,7 +7,14 @@ For the latest release and detailed documentation please refer to the website: h
 
 Building on Linux
 -----------------
+Both make and Cmake options are available to accommodate different preferences and system demands
+Using make
+cd src
+make
+The executables are written to bin directory
 
+Using Cmake
 cd src && mkdir build && cd build
 cmake ..
 make && make install
+The executables are written to /usr/local/taudem directory.  This can be changed at the second last line (following DESTINATION) if desired.
