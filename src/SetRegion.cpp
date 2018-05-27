@@ -75,7 +75,7 @@ int readline(FILE *fp, char *fline)
 }
 
 
-int setregion(char *fdrfile, char *regiongwfile, char *newfile, long regionID)
+int setregion(char *fdrfile, char *regiongwfile, char *newfile, int32_t regionID)
 {
 	MPI_Init(NULL,NULL);{
 
