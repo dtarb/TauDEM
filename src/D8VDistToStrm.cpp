@@ -105,6 +105,7 @@ MPI_Init(NULL,NULL);
 	tiffIO felf(felfile, FLOAT_TYPE);
 	if (!pf.compareTiff(felf)) {
 		printf("File sizes do not match\n%s\n", felfile);
+		fflush(stdout);
 		MPI_Abort(MCW, 5);
 		return 1;
 	}

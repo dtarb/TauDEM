@@ -152,6 +152,7 @@ void initNeighborDinfup(tdpartition* neighbor,tdpartition* flowData,queue<node> 
 		//TODO - consider copying this statement into other memory allocations
 		if( bufferAbove == NULL || bufferBelow == NULL ) {
 			printf("Error allocating memory\n");
+			fflush(stdout);
 			MPI_Abort(MCW,5);
 		}
 		
@@ -298,6 +299,7 @@ void initNeighborD8up(tdpartition* neighbor,tdpartition* flowData,queue<node> *q
 		//TODO - consider copying this statement into other memory allocations
 		if( bufferAbove == NULL || bufferBelow == NULL ) {
 			printf("Error allocating memory\n");
+			fflush(stdout);
 			MPI_Abort(MCW,5);
 		}
 		

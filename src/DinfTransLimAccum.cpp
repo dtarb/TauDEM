@@ -85,7 +85,8 @@ int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *de
 	if( useOutlets == 1) {
 		if(rank==0){
 			if(readoutlets(datasrc,lyrname,uselyrname,lyrno,hSRSRaster, &numOutlets, x, y) !=0){
-				printf("Exiting \n");
+				printf("Read outlets error. Exiting \n");
+				fflush(stdout);
 				MPI_Abort(MCW,5);
 			}else {
 				MPI_Bcast(&numOutlets, 1, MPI_INT, 0, MCW);
@@ -140,6 +141,7 @@ int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *de
 	tiffIO tsup(tsupfile, FLOAT_TYPE);
 	if(!ang.compareTiff(tsup)) {
 		printf("File sizes do not match\n%s\n",tsupfile);
+		fflush(stdout);
 		MPI_Abort(MCW,5);
 		return 1;  
 	}
@@ -151,6 +153,7 @@ int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *de
 	tiffIO tc(tcfile, FLOAT_TYPE);
 	if(!ang.compareTiff(tc)){
 		printf("File sizes do not match\n%s\n",tcfile);
+		fflush(stdout);
 		MPI_Abort(MCW,5);
 		return 1;  
 	} 
@@ -163,6 +166,7 @@ int tlaccum(char *angfile, char *tsupfile, char *tcfile, char *tlafile, char *de
 		tiffIO cin(cinfile, FLOAT_TYPE);
 		if(!ang.compareTiff(cin)) {
 			printf("File sizes do not match\n%s\n",cinfile);
+			fflush(stdout);
 			MPI_Abort(MCW,5);
 			return 1;  
 		}

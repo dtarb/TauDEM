@@ -104,6 +104,7 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 		}//5
 		else {
 			printf("Error opening shapefile. Exiting \n");
+			fflush(stdout);
 			MPI_Abort(MCW,5);
 		}
 	}//4

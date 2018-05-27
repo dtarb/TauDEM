@@ -65,6 +65,7 @@ tiffIO::tiffIO(char *fname, DATA_TYPE newtype) {
 	fh = GDALOpen(filename, GA_ReadOnly);
 	if (fh == NULL) {
 		printf("Error opening file %s.\n", fname);
+		fflush(stdout);
 		MPI_Abort(MCW, 21);
 	}
 	hDriver = GDALGetDatasetDriver( fh );
@@ -300,7 +301,8 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 		//if (isFileInititialized == 0) {
 			hDriver = GDALGetDriverByName(driver_code[index]);
 		    if (hDriver == NULL) {
-		        printf("driver is not available\n");
+		        printf("GDAL driver is not available\n");
+				fflush(stdout);
 				MPI_Abort(MPI_COMM_WORLD, 22);
 			}
 			// Set options
