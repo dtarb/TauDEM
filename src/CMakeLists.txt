@@ -41,6 +41,7 @@ set (THRESHOLD Threshold.cpp Thresholdmn.cpp ${common_srcs})
 set (GAGEWATERSHED gagewatershedmn.cpp gagewatershed.cpp ${common_srcs} ${shape_srcs})
 set (TWI TWImn.cpp TWI.cpp ${common_srcs})
 set (CONNECTDOWN ConnectDownmn.cpp ConnectDown.cpp ${common_srcs} ${shape_srcs})
+set (CATCHHYDROGEO CatchHydroGeo.cpp CatchHydroGeomn.cpp ${common_srcs} ${shape_srcs})
 set (CATCHOUTLETS CatchOutletsmn.cpp CatchOutlets.cpp ${common_srcs} ${shape_srcs})
 set (EDITRASTER EditRastermn.cpp EditRaster.cpp ${common_srcs})
 set (FLOWDIRCOND flowdirconditionmn.cpp flowdircond.cpp ${common_srcs})
@@ -86,6 +87,7 @@ add_executable (threshold ${THRESHOLD})
 add_executable (gagewatershed ${GAGEWATERSHED})
 add_executable (twi ${TWI})
 add_executable (connectdown ${CONNECTDOWN})
+add_executable (catchhydrogeo ${CATCHHYDROGEO})
 add_executable (catchoutlets ${CATCHOUTLETS})
 add_executable (editraster ${EDITRASTER})
 add_executable (flowdircond ${FLOWDIRCOND})
@@ -121,6 +123,7 @@ set (MY_TARGETS aread8
                 gagewatershed
                 twi
                 connectdown
+                catchhydrogeo
                 catchoutlets
                 editraster
                 flowdircond
@@ -130,5 +133,5 @@ set (MY_TARGETS aread8
 
 foreach( c_target ${MY_TARGETS} )
     target_link_libraries(${c_target} ${MPI_LIBRARIES} ${GDAL_LIBRARY})
-    install(TARGETS ${c_target} DESTINATION bin)
+    install(TARGETS ${c_target} DESTINATION taudem)
 endforeach( c_target ${MY_TARGETS} )
