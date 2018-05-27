@@ -89,6 +89,7 @@ int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *
 			}//5
 			else {
 				printf("Error opening shapefile. Exiting \n");
+				fflush(stdout);
 				MPI_Abort(MCW,5);
 			}
 	}//4
@@ -145,6 +146,7 @@ int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *
 		tiffIO mask(maskfile,LONG_TYPE);
 		if(!p.compareTiff(mask)) {
 			printf("File sizes do not match\n%s\n",maskfile);
+			fflush(stdout);
 			MPI_Abort(MCW,5);
 			return 1;  
 		}
@@ -288,6 +290,7 @@ int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *
 		//TODO - consider copying this statement into other memory allocations
 		if( bufferAbove == NULL || bufferBelow == NULL ) {
 			printf("Error allocating memory\n");
+			fflush(stdout);
 			MPI_Abort(MCW,5);
 		}
 		

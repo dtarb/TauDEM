@@ -166,6 +166,7 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletdatasrc, ch
 
 	if(!ad8IO.compareTiff(wIO)){
 		printf("ad8 and w files not the same size. Exiting \n");
+		fflush(stdout);
 		MPI_Abort(MCW,4);
 	}
 

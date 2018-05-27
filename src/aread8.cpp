@@ -80,6 +80,7 @@ int aread8( char* pfile, char* afile, char *datasrc, char *lyrname,int uselyrnam
 			}
 			else {
 				printf("Error opening shapefile. Exiting \n");
+				fflush(stdout);
 				MPI_Abort(MCW,5);
 			}
 		}
@@ -121,6 +122,7 @@ int aread8( char* pfile, char* afile, char *datasrc, char *lyrname,int uselyrnam
 		tiffIO w(wfile,FLOAT_TYPE);
 		if(!p.compareTiff(w)){
 			printf("File sizes do not match\n%s\n",wfile);
+			fflush(stdout);
 			MPI_Abort(MCW,5);
 			return 1;  
 		} 

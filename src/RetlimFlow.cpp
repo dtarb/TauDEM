@@ -89,6 +89,7 @@ int retlimro(char *angfile, char *wgfile, char * rcfile, char *qrlfile)
 	tiffIO wgIO(wgfile, FLOAT_TYPE);
 	if(!angIO.compareTiff(wgIO)){
 		printf("File sizes do not match\n%s\n",wgfile);
+		fflush(stdout);
 		MPI_Abort(MCW,5);
 		return 1;
 	}
@@ -100,6 +101,7 @@ int retlimro(char *angfile, char *wgfile, char * rcfile, char *qrlfile)
 	tiffIO rcgIO(rcfile, FLOAT_TYPE);
 	if(!angIO.compareTiff(rcgIO)){
 		printf("File sizes do not match\n%s\n",rcfile);
+		fflush(stdout);
 		MPI_Abort(MCW,5);
 		return 1;
 	}

@@ -161,6 +161,7 @@ int hdisttoridgegrd(char *angfile, char *wfile, char *rtrfile, int statmethod,
 		tiffIO w(wfile, FLOAT_TYPE);
 		if(!ang.compareTiff(w)) {
 			printf("File sizes do not match\n%s\n",wfile);
+			fflush(stdout);
 			MPI_Abort(MCW,5);
 		return 1; 
 		}
@@ -398,6 +399,7 @@ int vrisetoridgegrd(char *angfile, char *felfile, char *rtrfile, int statmethod,
 	tiffIO fel(felfile, FLOAT_TYPE);
 	if(!ang.compareTiff(fel)) {
 		printf("File sizes do not match\n%s\n",felfile);
+		fflush(stdout);
 		MPI_Abort(MCW,5);
 	return 1; 
 	}
@@ -659,6 +661,7 @@ int pdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 	tiffIO fel(felfile, FLOAT_TYPE);
 	if(!ang.compareTiff(fel)) {
 		printf("File sizes do not match\n%s\n",felfile);
+		fflush(stdout);
 		MPI_Abort(MCW,5);
 	return 1; 
 	}
@@ -671,6 +674,7 @@ int pdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 		tiffIO w(wfile, FLOAT_TYPE);
 		if(!ang.compareTiff(w)) {
 			printf("File sizes do not match\n%s\n",wfile);
+			fflush(stdout);
 			MPI_Abort(MCW,5);
 		return 1; 
 		}
@@ -980,6 +984,7 @@ int sdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 	tiffIO fel(felfile, FLOAT_TYPE);
 	if(!ang.compareTiff(fel)) {
 		printf("File sizes do not match\n%s\n",felfile);
+		fflush(stdout);
 		MPI_Abort(MCW,5);
 	return 1; 
 	}
@@ -992,6 +997,7 @@ int sdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 		tiffIO w(wfile, FLOAT_TYPE);
 		if(!ang.compareTiff(w)) {
 			printf("File sizes do not match\n%s\n",wfile);
+			fflush(stdout);
 			MPI_Abort(MCW,5);
 		return 1; 
 		}

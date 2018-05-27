@@ -95,6 +95,7 @@ int dsaccum(char *angfile,char *wgfile, char *raccfile, char *dmaxfile)
 	tiffIO wg(wgfile, FLOAT_TYPE);
 	if(!ang.compareTiff(wg)) {
 		printf("File sizes do not match\n%s\n",wgfile);
+		fflush(stdout);
 		MPI_Abort(MCW,5);
 		return 1;  
 	}

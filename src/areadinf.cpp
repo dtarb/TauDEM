@@ -82,6 +82,7 @@ int area( char* angfile, char* scafile, char* datasrc,char* lyrname,int uselyrna
 			}
 			else {
 				printf("Error opening shapefile. Exiting \n");
+				fflush(stdout);
 				MPI_Abort(MCW,5);
 			}
 		}

@@ -98,6 +98,7 @@ int sloped(char *pfile,char* felfile,char* slpdfile, double dn)
 	tiffIO pIO(pfile,SHORT_TYPE);
 	if(!dem.compareTiff(pIO)) {
 		printf("File sizes do not match\n%s\n",pfile);
+		fflush(stdout);
 		MPI_Abort(MCW,5);
 		return 1; 
 	}

@@ -152,6 +152,7 @@ int outletstosrc(char *pfile, char *srcfile, char *outletsdatasrc, char *outlets
 
 		if (!p.compareTiff(src)) {
 			printf("src and p files not the same size. Exiting \n");
+			fflush(stdout);
 			MPI_Abort(MCW, 4);
 		}
 		//

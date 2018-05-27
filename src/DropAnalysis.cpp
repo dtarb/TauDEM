@@ -253,10 +253,12 @@ int dropan(char *areafile, char *dirfile, char *elevfile, char *ssafile, char *d
 
 	if(!dir.compareTiff(ssa)){
 		printf("dir and ssa files not the same size. Exiting \n");
+		fflush(stdout);
 		MPI_Abort(MCW,4);
 	}
 	if(!ssa.compareTiff(area)){
 		printf("ssa and area files not the same size. Exiting \n");
+		fflush(stdout);
 		MPI_Abort(MCW,4);
 	}
 
@@ -273,6 +275,7 @@ int dropan(char *areafile, char *dirfile, char *elevfile, char *ssafile, char *d
 		}
 		else {
 			printf("Error opening shapefile. Exiting \n");
+			fflush(stdout);
 			MPI_Abort(MCW,5);
 		}
 	}
@@ -339,6 +342,7 @@ int dropan(char *areafile, char *dirfile, char *elevfile, char *ssafile, char *d
 	// compare to ssa size
 	if(!elev.compareTiff(ssa)){
 		printf("elev and ssa files not the same size. Exiting \n");
+		fflush(stdout);
 		MPI_Abort(MCW,5);
 	}
 
@@ -353,6 +357,7 @@ int dropan(char *areafile, char *dirfile, char *elevfile, char *ssafile, char *d
 	float thresh;
 	if(nthresh<2){
 		printf("Number of thresholds must be greater than 1. \n");
+		fflush(stdout);
 		MPI_Abort(MCW,7);
 	}
 	// *** loop over all thresholds

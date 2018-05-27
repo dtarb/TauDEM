@@ -87,7 +87,8 @@ int dmarea(char* angfile,char* adecfile,char* dmfile,char* datasrc,char* lyrname
 	if( useOutlets == 1) {
 		if(rank==0){
 			if(readoutlets(datasrc,lyrname,uselyrname,lyrno,hSRSRaster, &numOutlets, x, y, id) !=0){
-				printf("Exiting \n");
+				printf("Read outlets error. Exiting \n");
+				fflush(stdout);
 				MPI_Abort(MCW,5);
 			}else {
 				MPI_Bcast(&numOutlets, 1, MPI_INT, 0, MCW);
@@ -139,6 +140,7 @@ int dmarea(char* angfile,char* adecfile,char* dmfile,char* datasrc,char* lyrname
 	tiffIO dmm(dmfile, FLOAT_TYPE);
 	if(!ang.compareTiff(dmm)){
 		printf("File sizes do not match\n%s\n",dmfile);
+		fflush(stdout);
 		MPI_Abort(MCW,5);
 		return 1;  
 	}
@@ -151,6 +153,7 @@ int dmarea(char* angfile,char* adecfile,char* dmfile,char* datasrc,char* lyrname
 		tiffIO w(wfile, FLOAT_TYPE);
 		if(!ang.compareTiff(w)) {
 			printf("File sizes do not match\n%s\n",wfile);
+			fflush(stdout);
 			MPI_Abort(MCW,5);
 			return 1;  //And maybe an unhappy error message
 		}
