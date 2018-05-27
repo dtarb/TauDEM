@@ -80,6 +80,8 @@ EDITRASTER = EditRaster.o EditRastermn.o $(OBJFILES)
 CATCHOUTLETS = CatchOutlets.o CatchOutletsmn.o $(OBJFILES) $(SHAPEFILES)
 FLOWDIRCOND = flowdircond.o flowdirconditionmn.o $(OBJFILES) 
 RETLIMFLOW = RetlimFlow.o RetLimFlowmn.o $(OBJFILES) 
+SETREGION = SetRegion.o SetRegionmn.o $(OBJFILES) 
+SINMAPSI = SinmapSI.o SinmapSImn.o $(OBJFILES) 
 
 
 
@@ -98,7 +100,7 @@ LDLIBS=`gdal-config --libs`
 LDLIBS+=`nc-config --libs`
 
 #Rules: when and how to make a file
-all : ../bin/areadinf ../bin/aread8 ../bin/moveoutletstostrm ../bin/dropanalysis ../bin/streamnet ../bin/gridnet ../bin/dinfflowdir ../bin/d8flowdir ../bin/d8flowpathextremeup ../bin/d8hdisttostrm ../bin/d8vdisttostrm ../bin/dinfavalanche ../bin/dinfconclimaccum ../bin/dinfdecayaccum ../bin/dinfdistdown ../bin/dinfdistup ../bin/dinfrevaccum ../bin/dinftranslimaccum ../bin/dinfupdependence ../bin/lengtharea ../bin/peukerdouglas ../bin/pitremove ../bin/slopearea ../bin/slopearearatio ../bin/slopeavedown ../bin/threshold ../bin/twi ../bin/gagewatershed ../bin/connectdown ../bin/catchhydrogeo ../bin/inunmap clean 
+all : ../bin/areadinf ../bin/aread8 ../bin/moveoutletstostrm ../bin/dropanalysis ../bin/streamnet ../bin/gridnet ../bin/dinfflowdir ../bin/d8flowdir ../bin/d8flowpathextremeup ../bin/d8hdisttostrm ../bin/d8vdisttostrm ../bin/dinfavalanche ../bin/dinfconclimaccum ../bin/dinfdecayaccum ../bin/dinfdistdown ../bin/dinfdistup ../bin/dinfrevaccum ../bin/dinftranslimaccum ../bin/dinfupdependence ../bin/lengtharea ../bin/peukerdouglas ../bin/pitremove ../bin/slopearea ../bin/slopearearatio ../bin/slopeavedown ../bin/threshold ../bin/twi ../bin/gagewatershed ../bin/connectdown ../bin/catchhydrogeo ../bin/inunmap ../bin/editraster ../bin/catchoutlets ../bin/flowdircond ../bin/retlimflow ../bin/setregion ../bin/sinmapsi clean 
 
 ../bin/aread8 : $(D8FILES)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(D8FILES) $(LDLIBS) $(LDFLAGS)
@@ -202,8 +204,14 @@ all : ../bin/areadinf ../bin/aread8 ../bin/moveoutletstostrm ../bin/dropanalysis
 ../bin/flowdircond : $(FLOWDIRCOND)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(FLOWDIRCOND) $(LDLIBS) $(LDFLAGS)
 
-../bin/retlimlow : $(RETLIMFLOW)
+../bin/retlimflow : $(RETLIMFLOW)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(RETLIMFLOW) $(LDLIBS) $(LDFLAGS)
+
+../bin/setregion : $(SETREGION)
+	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(SETREGION) $(LDLIBS) $(LDFLAGS)
+
+../bin/sinmapsi : $(SINMAPSI)
+	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(SINMAPSI) $(LDLIBS) $(LDFLAGS)
 
 #Inference rule - states a general rule for compiling .o files
 %.o : %.cpp

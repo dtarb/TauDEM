@@ -45,15 +45,14 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 #include "tardemlib.h"
 
-int setregion(char *fdrfile, char *regiongwfile, char *newfile, long regionID);
+int setregion(char *fdrfile, char *regiongwfile, char *newfile, int32_t regionID);
 
 int main(int argc,char **argv)  
 {
    char fdrfile[MAXLN],regiongwfile[MAXLN],newfile[MAXLN];
-   long regionID = 1;
-      
-   if(argc <= 2) goto errexit;
-    int i=1;	
+   int32_t regionID = 1;
+   int i = 1;
+   if(argc <= 2) goto errexit;	
 	while (argc > i)
 	{
 		if (strcmp(argv[i], "-p") == 0)
@@ -92,7 +91,7 @@ int main(int argc,char **argv)
 			i++;
 			if (argc > i)
 			{
-				sscanf(argv[i], "%ld", &regionID);
+				sscanf(argv[i], "%d", &regionID);
 				i++;
 			}
 			else goto errexit;
