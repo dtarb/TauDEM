@@ -44,6 +44,7 @@ email:  dtarb@usu.edu
 #include "mpi.h"
 #include <stdint.h>
 #include "ogr_api.h"
+#include <queue>  // DGT 5/27/18
 
 #define MCW MPI_COMM_WORLD
 #define MAX_STRING_LENGTH 255
@@ -98,10 +99,10 @@ void getlayerfail(OGRDataSourceH hDS1,char * outletsds, int outletslyr);
 int readoutlets(char *outletsds,char *lyrname,int uselayername, int outletslyr, OGRSpatialReferenceH hSRSRaster, int *noutlets, double*& x, double*& y);
 int readoutlets(char *outletsds,char *lyrname,int uselayername, int outletslyr, OGRSpatialReferenceH  hSRSraster,int *noutlets, double*& x, double*& y, int*& id);
 
-#include <queue>
-#include "linearpart.h"
+// DGT 5/27/18  #include <queue>
+// DGT 5/27/18 #include "linearpart.h"
 
-bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData);
+// DGT 5/27/18 bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData);
 
 /* void initNeighborDinfup(tdpartition* neighbor,tdpartition* flowData,queue<node> *que,
 					  int nx,int ny,int useOutlets, int *outletsX,int *outletsY,long numOutlets);

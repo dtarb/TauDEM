@@ -43,7 +43,7 @@ email:  dtarb@usu.edu
 
 #include "commonLib.h"
 //#include "partition.h"
-//#include "linearpart.h"
+#include "linearpart.h"
 
 // noDatarefactor 11/18/17  apparrently both functions are needed so that sometimes a no data pointer can be input and sometimes a nodata value
 tdpartition *CreateNewPartition(DATA_TYPE datatype, long totalx, long totaly, double dxA, double dyA, double nodata){

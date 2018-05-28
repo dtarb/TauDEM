@@ -46,11 +46,12 @@ email:  dtarb@usu.edu
 //As of VS 2010 MS provides stdint.h so can now use <> rather than "" and use system stdint.h 
 // See http://en.wikipedia.org/wiki/Stdint.h for details.
 //  See http://msdn.microsoft.com/en-us/library/36k2cdd4(v=vs.71).aspx for explanation of difference
-#include "commonLib.h"
+// DGT 5/27/18 #include "commonLib.h"
 #include <gdal.h>
 #include <cpl_conv.h>
 #include <cpl_string.h>
 #include <ogr_spatialref.h>
+#include "commonLib.h"
 
 
 //Assumptions when using BIGTIFF - The BIGTIFF specification does not have these limitations, however this implementation does:
