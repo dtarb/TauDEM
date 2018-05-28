@@ -44,6 +44,7 @@ email:  dtarb@usu.edu
 #include <string.h>
 #include "commonLib.h"
 #include "ogr_api.h"
+#include <ogr_spatialref.h>
 
 int readoutlets(char *outletsds,char *lyrname, int uselayername,int outletslyr,OGRSpatialReferenceH hSRSRaster,int *noutlets, double*& x, double*& y,int*& id)
 

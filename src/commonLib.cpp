@@ -42,6 +42,7 @@ email:  dtarb@usu.edu
 #include <stdio.h>
 #include <string.h>
 #include "commonLib.h"
+#include "linearpart.h"
 #include <math.h>
 #include <cstddef>
 
@@ -384,16 +385,17 @@ void initNeighborD8up(tdpartition* neighbor,tdpartition* flowData,queue<node> *q
 	}
 }
 
+// DGT 5/27/18 Remove from common lib and put in files of functions that use this to resolve header dependency on linearpart.h
 //returns true iff cell at [nrow][ncol] points to cell at [row][col]
-bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData){
-	short d;
-	if(!dirData->hasAccess(ncol,nrow) || dirData->isNodata(ncol,nrow)){return false;}
-	d=dirData->getData(ncol,nrow,d);
-	if(nrow+d2[d]==row && ncol+d1[d]==col){
-		return true;
-	}
-	return false;
-}
+//bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData){
+//	short d;
+//	if(!dirData->hasAccess(ncol,nrow) || dirData->isNodata(ncol,nrow)){return false;}
+//	d=dirData->getData(ncol,nrow,d);
+//	if(nrow+d2[d]==row && ncol+d1[d]==col){
+//		return true;
+//	}
+//	return false;
+//}
 
 //get extension from OGR vector file
 //get layername if not provided by user
