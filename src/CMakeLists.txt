@@ -1,5 +1,7 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.1.0)
 project(TauDEM)
+
+set (CMAKE_CXX_STANDARD 11)
 
 set (shape_srcs ReadOutlets.cpp)
 set (common_srcs commonLib.cpp tiffIO.cpp)

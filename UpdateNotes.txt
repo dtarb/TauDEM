@@ -1,3 +1,16 @@
+5/27/18 Decided to tackle the issue in https://github.com/dtarb/TauDEM/issues/154#issuecomment-392370212 that while a warning on a PC is an error for some and seems to be a structural problem best addressed.
+
+Web search for "invalid use of incomplete type" leads to  https://stackoverflow.com/questions/20013901/im-getting-an-error-invalid-use-of-incomplete-type-class-map which explains forward declaration concepts. 
+
+In TauDEM the cause seems to be tiffio.cpp includes tiffio.h
+tiffio.h includes commonlib.h
+commonlib.h includes linearpart.h 
+linearpart.h includes partition.h
+partition.h has a function savedxdyc that uses a reference to tiffIO, but because the #include to commonlib.h is in tiffIO.h before tiffIO class is defined there is the invalid use of type error/warning.
+
+Strategy for solution.
+Rather than linearpart.h be included as part of commonlib.h, include linearpart.h independently and after tiffio.h.  Order includes commonlib.h, tiffio.h, linearpart.h.  That way tiffio is defined when linearpart.h is parsed.  However this requires that commonlib.h not include linearpart.h. The only function in commonlib that uses linearpart is pointsToMe.  PointsToMe is only used in DropAnalysis and streamnet, so decided to copy code out of commonlib and put at the top of each of these functions.  
+
 11/10/17
 
 Identified a problem with flow direction conditioning not working due to no data values not being robustly handled.
