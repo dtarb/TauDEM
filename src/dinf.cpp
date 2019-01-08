@@ -283,7 +283,7 @@ int setdir( char* demfile, char* angfile, char *slopefile, char *flowfile, int u
 	return 0;
 }
 void   VSLOPE(float E0,float E1, float E2,
-			  float D1,float D2,float DD,
+			  double D1,double D2,double DD,
 			  float *S,float *A)
 {
 	//SUBROUTINE TO RETURN THE SLOPE AND ANGLE ASSOCIATED WITH A DEM PANEL 
@@ -313,7 +313,7 @@ void   VSLOPE(float E0,float E1, float E2,
 // Sets only flowDir only where there is a positive slope
 // Returns number of cells which are flat
 
-void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition *flowDir, tdpartition *slope)
+void   SET2(int I, int J,double *DXX,double DD, tdpartition *elevDEM, tdpartition *flowDir, tdpartition *slope)
 {
 	double dxA = elevDEM->getdxA();
 	double dyA = elevDEM->getdyA();
@@ -368,7 +368,7 @@ void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition 
 	slope->setData(J,I,SMAX);
 }
 //Overloaded SET2 for use in resolve flats when slope is no longer recorded.  Also uses artificial elevations and actual elevations
-void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition *elev2, tdpartition *flowDir, tdpartition *dn)
+void   SET2(int I, int J,double *DXX,double DD, tdpartition *elevDEM, tdpartition *elev2, tdpartition *flowDir, tdpartition *dn)
 {
 	float SK[9];
 	float ANGLE[9];
@@ -568,8 +568,8 @@ long setPosDirDinf(tdpartition *elevDEM, tdpartition *flowDir, tdpartition *slop
 					elevDEM->getdxdyc(j,tempdxc,tempdyc);
 		        
 					
-					float DXX[3] = {0,tempdxc,tempdyc};//tardemlib.cpp ln 1291
-					float DD = sqrt(tempdxc*tempdxc+tempdyc*tempdyc);//tardemlib.cpp ln 1293
+					double DXX[3] = {0,tempdxc,tempdyc};//tardemlib.cpp ln 1291
+					double DD = sqrt(tempdxc*tempdxc+tempdyc*tempdyc);//tardemlib.cpp ln 1293
 					SET2(j,i,DXX,DD, elevDEM,flowDir,slope);//i=y in function form old code j is x switched on purpose
 					//  Use SET2 from serial code here modified to get what it has as felevg.d from elevDEM partition
 					//  Modify to return 0 if there is a 0 slope.  Modify SET2 to output flowDIR as no data (do nothing 
@@ -799,8 +799,8 @@ long resolveflats( tdpartition *elevDEM, tdpartition *flowDir, queue<node> *que,
 				//  direction based on the artificial elevations
 
 	elevDEM->getdxdyc(j,tempdxc,tempdyc);
-	float DXX[3] = {0,tempdxc,tempdyc};//tardemlib.cpp ln 1291
-	float DD = sqrt(tempdxc*tempdxc+tempdyc*tempdyc);//tardemlib.cpp ln 1293
+	double DXX[3] = {0,tempdxc,tempdyc};//tardemlib.cpp ln 1291
+	double DD = sqrt(tempdxc*tempdxc+tempdyc*tempdyc);//tardemlib.cpp ln 1293
 
 			SET2(j,i,DXX,DD,elevDEM,elev2,flowDir,dn);	//use new elevations to calculate flowDir.	
 			if(!flowDir->isNodata(i,j)&& flowDir->getData(i,j,tempFloat)< 0.) //this is still a flat
