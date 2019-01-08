@@ -29,7 +29,7 @@
 
 
 #define MyAppName "TauDEM"
-#define MyAppVersion "5.3.7"
+#define MyAppVersion "5.4.0"
 #define MyAppPublisher "Utah State University"
 #define MyAppURL "http://hydrology.usu.edu/taudem/taudem5/index.html"
 
@@ -141,14 +141,14 @@ begin
   begin
     UserPage := CreateInputQueryPage(wpWelcome,
       'The following programs will be installed', '',
-      'TauDEM version 5.3.7, GDAL 2.1.0 (Python 2.7), GDAL 201 (MSVC 2013) for 64 bit Windows PC, Microsoft Visual C++ 2015 Redistributable Package (x86), ' +
+      'TauDEM version 5.4.0, GDAL 2.1.0 (Python 2.7), GDAL 201 (MSVC 2013) for 64 bit Windows PC, Microsoft Visual C++ 2015 Redistributable Package (x86), ' +
       'Microsoft Visual C++ 2015 Redistributable Package (x64), Microsoft MPI'#13#13 +  notes_string);   
   end
   else
     begin
       UserPage := CreateInputQueryPage(wpWelcome,
       'The following programs will be installed', '',
-      'TauDEM version 5.3.7, GDAL 2.1.0 (Python 2.7), GDAL 201 (MSVC 2013) for 32 bit Windows PC, Microsoft Visual C++ 2015 Redistributable Package (x86), ' + 
+      'TauDEM version 5.4.0, GDAL 2.1.0 (Python 2.7), GDAL 201 (MSVC 2013) for 32 bit Windows PC, Microsoft Visual C++ 2015 Redistributable Package (x86), ' + 
       'Microsoft MPI'#13#13 +  notes_string);
     end
 end;
