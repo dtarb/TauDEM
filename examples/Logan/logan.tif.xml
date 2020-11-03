@@ -1,0 +1,3 @@
+<?xml version="1.0"?>
+<!--<!DOCTYPE metadata SYSTEM "http://www.esri.com/metadata/esriprof80.dtd">-->
+<metadata xml:lang="en"><Esri><MetaID>{04677E34-8EE2-4BAD-A9B6-854030986096}</MetaID><CreaDate>20100523</CreaDate><CreaTime>06561500</CreaTime><SyncOnce>TRUE</SyncOnce><DataProperties><lineage><Process ToolSource="C:\Program Files\ArcGIS\ArcToolbox\Toolboxes\Data Management Tools.tbx\CalculateStatistics" Date="20100523" Time="065615">CalculateStatistics C:\Scratch\Logan\logan.tif 1 1 # C:\Scratch\Logan\logan.tif</Process></lineage></DataProperties></Esri></metadata>
