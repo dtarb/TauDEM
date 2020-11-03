@@ -10,7 +10,7 @@ Nodata value recast to float used in partition raster: -300000000549775575777803
 Nodata value input to create partition from file: -300000000549775575777803994281145270272.000000
 Nodata value recast to float used in partition raster: -300000000549775575777803994281145270272.000000
 Processors: 12
-Read time: 0.012366
-Compute time: 0.025039
-Write time: 0.014615
-Total time: 0.052020
+Read time: 0.012263
+Compute time: 0.025239
+Write time: 0.014727
+Total time: 0.052229

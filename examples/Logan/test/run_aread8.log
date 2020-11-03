@@ -1,14 +1,14 @@
 AreaD8 version 5.3.9
 Input file test/logan.p.tif has projected coordinate system.
-Nodata value input to create partition from file: -32768.000000
-Nodata value recast to int16_t used in partition raster: -32768
 This run may take on the order of 1 minutes to complete.
 This estimate is very approximate. 
 Run time is highly uncertain as it depends on the complexity of the input data 
 and speed and memory of the computer. This estimate is based on our testing on 
 a dual quad core Dell Xeon E5405 2.0GHz PC with 16GB RAM.
+Nodata value input to create partition from file: -32768.000000
+Nodata value recast to int16_t used in partition raster: -32768
 Number of Processes: 12
-Read time: 0.007930
-Compute time: 0.051549
-Write time: 0.007152
-Total time: 0.066631
+Read time: 0.008533
+Compute time: 0.050849
+Write time: 0.007039
+Total time: 0.066421

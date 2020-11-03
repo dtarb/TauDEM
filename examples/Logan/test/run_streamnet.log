@@ -21,10 +21,10 @@ Creating links
 logan.net 
  Calculating watersheds
 Processors: 12
-Read time: 0.024638
-Length compute time: 0.003988
-Link compute time: 0.004692
-Link write time: 0.098779
-Watershed compute time: 0.030206
-Write time: 0.031498
-Total time: 0.193801
+Read time: 0.023531
+Length compute time: 0.004114
+Link compute time: 0.004810
+Link write time: 0.097797
+Watershed compute time: 0.030000
+Write time: 0.031561
+Total time: 0.191813

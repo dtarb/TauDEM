@@ -26,10 +26,10 @@ Draining flats away from higher adjacent terrain
 ..
 Setting directions
 Processors: 12
-Header read time: 0.006863
-Data read time: 0.005852
-Compute Slope time: 0.043368
-Write Slope time: 0.073207
-Resolve Flat time: 0.178337
-Write Flat time: 0.022955
-Total time: 0.330582
+Header read time: 0.007657
+Data read time: 0.006638
+Compute Slope time: 0.044652
+Write Slope time: 0.073143
+Resolve Flat time: 0.178625
+Write Flat time: 0.022936
+Total time: 0.333651

@@ -29,6 +29,6 @@ Threshold DrainDen NoFirstOrd NoHighOrd MeanDFirstOrd MeanDHighOrd StdDevFirstOr
 500.000153 0.000304 30 4 214.549332 289.485138 153.106659 135.973572 -0.928733
 299.742218  Value for optimum that drop analysis selected - see output file for details.
 Processes: 12
-Read time: 0.024530
-Compute time: 36.133471
-Total time: 36.158001
+Read time: 0.027501
+Compute time: -47.652005
+Total time: -47.624503

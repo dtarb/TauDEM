@@ -8,8 +8,8 @@ Run time is highly uncertain as it depends on the complexity of the input data
 and speed and memory of the computer. This estimate is based on our testing on 
 a dual quad core Dell Xeon E5405 2.0GHz PC with 16GB RAM.
 Processes: 12
-Header read time: 0.007090
-Data read time: 0.000684
-Compute time: 0.100830
-Write time: 0.065124
-Total time: 0.173727
+Header read time: 0.007174
+Data read time: 0.000640
+Compute time: 0.100105
+Write time: 0.064937
+Total time: 0.172857

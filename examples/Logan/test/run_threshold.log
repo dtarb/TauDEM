@@ -7,4 +7,4 @@ and speed and memory of the computer. This estimate is based on our testing on
 a dual quad core Dell Xeon E5405 2.0GHz PC with 16GB RAM.
 Nodata value input to create partition from file: -1.000000
 Nodata value recast to float used in partition raster: -1.000000
-Compute time: 0.002096
+Compute time: 0.002293

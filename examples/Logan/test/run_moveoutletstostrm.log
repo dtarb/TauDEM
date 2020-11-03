@@ -10,4 +10,4 @@ Nodata value recast to int16_t used in partition raster: -32768
 Input file test/logan.p.tif has projected coordinate system.
 Nodata value input to create partition from file: -32768.000000
 Nodata value recast to int16_t used in partition raster: -32768
-logan.om Total time: 0.011245
+logan.om Total time: 0.010924

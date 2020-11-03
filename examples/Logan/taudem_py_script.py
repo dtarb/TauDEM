@@ -220,7 +220,6 @@ class TauDEMRunner:
 
         del ds
 
-
     def longlat_to_pixel(self, long, lat):
         """
         return the x,y pixel coords of long, lat
@@ -480,6 +479,18 @@ class TauDEMRunner:
         return ['-w', self._w]
 
     @property
+    def gagewatershed_path(self):
+        _dem = self.dem.split('.')
+        _dem.insert(-1, 'gw')
+        return '.'.join(_dem)
+
+    _gw = gagewatershed_path
+
+    @property
+    def gagewatershed_args(self):
+        return ['-gw', self._gw]
+
+    @property
     def _mpi_args(self):
         global _USE_MPI
 
@@ -531,6 +542,10 @@ class TauDEMRunner:
     @property
     def streamnet(self):
         return self._mpi_args + [_join(taudem_bin, 'streamnet')]
+
+    @property
+    def gagewatershed(self):
+        return self._mpi_args + [_join(taudem_bin, 'gagewatershed')]
 
     def run_pitremove(self):
         """
@@ -661,7 +676,14 @@ class TauDEMRunner:
                          self.coord_file_args + self.watershed_args + ['-o', self._om] +
                          ([], ['-sw'])[single_watershed])
 
-        assert _exists(self.short_path), self.short_path
+        assert _exists(self._w), self._w
+
+    def run_gagewatershed(self):
+        """
+        """
+        self._nix_runner(self.gagewatershed + self.point_args + ['-o', self._om] + self.gagewatershed_args)
+
+        assert _exists(self._gw), self._gw
 
  #Streamnet -fel loganfel.tif -p loganp.tif -ad8
  #    loganad8.tif -src logansrc.tif -ord loganord3.tif -tree
@@ -681,6 +703,7 @@ if __name__ == "__main__":
     taudem.run_peukerdouglas()
     taudem.run_peukerdouglas_stream_delineation()
     taudem.run_streamnet()
+    taudem.run_gagewatershed()
 
 
 """
