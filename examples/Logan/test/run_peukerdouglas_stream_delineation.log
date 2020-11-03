@@ -1,0 +1,34 @@
+DropAnalysis version 5.3.9
+Input file test/logan.ssa.tif has projected coordinate system.
+This run may take on the order of 1 minutes to complete.
+This estimate is very approximate. 
+Run time is highly uncertain as it depends on the complexity of the input data 
+and speed and memory of the computer. This estimate is based on our testing on 
+a dual quad core Dell Xeon E5405 2.0GHz PC with 16GB RAM.
+Nodata value input to create partition from file: -1.000000
+Nodata value recast to float used in partition raster: -1.000000
+Input file test/logan.p.tif has projected coordinate system.
+Nodata value input to create partition from file: -32768.000000
+Nodata value recast to int16_t used in partition raster: -32768
+Input file test/logan.ad8.tif has projected coordinate system.
+Nodata value input to create partition from file: -1.000000
+Nodata value recast to float used in partition raster: -1.000000
+Input file test/logan.fel.tif has projected coordinate system.
+Nodata value input to create partition from file: -300000000549775575777803994281145270272.000000
+Nodata value recast to float used in partition raster: -300000000549775575777803994281145270272.000000
+Threshold DrainDen NoFirstOrd NoHighOrd MeanDFirstOrd MeanDHighOrd StdDevFirstOrd StdDevHighOrd Tval
+5.000000 0.002461 2256 688 66.508446 125.044464 76.240829 131.867966 -14.564702
+8.340503 0.001854 1165 351 85.638756 145.378479 97.830658 142.423080 -8.938836
+13.912798 0.001537 774 239 96.581413 159.873123 103.330811 151.388092 -7.345117
+23.207947 0.001226 452 141 115.005341 182.002899 109.692078 158.783493 -5.642088
+38.713188 0.000999 294 96 116.624161 211.537109 107.394661 166.852890 -6.479938
+64.577492 0.000790 188 70 116.728371 209.407593 123.760887 156.084808 -4.967546
+107.721756 0.000635 109 38 153.991043 239.083878 144.088898 162.634750 -3.030640
+179.690720 0.000524 75 19 187.208069 269.439911 158.242188 156.966782 -2.026490
+299.742218 0.000412 50 14 197.519669 255.433456 137.707321 168.146454 -1.324366
+500.000153 0.000304 30 4 214.549332 289.485138 153.106659 135.973572 -0.928733
+299.742218  Value for optimum that drop analysis selected - see output file for details.
+Processes: 12
+Read time: 0.024530
+Compute time: 36.133471
+Total time: 36.158001

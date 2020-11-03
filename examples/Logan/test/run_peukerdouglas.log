@@ -1,0 +1,16 @@
+PeukerDouglas version 5.3.9
+Input file test/logan.fel.tif has projected coordinate system.
+This run may take on the order of 1 minutes to complete.
+This estimate is very approximate. 
+Run time is highly uncertain as it depends on the complexity of the input data 
+and speed and memory of the computer. This estimate is based on our testing on 
+a dual quad core Dell Xeon E5405 2.0GHz PC with 16GB RAM.
+Nodata value input to create partition from file: -300000000549775575777803994281145270272.000000
+Nodata value recast to float used in partition raster: -300000000549775575777803994281145270272.000000
+Nodata value input to create partition from file: -300000000549775575777803994281145270272.000000
+Nodata value recast to float used in partition raster: -300000000549775575777803994281145270272.000000
+Processors: 12
+Read time: 0.012366
+Compute time: 0.025039
+Write time: 0.014615
+Total time: 0.052020
