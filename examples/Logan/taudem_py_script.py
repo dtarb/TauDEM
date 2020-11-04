@@ -5,21 +5,27 @@ import sys
 import shutil
 import subprocess
 import inspect
+import json
 
 from os.path import join as _join
 from os.path import split as _split
 from os.path import exists as _exists
 import math
 
-from pprint import pprint
+from collections import Counter
+# from pprint import pprint
 
 from osgeo import gdal, ogr, osr
 import utm
 
 import numpy as np
+from scipy.ndimage import label
+
+# import cv2
 
 from wepppy.all_your_base import (
-    read_arc,
+    read_tif,
+    write_arc,
     utm_srid,
     isfloat,
     GeoTransformer,
@@ -82,17 +88,18 @@ def get_utm_zone(srs):
 
 # TauDEM command line executables.
 
-taudem_bin = '../../bin'
+_thisdir = os.path.dirname(__file__)
+_taudem_bin = _join(_thisdir, '../../bin')
 
-assert _exists(_join(taudem_bin, 'pitremove')), 'Cannot find pitremove'
-assert _exists(_join(taudem_bin, 'd8flowdir')), 'Cannot find d8flowdir'
-assert _exists(_join(taudem_bin, 'aread8')), 'Cannot find aread8'
-assert _exists(_join(taudem_bin, 'threshold')), 'Cannot find threshold'
-assert _exists(_join(taudem_bin, 'moveoutletstostrm')), 'Cannot find moveoutletstostrm'
-assert _exists(_join(taudem_bin, 'peukerdouglas')), 'Cannot find peukerdouglas'
-assert _exists(_join(taudem_bin, 'dropanalysis')), 'Cannot find dropanalysis'
-assert _exists(_join(taudem_bin, 'streamnet')), 'Cannot find streamnet'
-assert _exists(_join(taudem_bin, 'dropanalysis')), 'Cannot find dropanalysis'
+assert _exists(_join(_taudem_bin, 'pitremove')), 'Cannot find pitremove'
+assert _exists(_join(_taudem_bin, 'd8flowdir')), 'Cannot find d8flowdir'
+assert _exists(_join(_taudem_bin, 'aread8')), 'Cannot find aread8'
+assert _exists(_join(_taudem_bin, 'threshold')), 'Cannot find threshold'
+assert _exists(_join(_taudem_bin, 'moveoutletstostrm')), 'Cannot find moveoutletstostrm'
+assert _exists(_join(_taudem_bin, 'peukerdouglas')), 'Cannot find peukerdouglas'
+assert _exists(_join(_taudem_bin, 'dropanalysis')), 'Cannot find dropanalysis'
+assert _exists(_join(_taudem_bin, 'streamnet')), 'Cannot find streamnet'
+assert _exists(_join(_taudem_bin, 'dropanalysis')), 'Cannot find dropanalysis'
 
 _TIMEOUT = 60
 
@@ -109,6 +116,7 @@ _outlet_template_geojson = """{{
 ]
 }}"""
 
+
 class TauDEMRunner:
     """
     Object oriented abstraction for running TauDEM
@@ -116,29 +124,29 @@ class TauDEMRunner:
     For more infomation on topaz see the manual available here:
         https://hydrology.usu.edu/taudem/taudem5/documentation.html
     """
-    def __init__(self, wd, dem):
+    def __init__(self, wd, dem, vector_ext='geojson'):
         """
         provide a path to a directory to store the topaz files a
         path to a dem
         """
-        global taudem_bin
-
-        # verify the dem exists
-        if not _exists(dem):
-            raise Exception('file "%s" does not exist' % dem)
 
         # verify the dem exists
         if not _exists(wd):
             raise Exception('working directory "%s" does not exist' % wd)
 
-        _dem = _join(wd, _split(dem)[-1])
-        shutil.copyfile(dem, _dem)
-
         self.wd = wd
-        self.dem = _dem
 
+        # verify the dem exists
+        if not _exists(dem):
+            raise Exception('file "%s" does not exist' % dem)
+
+        self._dem_ext = _split(dem)[-1].split('.')[-1]
+        shutil.copyfile(dem, self._z)
+
+        self._vector_ext = vector_ext
+
+        self.user_outlet = None
         self.outlet = None
-        self.actual_outlet = None
         self._parse_dem()
 
     def _parse_dem(self):
@@ -146,7 +154,7 @@ class TauDEMRunner:
         Uses gdal to extract elevation values from dem and puts them in a
         single column ascii file named DEDNM.INP for topaz
         """
-        dem = self.dem
+        dem = self._z
 
         # open the dataset
         ds = gdal.Open(dem)
@@ -179,6 +187,7 @@ class TauDEMRunner:
         srs.ImportFromWkt(ds.GetProjectionRef())
 
         datum, utm_zone, hemisphere = get_utm_zone(srs)
+        print(datum, utm_zone, hemisphere)
         if utm_zone is None:
             raise Exception('input is not in utm')
 
@@ -212,13 +221,47 @@ class TauDEMRunner:
         self.epsg = utm_srid(utm_zone, datum, hemisphere)
         self.utm_zone = utm_zone
         self.srs_proj4 = srs.ExportToProj4()
-        self.epsg = utm_srid(utm_zone, hemisphere='')
         srs.MorphToESRI()
         self.srs_wkt = srs.ExportToWkt()
         self.minimum_elevation = minimum_elevation
         self.maximum_elevation = maximum_elevation
 
+        self.scratch = {}
+
         del ds
+
+    def data_fetcher(self, band, dtype=None):
+        if dtype is None:
+            dtype = np.int16
+
+        if band not in self.scratch:
+            _band = getattr(self, '_' + band)
+            self.scratch[band], _, _ = read_tif(_band, dtype=dtype)
+
+        return self.scratch[band]
+
+    def get_elevation(self, easting, northing):
+        z_data = self.data_fetcher('z', dtype=np.float64)
+        x, y = self.utm_to_px(easting, northing)
+
+        return z_data[x, y]
+
+    def utm_to_px(self, easting, northing):
+        """
+        return the utm coords from pixel coords
+        """
+
+        # unpack variables for instance
+        cellsize, num_cols, num_rows = self.cellsize, self.num_cols, self.num_rows
+        ul_x, ul_y, lr_x, lr_y = self.ul_x, self.ul_y, self.lr_x, self.lr_y
+
+        x = int(round((easting - ul_x) / cellsize))
+        y = int(round((northing - ul_y) / -cellsize))
+
+        assert x >= 0 and x < num_rows, x
+        assert y >= 0 and x < num_cols, y
+
+        return x, y
 
     def longlat_to_pixel(self, long, lat):
         """
@@ -280,215 +323,187 @@ class TauDEMRunner:
         proj2wgs_transformer = GeoTransformer(src_proj4=self.srs_proj4, dst_proj4=wgs84_proj4)
         return proj2wgs_transformer.transform(easting, northing)
 
+    # dem
     @property
-    def dem_args(self):
-        return ['-z', self.dem]
+    def _z(self):
+        return _join(self.wd, 'dem.%s' % self._dem_ext)
 
     @property
-    def fel_path(self):
-        _dem = self.dem.split('.')
-        _dem.insert(-1, 'fel')
-        return '.'.join(_dem)
+    def _z_args(self):
+        return ['-z', self._z]
 
-    _fel = fel_path
+    # fel
+    @property
+    def _fel(self):
+        return _join(self.wd, 'fel.tif')
 
     @property
-    def fel_args(self):
+    def _fel_args(self):
         return ['-fel', self._fel]
 
+    # point
     @property
-    def point_path(self):
-        _dem = self.dem.split('.')
-        _dem.insert(-1, 'p')
-        return '.'.join(_dem)
-
-    _p = point_path
+    def _p(self):
+        return _join(self.wd, 'point.tif')
 
     @property
-    def point_args(self):
+    def _p_args(self):
         return ['-p', self._p]
 
+    # slope d8
     @property
-    def slope_path(self):
-        _dem = self.dem.split('.')
-        _dem.insert(-1, 'sd8')
-        return '.'.join(_dem)
-
-    _sd8 = slope_path
+    def _sd8(self):
+        return _join(self.wd, 'slope_d8.tif')
 
     @property
-    def slope_args(self):
+    def _sd8_args(self):
         return ['-sd8', self._sd8]
 
+    # area d8
     @property
-    def contrib_area_path(self):
-        _dem = self.dem.split('.')
-        _dem.insert(-1, 'ad8')
-        return '.'.join(_dem)
-
-    _ad8 = contrib_area_path
+    def _ad8(self):
+        return _join(self.wd, 'area_d8.tif')
 
     @property
-    def contrib_area_args(self):
+    def _ad8_args(self):
         return ['-ad8', self._ad8]
 
+    # stream raster
     @property
-    def stream_raster_path(self):
-        _dem = self.dem.split('.')
-        _dem.insert(-1, 'src')
-        return '.'.join(_dem)
-
-    _src = stream_raster_path
+    def _src(self):
+        return _join(self.wd, 'src.tif')
 
     @property
-    def stream_raster_args(self):
+    def _src_args(self):
         return ['-src', self._src]
 
+    # pk stream reaster
     @property
-    def pk_stream_raster_path(self):
-        _dem = self.dem.split('.')
-        _dem.insert(-1, 'pksrc')
-        return '.'.join(_dem)
-
-    _pksrc = pk_stream_raster_path
+    def _pksrc(self):
+        return _join(self.wd, 'pksrc.tif')
 
     @property
-    def channel_shp_path(self):
-        _dem = self.dem.split('.')
-        _dem.insert(-1, 'net')
-        _dem[-1] = 'geojson'
-        return '.'.join(_dem)
+    def _pksrc_args(self):
+        return ['-src', self._pksrc]
 
-    _net = channel_shp_path
+    # net
+    @property
+    def _net(self):
+        return _join(self.wd, 'net.%s' % self._vector_ext)
 
     @property
-    def channel_shp_args(self):
+    def _net_args(self):
         return ['-net', self._net]
 
+    # user outlet
     @property
-    def outlet_shp_path(self):
-        _dem = self.dem.split('.')
-        _dem.insert(-1, 'o')
-        _dem[-1] = 'geojson'
-        return '.'.join(_dem)
-
-    _o = outlet_shp_path
+    def _uo(self):
+        return _join(self.wd, 'user_outlet.%s' % self._vector_ext)
 
     @property
-    def outlet_shp_args(self):
+    def _uo_args(self):
+        return ['-o', self._uo]
+
+    # outlet
+    @property
+    def _o(self):
+        return _join(self.wd, 'outlet.%s' % self._vector_ext)
+
+    @property
+    def _o_args(self):
         return ['-o', self._o]
 
+    # stream source
     @property
-    def actual_outlet_shp_path(self):
-        _dem = self.dem.split('.')
-        _dem.insert(-1, 'om')
-        _dem[-1] = 'geojson'
-        return '.'.join(_dem)
-
-    _om = actual_outlet_shp_path
+    def _ss(self):
+        return _join(self.wd, 'ss.tif')
 
     @property
-    def actual_outlet_shp_args(self):
-        return ['-om', self._om]
-
-    @property
-    def short_path(self):
-        _dem = self.dem.split('.')
-        _dem.insert(-1, 'ss')
-        return '.'.join(_dem)
-
-    _ss = short_path
-
-    @property
-    def short_args(self):
+    def _ss_args(self):
         return ['-ss', self._ss]
 
+    # ssa
     @property
-    def short_area_path(self):
-        _dem = self.dem.split('.')
-        _dem.insert(-1, 'ssa')
-        return '.'.join(_dem)
-
-    _ssa = short_area_path
+    def _ssa(self):
+        return _join(self.wd, 'ssa.tif')
 
     @property
-    def short_area_args(self):
+    def _ssa_args(self):
         return ['-ssa', self._ssa]
 
+    # drop
     @property
-    def drop_file_path(self):
-        _dem = self.dem.split('.')
-        _dem.insert(-1, 'drp')
-        _dem[-1] = 'txt'
-        return '.'.join(_dem)
-
-    _drp = drop_file_path
+    def _drp(self):
+        return _join(self.wd, 'drp.tif')
 
     @property
-    def drop_file_args(self):
+    def _drp_args(self):
         return ['-drp', self._drp]
 
+    # tree
     @property
-    def tree_file_path(self):
-        _dem = self.dem.split('.')
-        _dem.insert(-1, 'tree')
-        _dem[-1] = 'txt'
-        return '.'.join(_dem)
-
-    _tree = tree_file_path
+    def _tree(self):
+        return _join(self.wd, 'tree.tsv')
 
     @property
-    def tree_file_args(self):
+    def _tree_args(self):
         return ['-tree', self._tree]
 
+    # coord
     @property
-    def coord_file_path(self):
-        _dem = self.dem.split('.')
-        _dem.insert(-1, 'coord')
-        _dem[-1] = 'txt'
-        return '.'.join(_dem)
-
-    _coord = coord_file_path
+    def _coord(self):
+        return _join(self.wd, 'coord.tsv')
 
     @property
-    def coord_file_args(self):
+    def _coord_args(self):
         return ['-coord', self._coord]
 
+    # order
     @property
-    def order_file_path(self):
-        _dem = self.dem.split('.')
-        _dem.insert(-1, 'ord')
-        return '.'.join(_dem)
-
-    _ord = order_file_path
+    def _ord(self):
+        return _join(self.wd, 'order.tif')
 
     @property
-    def order_file_args(self):
+    def _ord_args(self):
         return ['-ord', self._ord]
 
+    # watershed
     @property
-    def watershed_path(self):
-        _dem = self.dem.split('.')
-        _dem.insert(-1, 'w')
-        return '.'.join(_dem)
-
-    _w = watershed_path
+    def _w(self):
+        return _join(self.wd, 'watershed.tif')
 
     @property
-    def watershed_args(self):
+    def _w_args(self):
         return ['-w', self._w]
 
+    # gord
     @property
-    def gagewatershed_path(self):
-        _dem = self.dem.split('.')
-        _dem.insert(-1, 'gw')
-        return '.'.join(_dem)
-
-    _gw = gagewatershed_path
+    def _gord(self):
+        return _join(self.wd, 'gord.tif')
 
     @property
-    def gagewatershed_args(self):
-        return ['-gw', self._gw]
+    def _gord_args(self):
+        return ['-gord', self._gord]
+
+    # plen
+    @property
+    def _plen(self):
+        return _join(self.wd, 'plen.tif')
+
+    @property
+    def _plen_args(self):
+        return ['-plen', self._plen]
+
+    # tlen
+    @property
+    def _tlen(self):
+        return _join(self.wd, 'tlen.tif')
+
+    @property
+    def _tlen_args(self):
+        return ['-tlen', self._tlen]
+
+    # subprocess methods
 
     @property
     def _mpi_args(self):
@@ -499,10 +514,22 @@ class TauDEMRunner:
         else:
             return []
 
-    def _nix_runner(self, cmd, verbose=True):
+    def _sys_call(self, cmd, verbose=True, intent_in=None, intent_out=None):
+        # verify inputs exist
+        if intent_in is not None:
+            for product in intent_in:
+                assert _exists(product)
+
+        # delete outputs if they exist
+        if intent_out is not None:
+            for product in intent_out:
+                if _exists(product):
+                    os.remove(product)
+
         cmd = [str(v) for v in cmd]
         caller = inspect.stack()[1].function
-        _log = open(_join(self.wd, caller + '.log'), 'w')
+        log = _join(self.wd, caller + '.log')
+        _log = open(log, 'w')
 
         if verbose:
             print(caller, cmd)
@@ -511,41 +538,56 @@ class TauDEMRunner:
         p.wait()
         _log.close()
 
-    @property
-    def pitremove(self):
-        return self._mpi_args + [_join(taudem_bin, 'pitremove')]
+        if intent_out is None:
+            return
+
+        for product in intent_out:
+            if not _exists(product):
+                raise Exception('{} Failed: {} does not exist. See {}'.format(caller, product, log))
+
+        os.remove(log)
 
     @property
-    def d8flowdir(self):
-        return self._mpi_args + [_join(taudem_bin, 'd8flowdir')]
+    def __pitremove(self):
+        return self._mpi_args + [_join(_taudem_bin, 'pitremove')]
 
     @property
-    def aread8(self):
-        return self._mpi_args + [_join(taudem_bin, 'aread8')]
+    def __d8flowdir(self):
+        return self._mpi_args + [_join(_taudem_bin, 'd8flowdir')]
 
     @property
-    def threshold(self):
-        return self._mpi_args + [_join(taudem_bin, 'threshold')]
+    def __aread8(self):
+        return self._mpi_args + [_join(_taudem_bin, 'aread8')]
 
     @property
-    def moveoutletstostrm(self):
-        return self._mpi_args + [_join(taudem_bin, 'moveoutletstostrm')]
+    def __gridnet(self):
+        return self._mpi_args + [_join(_taudem_bin, 'gridnet')]
 
     @property
-    def peukerdouglas(self):
-        return self._mpi_args + [_join(taudem_bin, 'peukerdouglas')]
+    def __threshold(self):
+        return self._mpi_args + [_join(_taudem_bin, 'threshold')]
 
     @property
-    def dropanalysis(self):
-        return self._mpi_args + [_join(taudem_bin, 'dropanalysis')]
+    def __moveoutletstostrm(self):
+        return self._mpi_args + [_join(_taudem_bin, 'moveoutletstostrm')]
 
     @property
-    def streamnet(self):
-        return self._mpi_args + [_join(taudem_bin, 'streamnet')]
+    def __peukerdouglas(self):
+        return self._mpi_args + [_join(_taudem_bin, 'peukerdouglas')]
 
     @property
-    def gagewatershed(self):
-        return self._mpi_args + [_join(taudem_bin, 'gagewatershed')]
+    def __dropanalysis(self):
+        return self._mpi_args + [_join(_taudem_bin, 'dropanalysis')]
+
+    @property
+    def __streamnet(self):
+        return self._mpi_args + [_join(_taudem_bin, 'streamnet')]
+
+    @property
+    def __gagewatershed(self):
+        return self._mpi_args + [_join(_taudem_bin, 'gagewatershed')]
+
+    # TauDEM wrapper methods
 
     def run_pitremove(self):
         """
@@ -555,8 +597,9 @@ class TauDEMRunner:
         in: dem
         out: fel
         """
-        self._nix_runner(self.pitremove + self.dem_args + self.fel_args)
-        assert _exists(self.fel_path), self.fel_path
+        self._sys_call(self.__pitremove + self._z_args + self._fel_args,
+                       intent_in=(self._z,),
+                       intent_out=(self._fel,))
 
     def run_d8flowdir(self):
         """
@@ -565,11 +608,11 @@ class TauDEMRunner:
         using the method of Garbrecht and Martz (Garbrecht and Martz, 1997).
 
         in: fel
-        out: point, slope
+        out: point, slope_d8
         """
-        self._nix_runner(self.d8flowdir + self.fel_args + self.point_args + self.slope_args)
-        assert _exists(self.point_path), self.point_path
-        assert _exists(self.slope_path), self.slope_path
+        self._sys_call(self.__d8flowdir + self._fel_args + self._p_args + self._sd8_args,
+                       intent_in=(self._fel,),
+                       intent_out=(self._sd8, self._p))
 
     def run_aread8(self, no_edge_contamination_checking=False):
         """
@@ -581,12 +624,22 @@ class TauDEMRunner:
         checking may be overridden with the optional command line.
 
         in: point
-        out: contrib_area
+        out: area_d8
         """
-        self._nix_runner(self.aread8 + self.point_args + self.contrib_area_args +
-                         ([], ['-nc'])[no_edge_contamination_checking])
+        self._sys_call(self.__aread8 + self._p_args + self._ad8_args + ([], ['-nc'])[no_edge_contamination_checking],
+                       intent_in=(self._p,),
+                       intent_out=(self._ad8,))
 
-    def run_threshold(self, ssa, src, threshold=1000):
+    def run_gridnet(self):
+        """
+        in: p
+        out: gord, plen, tlen
+        """
+        self._sys_call(self.__gridnet + self._p_args + self._gord_args + self._plen_args + self._tlen_args,
+                       intent_in=(self._p,),
+                       intent_out=(self._gord, self._plen, self._tlen))
+
+    def _run_threshold(self, ssa, src, threshold=1000):
         """
         This function operates on any grid and outputs an indicator (1,0) grid of grid cells that have values >= the
         input threshold. The standard use is to threshold an accumulated source area grid to determine a stream raster.
@@ -596,12 +649,27 @@ class TauDEMRunner:
         in: ssa
         out: src
         """
-        self._nix_runner(self.threshold + ['-ssa', ssa, '-src', src, '-thresh', threshold])
+        self._sys_call(self.__threshold + ['-ssa', ssa, '-src', src, '-thresh', threshold],
+                       intent_in=(ssa,),
+                       intent_out=(src,))
 
     def run_src_threshold(self, threshold=1000):
-        self.run_threshold(ssa=self._ad8, src=self._src, threshold=threshold)
+        self._run_threshold(ssa=self._ad8, src=self._src, threshold=threshold)
 
-        assert _exists(self._src), self._src
+    def _make_outlet(self, long=None, lat=None, dst=None, easting=None, northing=None):
+        assert dst is not None
+
+        if long is not None and lat is not None:
+            easting, northing = self.longlat_to_utm(long=long, lat=lat)
+
+        assert isfloat(easting), easting
+        assert isfloat(northing), northing
+
+        with open(dst, 'w') as fp:
+            fp.write(_outlet_template_geojson.format(epsg=self.epsg, easting=easting, northing=northing))
+
+        assert _exists(dst), dst
+        return dst
 
     def run_moveoutletstostrm(self, long, lat):
         """
@@ -610,24 +678,11 @@ class TauDEMRunner:
         :param long: requested longitude
         :param lat: requested latitude
         """
-        self.outlet = long, lat
-        self._make_outlet()
-
-        self._nix_runner(self.moveoutletstostrm + self.point_args + self.stream_raster_args +
-                         self.outlet_shp_args + self.actual_outlet_shp_args)
-
-        assert _exists(self._om), self._om
-
-    def _make_outlet(self):
-        outlet = self.outlet
-        assert outlet is not None
-        long, lat = outlet
-        easting, northing = self.longlat_to_utm(long=long, lat=lat)
-
-        with open(self.outlet_shp_path, 'w') as fp:
-            fp.write(_outlet_template_geojson.format(epsg=self.epsg, easting=easting, northing=northing))
-
-        assert _exists(self._o), self._o
+        self.user_outlet = long, lat
+        self._make_outlet(long=long, lat=lat, dst=self._uo)
+        self._sys_call(self.__moveoutletstostrm + self._p_args + self._src_args + ['-o', self._uo] + ['-om', self._o],
+                       intent_in=(self._p, self._src, self._uo),
+                       intent_out=(self._o,))
 
     def run_peukerdouglas(self, center_weight=0.4, side_weight=0.1, diagonal_weight=0.05):
         """
@@ -635,15 +690,20 @@ class TauDEMRunner:
         according to the Peuker and Douglas algorithm. This is to be based on code in tardemlib.cpp/source.
 
         in: fel
-        out: short
+        out: ss
         """
-        self._nix_runner(self.peukerdouglas + self.fel_args + self.short_args +
-                         ['-par', center_weight, side_weight, diagonal_weight])
-
-        assert _exists(self.short_path), self.short_path
+        self._sys_call(self.__peukerdouglas + self._fel_args + self._ss_args +
+                       ['-par', center_weight, side_weight, diagonal_weight],
+                       intent_in=(self._fel,),
+                       intent_out=(self._ss,))
 
     @property
     def drop_analysis_threshold(self):
+        """
+        Reads the drop table and extracts the optimal value
+
+        :return: optimimum threshold value from drop table
+        """
         with open(self._drp) as fp:
             lines = fp.readlines()
 
@@ -653,57 +713,197 @@ class TauDEMRunner:
         return float(last.replace('Optimum Threshold Value:', '').strip())
 
     def run_peukerdouglas_stream_delineation(self, threshmin=5, threshmax=500, nthresh=10, steptype=0, threshold=None):
-        self._nix_runner(self.aread8 + self.point_args + ['-o', self._om] + ['-ad8', self._ssa] + ['-wg', self._ss])
+        """
 
-        assert _exists(self._ssa), self._ssa
+        :param threshmin:
+        :param threshmax:
+        :param nthresh:
+        :param steptype:
+        :param threshold:
 
-        self._nix_runner(self.dropanalysis + self.point_args + self.fel_args +
-                         self.contrib_area_args + self.short_area_args + self.drop_file_args +
-                         ['-o', self._om] + ['-par', threshmin, threshmax, nthresh, steptype])
+        in: p, o, ss
+        out:
+        """
+        self._sys_call(self.__aread8 + self._p_args + self._o_args + ['-ad8', self._ssa] + ['-wg', self._ss],
+                       intent_in=(self._p, self._o, self._ss),
+                       intent_out=(self._ssa,))
 
-        assert _exists(self._drp), self._drp
+        self._sys_call(self.__dropanalysis + self._p_args + self._fel_args +
+                       self._ad8_args + self._ssa_args + self._drp_args +
+                       self._o_args + ['-par', threshmin, threshmax, nthresh, steptype],
+                       intent_in=(self._p, self._fel, self._ad8, self._o, self._ssa),
+                       intent_out=(self._drp,))
 
         if threshold is None:
             threshold = self.drop_analysis_threshold
 
-        self.run_threshold(self._ssa, self._pksrc, threshold=threshold)
+        self._run_threshold(self._ssa, self._pksrc, threshold=threshold)
 
     def run_streamnet(self, single_watershed=False):
         """
+        in: fel, p, ad8, pksrc, o
+        out: w, ord, tree, net, coors
         """
-        self._nix_runner(self.streamnet + self.fel_args + self.point_args + self.contrib_area_args +
-                         ['-src', self._pksrc] + self.order_file_args + self.tree_file_args + self.channel_shp_args +
-                         self.coord_file_args + self.watershed_args + ['-o', self._om] +
-                         ([], ['-sw'])[single_watershed])
+        self._sys_call(self.__streamnet + self._fel_args + self._p_args + self._ad8_args +
+                       self._pksrc_args + self._o_args + self._ord_args + self._tree_args + self._net_args +
+                       self._coord_args + self._w_args + ([], ['-sw'])[single_watershed],
+                       intent_in=(self._fel, self._p, self._ad8, self._pksrc, self._o),
+                       intent_out=(self._w, self._ord, self._tree, self._net, self._coord))
 
-        assert _exists(self._w), self._w
-
-    def run_gagewatershed(self):
+    def _run_gagewatershed(self, **kwargs):
         """
+        in: p
+        out: gw
         """
-        self._nix_runner(self.gagewatershed + self.point_args + ['-o', self._om] + self.gagewatershed_args)
+        long = kwargs.get('long', None)
+        lat = kwargs.get('lat', None)
+        easting = kwargs.get('easting', None)
+        northing = kwargs.get('northing', None)
+        dst = kwargs.get('dst', None)
 
-        assert _exists(self._gw), self._gw
+        point = self._make_outlet(long=long, lat=lat, easting=easting, northing=northing, dst=dst[:-4] + '.geojson')
+        self._sys_call(self.__gagewatershed + self._p_args + ['-o', point] + ['-gw', dst],
+                       intent_in=(point, self._p),
+                       intent_out=(dst,))
 
- #Streamnet -fel loganfel.tif -p loganp.tif -ad8
- #    loganad8.tif -src logansrc.tif -ord loganord3.tif -tree
- #    logantree.dat -coord logancoord.dat -net logannet.shp -w
- #    loganw.tif -o loganoutlet.shp
+    def _create_prj(self, fname):
+        """
+        Create a PRJ for a topaz resource based on dem's projection
+        """
+        fname = fname.replace('.arc', '.prj')
+
+        if _exists(fname):
+            os.remove(fname)
+
+        fid = open(fname, 'w')
+        fid.write(self.srs_wkt)
+        fid.close()
+
+        return True
+
+    def run_subcatchment_delineation(self, min_sub_area=None):
+        cellsize = self.cellsize
+
+        w_data = self.data_fetcher('w', dtype=np.int16)
+        src_data = self.data_fetcher('pksrc', dtype=np.int16)
+
+        subwta = np.zeros(w_data.shape, dtype=np.int16)
+
+        s = [[0, 1, 0],
+             [1, 1, 1],
+             [0, 1, 0]]
+
+        with open(self._net) as fp:
+            js = json.load(fp)
+
+        for feature in js['features']:
+            chn_enum = feature['properties']['WSNO']
+            coords = feature['geometry']['coordinates']
+            uslinkn01 = feature['properties']['USLINKNO1']
+            uslinkn02 = feature['properties']['USLINKNO2']
+            end_node = uslinkn01 == -1 and uslinkn02 == -1
+
+            first = coords[0]
+            last = coords[-1]
+
+            z_first = self.get_elevation(easting=first[0], northing=first[1])
+            z_last = self.get_elevation(easting=last[0], northing=last[1])
+
+            print(chn_enum, first, z_first, last, z_last, uslinkn01, uslinkn02, end_node)
+
+            if z_first > z_last:
+                top = first
+            else:
+                top = last
+
+            # Identify the catchment by walking along the channel and sampling the watershed layer.
+            # The sampling is needed because the channel could border on the diagonal of a catchment
+            # and a single value could return the wrong catchment.
+            catchment_id = Counter()
+            for i in range(0, len(coords), 5):
+                _e, _n, _ = coords[i]
+                _x, _y = self.utm_to_px(easting=_e, northing=_n)
+                catchment_id[w_data[_x, _y]] += 1
+            catchment_id = catchment_id.most_common()[0][0]
+
+            # need a mask for the side subcatchments
+            catchment_data = np.zeros(w_data.shape, dtype=np.int16)
+            catchment_data[np.where(w_data == catchment_id)] = 1
+
+            if end_node:
+                gw = _join(self.wd, 'wsno_%05i.tif' % chn_enum)
+                self._run_gagewatershed(easting=top[0], northing=top[1], dst=gw)
+
+                gw_data, _, _ = read_tif(gw)
+
+                gw_indx = np.where(gw_data == 0)
+                subwta[gw_indx] = int(str(catchment_id) + '1')
+
+                # remove end subcatchment from the catchment mask
+                catchment_data[gw_indx] = 0
+
+                os.remove(gw)
+                os.remove(gw[:-4] + '.geojson')
+
+            # remove channels from catchment mask
+            catchment_data -= src_data
+            indx, indy = np.where(catchment_data == 1)
+
+            # the whole catchment drains through the top of the channel
+            if len(indx) == 0:
+                continue
+
+            x0, xend = np.min(indx), np.max(indx)
+
+            if x0 > 0:
+                x0 -= 1
+            if xend < self.num_cols - 1:
+                xend += 1
+
+            y0, yend = np.min(indy), np.max(indy)
+
+            if y0 > 0:
+                y0 -= 1
+            if yend < self.num_rows - 1:
+                yend += 1
+
+            _catchment_data = catchment_data[x0:xend, y0:yend]
+            _catchment_data = np.clip(_catchment_data, a_min=0, a_max=1)
+            # cv2.imwrite('%s.png' % str(catchment_id), np.array(255 * _catchment_data.T, dtype=np.uint8))
+
+            subcatchment_data, n_labels = label(_catchment_data)
+
+            for i in range(n_labels):
+                indxx, indyy = np.where(subcatchment_data == i + 1)
+                sub_area = len(indxx) * cellsize * cellsize
+                if sub_area < min_sub_area:
+                    continue
+
+                subwta[x0:xend, y0:yend][indxx, indyy] = int(str(catchment_id) + str(i+2))
+
+        subwta[np.where(w_data < 0)] = 0
+        subwta = np.clip(subwta, 0, 2**15)
+        subwta_fn = _join(self.wd, 'subwta.arc')
+        write_arc(subwta, subwta_fn, self.ll_x, self.ll_y, self.cellsize)
+        self._create_prj(subwta_fn)
+
 
 if __name__ == "__main__":
-    wd = 'test'
-    dem = 'logan.tif'
+    wd = _join(_thisdir, 'test')
+    dem = _join(_thisdir, 'logan.tif')
 
     taudem = TauDEMRunner(wd=wd, dem=dem)
     taudem.run_pitremove()
     taudem.run_d8flowdir()
     taudem.run_aread8()
+    taudem.run_gridnet()
     taudem.run_src_threshold()
     taudem.run_moveoutletstostrm(long=-111.784228758779406, lat=41.743629188805421)
     taudem.run_peukerdouglas()
     taudem.run_peukerdouglas_stream_delineation()
     taudem.run_streamnet()
-    taudem.run_gagewatershed()
+    taudem._run_gagewatershed(long=-111.63609, lat=42.020262, dst=_join(wd, 'gw_test.tif'))
+    taudem.run_subcatchment_delineation(min_sub_area=30*30*10)
 
 
 """
@@ -792,8 +992,7 @@ plot(src1)
 zoom(src1)
 
 # Stream Reach and Watershed
-system(
-    "mpiexec -n 8 Streamnet -fel loganfel.tif -p loganp.tif -ad8 loganad8.tif -src logansrc1.tif -o outlet.shp -ord loganord.tif -tree logantree.txt -coord logancoord.txt -net logannet.shp -w loganw.tif")
+system("mpiexec -n 8 Streamnet -fel loganfel.tif -p loganp.tif -ad8 loganad8.tif -src logansrc1.tif -o outlet.shp -ord loganord.tif -tree logantree.txt -coord logancoord.txt -net logannet.shp -w loganw.tif")
 plot(raster("loganord.tif"))
 zoom(raster("loganord.tif"))
 plot(raster("loganw.tif"))
@@ -802,56 +1001,56 @@ plot(raster("loganw.tif"))
 snet = read.shapefile("logannet")
 ns = length(snet$shp$shp)
 for (i in 1:ns)
-    {
-        lines(snet$shp$shp[[i]]$points, lwd = snet$dbf$dbf$Order[i])
-    }
+{
+    lines(snet$shp$shp[[i]]$points, lwd = snet$dbf$dbf$Order[i])
+}
 
-    # Peuker Douglas stream definition
-    system("mpiexec -n 8 PeukerDouglas -fel loganfel.tif -ss loganss.tif")
-    ss = raster("loganss.tif")
-    plot(ss)
-    zoom(ss)
+# Peuker Douglas stream definition
+system("mpiexec -n 8 PeukerDouglas -fel loganfel.tif -ss loganss.tif")
+ss = raster("loganss.tif")
+plot(ss)
+zoom(ss)
 
-    #  Accumulating candidate stream source cells
-    system("mpiexec -n 8 Aread8 -p loganp.tif -o outlet.shp -ad8 loganssa.tif -wg loganss.tif")
-    ssa = raster("loganssa.tif")
-    plot(ssa)
+#  Accumulating candidate stream source cells
+system("mpiexec -n 8 Aread8 -p loganp.tif -o outlet.shp -ad8 loganssa.tif -wg loganss.tif")
+ssa = raster("loganssa.tif")
+plot(ssa)
 
-    #  Drop Analysis
-    system(
-        "mpiexec -n 8 Dropanalysis -p loganp.tif -fel loganfel.tif -ad8 loganad8.tif -ssa loganssa.tif -drp logandrp.txt -o outlet.shp -par 5 500 10 0")
+#  Drop Analysis
+system(
+    "mpiexec -n 8 Dropanalysis -p loganp.tif -fel loganfel.tif -ad8 loganad8.tif -ssa loganssa.tif -drp logandrp.txt -o outlet.shp -par 5 500 10 0")
 
-    # Deduce that the optimal threshold is 300 
-    # Stream raster by threshold
-    system("mpiexec -n 8 Threshold -ssa loganssa.tif -src logansrc2.tif -thresh 300")
-    plot(raster("logansrc2.tif"))
+# Deduce that the optimal threshold is 300 
+# Stream raster by threshold
+system("mpiexec -n 8 Threshold -ssa loganssa.tif -src logansrc2.tif -thresh 300")
+plot(raster("logansrc2.tif"))
 
-    # Stream network
-    system(
-        "mpiexec -n 8 Streamnet -fel loganfel.tif -p loganp.tif -ad8 loganad8.tif -src logansrc2.tif -ord loganord2.tif -tree logantree2.dat -coord logancoord2.dat -net logannet2.shp -w loganw2.tif -o Outlet.shp",
-        show.output.on.console = F, invisible = F)
+# Stream network
+system(
+    "mpiexec -n 8 Streamnet -fel loganfel.tif -p loganp.tif -ad8 loganad8.tif -src logansrc2.tif -ord loganord2.tif -tree logantree2.dat -coord logancoord2.dat -net logannet2.shp -w loganw2.tif -o Outlet.shp",
+    show.output.on.console = F, invisible = F)
 
-    plot(raster("loganw2.tif"))
-    snet = read.shapefile("logannet2")
-    ns = length(snet$shp$shp)
-    for (i in 1:ns)
-        {
-            lines(snet$shp$shp[[i]]$points, lwd = snet$dbf$dbf$Order[i])
-        }
+plot(raster("loganw2.tif"))
+snet = read.shapefile("logannet2")
+ns = length(snet$shp$shp)
+for (i in 1:ns)
+{
+    lines(snet$shp$shp[[i]]$points, lwd = snet$dbf$dbf$Order[i])
+}
 
-        # Wetness Index
-        system("mpiexec -n 8 SlopeAreaRatio -slp loganslp.tif -sca logansca.tif -sar logansar.tif",
-               show.output.on.console = F, invisible = F)
-        sar = raster("logansar.tif")
-        wi = sar
-        wi[,]=-log(sar[,])
-        plot(wi)
+# Wetness Index
+system("mpiexec -n 8 SlopeAreaRatio -slp loganslp.tif -sca logansca.tif -sar logansar.tif",
+       show.output.on.console = F, invisible = F)
+sar = raster("logansar.tif")
+wi = sar
+wi[,]=-log(sar[,])
+plot(wi)
 
-        # Distance Down
-        system(
-            "mpiexec -n 8 DinfDistDown -ang loganang.tif -fel loganfel.tif -src logansrc2.tif -m ave v -dd logandd.tif",
-            show.output.on.console = F, invisible = F)
-        plot(raster("logandd.tif"))
+# Distance Down
+system(
+    "mpiexec -n 8 DinfDistDown -ang loganang.tif -fel loganfel.tif -src logansrc2.tif -m ave v -dd logandd.tif",
+    show.output.on.console = F, invisible = F)
+plot(raster("logandd.tif"))
 
 
 
