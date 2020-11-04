@@ -432,7 +432,7 @@ class TauDEMRunner:
     # drop
     @property
     def _drp(self):
-        return _join(self.wd, 'drp.tif')
+        return _join(self.wd, 'drp.txt')
 
     @property
     def _drp_args(self):
@@ -500,6 +500,11 @@ class TauDEMRunner:
     @property
     def _tlen_args(self):
         return ['-tlen', self._tlen]
+
+    # subwta
+    @property
+    def _subwta(self):
+        return _join(self.wd, 'subwta.tif')
 
     # subprocess methods
 
@@ -685,7 +690,7 @@ class TauDEMRunner:
         with open(self._o) as fp:
             js = json.load(fp)
 
-        o_e, o_n = js['features']['geometry']['coordinates']
+        o_e, o_n = js['features'][0]['geometry']['coordinates']
         proj2wgs_transformer = GeoTransformer(src_proj4=self.srs_proj4, dst_proj4=wgs84_proj4)
         self.outlet = proj2wgs_transformer.transform(x=o_e, y=o_n)
 
@@ -786,114 +791,131 @@ class TauDEMRunner:
 
         return True
 
-    def run_subcatchment_delineation(self, min_sub_area=None):
-        cellsize = self.cellsize
+    def run_subcatchment_delineation(self):
+        """
+        in: pksrc, net,
+        out: subwta
+        :return:
+        """
 
-        w_data = self.data_fetcher('w', dtype=np.int16)
-        src_data = self.data_fetcher('pksrc', dtype=np.int16)
+        w_data = self.data_fetcher('w', dtype=np.int32)
+        src_data = self.data_fetcher('pksrc', dtype=np.int32)
 
-        subwta = np.zeros(w_data.shape, dtype=np.int16)
-
-        s = [[0, 1, 0],
-             [1, 1, 1],
-             [0, 1, 0]]
+        subwta = np.zeros(w_data.shape, dtype=np.uint16)
 
         with open(self._net) as fp:
             js = json.load(fp)
 
-        for feature in js['features']:
-            chn_enum = feature['properties']['WSNO']
-            coords = feature['geometry']['coordinates']
-            uslinkn01 = feature['properties']['USLINKNO1']
-            uslinkn02 = feature['properties']['USLINKNO2']
-            end_node = uslinkn01 == -1 and uslinkn02 == -1
+        for _pass in range(2):
+            for feature in js['features']:
+                catchment_id = feature['properties']['WSNO']
+                coords = feature['geometry']['coordinates']
+                uslinkn01 = feature['properties']['USLINKNO1']
+                uslinkn02 = feature['properties']['USLINKNO2']
+                end_node = uslinkn01 == -1 and uslinkn02 == -1
 
-            first = coords[0]
-            last = coords[-1]
+                if end_node:
+                    if _pass == 1:
+                        continue  # this has already been processed
 
-            z_first = self.get_elevation(easting=first[0], northing=first[1])
-            z_last = self.get_elevation(easting=last[0], northing=last[1])
+                else:
+                    if _pass == 0:
+                        continue  # don't process non end nodes on the first pass
 
-            if z_first > z_last:
-                top = first
-            else:
-                top = last
+                first = coords[0]
+                last = coords[-1]
 
-            # Identify the catchment by walking along the channel and sampling the watershed layer.
-            # The sampling is needed because the channel could border on the diagonal of a catchment
-            # and a single value could return the wrong catchment.
-            catchment_id = Counter()
-            for i in range(0, len(coords), 5):
-                _e, _n, _ = coords[i]
-                _x, _y = self.utm_to_px(easting=_e, northing=_n)
-                catchment_id[w_data[_x, _y]] += 1
-            catchment_id = catchment_id.most_common()[0][0]
+                z_first = self.get_elevation(easting=first[0], northing=first[1])
+                z_last = self.get_elevation(easting=last[0], northing=last[1])
 
-            # need a mask for the side subcatchments
-            catchment_data = np.zeros(w_data.shape, dtype=np.int16)
-            catchment_data[np.where(w_data == catchment_id)] = 1
+                if z_first > z_last:
+                    top = first
+                else:
+                    top = last
 
-            if end_node:
-                gw = _join(self.wd, 'wsno_%05i.tif' % chn_enum)
-                self._run_gagewatershed(easting=top[0], northing=top[1], dst=gw)
+                # need a mask for the side subcatchments
+                catchment_data = np.zeros(w_data.shape, dtype=np.int32)
+                catchment_data[np.where(w_data == catchment_id)] = 1
 
-                gw_data, _, _ = read_tif(gw)
+                if end_node:
+                    gw = _join(self.wd, 'wsno_%05i.tif' % catchment_id)
+                    self._run_gagewatershed(easting=top[0], northing=top[1], dst=gw)
 
-                gw_indx = np.where(gw_data == 0)
-                subwta[gw_indx] = int(str(catchment_id) + '1')
+                    gw_data, _, _ = read_tif(gw, dtype=np.int16)  # gage watershed cells are 0 in the drainage area
+                    gw_data += 1
+                    gw_data = np.clip(gw_data, 0, 1)
 
-                # remove end subcatchment from the catchment mask
-                catchment_data[gw_indx] = 0
+                    # don't allow gw to extend beyond catchment
+                    gw_data *= catchment_data
 
-                os.remove(gw)
-                os.remove(gw[:-4] + '.geojson')
+                    # identify top subcatchment cells
+                    gw_indx = np.where(gw_data == 1)
 
-            # remove channels from catchment mask
-            catchment_data -= src_data
-            indx, indy = np.where(catchment_data == 1)
+                    # copy the top subcatchment to the subwta raster
+                    subwta[gw_indx] = int(str(catchment_id) + '1')
 
-            # the whole catchment drains through the top of the channel
-            if len(indx) == 0:
-                continue
+                    os.remove(gw)
+                    os.remove(gw[:-4] + '.geojson')
 
-            x0, xend = np.min(indx), np.max(indx)
+                # remove end subcatchments from the catchment mask
+                catchment_data[np.where(subwta != 0)] = 0
 
-            if x0 > 0:
-                x0 -= 1
-            if xend < self.num_cols - 1:
-                xend += 1
+                # remove channels from catchment mask
+                catchment_data -= src_data
+                catchment_data = np.clip(catchment_data, a_min=0, a_max=1)
+                indx, indy = np.where(catchment_data == 1)
 
-            y0, yend = np.min(indy), np.max(indy)
-
-            if y0 > 0:
-                y0 -= 1
-            if yend < self.num_rows - 1:
-                yend += 1
-
-            _catchment_data = catchment_data[x0:xend, y0:yend]
-            _catchment_data = np.clip(_catchment_data, a_min=0, a_max=1)
-            # cv2.imwrite('%s.png' % str(catchment_id), np.array(255 * _catchment_data.T, dtype=np.uint8))
-
-            subcatchment_data, n_labels = label(_catchment_data)
-
-            for i in range(n_labels):
-                indxx, indyy = np.where(subcatchment_data == i + 1)
-                sub_area = len(indxx) * cellsize * cellsize
-                if sub_area < min_sub_area:
+                # the whole catchment drains through the top of the channel
+                if len(indx) == 0:
                     continue
 
-                subwta[x0:xend, y0:yend][indxx, indyy] = int(str(catchment_id) + str(i+2))
+                # we are going to crop the catchment for scipy.ndimage.label. It is really slow otherwise
+                # to do this we identify the bounds and then add a pad
+                pad = 1
+                x0, xend = np.min(indx), np.max(indx)
+                if x0 >= pad:
+                    x0 -= pad
+                if xend < self.num_cols - pad:
+                    xend += pad
 
-        subwta[np.where(w_data < 0)] = 0
-        subwta = np.clip(subwta, 0, 2**15)
-        subwta_fn = _join(self.wd, 'subwta.arc')
-        write_arc(subwta, subwta_fn, self.ll_x, self.ll_y, self.cellsize)
-        self._create_prj(subwta_fn)
+                y0, yend = np.min(indy), np.max(indy)
 
+                if y0 >= pad:
+                    y0 -= pad
+                if yend < self.num_rows - pad:
+                    yend += pad
+
+                # crop to just the side channel catchments
+                _catchment_data = catchment_data[x0:xend, y0:yend]
+
+                # use scipy.ndimage.label to identify side subcatchments
+                subcatchment_data, n_labels = label(_catchment_data)
+
+                # isolated pixels in the channel can get misidentified as subcatchments
+                # this gets rid of those
+                subcatchment_data -= src_data[x0:xend, y0:yend]
+
+                for i in range(n_labels):
+                    indxx, indyy = np.where(subcatchment_data == i + 1)
+
+                    if len(indxx) < 5:
+                        continue
+
+                    subwta[x0:xend, y0:yend][indxx, indyy] = int(str(catchment_id) + str(i+2))
+
+        driver = gdal.GetDriverByName('GTiff')
+        dst_ds = driver.Create(self._subwta, xsize=subwta.shape[0], ysize=subwta.shape[1],
+                               bands=1, eType=gdal.GDT_UInt16, options=['COMPRESS=LZW', 'PREDICTOR=2'])
+        dst_ds.SetGeoTransform(self.transform)
+        dst_ds.SetProjection(self.srs_wkt)
+        band = dst_ds.GetRasterBand(1)
+        band.WriteArray(subwta.T)
+        band.SetNoDataValue(0)
+        dst_ds = None
 
 if __name__ == "__main__":
     wd = _join(_thisdir, 'test')
-    dem = _join(_thisdir, 'logan.tif')
+    dem = _join(_thisdir, 'dem.tif')
 
     taudem = TauDEMRunner(wd=wd, dem=dem)
     taudem.run_pitremove()
@@ -901,160 +923,8 @@ if __name__ == "__main__":
     taudem.run_aread8()
     taudem.run_gridnet()
     taudem.run_src_threshold()
-    taudem.run_moveoutletstostrm(long=-111.784228758779406, lat=41.743629188805421)
+    taudem.run_moveoutletstostrm(long=-120.1652, lat=39.1079)
     taudem.run_peukerdouglas()
-    taudem.run_peukerdouglas_stream_delineation()
+    taudem.run_peukerdouglas_stream_delineation(threshold=10)
     taudem.run_streamnet()
-    taudem._run_gagewatershed(long=-111.63609, lat=42.020262, dst=_join(wd, 'gw_test.tif'))
-    taudem.run_subcatchment_delineation(min_sub_area=30*30*10)
-
-
-"""
-plot(z)
-
-# Pitremove
-system("mpiexec -n 8 pitremove -z logan.tif -fel loganfel.tif")
-fel = raster("loganfel.tif")
-plot(fel)
-
-# D8 flow directions
-system("mpiexec -n 8 D8Flowdir -p loganp.tif -sd8 logansd8.tif -fel loganfel.tif",
-       show.output.on.console = F, invisible = F)
-p = raster("loganp.tif")
-plot(p)
-sd8 = raster("logansd8.tif")
-plot(sd8)
-
-# Contributing area
-system("mpiexec -n 8 AreaD8 -p loganp.tif -ad8 loganad8.tif")
-ad8 = raster("loganad8.tif")
-plot(log(ad8))
-zoom(log(ad8))
-
-# Grid Network 
-system("mpiexec -n 8 Gridnet -p loganp.tif -gord logangord.tif -plen loganplen.tif -tlen logantlen.tif")
-gord = raster("logangord.tif")
-plot(gord)
-zoom(gord)
-
-# DInf flow directions
-system("mpiexec -n 8 DinfFlowdir -ang loganang.tif -slp loganslp.tif -fel loganfel.tif",
-       show.output.on.console = F, invisible = F)
-ang = raster("loganang.tif")
-plot(ang)
-slp = raster("loganslp.tif")
-plot(slp)
-
-# Dinf contributing area
-system("mpiexec -n 8 AreaDinf -ang loganang.tif -sca logansca.tif")
-sca = raster("logansca.tif")
-plot(log(sca))
-zoom(log(sca))
-
-# Threshold
-system("mpiexec -n 8 Threshold -ssa loganad8.tif -src logansrc.tif -thresh 100")
-src = raster("logansrc.tif")
-plot(src)
-zoom(src)
-
-# a quick R function to write a shapefile
-makeshape.r = function(sname="shape", n=1)
-{
-    xy = locator(n=n)
-points(xy)
-
-# Point
-dd < - data.frame(Id=1: n, X = xy$x, Y = xy$y)
-ddTable < - data.frame(Id=c(1), Name=paste("Outlet", 1: n, sep = ""))
-ddShapefile < - convert.to.shapefile(dd, ddTable, "Id", 1)
-write.shapefile(ddShapefile, sname, arcgis=T)
-}
-
-makeshape.r("ApproxOutlets")
-
-# Move Outlets
-system("mpiexec -n 8 moveoutletstostreams -p loganp.tif -src logansrc.tif -o approxoutlets.shp -om Outlet.shp")
-outpt = read.shp("outlet.shp")
-approxpt = read.shp("ApproxOutlets.shp")
-
-plot(src)
-points(outpt$shp[2], outpt$shp[3], pch = 19, col = 2)
-points(approxpt$shp[2], approxpt$shp[3], pch = 19, col = 4)
-
-zoom(src)
-
-# Contributing area upstream of outlet
-system("mpiexec -n 8 Aread8 -p loganp.tif -o Outlet.shp -ad8 loganssa.tif")
-ssa = raster("loganssa.tif")
-plot(ssa)
-
-# Threshold
-system("mpiexec -n 8 threshold -ssa loganssa.tif -src logansrc1.tif -thresh 2000")
-src1 = raster("logansrc1.tif")
-plot(src1)
-zoom(src1)
-
-# Stream Reach and Watershed
-system("mpiexec -n 8 Streamnet -fel loganfel.tif -p loganp.tif -ad8 loganad8.tif -src logansrc1.tif -o outlet.shp -ord loganord.tif -tree logantree.txt -coord logancoord.txt -net logannet.shp -w loganw.tif")
-plot(raster("loganord.tif"))
-zoom(raster("loganord.tif"))
-plot(raster("loganw.tif"))
-
-# Plot streams using stream order as width
-snet = read.shapefile("logannet")
-ns = length(snet$shp$shp)
-for (i in 1:ns)
-{
-    lines(snet$shp$shp[[i]]$points, lwd = snet$dbf$dbf$Order[i])
-}
-
-# Peuker Douglas stream definition
-system("mpiexec -n 8 PeukerDouglas -fel loganfel.tif -ss loganss.tif")
-ss = raster("loganss.tif")
-plot(ss)
-zoom(ss)
-
-#  Accumulating candidate stream source cells
-system("mpiexec -n 8 Aread8 -p loganp.tif -o outlet.shp -ad8 loganssa.tif -wg loganss.tif")
-ssa = raster("loganssa.tif")
-plot(ssa)
-
-#  Drop Analysis
-system(
-    "mpiexec -n 8 Dropanalysis -p loganp.tif -fel loganfel.tif -ad8 loganad8.tif -ssa loganssa.tif -drp logandrp.txt -o outlet.shp -par 5 500 10 0")
-
-# Deduce that the optimal threshold is 300 
-# Stream raster by threshold
-system("mpiexec -n 8 Threshold -ssa loganssa.tif -src logansrc2.tif -thresh 300")
-plot(raster("logansrc2.tif"))
-
-# Stream network
-system(
-    "mpiexec -n 8 Streamnet -fel loganfel.tif -p loganp.tif -ad8 loganad8.tif -src logansrc2.tif -ord loganord2.tif -tree logantree2.dat -coord logancoord2.dat -net logannet2.shp -w loganw2.tif -o Outlet.shp",
-    show.output.on.console = F, invisible = F)
-
-plot(raster("loganw2.tif"))
-snet = read.shapefile("logannet2")
-ns = length(snet$shp$shp)
-for (i in 1:ns)
-{
-    lines(snet$shp$shp[[i]]$points, lwd = snet$dbf$dbf$Order[i])
-}
-
-# Wetness Index
-system("mpiexec -n 8 SlopeAreaRatio -slp loganslp.tif -sca logansca.tif -sar logansar.tif",
-       show.output.on.console = F, invisible = F)
-sar = raster("logansar.tif")
-wi = sar
-wi[,]=-log(sar[,])
-plot(wi)
-
-# Distance Down
-system(
-    "mpiexec -n 8 DinfDistDown -ang loganang.tif -fel loganfel.tif -src logansrc2.tif -m ave v -dd logandd.tif",
-    show.output.on.console = F, invisible = F)
-plot(raster("logandd.tif"))
-
-
-
-"""
+    taudem.run_subcatchment_delineation()
