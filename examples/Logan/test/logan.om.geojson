@@ -1,8 +1,0 @@
-{
-"type": "FeatureCollection",
-"name": "logan.om",
-"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::26912" } },
-"features": [
-{ "type": "Feature", "properties": { "Id": 0, "Dist_moved": 0 }, "geometry": { "type": "Point", "coordinates": [ 434789.019091270340141, 4621607.446916306391358 ] } }
-]
-}

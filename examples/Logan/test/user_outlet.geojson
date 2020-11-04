@@ -1,0 +1,9 @@
+{
+"type": "FeatureCollection",
+"name": "Outlet",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::26912" } },
+"features": [
+{ "type": "Feature", "properties": { "Id": 0 }, 
+   "geometry": { "type": "Point", "coordinates": [ 434791.76231047, 4621609.43730351 ] } }
+]
+}
