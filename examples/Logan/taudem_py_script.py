@@ -121,12 +121,12 @@ class TauDEMRunner:
     """
     Object oriented abstraction for running TauDEM
 
-    For more infomation on topaz see the manual available here:
+    For more infomation on taudem see the manual available here:
         https://hydrology.usu.edu/taudem/taudem5/documentation.html
     """
     def __init__(self, wd, dem, vector_ext='geojson'):
         """
-        provide a path to a directory to store the topaz files a
+        provide a path to a directory to store the taudem files a
         path to a dem
         """
 
@@ -147,12 +147,12 @@ class TauDEMRunner:
 
         self.user_outlet = None
         self.outlet = None
+        self._scratch = {}
         self._parse_dem()
 
     def _parse_dem(self):
         """
-        Uses gdal to extract elevation values from dem and puts them in a
-        single column ascii file named DEDNM.INP for topaz
+        reads metadata from the dem to get the projection, transform, bounds, resolution, and size
         """
         dem = self._z
 
@@ -225,7 +225,6 @@ class TauDEMRunner:
         self.minimum_elevation = minimum_elevation
         self.maximum_elevation = maximum_elevation
 
-        self.scratch = {}
 
         del ds
 
@@ -233,11 +232,11 @@ class TauDEMRunner:
         if dtype is None:
             dtype = np.int16
 
-        if band not in self.scratch:
+        if band not in self._scratch:
             _band = getattr(self, '_' + band)
-            self.scratch[band], _, _ = read_tif(_band, dtype=dtype)
+            self._scratch[band], _, _ = read_tif(_band, dtype=dtype)
 
-        return self.scratch[band]
+        return self._scratch[band]
 
     def get_elevation(self, easting, northing):
         z_data = self.data_fetcher('z', dtype=np.float64)
@@ -682,6 +681,13 @@ class TauDEMRunner:
         self._sys_call(self.__moveoutletstostrm + self._p_args + self._src_args + ['-o', self._uo] + ['-om', self._o],
                        intent_in=(self._p, self._src, self._uo),
                        intent_out=(self._o,))
+
+        with open(self._o) as fp:
+            js = json.load(fp)
+
+        o_e, o_n = js['features']['geometry']['coordinates']
+        proj2wgs_transformer = GeoTransformer(src_proj4=self.srs_proj4, dst_proj4=wgs84_proj4)
+        self.outlet = proj2wgs_transformer.transform(x=o_e, y=o_n)
 
     def run_peukerdouglas(self, center_weight=0.4, side_weight=0.1, diagonal_weight=0.05):
         """
