@@ -187,7 +187,6 @@ class TauDEMRunner:
         srs.ImportFromWkt(ds.GetProjectionRef())
 
         datum, utm_zone, hemisphere = get_utm_zone(srs)
-        print(datum, utm_zone, hemisphere)
         if utm_zone is None:
             raise Exception('input is not in utm')
 
@@ -808,8 +807,6 @@ class TauDEMRunner:
 
             z_first = self.get_elevation(easting=first[0], northing=first[1])
             z_last = self.get_elevation(easting=last[0], northing=last[1])
-
-            print(chn_enum, first, z_first, last, z_last, uslinkn01, uslinkn02, end_node)
 
             if z_first > z_last:
                 top = first
