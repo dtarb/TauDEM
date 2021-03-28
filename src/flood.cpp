@@ -240,35 +240,35 @@ int flood( char* demfile, char* felfile, char *sfdrfile, int usesfdr, bool verbo
   if (use_mask)
     maskPartition->share();
 	//Initialize the new grid
-	for(j=0; j<ny; j++){
-		for(i=0; i<nx; i++){
-			//If elevDEM has no data, planchon has no data.
-			if(elevDEM->isNodata(i,j)) 
-				planchon->setToNodata(i,j);
+  for (j = 0; j < ny; j++) {
+	  for (i = 0; i < nx; i++) {
+		  //If elevDEM has no data, planchon has no data.
+		  if (elevDEM->isNodata(i, j))
+			  planchon->setToNodata(i, j);
 
-      else if (use_mask && maskPartition->getData(i,j,tmpshort)==1) // logic for setting the elevation when using a depression mask
-        planchon->setData(i,j,elevDEM->getData(i,j,tempFloat));
+		  else if (use_mask && maskPartition->getData(i, j, tmpshort) == 1) // logic for setting the elevation when using a depression mask
+			  planchon->setData(i, j, elevDEM->getData(i, j, tempFloat));
 
-			//If i,j is on the border, set planchon(i,j) to elevDEM(i,j)
-			else if (!elevDEM->hasAccess(i-1,j) || !elevDEM->hasAccess(i+1,j) ||
-					 !elevDEM->hasAccess(i,j-1) || !elevDEM->hasAccess(i,j+1))
-				planchon->setData(i,j, elevDEM->getData(i,j,tempFloat));
-			//Check if cell is "contaminated" (neighbors have no data)
-			//  set planchon to elevDEM(i,j) if it is, else set to FLT_MAX
-			else{ 
-				con = false;
-				for(k=1; k<=8 && !con; k+=step) {
-					in = i+d1[k];
-					jn = j+d2[k];
-					if(elevDEM->isNodata(in,jn)) con=true;
-				}
-				if(con)
-					planchon->setData(i,j,elevDEM->getData(i,j,tempFloat));
-				else if(!elevDEM->isNodata(i,j))
-					planchon->setData(i,j,FLT_MAX);
-			}
-		}
-	}
+		  //If i,j is on the border, set planchon(i,j) to elevDEM(i,j)
+		  else if (!elevDEM->hasAccess(i - 1, j) || !elevDEM->hasAccess(i + 1, j) ||
+			  !elevDEM->hasAccess(i, j - 1) || !elevDEM->hasAccess(i, j + 1))
+			  planchon->setData(i, j, elevDEM->getData(i, j, tempFloat));
+		  //Check if cell is "contaminated" (neighbors have no data)
+		  //  set planchon to elevDEM(i,j) if it is, else set to FLT_MAX
+		  else {
+			  con = false;
+			  for (k = 1; k <= 8 && !con; k += step) {
+				  in = i + d1[k];
+				  jn = j + d2[k];
+				  if (elevDEM->isNodata(in, jn)) con = true;
+			  }
+			  if (con)
+				  planchon->setData(i, j, elevDEM->getData(i, j, tempFloat));
+			  else if (!elevDEM->isNodata(i, j))
+				  planchon->setData(i, j, FLT_MAX);
+		  }
+	  }
+  }
 	//Done initializing grid
 	//Make sure everyone has updated subgirds
 	planchon->share();
