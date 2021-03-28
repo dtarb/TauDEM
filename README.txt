@@ -30,7 +30,7 @@ On Linux dependencies can be tricky.  I've added the following scripts to help, 
 GDAL:  GDAL.sh installs from GDAL source. You could also try
 apt-get install gdal-bin libgdal-dev
 apt-get install gdal-bin=2.1.3+dfsg-1~xenial2
-apt-get install libmpich-dev (on Bionic 18.04 LTS)
+apt-get install libmpich-dev (on Bionic 18.04 LTS)  [Suggested by another user - not verified]
 
 C++: The script GCC.sh contains some commands I've used to get the required compiler.
 
