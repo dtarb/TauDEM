@@ -15,7 +15,4 @@
     <ClCompile Include="..\..\src\DinfRevAccum.cpp" />
     <ClCompile Include="..\..\src\DinfRevAccummn.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="..\TauDEM.rc" />
-  </ItemGroup>
 </Project>

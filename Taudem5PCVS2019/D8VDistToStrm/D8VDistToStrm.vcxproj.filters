@@ -15,7 +15,4 @@
     <ClCompile Include="..\..\src\D8VDistToStrm.cpp" />
     <ClCompile Include="..\..\src\D8VDistToStrmmn.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="..\TauDEM.rc" />
-  </ItemGroup>
 </Project>

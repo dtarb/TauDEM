@@ -15,7 +15,4 @@
     <ClCompile Include="..\..\src\LengthArea.cpp" />
     <ClCompile Include="..\..\src\LengthAreamn.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="..\TauDEM.rc" />
-  </ItemGroup>
 </Project>

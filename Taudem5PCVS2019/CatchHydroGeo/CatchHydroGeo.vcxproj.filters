@@ -15,7 +15,4 @@
     <ClCompile Include="..\..\src\CatchHydroGeo.cpp" />
     <ClCompile Include="..\..\src\CatchHydroGeomn.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="..\TauDEM.rc" />
-  </ItemGroup>
 </Project>

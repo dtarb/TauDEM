@@ -176,9 +176,6 @@
     <ClCompile Include="..\..\src\tiffIO.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="..\TauDEM.rc" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="ClassDiagram1.cd" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

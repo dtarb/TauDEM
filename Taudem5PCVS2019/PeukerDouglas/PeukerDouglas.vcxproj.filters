@@ -15,7 +15,4 @@
     <ClCompile Include="..\..\src\PeukerDouglas.cpp" />
     <ClCompile Include="..\..\src\PeukerDouglasmn.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="..\TauDEM.rc" />
-  </ItemGroup>
 </Project>

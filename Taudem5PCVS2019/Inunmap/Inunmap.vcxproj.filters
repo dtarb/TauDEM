@@ -15,7 +15,4 @@
     <ClCompile Include="..\..\src\InunMap.cpp" />
     <ClCompile Include="..\..\src\InunMapmn.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="..\TauDEM.rc" />
-  </ItemGroup>
 </Project>

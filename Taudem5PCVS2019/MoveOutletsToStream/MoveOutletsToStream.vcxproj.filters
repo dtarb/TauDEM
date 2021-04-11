@@ -14,9 +14,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="..\TauDEM.rc" />
-  </ItemGroup>
-  <ItemGroup>
     <Filter Include="Common">
       <UniqueIdentifier>{7f607bea-8fd4-4ce8-8b5a-c134d167c81a}</UniqueIdentifier>
     </Filter>

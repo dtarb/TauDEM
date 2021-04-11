@@ -15,7 +15,4 @@
     <ClCompile Include="..\..\src\DinfAvalanche.cpp" />
     <ClCompile Include="..\..\src\DinfAvalanchemn.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="..\TauDEM.rc" />
-  </ItemGroup>
 </Project>

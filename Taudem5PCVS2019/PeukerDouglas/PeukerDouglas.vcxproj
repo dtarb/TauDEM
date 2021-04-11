@@ -175,9 +175,6 @@
     <ClCompile Include="..\..\src\PeukerDouglas.cpp" />
     <ClCompile Include="..\..\src\PeukerDouglasmn.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="..\TauDEM.rc" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

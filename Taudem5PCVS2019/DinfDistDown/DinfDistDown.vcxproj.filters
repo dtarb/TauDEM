@@ -15,7 +15,4 @@
     <ClCompile Include="..\..\src\DinfDistDown.cpp" />
     <ClCompile Include="..\..\src\DinfDistDownmn.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="..\TauDEM.rc" />
-  </ItemGroup>
 </Project>

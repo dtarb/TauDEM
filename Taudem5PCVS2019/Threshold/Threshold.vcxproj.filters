@@ -15,7 +15,4 @@
     <ClCompile Include="..\..\src\Threshold.cpp" />
     <ClCompile Include="..\..\src\Thresholdmn.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="..\TauDEM.rc" />
-  </ItemGroup>
 </Project>

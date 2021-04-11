@@ -175,9 +175,6 @@
     <ClCompile Include="..\..\src\SlopeAreaRatio.cpp" />
     <ClCompile Include="..\..\src\SlopeAreaRatiomn.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="..\TauDEM.rc" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -11,9 +11,6 @@
     <ClCompile Include="..\..\src\RetLimFlowmn.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="..\TauDEM.rc" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="ClassDiagram1.cd" />
   </ItemGroup>
   <ItemGroup>

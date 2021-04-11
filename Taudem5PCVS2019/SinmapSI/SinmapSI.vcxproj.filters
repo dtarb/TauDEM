@@ -15,7 +15,4 @@
       <UniqueIdentifier>{c3052280-7db2-4c96-bccf-d13f6687a3bb}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="..\TauDEM.rc" />
-  </ItemGroup>
 </Project>

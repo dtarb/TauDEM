@@ -15,7 +15,4 @@
     <ClCompile Include="..\..\src\SlopeAveDown.cpp" />
     <ClCompile Include="..\..\src\SlopeAveDownmn.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="..\TauDEM.rc" />
-  </ItemGroup>
 </Project>

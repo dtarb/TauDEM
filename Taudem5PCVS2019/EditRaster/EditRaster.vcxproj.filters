@@ -15,7 +15,4 @@
     <ClCompile Include="..\..\src\EditRaster.cpp" />
     <ClCompile Include="..\..\src\EditRastermn.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="..\TauDEM.rc" />
-  </ItemGroup>
 </Project>

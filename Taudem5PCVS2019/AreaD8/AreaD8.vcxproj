@@ -176,9 +176,6 @@
     <ClCompile Include="..\..\src\aread8.cpp" />
     <ClCompile Include="..\..\src\aread8mn.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="..\TauDEM.rc" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

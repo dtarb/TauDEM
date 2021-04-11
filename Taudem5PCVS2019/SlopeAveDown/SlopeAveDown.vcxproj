@@ -175,9 +175,6 @@
     <ClCompile Include="..\..\src\SlopeAveDown.cpp" />
     <ClCompile Include="..\..\src\SlopeAveDownmn.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="..\TauDEM.rc" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

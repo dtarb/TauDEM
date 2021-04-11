@@ -15,7 +15,4 @@
     <ClCompile Include="..\..\src\DinfUpDependence.cpp" />
     <ClCompile Include="..\..\src\DinfUpDependencemn.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="..\TauDEM.rc" />
-  </ItemGroup>
 </Project>

@@ -15,7 +15,4 @@
     <ClCompile Include="..\..\src\SlopeAreaRatio.cpp" />
     <ClCompile Include="..\..\src\SlopeAreaRatiomn.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="..\TauDEM.rc" />
-  </ItemGroup>
 </Project>

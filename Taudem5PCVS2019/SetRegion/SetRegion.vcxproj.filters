@@ -15,7 +15,4 @@
     <ClCompile Include="..\..\src\SetRegion.cpp" />
     <ClCompile Include="..\..\src\SetRegionmn.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="..\TauDEM.rc" />
-  </ItemGroup>
 </Project>
