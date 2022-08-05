@@ -47,6 +47,53 @@ email:  dtarb@usu.edu
 #include <stack>
 using namespace std;
 
+struct ChangedElem {
+	ChangedElem(int _i, int _j, float _filled)
+		: i(_i), j(_j), filled(_filled) { ; }
+	friend bool operator>(const ChangedElem& lhs, const ChangedElem &rhs) {
+		return lhs.filled > rhs.filled;
+	}
+	int i,j;
+	float filled;
+};
+
+// priority queue optimized by additional stack for pushing elements at top
+class ChangedQueue {
+public:
+	// combine top() and pop() to avoid redundant branching
+	void extract_top(long &i, long &j, float &filled) {
+		if ( stack.empty() || ( ! queue.empty() && stack.back() > queue.top() ) ) {
+			const ChangedElem& elem = queue.top();
+			i = elem.i;
+			j = elem.j;
+			filled = elem.filled;
+			queue.pop();
+		} else {
+			const ChangedElem& elem = stack.back();
+			i = elem.i;
+			j = elem.j;
+			filled = elem.filled;
+			stack.pop_back();
+		}
+	}
+	bool empty() const {
+		return queue.empty() && stack.empty();
+	}
+	long size() const {
+		return queue.size() + stack.size();
+	}
+	// only call emplace_top if filled <= last extracted value
+	void emplace_top(long i, long j, float filled) {
+		stack.emplace_back(i, j, filled);
+	}
+	void emplace(long i, long j, float filled) {
+		queue.emplace(i, j, filled);
+	}
+private:
+	priority_queue<ChangedElem, std::vector<ChangedElem>, std::greater<ChangedElem>> queue;
+	std::vector<ChangedElem> stack;
+};
+
 int flood( char* demfile, char* felfile, char *sfdrfile, int usesfdr, bool verbose, 
            bool is_4Point,bool use_mask,char *maskfile)  // these three added by arb, 5/31/11
 {
@@ -136,12 +183,21 @@ int flood( char* demfile, char* felfile, char *sfdrfile, int usesfdr, bool verbo
 	float felNodata = -3.0e38;
 	planchon = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, felNodata);
 
+	// 0 if updates possible (has water that might drain)
+	// 1 if no updates possible (bare ground or DEM is nodata)
+	linearpart<char> isDrained;
+	isDrained.init(totalX, totalY, dxA, dyA, MPI_CHAR, char(4));
+
+	// optimized priority queue - yields point with lowest filled elevation
+	ChangedQueue changed;
+
 	long i,j;
 	short k;
 	long in,jn;
 	bool con=false, finished;
 	int scan=0;
 	float tempFloat=0, neighborFloat=0;
+	char tempChar=0;
 
 	if(verbose)
 	{
@@ -267,6 +323,16 @@ int flood( char* demfile, char* felfile, char *sfdrfile, int usesfdr, bool verbo
 			  else if (!elevDEM->isNodata(i, j))
 				  planchon->setData(i, j, FLT_MAX);
 		  }
+
+		  if ( planchon->getData(i, j, tempFloat) == FLT_MAX ) {
+			  isDrained.setData(i, j, char(0));
+		  } else {
+			  isDrained.setData(i, j, char(1));
+			  if ( ! planchon->isNodata(i, j) ) {
+				  // must have been set to DEM
+				  changed.emplace(i, j, tempFloat);
+			  }
+		  }
 	  }
   }
 	//Done initializing grid
@@ -279,200 +345,97 @@ int flood( char* demfile, char* felfile, char *sfdrfile, int usesfdr, bool verbo
 	}
 	
 //////////////////////////////////////		
-	//First pass - put unresolved grid cells on a stack
-//	finished = false;
-//	while( finished == false ) {
-	finished = true;
-	i = X0[scan];
-	j = Y0[scan];
-
-	stack<long> s1, s2;
 	long pass=0;
-	long stacksize=100;  // Stack size above which verbose message is written
-	while(planchon->isInPartition(i,j)) { 
-		//If statement - only enter if there is data there OR
-		// there is "water" on planchon
-		if(!planchon->isNodata(i,j) && planchon->getData(i,j,tempFloat) > elevDEM->getData(i,j,neighborFloat)){
-			//Checks each direction...
-			neighborFloat = FLT_MAX;
-			for(k=1; k<=8; k+=step){
-				in = i+d1[k];
-				jn = j+d2[k];
-				if(planchon->hasAccess(in,jn) && planchon->getData(in,jn,tempFloat) < neighborFloat)
-						//Get neighbor data and store as planchon for self
-						planchon->getData(in,jn, neighborFloat);
+
+	//Enqueue initial points from borders and make copy for comparison
+	std::vector<float> upperBorderCopy(nx), lowerBorderCopy(nx);
+	if ( planchon->hasAccess(0,-1) ) {
+		for (i=0; i<nx; i++) {
+			const float filled = planchon->getData(i,-1,tempFloat);
+			if ( filled != FLT_MAX && ! planchon->isNodata(i, -1) ) {
+				changed.emplace(i, -1, filled);
 			}
-//				if( neighborFloat < FLT_MAX ) {  //DGT This check is redundant - because scans start from the side
-				//Set the grid to either elevDEM, all "water" can be taken off"
-			if(elevDEM->getData(i,j, tempFloat) >= neighborFloat ){
-				planchon->setData(i,j, elevDEM->getData(i,j,tempFloat));
-				finished = false;  
-			}
-			// or some water can be taken off
-			else 
-			{				
-				s1.push(i);
-				s1.push(j);
-				if(verbose)
-				{
-					if(s1.size()>stacksize)
-					{
-						long psz=s1.size();
-						printf("Rank: %d, Stack size: %ld\n",rank,psz);
-						fflush(stdout);
-						stacksize=stacksize+100000;
-					}			
-				}
-				//  DGT.  The second part of the condition below is redundant
-				if(planchon->getData(i,j,tempFloat) > neighborFloat /* && elevDEM->getData(i,j,tempFloat) < neighborFloat */){
-					planchon->setData(i,j,neighborFloat);
-					finished = false;
-				}
-			} 
-//				}
-//				else   //DGT code used to verify that above if was redundant
-//					printf("I am here - should never be\n");
-		}
-		//Now we need to set i,j to the next one to evaluate
-		i += dX[scan];
-		j += dY[scan];
-		if(!planchon->isInPartition(i,j) ) {
-			i+= fX[scan];
-			j+= fY[scan];
+			upperBorderCopy[i] = filled;
 		}
 	}
-	planchon->share();
+	if ( planchon->hasAccess(0,ny) ) {
+		for (i=0; i<nx; i++) {
+			const float filled = planchon->getData(i,ny,tempFloat);
+			if ( filled != FLT_MAX && ! planchon->isNodata(i, ny) ) {
+				changed.emplace(i, ny, filled);
+			}
+			lowerBorderCopy[i] = filled;
+		}
+	}
+
 	//  progress and debug prints
 	if(verbose)
 	{
 		pass=pass+1;
-		stacksize=100;  // reset stacksize
-		long remaining=s1.size();
+		long remaining = changed.size();
 		printf("Process: %d, Pass: %ld, Remaining: %ld\n",rank,pass,remaining);
 		fflush(stdout);
 	}
-	//  This step is to check if all processes are finished in which case while loop is skipped for all processes
-	finished = planchon->ringTerm(finished);
-// Now repeat the scanning but pulling off stack and putting on new stack
+
+	// optimize for data locality in pits by pushing same row onto stack last
+	const int d1opt[9] = { 0,-1, 1, 1,-1, 0, 0,-1, 1};
+	const int d2opt[9] = { 0,-1,-1, 1, 1,-1, 1, 0, 0};
+
+	finished = false;
+	long limitwork = (long)nx * 8;
 	while(!finished){
-		finished=true;
-		while(!s1.empty()){
-			j=s1.top();
-			s1.pop();
-			i=s1.top();
-			s1.pop();
-			neighborFloat = FLT_MAX;
-			for(k=1; k<=8; k+=step){
-				in = i+d1[k];
-				jn = j+d2[k];
-				if(planchon->hasAccess(in,jn) && planchon->getData(in,jn,tempFloat) < neighborFloat)
-						//Get neighbor data and store as planchon for self
-						planchon->getData(in,jn, neighborFloat);
-			}
-	//				if( neighborFloat < FLT_MAX ) {  //DGT This check is redundant - because scans start from the side
-				//Set the grid to either elevDEM, all "water" can be taken off"
-			if(elevDEM->getData(i,j, tempFloat) >= neighborFloat ){
-				planchon->setData(i,j, elevDEM->getData(i,j,tempFloat));
-				finished = false;
-			}
-			// or some water can be taken off
-			else 
-			{   // Keep grid cell on scan list because still above original elevation
-				s2.push(i);
-				s2.push(j);
-				if(verbose)
-				{
-					if(s2.size()>stacksize)
-					{
-						long psz=s2.size();
-						printf("Rank: %d, Stack 2 size: %ld\n",rank,psz);
-						fflush(stdout);
-						stacksize=stacksize+100000;
-					}			
+		long localwork = 0;
+		while ( localwork < limitwork ) {
+			if ( changed.empty() ) break;
+			float filled;
+			changed.extract_top(i,j,filled);
+			if ( planchon->getData(i,j,tempFloat) != filled ) continue;
+			++localwork;
+			for(k=(is_4Point?5:1); k<=8; ++k){
+				in = i+d1opt[k];
+				jn = j+d2opt[k];
+				if ( ! planchon->isInPartition(in,jn) ) continue;
+				if ( isDrained.getData(in,jn,tempChar) ) continue;
+				if ( planchon->getData(in,jn,tempFloat) <= filled ) continue;
+				if ( elevDEM->getData(in,jn,tempFloat) >= filled ) {
+					// remove all water, set to elevDEM
+					planchon->setData(in,jn,tempFloat);
+					isDrained.setData(in,jn,char(1));
+					changed.emplace(in,jn,tempFloat);
+				} else {
+					// remove water to match neighbor
+					planchon->setData(in,jn,filled);
+					changed.emplace_top(in,jn,filled);
 				}
-				//  condition below is commented out for efficiency.  It has already passed this test from if above
-				if(planchon->getData(i,j,tempFloat) > neighborFloat /*&& elevDEM->getData(i,j,tempFloat) < neighborFloat */)
-				{
-					planchon->setData(i,j,neighborFloat);
-					finished = false;
-				}
-			} 
+			}
 		}
+
 		planchon->share();
-
-		//  progress and debug prints
-		if(verbose)
-		{
-			pass=pass+1;
-			long remaining=s2.size();
-			stacksize=100;  //  reset stack size
-			printf("Process: %d, Pass: %ld, Remaining: %ld\n",rank,pass,remaining);
-			fflush(stdout);
-		}
-
-        //  Repeat but with stacks interchanged
-		finished=true;
-		while(!s2.empty()){
-			j=s2.top();
-			s2.pop();
-			i=s2.top();
-			s2.pop();
-			neighborFloat = FLT_MAX;
-			for(k=1; k<=8; k+=step){
-				in = i+d1[k];
-				jn = j+d2[k];
-				if(planchon->hasAccess(in,jn) && planchon->getData(in,jn,tempFloat) < neighborFloat)
-						//Get neighbor data and store as planchon for self
-						planchon->getData(in,jn, neighborFloat);
-			}
-	//				if( neighborFloat < FLT_MAX ) {  //DGT This check is redundant - because scans start from the side
-				//Set the grid to either elevDEM, all "water" can be taken off"
-			if(elevDEM->getData(i,j, tempFloat) >= neighborFloat ){
-				planchon->setData(i,j, elevDEM->getData(i,j,tempFloat));
-				finished = false;
-			}
-			// or some water can be taken off
-			else 
-			{   // Keep grid cell on scan list because still above original elevation
-				s1.push(i);
-				s1.push(j);
-				if(verbose)
-				{
-					if(s1.size()>stacksize)
-					{
-						long psz=s1.size();
-						printf("Rank: %d, Stack 1 size: %ld\n",rank,psz);
-						fflush(stdout);
-						stacksize=stacksize+100000;
-					}			
+		if ( planchon->hasAccess(0,-1) ) {
+			for (i=0; i<nx; i++) {
+				const float filled = planchon->getData(i,-1,tempFloat);
+				if ( upperBorderCopy[i] != filled ) {
+					changed.emplace(i,-1,filled);
+					upperBorderCopy[i] = filled;
 				}
-				//  condition below is commented out for efficiency.  It has already passed this test from if above
-				if(planchon->getData(i,j,tempFloat) > neighborFloat /*&& elevDEM->getData(i,j,tempFloat) < neighborFloat */)
-				{
-					planchon->setData(i,j,neighborFloat);
-					finished = false;
-				}
-			} 
+			}
 		}
+		if ( planchon->hasAccess(0,ny) ) {
+			for (i=0; i<nx; i++) {
+				const float filled = planchon->getData(i,ny,tempFloat);
+				if ( lowerBorderCopy[i] != filled ) {
+					changed.emplace(i,ny,filled);
+					lowerBorderCopy[i] = filled;
+				}
+			}
+		}
+		finished = changed.empty();
 		finished = planchon->ringTerm(finished);
-
-		//scan++;
-		//if(scan == 8) {
-		//	scan=0;
-		//	//Terminate if nothing had been done
-		//	// only check every 8 scans to reduce message passing
-		//	finished = planchon->ringTerm(finished);
-		//	////////////////////////////
-		//}
-		//else finished = false;
-		planchon->share();
-
 		//  progress and debug prints
 		if(verbose)
 		{
 			pass=pass+1;
-			long remaining=s1.size();
-			stacksize=100;  // reset stack size
+			long remaining = changed.size();
 			printf("Process: %d, Pass: %ld, Remaining: %ld\n",rank,pass,remaining);
 			fflush(stdout);
 		}
