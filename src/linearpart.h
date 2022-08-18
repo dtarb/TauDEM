@@ -65,6 +65,7 @@ class linearpart : public tdpartition {
 		datatype *gridData;
 		datatype *topBorder;
 		datatype *bottomBorder;
+		datatype *passBordersBuffer;
 
 	public:
 		linearpart():tdpartition(){}
@@ -117,6 +118,7 @@ linearpart<datatype>::~linearpart(){
 	delete [] gridData;
 	delete [] bottomBorder;
 	delete [] topBorder;
+	delete [] passBordersBuffer;
 }
 
 //Init routine.  Takes the total number of rows and columns in the ENTIRE grid to be partitioned,
@@ -145,6 +147,7 @@ void linearpart<datatype>::init(long totalx, long totaly, double dx_in, double d
 		gridData = new datatype[prod];
 		topBorder = new datatype[nx];
 		bottomBorder = new datatype[nx];
+		passBordersBuffer = new datatype[nx];
 	}
 	catch(bad_alloc&)
 	{
@@ -196,27 +199,18 @@ void linearpart<datatype>::share() {
 	MPI_Status status;
 	if(size<=1) return; //if there is only one process, we're all done sharing
 
-
-	datatype *ptr;
-	int place;
-	datatype *buf;
-	int bsize=nx*sizeof(datatype)+MPI_BSEND_OVERHEAD; 
-	buf = new datatype[bsize];
-
-	if(rank<size-1){
-		MPI_Buffer_attach(buf,bsize);
-		MPI_Bsend(gridData+((ny-1)*nx), nx, MPI_type, rank+1, 0, MCW);
-		MPI_Buffer_detach(&ptr,&place);
+	if (rank<size-1 && rank>0) {
+		MPI_Sendrecv(gridData+((ny-1)*nx), nx, MPI_type, rank+1, 0,
+			topBorder, nx, MPI_type, rank-1, 0, MCW, &status);
+		MPI_Sendrecv(gridData, nx, MPI_type, rank-1, 0,
+			bottomBorder, nx, MPI_type, rank+1, 0, MCW, &status);
+	} else if (rank<size-1) {
+		MPI_Send(gridData+((ny-1)*nx), nx, MPI_type, rank+1, 0, MCW);
+		MPI_Recv(bottomBorder, nx, MPI_type, rank+1, 0, MCW, &status);
+	} else if (rank>0) {
+		MPI_Recv(topBorder, nx, MPI_type, rank-1, 0, MCW, &status);
+		MPI_Send(gridData, nx, MPI_type, rank-1, 0, MCW);
 	}
-	if(rank >0)	MPI_Recv(topBorder, nx, MPI_type, rank-1, 0, MCW, &status);
-	if(rank>0){
-		MPI_Buffer_attach(buf,bsize);
-		MPI_Bsend(gridData, nx, MPI_type, rank-1, 0, MCW);
-		MPI_Buffer_detach(&ptr,&place);
-	}
-	if(rank<size-1) MPI_Recv(bottomBorder, nx, MPI_type, rank+1, 0, MCW, &status);
-
-	delete [] buf;   // added by dww -- why not elsewhere?
 
 /*
 	if(rank == 0){ //Top partition in grid - only send and receive the bottom
@@ -255,31 +249,29 @@ void linearpart<datatype>::passBorders() {
 	MPI_Status status;
 	if(size<=1) return; //if there is only one process, we're all done sharing
 
-	datatype *ptr;
-	int place;
-	datatype *buf;
-	datatype *tempBorder;
-	int bsize=nx*sizeof(datatype)+MPI_BSEND_OVERHEAD; 
-	buf = new datatype[bsize];
-	tempBorder = new datatype[nx];
-
-	if(rank<size-1){
-		MPI_Buffer_attach(buf,bsize);
-		MPI_Bsend(bottomBorder, nx, MPI_type, rank+1, 0, MCW);
-		MPI_Buffer_detach(&ptr,&place);
+	//  0 exchange with 1, 2 exchange with 3, ...
+	if (rank%2==0 && rank+1<size) {
+		std::swap(bottomBorder,passBordersBuffer);
+		MPI_Sendrecv(passBordersBuffer, nx, MPI_type, rank+1, 0,
+			bottomBorder, nx, MPI_type, rank+1, 0, MCW, &status);
 	}
-	if(rank >0)	MPI_Recv(tempBorder, nx, MPI_type, rank-1, 0, MCW, &status);
-	if(rank>0){
-		MPI_Buffer_attach(buf,bsize);
-		MPI_Bsend(topBorder, nx, MPI_type, rank-1, 0, MCW);
-		MPI_Buffer_detach(&ptr,&place);
+	if (rank%2==1) {
+		std::swap(topBorder,passBordersBuffer);
+		MPI_Sendrecv(passBordersBuffer, nx, MPI_type, rank-1, 0,
+			topBorder, nx, MPI_type, rank-1, 0, MCW, &status);
 	}
-	if(rank<size-1) MPI_Recv(bottomBorder, nx, MPI_type, rank+1, 0, MCW, &status);
-	memmove(topBorder,tempBorder,nx*sizeof(datatype)); 
 
-	delete [] buf;   // added by dww -- why not elsewhere?
-	delete [] tempBorder;
-
+	//  1 exchange with 2, 3 exchange with 4, ...
+	if (rank%2==1 && rank+1<size) {
+		std::swap(bottomBorder,passBordersBuffer);
+		MPI_Sendrecv(passBordersBuffer, nx, MPI_type, rank+1, 0,
+			bottomBorder, nx, MPI_type, rank+1, 0, MCW, &status);
+	}
+	if (rank%2==0 && rank>0) {
+		std::swap(topBorder,passBordersBuffer);
+		MPI_Sendrecv(passBordersBuffer, nx, MPI_type, rank-1, 0,
+			topBorder, nx, MPI_type, rank-1, 0, MCW, &status);
+	}
 
 /*
 
@@ -338,48 +330,11 @@ void linearpart<datatype>::clearBorders(){
 }
 
 
-//TODO: revisit the way this function works.  I don't like it.
-//      It really shouldn't even be here.
 template <class datatype>
 int linearpart<datatype>::ringTerm(int isFinished) {
-	int ringBool = isFinished;
 	//The parameter isFinished tells us if the que is empty.
-	MPI_Status status;
-	//Ring termination check
-//	cout << rank << " ring Term begin" << endl;
-	if(size>1) {
-		//First processor will send a token.  It will tell the next proc if it is done or not
-		if( rank==0 ) {
-		//	cout << rank << " sending..." << endl;
-			MPI_Send( &ringBool, 1, MPI_INT, rank+1 ,1,MCW);
-			//cout << rank << " reciving..." << endl;
-			MPI_Recv( &ringBool, 1,MPI_INT, size-1,1,MCW,&status);
-			//cout << rank << " finished ..." << endl;
-		}
-		//The rest of the processors recv, if they are not finished, they change the token to NOTFINISHED
-		else {
-			//cout << rank << " reciving ..." << endl;
- 			MPI_Recv( &ringBool, 1,MPI_INT, rank-1,1,MCW,&status);
-			//cout << rank << " sending ..." << endl;
-			if( isFinished == NOTFINISHED ) ringBool = NOTFINISHED;
-			MPI_Send( &ringBool, 1,MPI_INT, (rank+1)%size, 1, MCW);
-			//cout << rank << " finished ..." << endl;
-		}
-
-		//If the token came back as FINISHED, all ranks may quit, but first they need to know they can quit.
-		// First proc sends ringBool=FINISHED or NOTFINISHED, each processor sends it on until the last recieves it
-		if( rank==0 ) {
-			//cout << " distribute results" << endl;
-			MPI_Send( &ringBool, 1, MPI_INT, rank+1 ,1,MCW);
-		}
-		else {
-			//cout << " recive results" << endl;
-			MPI_Recv( &ringBool, 1,MPI_INT, rank-1,1,MCW,&status);
-			if( rank!=size-1)
-				MPI_Send( &ringBool, 1,MPI_INT, (rank+1)%size, 1, MCW);
-		}
-	}
-	//cout << rank <<" ring term end" << endl;
+	int ringBool = 1;
+	MPI_Allreduce( &isFinished, &ringBool, 1, MPI_INT, MPI_LAND, MCW);
 	return ringBool; 
 }
 
