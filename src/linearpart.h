@@ -211,34 +211,6 @@ void linearpart<datatype>::share() {
 		MPI_Recv(topBorder, nx, MPI_type, rank-1, 0, MCW, &status);
 		MPI_Send(gridData, nx, MPI_type, rank-1, 0, MCW);
 	}
-
-/*
-	if(rank == 0){ //Top partition in grid - only send and receive the bottom
-		
-//		cout << rank << " 1" << endl;
-		MPI_Bsend(gridData+((ny-1)*nx), nx, MPI_type, rank+1, 0, MCW);
-		MPI_Recv(bottomBorder, nx, MPI_type, rank+1, 0, MCW, &status);
-//		cout << rank << " end" << endl;
-
-	}else if(rank == size-1){ //Bottom partition - only send and receive top
-		MPI_Bsend(gridData, nx, MPI_type, rank-1, 0, MCW);
-		MPI_Recv(topBorder, nx, MPI_type, rank-1, 0, MCW, &status);
-//		cout << rank << " end" << endl;
-
-	}else{ //Send and receive top and bottom
-		MPI_Bsend(gridData+((ny-1)*nx), nx, MPI_type, rank+1, 0, MCW);
-		MPI_Recv(bottomBorder, nx, MPI_type, rank+1, 0, MCW, &status);
-
-		MPI_Buffer_detach(&ptr,&place);
-		MPI_Buffer_attach(buf,bsize);
-
-		MPI_Bsend(gridData, nx, MPI_type, rank-1, 0, MCW);
-		MPI_Recv(topBorder, nx, MPI_type, rank-1, 0, MCW, &status);
-//		cout << rank << " end" << endl;
-
-	}
-	MPI_Buffer_detach(&ptr,&place);
-*/
 }
 
 //Swaps border information between adjacent processes.  In this way, no data is
@@ -272,32 +244,6 @@ void linearpart<datatype>::passBorders() {
 		MPI_Sendrecv(passBordersBuffer, nx, MPI_type, rank-1, 0,
 			topBorder, nx, MPI_type, rank-1, 0, MCW, &status);
 	}
-
-/*
-
-
-	if(rank == 0){ //Top partition in grid - only send and receive the bottom
-		MPI_Bsend(bottomBorder, nx, MPI_type, rank+1, 0, MCW);
-		MPI_Recv(bottomBorder, nx, MPI_type, rank+1, 0, MCW, &status);
-
-	}else if(rank == size-1){ //Bottom partition - only send and receive top
-		MPI_Bsend(topBorder, nx, MPI_type, rank-1, 0, MCW);
-		MPI_Recv(topBorder, nx, MPI_type, rank-1, 0, MCW, &status);
-
-	}else{ //Send and receive top and bottom
-		MPI_Bsend(bottomBorder, nx, MPI_type, rank+1, 0, MCW);
-		MPI_Recv(bottomBorder, nx, MPI_type, rank+1, 0, MCW, &status);
-
-		MPI_Buffer_detach(&ptr,&place);
-		MPI_Buffer_attach(buf,bsize);
-
-		MPI_Bsend(topBorder, nx, MPI_type, rank-1, 0, MCW);
-		MPI_Recv(topBorder, nx, MPI_type, rank-1, 0, MCW, &status);
-	}
-	MPI_Buffer_detach(&ptr,&place);
-*/
-
-
 }
 
 //Swaps border information between adjacent processes,
