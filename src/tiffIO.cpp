@@ -439,39 +439,50 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 			MPI_Gather(&numRows,1,MPI_LONG,ycountlist,1,MPI_LONG,0,MPI_COMM_WORLD);
 			if ( rank == 0 ) {
 				//GDALBuildVRT is slow because it opens every file
-				FILE *vrtfile = fopen(vrtfilename,"w");
-				fprintf(vrtfile,"<VRTDataset rasterXSize=\"%ld\" rasterYSize=\"%ld\">\n",
+				VSILFILE *vrtfile = VSIFOpenL(vrtfilename,"w");
+				if (vrtfile == NULL) {
+					printf("Error creating VRT output file %s: %s\n",
+						vrtfilename, strerror(errno));
+					fflush(stdout);
+					MPI_Abort(MCW, 23);
+				}
+				VSIFPrintfL(vrtfile,"<VRTDataset rasterXSize=\"%ld\" rasterYSize=\"%ld\">\n",
 					totalX, totalY);
-				fprintf(vrtfile,"  <SRS>%s</SRS>\n", projref);
-				fprintf(vrtfile,"  <Metadata><MDI key=\"AREA_OR_POINT\">Area</MDI></Metadata>\n");
+				VSIFPrintfL(vrtfile,"  <SRS>%s</SRS>\n", projref);
+				VSIFPrintfL(vrtfile,"  <Metadata><MDI key=\"AREA_OR_POINT\">Area</MDI></Metadata>\n");
 				GDALGetGeoTransform(copyfh, adfGeoTransform);
-				fprintf(vrtfile,"  <GeoTransform>%24.16e,%24.16e,%24.16e,%24.16e,%24.16e,%24.16e</GeoTransform>\n",
+				VSIFPrintfL(vrtfile,"  <GeoTransform>%24.16e,%24.16e,%24.16e,%24.16e,%24.16e,%24.16e</GeoTransform>\n",
 					adfGeoTransform[0], adfGeoTransform[1], adfGeoTransform[2],
 					adfGeoTransform[3], adfGeoTransform[4], adfGeoTransform[5]);
-				fprintf(vrtfile,"  <VRTRasterBand dataType=\"%s\" band=\"1\">\n", gdalDataTypeName);
-				fprintf(vrtfile,"    <NoDataValue>");
+				VSIFPrintfL(vrtfile,"  <VRTRasterBand dataType=\"%s\" band=\"1\">\n", gdalDataTypeName);
+				VSIFPrintfL(vrtfile,"    <NoDataValue>");
 				if (datatype == FLOAT_TYPE) {
-					fprintf(vrtfile, (fabs(nodata) < 1.e16 ? "%.16g" : "%f"), nodata);
+					VSIFPrintfL(vrtfile, (fabs(nodata) < 1.e16 ? "%.16g" : "%f"), nodata);
 				} else {
-					fprintf(vrtfile, "%ld", (long)nodata);
+					VSIFPrintfL(vrtfile, "%ld", (long)nodata);
 				}
-				fprintf(vrtfile,"</NoDataValue>\n");
-				fprintf(vrtfile,"    <ColorInterp>Gray</ColorInterp>\n");
+				VSIFPrintfL(vrtfile,"</NoDataValue>\n");
+				VSIFPrintfL(vrtfile,"    <ColorInterp>Gray</ColorInterp>\n");
 				strcpy(filename,CPLGetBasename(vrtfilename));
 				for ( int i=0; i<size; ++i ) {
-					fprintf(vrtfile,"    <SimpleSource>\n");
-					fprintf(vrtfile,"      <SourceFilename relativeToVRT=\"1\">%s.%d.tif</SourceFilename>\n", filename, i);
-					fprintf(vrtfile,"      <SourceBand>1</SourceBand>\n");
-					fprintf(vrtfile,"      <SourceProperties RasterXSize=\"%ld\" RasterYSize=\"%ld\" DataType=\"%s\" BlockXSize=\"%d\" BlockYSize=\"%d\" />\n",
+					VSIFPrintfL(vrtfile,"    <SimpleSource>\n");
+					VSIFPrintfL(vrtfile,"      <SourceFilename relativeToVRT=\"1\">%s.%d.tif</SourceFilename>\n", filename, i);
+					VSIFPrintfL(vrtfile,"      <SourceBand>1</SourceBand>\n");
+					VSIFPrintfL(vrtfile,"      <SourceProperties RasterXSize=\"%ld\" RasterYSize=\"%ld\" DataType=\"%s\" BlockXSize=\"%d\" BlockYSize=\"%d\" />\n",
 						numCols, ycountlist[i], gdalDataTypeName, blockXSize, blockYSize);
-					fprintf(vrtfile,"      <SrcRect xOff=\"0\" yOff=\"0\" xSize=\"%ld\" ySize=\"%ld\" />\n", numCols, ycountlist[i]);
-					fprintf(vrtfile,"      <DstRect xOff=\"0\" yOff=\"%ld\" xSize=\"%ld\" ySize=\"%ld\" />\n", ystartlist[i], numCols, ycountlist[i]);
-					fprintf(vrtfile,"    </SimpleSource>\n");
+					VSIFPrintfL(vrtfile,"      <SrcRect xOff=\"0\" yOff=\"0\" xSize=\"%ld\" ySize=\"%ld\" />\n", numCols, ycountlist[i]);
+					VSIFPrintfL(vrtfile,"      <DstRect xOff=\"0\" yOff=\"%ld\" xSize=\"%ld\" ySize=\"%ld\" />\n", ystartlist[i], numCols, ycountlist[i]);
+					VSIFPrintfL(vrtfile,"    </SimpleSource>\n");
 				}
 
-				fprintf(vrtfile,"  </VRTRasterBand>\n");
-				fprintf(vrtfile,"</VRTDataset>\n");
-				fclose(vrtfile);
+				VSIFPrintfL(vrtfile,"  </VRTRasterBand>\n");
+				VSIFPrintfL(vrtfile,"</VRTDataset>\n");
+				if (VSIFCloseL(vrtfile) != 0) {
+					printf("Error closing VRT output file %s: %s\n",
+						vrtfilename, strerror(errno));
+					fflush(stdout);
+					MPI_Abort(MCW, 24);
+				}
 
 				delete [] ystartlist;
 				delete [] ycountlist;
