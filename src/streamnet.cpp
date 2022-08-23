@@ -1136,7 +1136,12 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 		long treeBuf[9];
 
 		int ilink, ipoint;
-		if(rank==0){//open output point file
+		if( treefile[0] == '\0' || coordfile[0] == '\0' || streamnetsrc[0] == '\0' ) {
+			if ( rank == 0 ) {
+				printf("Not writing tree, coord, or net files (specify all three to write).\n");
+				fflush(stdout);
+			}
+		} else if(rank==0){//open output point file
 			FILE *fTreeOut;
 			fTreeOut = fopen(treefile,"w");// process 0 writes all of its stuff
 			FILE *fout;
