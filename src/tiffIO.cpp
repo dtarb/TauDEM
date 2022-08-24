@@ -274,7 +274,7 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 	if(!ext){
 		strcat(filename,".tif");
 		index=0;
-	} else if (strcmp(ext,".vrt")==0) {
+	} else if (EQUAL(ext,".vrt")) {
 		isvrt=true;
 		strcpy(vrtfilename,filename);
 		if ( rank == 0 ) {
@@ -295,14 +295,9 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 	}
 	else
 	{
-
-		//  convert to lower case for matching
-		for(int i = 0; ext[i]; i++){
-			ext[i] = tolower(ext[i]);
-		}
 		// if extension matches then set driver
 		for (size_t i = 0; i < extension_num; i++) {
-			if (strcmp(ext,extension_list[i])==0) {
+			if (EQUAL(ext,extension_list[i])) {
 				index=i; //get the index where extension of the outputfile matches with the extensionlist 
 				break;
 			}
