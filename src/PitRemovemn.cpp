@@ -93,7 +93,7 @@ int main(int argc,char **argv)
 			}
 			else goto errexit;
 		}
-		else if(strcmp(argv[i],"-sfdr")==0)
+		/* else if(strcmp(argv[i],"-sfdr")==0)  // dgt 5/11/23 Commenting out this option as main code appears to not support this option
 		{
 			i++;
 			if(argc > i)
@@ -103,7 +103,7 @@ int main(int argc,char **argv)
 				i++;
 			}
 			else goto errexit;
-		}
+		} */
 		else if(strcmp(argv[i],"-v")==0)
 		{
 			i++;
@@ -151,16 +151,22 @@ int main(int argc,char **argv)
 	return 0;
 
 	errexit:
-	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
-	   printf("Usage with specific file names:\n %s -z <demfile>\n",argv[0]);
-       printf("-fel <newfile> [-sfdr <flowfile>]\n");
-	   printf("<basefilename> is the name of the raw digital elevation model.\n");
+	// 5/11/23 dgt Fixing usage text (noting that sfdr option is currently commented out in main code)
+	   printf("Simple use:\n %s <demfile>\n",argv[0]);
+	   printf("Simple use takes as input just the input DEM file name and the name of the output file is\n");
+	   printf("created by inserting 'fel' into the input file name.\n");
+	   printf("It is not possible to use a depression mask, or specify 4 way pit removal with the simple input pattern.\n\n");
+	   
+	   printf("General use with specific file names:\n %s -z <demfile> ",argv[0]);
+           printf("-fel <newfile> [-depmask <maskfile>] [ -4way] [-v] \n");
+	   printf("General use requires specification of the file name for each input/output, preceded by a flag indicating\n");
+	   printf("the file content.\n") 
 	   printf("<demfile> is the name of the input elevation grid file.\n");
 	   printf("<newfile> is the output elevation grid with pits filled.\n");
-	   printf("<flowfile> is the input grid of flow directions to be imposed.\n");
-	   printf("The following are appended to the file names\n");
-       printf("before the files are opened:\n");
-       printf("fel    output elevation grid with pits filled.\n\n");
+	   //printf("<flowfile> (optional) is the input grid of flow directions to be imposed.\n");
+	   printf("<depmaskfile> is depression mask indicator grid.\n");
+	   printf("-4way (optional) is flag to set 4 way depression filling.\n");
+           printf("-v (optional) is flag to set verbose (more detailed) output messages.\n");
        exit(0);
 }
 
