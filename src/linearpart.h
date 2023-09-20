@@ -59,6 +59,7 @@ class linearpart : public tdpartition {
 		//long totalx, totaly;
 		//long nx, ny;
 		//double dx, dy;
+		long starty;
 		int rank, size;
 		MPI_Datatype MPI_type;
 		datatype noData;
@@ -130,8 +131,22 @@ void linearpart<datatype>::init(long totalx, long totaly, double dx_in, double d
 	this->totalx = totalx;
 	this->totaly = totaly;
 	nx = totalx;
-	ny = totaly / size;
-	if(rank == size-1)  ny += (totaly % size); //Add extra rows to the last process
+	starty = (rank * (int64_t)totaly) / size;
+	ny = ((rank+1) * (int64_t)totaly) / size - starty;
+	if ( ny < 2 ) {
+		fprintf(stdout,"Too many MPI ranks.  Rank %d only has %ld rows.\n", rank, ny);
+		fflush(stdout);
+		MPI_Abort(MCW,-997);
+	}
+	long should_be_totaly = -1;
+	MPI_Allreduce( &ny, &should_be_totaly, 1, MPI_LONG, MPI_SUM, MCW);
+	if ( should_be_totaly != totaly ) {
+		fprintf(stdout,"Incorrect row count in linearpart (%ld instead of %ld).\n",
+			should_be_totaly, totaly);
+		fflush(stdout);
+		MPI_Abort(MCW,-998);
+	}
+
 	dxA = dx_in;
 	dyA = dy_in;
 	MPI_type = MPIt;
@@ -389,12 +404,7 @@ int linearpart<datatype>::ringTerm(int isFinished) {
 template <class datatype>
 bool linearpart<datatype>::globalToLocal(int globalX, int globalY, int &localX, int &localY){
 	localX = globalX;
-	localY = globalY - rank * ny;
-	//  For the last process ny is greater than the size of the other partitions so rank*ny does not get the row right.
-	//  totaly%size was added to ny for the last partition, so the size of partitions above is actually 
-	//  ny - totaly%size  (the remainder from dividing totaly by size).
-	if(rank == size-1) 
-		localY = globalY - rank * (ny - totaly%size); 
+	localY = globalY - starty;
 	return isInPartition(localX, localY);
 } 
 
@@ -402,27 +412,7 @@ bool linearpart<datatype>::globalToLocal(int globalX, int globalY, int &localX, 
 template <class datatype>
 void linearpart<datatype>::localToGlobal(int localX, int localY, int &globalX, int &globalY){
 	globalX = localX;
-	globalY = rank * ny + localY;
-	if(rank == size-1) 
-		globalY = rank * (ny - totaly%size) + localY;
-}
-
-//TODO: Figure out what this function is actually for.
-//I don't think it is called more than once in Taudem.
-template <class datatype>
-int linearpart<datatype>::getGridXY( int x, int y, int *i, int *j) {
-	*i = *j = -1;
-	int numRowsPerProc = ny/size;
-	int starty = numRowsPerProc*rank;
-	if( rank == size-1)
-		numRowsPerProc += (totaly%size);
-	int  endy = starty + numRowsPerProc;
-	if( x >= 0 && x < nx && y >= starty && y < endy) {
-		*i = x;
-		*j = y - starty;
-		return 1;
-	}
-	return 0;
+	globalY = starty + localY;
 }
 
 //TODO: Revisit this function to see how necessary it is.
@@ -515,22 +505,23 @@ datatype linearpart<datatype>::getData(long inx, long iny, datatype &val) {
 
 template <class datatype>
 void linearpart<datatype>::savedxdyc( tiffIO &obj) {
-    dxc=new double[ny];
-	dyc=new double[ny];
-    for (int i=0;i<ny;i++){
-		int globalY = rank * ny +i;
-	if(rank == size-1) globalY = rank * (ny - totaly%size) + i;
-	    dxc[i]=obj.getdxc(globalY);
-		dyc[i]=obj.getdyc(globalY);
-
-	         }
-    }
+	dxc = new double[ny+2];
+	dyc = new double[ny+2];
+	int ilo = ( rank == 0 ? 0 : -1 );
+	int ihi = ( rank == size-1 ? ny : ny+1 );
+	for ( int i = ilo; i < ihi; i++ ) {
+		int globalX, globalY;
+		localToGlobal(0, i, globalX, globalY);
+		dxc[i+1] = obj.getdxc(globalY);
+		dyc[i+1] = obj.getdyc(globalY);
+	}
+}
 	
 
 template <class datatype>
 void linearpart<datatype>::getdxdyc(long iny, double &val_dxc,double &val_dyc){
 	 int64_t y;y = iny;
-	 if(y>=0 && y<ny){ val_dxc=dxc[y];val_dyc=dyc[y];}
+	 if ( y >= -1 && y < ny+1 ) { val_dxc = dxc[y+1]; val_dyc = dyc[y+1]; }
 }
 
 
