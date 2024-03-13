@@ -40,6 +40,7 @@ email:  dtarb@usu.edu
 
 #include <mpi.h>
 #include <stdio.h>
+#include <errno.h>
 #include <memory>
 #include "gdal.h"
 #include "ogrsf_frmts.h"
@@ -261,6 +262,9 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 	const char *extension_list[6] = {".tif",".img",".sdat",".bil",".bin",".tiff"};  // extension list --can add more 
 	const char *driver_code[6] = {"GTiff","HFA","SAGA","EHdr","ENVI","GTiff"};   //  code list -- can add more
 	const char *compression_meth[6] = {"LZW","YES"," "," "," "," "};   //  code list -- can add more
+	bool isvrt = false;
+	char vrtfilename[MAXLN] = "";
+	const char *gdalDataTypeName = 0;
 	size_t extension_num=6;
 	char *ext; 
 	int index = -1; 
@@ -270,17 +274,30 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 	if(!ext){
 		strcat(filename,".tif");
 		index=0;
+	} else if (EQUAL(ext,".vrt")) {
+		isvrt=true;
+		strcpy(vrtfilename,filename);
+		if ( rank == 0 ) {
+			char dirname[MAXLN];
+			strcpy(dirname,CPLGetDirname(vrtfilename));
+			VSIStatBufL statbuf;
+			if ( VSIStatL(dirname, &statbuf) ) {
+				if ( VSIMkdir(dirname, 0777) ) {
+					printf("Error creating VRT output directory %s: %s\n", dirname, strerror(errno));
+					fflush(stdout);
+					MPI_Abort(MCW, 21);
+				}
+			}
+		}
+		MPI_Barrier(MPI_COMM_WORLD);
+		sprintf(ext,".%d.tif",rank);
+		index=0;
 	}
 	else
 	{
-
-		//  convert to lower case for matching
-		for(int i = 0; ext[i]; i++){
-			ext[i] = tolower(ext[i]);
-		}
 		// if extension matches then set driver
 		for (size_t i = 0; i < extension_num; i++) {
-			if (strcmp(ext,extension_list[i])==0) {
+			if (EQUAL(ext,extension_list[i])) {
 				index=i; //get the index where extension of the outputfile matches with the extensionlist 
 				break;
 			}
@@ -297,7 +314,7 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 			index=0;
 		}
 	}
-	if (rank == 0) {
+	if (rank == 0 || isvrt) {
 		//if (isFileInititialized == 0) {
 			hDriver = GDALGetDriverByName(driver_code[index]);
 		    if (hDriver == NULL) {
@@ -308,13 +325,22 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 			// Set options
 			if(index==0){  // for .tif files.  Refer to http://www.gdal.org/frmt_gtiff.html for GTiff options.
 				papszOptions = CSLSetNameValue( papszOptions, "COMPRESS", compression_meth[index]); 
+				if ( isvrt ) {
+					// Reading small parts of compressed but non-tiled rasters
+					// can be very slow as entire rows must be decompressed.
+					papszOptions = CSLSetNameValue( papszOptions, "TILED", "YES");
+					papszOptions = CSLSetNameValue( papszOptions, "BLOCKXSIZE", "1024");
+				}
 			}
 			else if(index==1){ // .img files.  Refer to http://www.gdal.org/frmt_hfa.html where COMPRESSED = YES are create options for ERDAS .img files
 				papszOptions = CSLSetNameValue( papszOptions, "COMPRESSED", compression_meth[index]);
 			}
 			int cellbytes=4;	
 			if (datatype == SHORT_TYPE)cellbytes=2;
-			double fileGB=(double)cellbytes*(double)totalX*(double)totalY/1000000000.0;  // This purposely neglects the lower significant digits to overvalue GB to allow space for header information in the file
+			double fileGB = (double)cellbytes
+				* (double)(isvrt ? numCols : totalX)
+				* (double)(isvrt ? numRows : totalY)
+				/ 1000000000.0;  // This purposely neglects the lower significant digits to overvalue GB to allow space for header information in the file
 			if(fileGB > 4.0){
 				if(index==0 || index==6){  // .tiff files.  Need to explicity indicate BIGTIFF.  See http://www.gdal.org/frmt_gtiff.html.
 					papszOptions = CSLSetNameValue( papszOptions, "BIGTIFF", "YES");
@@ -332,12 +358,38 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 			else if (datatype == LONG_TYPE)
 				eBDataType = GDT_Int32;
 	        
+			gdalDataTypeName = GDALGetDataTypeName(eBDataType);
    
-			fh = GDALCreate(hDriver, filename, totalX , totalY, 1, eBDataType, papszOptions);
-			GDALSetProjection(fh, GDALGetProjectionRef(copyfh));
+			fh = GDALCreate(hDriver, filename,
+				isvrt ? numCols : totalX,
+				isvrt ? numRows : totalY,
+				1, eBDataType, papszOptions);
+
+			const char *projref;
+			char *projbuf;
+			int projsize;
+			if ( rank == 0 ) {
+				projref = GDALGetProjectionRef(copyfh);
+				projsize = strlen(projref) + 1;
+			}
+			if ( isvrt ) MPI_Bcast(&projsize, 1, MPI_INT, 0, MPI_COMM_WORLD);
+			projbuf = new char[projsize];
+			if ( rank == 0 ) strcpy(projbuf,projref);
+			if ( isvrt ) MPI_Bcast(projbuf, projsize, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+			GDALSetProjection(fh, projbuf);
+			delete [] projbuf;
 
 			double adfGeoTransform[6];
-			GDALGetGeoTransform(copyfh, adfGeoTransform);
+			if ( rank == 0 ) GDALGetGeoTransform(copyfh, adfGeoTransform);
+
+			if ( isvrt ) {
+				MPI_Bcast(adfGeoTransform, 6, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+				adfGeoTransform[0] +=
+					xstart * adfGeoTransform[1] + ystart * adfGeoTransform[2];
+				adfGeoTransform[3] +=
+					xstart * adfGeoTransform[4] + ystart * adfGeoTransform[5];
+			}
 
 			GDALSetGeoTransform(fh, adfGeoTransform);
 
@@ -365,16 +417,75 @@ void tiffIO::write(long xstart, long ystart, long numRows, long numCols, void* s
 		//else if (datatype == LONG_TYPE)
 			//eBDataType = GDT_Int32;
 
-		GDALRasterIO(bandh, GF_Write, xstart, ystart, numCols, numRows,
+		GDALRasterIO(bandh, GF_Write, isvrt?0:xstart, isvrt?0:ystart, numCols, numRows,
 			source, numCols, numRows, eBDataType,
 			0, 0);
+		int blockXSize, blockYSize;
+		GDALGetBlockSize(bandh, &blockXSize, &blockYSize);
 		
 		GDALFlushCache(fh);  //  DGT effort get large files properly written
 		GDALClose(fh);
 
-		//  Send message to rank 1
-		int d = 0;
-		if (size > rank + 1){
+		if ( isvrt ) {
+			MPI_Barrier(MPI_COMM_WORLD);
+			long *ystartlist = rank ? 0 : new long[size];
+			MPI_Gather(&ystart,1,MPI_LONG,ystartlist,1,MPI_LONG,0,MPI_COMM_WORLD);
+			long *ycountlist = rank ? 0 : new long[size];
+			MPI_Gather(&numRows,1,MPI_LONG,ycountlist,1,MPI_LONG,0,MPI_COMM_WORLD);
+			if ( rank == 0 ) {
+				//GDALBuildVRT is slow because it opens every file
+				VSILFILE *vrtfile = VSIFOpenL(vrtfilename,"w");
+				if (vrtfile == NULL) {
+					printf("Error creating VRT output file %s: %s\n",
+						vrtfilename, strerror(errno));
+					fflush(stdout);
+					MPI_Abort(MCW, 23);
+				}
+				VSIFPrintfL(vrtfile,"<VRTDataset rasterXSize=\"%ld\" rasterYSize=\"%ld\">\n",
+					totalX, totalY);
+				VSIFPrintfL(vrtfile,"  <SRS>%s</SRS>\n", projref);
+				VSIFPrintfL(vrtfile,"  <Metadata><MDI key=\"AREA_OR_POINT\">Area</MDI></Metadata>\n");
+				GDALGetGeoTransform(copyfh, adfGeoTransform);
+				VSIFPrintfL(vrtfile,"  <GeoTransform>%24.16e,%24.16e,%24.16e,%24.16e,%24.16e,%24.16e</GeoTransform>\n",
+					adfGeoTransform[0], adfGeoTransform[1], adfGeoTransform[2],
+					adfGeoTransform[3], adfGeoTransform[4], adfGeoTransform[5]);
+				VSIFPrintfL(vrtfile,"  <VRTRasterBand dataType=\"%s\" band=\"1\">\n", gdalDataTypeName);
+				VSIFPrintfL(vrtfile,"    <NoDataValue>");
+				if (datatype == FLOAT_TYPE) {
+					VSIFPrintfL(vrtfile, (fabs(nodata) < 1.e16 ? "%.16g" : "%f"), nodata);
+				} else {
+					VSIFPrintfL(vrtfile, "%ld", (long)nodata);
+				}
+				VSIFPrintfL(vrtfile,"</NoDataValue>\n");
+				VSIFPrintfL(vrtfile,"    <ColorInterp>Gray</ColorInterp>\n");
+				strcpy(filename,CPLGetBasename(vrtfilename));
+				for ( int i=0; i<size; ++i ) {
+					VSIFPrintfL(vrtfile,"    <SimpleSource>\n");
+					VSIFPrintfL(vrtfile,"      <SourceFilename relativeToVRT=\"1\">%s.%d.tif</SourceFilename>\n", filename, i);
+					VSIFPrintfL(vrtfile,"      <SourceBand>1</SourceBand>\n");
+					VSIFPrintfL(vrtfile,"      <SourceProperties RasterXSize=\"%ld\" RasterYSize=\"%ld\" DataType=\"%s\" BlockXSize=\"%d\" BlockYSize=\"%d\" />\n",
+						numCols, ycountlist[i], gdalDataTypeName, blockXSize, blockYSize);
+					VSIFPrintfL(vrtfile,"      <SrcRect xOff=\"0\" yOff=\"0\" xSize=\"%ld\" ySize=\"%ld\" />\n", numCols, ycountlist[i]);
+					VSIFPrintfL(vrtfile,"      <DstRect xOff=\"0\" yOff=\"%ld\" xSize=\"%ld\" ySize=\"%ld\" />\n", ystartlist[i], numCols, ycountlist[i]);
+					VSIFPrintfL(vrtfile,"    </SimpleSource>\n");
+				}
+
+				VSIFPrintfL(vrtfile,"  </VRTRasterBand>\n");
+				VSIFPrintfL(vrtfile,"</VRTDataset>\n");
+				if (VSIFCloseL(vrtfile) != 0) {
+					printf("Error closing VRT output file %s: %s\n",
+						vrtfilename, strerror(errno));
+					fflush(stdout);
+					MPI_Abort(MCW, 24);
+				}
+
+				delete [] ystartlist;
+				delete [] ycountlist;
+			}
+			MPI_Barrier(MPI_COMM_WORLD);
+		} else if (size > rank + 1) {
+			//  Send message to rank 1
+			int d = 0;
 			//     buffer, count, datatype, dest, tag, comm
 			MPI_Send(&d, 1, MPI_INT, 1, 1, MPI_COMM_WORLD);
 			//printf("Written rank: %d\n", rank);
