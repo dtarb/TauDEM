@@ -1,0 +1,10 @@
+{
+    "cmake.sourceDirectory": "${workspaceFolder}/src",
+    "C_Cpp.intelliSenseEngineFallback": "Default",
+    // Platform-specific IntelliSense settings for macOS
+    "clangd.path": "/opt/homebrew/opt/llvm/bin/clangd",
+    "[cpp]": {
+        "editor.defaultFormatter": "ms-vscode.cpptools"
+    },
+    "C_Cpp.intelliSenseEngine": "disabled"
+}
