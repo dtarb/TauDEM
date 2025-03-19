@@ -163,3 +163,7 @@ Taudem5PCVS2015/Taudem5PC.VC.opendb
 Taudem5PCVS2015/Taudem5PC.VC.db
 pyfiles/.idea/
 *.db
+install
+
+# VS Code settings
+.vscode/settings.json
