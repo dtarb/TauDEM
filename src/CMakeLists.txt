@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1.0)
+cmake_minimum_required(VERSION 3.10)
 project(TauDEM)
 
 set (CMAKE_CXX_STANDARD 11)
@@ -133,7 +133,20 @@ set (MY_TARGETS aread8
                 setregion
                 sinmapsi)
 
-foreach( c_target ${MY_TARGETS} )
-    target_link_libraries(${c_target} ${MPI_LIBRARIES} ${GDAL_LIBRARY})
+
+foreach(c_target ${MY_TARGETS})
+    # Link the target to MPI and GDAL
+    target_link_libraries(${c_target} PRIVATE ${MPI_LIBRARIES} ${GDAL_LIBRARY})
+    
+    # Add MPI include directories
+    target_include_directories(${c_target} PRIVATE ${MPI_INCLUDE_PATH})
+    
+    # Add MPI compile flags
+    target_compile_options(${c_target} PRIVATE ${MPI_COMPILE_FLAGS})
+    
+    # Add MPI link flags
+    target_link_libraries(${c_target} PRIVATE ${MPI_LINK_FLAGS})
+
+    # Install the targets to the 'taudem' directory
     install(TARGETS ${c_target} DESTINATION taudem)
-endforeach( c_target ${MY_TARGETS} )
+endforeach()
