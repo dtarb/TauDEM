@@ -1,11 +1,20 @@
-# Detect platform
+# Detect platform (all settings here are default fallback values for specific platforms)
 if(APPLE)
     # macOS settings
+    # Set GDAL paths first
+    set(CMAKE_PREFIX_PATH "/opt/homebrew/opt/gdal" CACHE PATH "GDAL installation path")
+    set(GDAL_INCLUDE_DIR "/opt/homebrew/opt/gdal/include" CACHE PATH "GDAL include directory")
+    set(GDAL_LIBRARY "/opt/homebrew/opt/gdal/lib/libgdal.dylib" CACHE PATH "GDAL library")
+
+    # Now try to find GDAL
+    find_package(GDAL REQUIRED)
+    message(STATUS "Found GDAL version: ${GDAL_VERSION}")
+
+    # MPI settings
     set(MPI_C_COMPILER "/opt/homebrew/bin/mpicc" CACHE PATH "MPI C compiler")
     set(MPI_CXX_COMPILER "/opt/homebrew/bin/mpic++" CACHE PATH "MPI C++ compiler")
     set(MPI_C_LIBRARIES "/opt/homebrew/lib/libmpi.dylib" CACHE PATH "MPI libraries")
     set(MPI_C_INCLUDE_PATH "/opt/homebrew/include" CACHE PATH "MPI include path")
-    set(CMAKE_PREFIX_PATH "/opt/homebrew/opt/gdal" CACHE PATH "GDAL installation path")
 elseif(UNIX AND NOT APPLE)
     # Linux settings
     set(MPI_C_COMPILER "/usr/bin/mpicc" CACHE PATH "MPI C compiler")
@@ -20,7 +29,8 @@ endif()
 
 # Common settings for all platforms
 if(NOT CMAKE_INSTALL_PREFIX)
-    set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/install" CACHE PATH "Installation directory")
+    # Use absolute path with CMAKE_CURRENT_LIST_DIR to ensure consistency
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_LIST_DIR}/install" CACHE PATH "Installation directory")
 endif()
 
 if(NOT CMAKE_BUILD_TYPE)
