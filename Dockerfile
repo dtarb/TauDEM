@@ -1,5 +1,5 @@
 # Use Ubuntu as the base image
-FROM ubuntu:22.04 
+FROM ubuntu:22.04
 
 # Install necessary dependencies
 RUN apt update && apt install -y \
@@ -12,9 +12,44 @@ RUN apt update && apt install -y \
     libproj-dev \
     libtiff-dev \
     libgeotiff-dev \
+    git \
+    nano \
+    sudo \
     && rm -rf /var/lib/apt/lists/*  # Clean up to reduce image size
 
-# Set the working directory inside the container
+# Install bats testing framework
+RUN git clone https://github.com/sstephenson/bats.git && \
+    cd bats && \
+    ./install.sh /usr/local && \
+    git clone https://github.com/ztombol/bats-support /tmp/bats-support && \
+    git clone https://github.com/ztombol/bats-assert /tmp/bats-assert && \
+    git clone https://github.com/ztombol/bats-file /tmp/bats-file
+
+# Create a non-root user
+RUN useradd -m -s /bin/bash taudem-docker
+
+# Set the password for the taudem-docker user (less secure, for demonstration purposes)
+RUN echo "taudem-docker:taudem-docker" | chpasswd
+
+# Grant the taudem-docker user sudo privileges
+RUN usermod -aG sudo taudem-docker
+
+# Create workspace directory for taudem-docker
+RUN mkdir -p /home/taudem-docker/workspace/TauDEM-Test-Data
+
+# Clone the TauDEM-Test-Data repo and make the taudem-tests.sh executable
+RUN chown taudem-docker:taudem-docker /home/taudem-docker/workspace/TauDEM-Test-Data && \
+    sudo -u taudem-docker git clone https://github.com/dtarb/TauDEM-Test-Data.git /home/taudem-docker/workspace/TauDEM-Test-Data && \
+    chown taudem-docker:taudem-docker /home/taudem-docker/workspace/TauDEM-Test-Data/Input/taudem-tests.sh && \
+    chmod +x /home/taudem-docker/workspace/TauDEM-Test-Data/Input/taudem-tests.sh
+
+# Create the taudem directory
+RUN mkdir -p /usr/local/taudem
+
+# Set the PATH environment variable for taudem-docker user
+RUN echo "export PATH=/usr/local/taudem:\$PATH" >> /home/taudem-docker/.bashrc
+
+# Set the working directory inside the container - this is where we will run commands to build and install TauDEM
 WORKDIR /app
 
 # Set the default command to run an interactive shell
