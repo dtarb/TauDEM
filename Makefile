@@ -52,14 +52,25 @@ $(if $(filter linux,$1),-DCMAKE_C_COMPILER=/opt/homebrew/bin/x86_64-unknown-linu
     -DCMAKE_OSX_DEPLOYMENT_TARGET="" \
     -DCMAKE_OSX_SYSROOT="",\
 $(if $(filter macos,$1),-DCMAKE_C_COMPILER=/opt/homebrew/bin/gcc-14 -DCMAKE_CXX_COMPILER=/opt/homebrew/bin/g++-14 \
-	-DMPI_C_COMPILER=/opt/homebrew/opt/mpich/bin/mpicc \
-	-DMPI_CXX_COMPILER=/opt/homebrew/opt/mpich/bin/mpicxx \
-	-DMPI_C_LIBRARIES=/opt/homebrew/opt/mpich/lib/libmpi.dylib \
-	-DMPI_CXX_LIBRARIES=/opt/homebrew/opt/mpich/lib/libmpicxx.dylib \
-	-DMPI_C_INCLUDE_PATH=/opt/homebrew/opt/mpich/include \
-	-DMPI_CXX_INCLUDE_PATH=/opt/homebrew/opt/mpich/include,\
+    -DMPI_C_COMPILER=/opt/homebrew/opt/open-mpi/bin/mpicc \
+    -DMPI_CXX_COMPILER=/opt/homebrew/opt/open-mpi/bin/mpicxx \
+    -DMPI_C_LIBRARIES=/opt/homebrew/opt/open-mpi/lib/libmpi.dylib \
+    -DMPI_CXX_LIBRARIES=/opt/homebrew/opt/open-mpi/lib/libmpi.dylib \
+    -DMPI_C_INCLUDE_PATH=/opt/homebrew/opt/open-mpi/include \
+    -DMPI_CXX_INCLUDE_PATH=/opt/homebrew/opt/open-mpi/include \
+    -DMPI_CXX_FOUND=TRUE,\
 $(if $(filter clang,$1),-DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++,\
-$(if $(filter gcc-apple,$1),-DCMAKE_C_COMPILER=/opt/homebrew/bin/aarch64-apple-darwin24-gcc-14 -DCMAKE_CXX_COMPILER=/opt/homebrew/bin/aarch64-apple-darwin24-g++-14,)))))
+$(if $(filter gcc-apple,$1),-DCMAKE_C_COMPILER=/opt/homebrew/bin/aarch64-apple-darwin24-gcc-14 -DCMAKE_CXX_COMPILER=/opt/homebrew/bin/aarch64-apple-darwin24-g++-14 \
+    -DMPI_C_COMPILER=/opt/homebrew/opt/open-mpi/bin/mpicc \
+    -DMPI_CXX_COMPILER=/opt/homebrew/opt/open-mpi/bin/mpicxx \
+    -DMPI_C_LIBRARIES=/opt/homebrew/opt/open-mpi/lib/libmpi.dylib \
+    -DMPI_CXX_LIBRARIES=/opt/homebrew/opt/open-mpi/lib/libmpi.dylib \
+    -DMPI_C_INCLUDE_PATH=/opt/homebrew/opt/open-mpi/include \
+    -DMPI_CXX_INCLUDE_PATH=/opt/homebrew/opt/open-mpi/include \
+    -DMPI_CXX_FOUND=TRUE \
+    -DMPI_C_FOUND=TRUE \
+    -DMPIEXEC_EXECUTABLE=/opt/homebrew/opt/open-mpi/bin/mpiexec \
+    -DMPI_SKIP_MPICXX=ON,))))) 
 endef
 
 
