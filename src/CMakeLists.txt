@@ -1,7 +1,14 @@
 cmake_minimum_required(VERSION 3.10)
 project(TauDEM)
 
-set (CMAKE_CXX_STANDARD 11)
+# Update to C++17 for filesystem support
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Add filesystem library for older compilers
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.1)
+    link_libraries(stdc++fs)
+endif()
 
 set (shape_srcs ReadOutlets.cpp)
 set (common_srcs commonLib.cpp tiffIO.cpp)
