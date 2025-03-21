@@ -1,4 +1,3 @@
-
 # Detect OS
 UNAME_S := $(shell uname -s)
 
@@ -66,26 +65,33 @@ endef
 
 # Function to check OS compatibility
 check_os_compatibility = $(if $(COMPILER),\
-	$(if $(filter mingw,$(COMPILER)),\
-		$(if $(filter Darwin,$(UNAME_S)),\
-			$(error MinGW compiler is not suitable on macOS. Use COMPILER=clang, macos, or gcc-apple)),\
-		$(if $(filter Linux,$(UNAME_S)),\
-			$(error MinGW compiler is not suitable on Linux. Use COMPILER=gcc, clang, or gcc-apple))),\
-	$(if $(filter linux,$(COMPILER)),\
-		$(if $(filter Darwin,$(UNAME_S)),\
-			$(error Linux compiler is not suitable on macOS. Use COMPILER=clang, macos, or gcc-apple)),\
-		$(if $(filter Windows,$(UNAME_S)),\
-			$(error Linux compiler is not suitable on Windows. Use COMPILER=mingw))),\
-	$(if $(filter macos clang gcc-apple,$(COMPILER)),\
-		$(if $(filter Linux,$(UNAME_S)),\
-			$(error $(COMPILER) is not suitable on Linux. Use COMPILER=linux)),\
-		$(if $(filter Windows,$(UNAME_S)),\
-			$(error $(COMPILER) is not suitable on Windows. Use COMPILER=mingw))),\
-	$(error COMPILER is required for build targets. Use COMPILER=mingw, linux, macos, clang, or gcc-apple)\
+    $(if $(and $(filter mingw,$(COMPILER)),$(filter Darwin,$(UNAME_S))),\
+        $(error MinGW compiler is not suitable on macOS. Use COMPILER=clang, macos, or gcc-apple),\
+    $(if $(and $(filter mingw,$(COMPILER)),$(filter Linux,$(UNAME_S))),\
+        $(error MinGW compiler is not suitable on Linux. Use COMPILER=linux),\
+    $(if $(and $(filter linux,$(COMPILER)),$(filter Darwin,$(UNAME_S))),\
+        $(error Linux compiler is not suitable on macOS. Use COMPILER=clang, macos, or gcc-apple),\
+    $(if $(and $(filter linux,$(COMPILER)),$(filter Windows,$(UNAME_S))),\
+        $(error Linux compiler is not suitable on Windows. Use COMPILER=mingw),\
+    $(if $(and $(filter macos,$(COMPILER)),$(filter Linux,$(UNAME_S))),\
+        $(error macos compiler is not suitable on Linux. Use COMPILER=linux),\
+    $(if $(and $(filter macos,$(COMPILER)),$(filter Windows,$(UNAME_S))),\
+        $(error macos compiler is not suitable on Windows. Use COMPILER=mingw),\
+    $(if $(and $(filter clang,$(COMPILER)),$(filter Linux,$(UNAME_S))),\
+        $(error clang compiler is not suitable on Linux. Use COMPILER=linux),\
+    $(if $(and $(filter clang,$(COMPILER)),$(filter Windows,$(UNAME_S))),\
+        $(error clang compiler is not suitable on Windows. Use COMPILER=mingw),\
+    $(if $(and $(filter gcc-apple,$(COMPILER)),$(filter Linux,$(UNAME_S))),\
+        $(error gcc-apple compiler is not suitable on Linux. Use COMPILER=linux),\
+    $(if $(and $(filter gcc-apple,$(COMPILER)),$(filter Windows,$(UNAME_S))),\
+        $(error gcc-apple compiler is not suitable on Windows. Use COMPILER=mingw))))))))))),\
+    $(error COMPILER is required for build targets. Use COMPILER=mingw, linux, macos, clang, or gcc-apple)\
 )
 
 # Build targets
 debug:
+	$(warning COMPILER is $(COMPILER))
+	$(warning UNAME_S is $(UNAME_S))
 	$(call check_os_compatibility)
 	$(call check_compiler)
 	@echo "Building in Debug mode with $(COMPILER) compiler..."
@@ -94,12 +100,29 @@ debug:
 	@cd $(BUILD_DIR) && make
 
 release:
+	$(warning COMPILER is $(COMPILER))
+	$(warning UNAME_S is $(UNAME_S))
 	$(call check_os_compatibility)
 	$(call check_compiler)
 	@echo "Building in Release mode with $(COMPILER) compiler..."
 	@mkdir -p $(BUILD_DIR)
 	@cd $(BUILD_DIR) && cmake .. -C ../../$(CONFIG_FILE) -DCMAKE_BUILD_TYPE=Release $(CMAKE_COMPILER_OPTIONS) -G $(CMAKE_GENERATOR)
 	@cd $(BUILD_DIR) && make
+
+dk-release:
+	$(if $(filter Linux,$(UNAME_S)),,$(error dk-release is only supported on Linux))
+	$(warning COMPILER is $(COMPILER))
+	$(warning UNAME_S is $(UNAME_S))
+	$(call check_compiler)
+	@echo "Building in Release mode with $(COMPILER) compiler..."
+	@mkdir -p $(BUILD_DIR)
+	@cd $(SRC_DIR) && cmake -S . -B build
+	@cd $(SRC_DIR)/build && make
+
+dk-run-tests:
+	@echo "Running tests..."
+	@cd /home/taudem-docker/workspace/TauDEM-Test-Data/Input && \
+	./taudem-tests.sh
 
 clean:
 	@echo "Cleaning build directory..."
@@ -123,6 +146,8 @@ help:
 	@echo "Makefile usage:"
 	@echo "  make debug COMPILER=<compiler>    - Build in Debug mode with specified compiler (mingw, linux, macos, clang, gcc-apple)"
 	@echo "  make release COMPILER=<compiler>  - Build in Release mode with specified compiler (mingw, linux, macos, clang, gcc-apple)"
+	@echo "  make dk-release                   - Build in Release mode for Docker (Linux only)"
+	@echo "  make dk-run-tests                 - Run TauDEM tests in Docker environment"
 	@echo "  make clean                        - Clean build directory"
 	@echo "  make install                      - Install TauDEM (not applicable for mingw)"
 	@echo "  make uninstall                    - Remove TauDEM installation (not applicable for mingw)"
