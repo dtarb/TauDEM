@@ -4,17 +4,19 @@
             "name": "Mac",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/opt/homebrew/include"
+                "/opt/homebrew/include",
+                "/opt/homebrew/opt/open-mpi/include"
             ],
             "defines": [],
-            "compilerPath": "/opt/homebrew/bin/mpic++",
+            "compilerPath": "/opt/homebrew/opt/open-mpi/bin/mpicxx",
             "cStandard": "c11",
             "cppStandard": "c++17",
             "intelliSenseMode": "macos-clang-arm64",
             "browse": {
                 "path": [
                     "${workspaceFolder}",
-                    "/opt/homebrew/include"
+                    "/opt/homebrew/include",
+                    "/opt/homebrew/opt/open-mpi/include"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""
