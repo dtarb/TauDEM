@@ -27,6 +27,28 @@ elseif(UNIX AND NOT APPLE)
 
     # GDAL settings
     set(CMAKE_PREFIX_PATH "/usr/lib/gdal" CACHE PATH "GDAL installation path")
+elseif(WIN32)
+    message(STATUS "Configuring for Windows x64 platform")
+    
+    # Set vcpkg toolchain file and target triplet
+    set(CMAKE_TOOLCHAIN_FILE "C:/dev/vcpkg/scripts/buildsystems/vcpkg.cmake" 
+        CACHE STRING "Vcpkg toolchain file")
+    set(VCPKG_TARGET_TRIPLET "x64-windows" CACHE STRING "Vcpkg target triplet")
+    
+    # Add vcpkg installed path to prefix path
+    list(APPEND CMAKE_PREFIX_PATH "C:/dev/vcpkg/installed/x64-windows")
+    
+    # Set specific library and include directories for GDAL
+    set(GDAL_ROOT "C:/dev/vcpkg/installed/x64-windows" CACHE PATH "GDAL root directory")
+    set(GDAL_INCLUDE_DIR "${GDAL_ROOT}/include" CACHE PATH "GDAL include directory")
+    set(GDAL_LIBRARY "${GDAL_ROOT}/lib/gdal.lib" CACHE PATH "GDAL library")
+    
+    # Set MPI paths (using vcpkg's MPI)
+    set(MPI_ROOT "C:/dev/vcpkg/installed/x64-windows" CACHE PATH "MPI root directory")
+    
+    # Windows-specific compiler flags
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /D_WIN32_WINNT=0x0A00" CACHE STRING "C flags" FORCE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_WIN32_WINNT=0x0A00" CACHE STRING "CXX flags" FORCE)
 endif()
 
 # Common settings for all platforms
