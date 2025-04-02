@@ -143,7 +143,7 @@ set (MY_TARGETS aread8
 
 foreach(c_target ${MY_TARGETS})
     # Link the target to MPI and GDAL
-    target_link_libraries(${c_target} PRIVATE ${MPI_LIBRARIES} ${GDAL_LIBRARY})
+    target_link_libraries(${c_target} PRIVATE ${MPI_LIBRARIES} GDAL::GDAL)
     
     # Add MPI include directories
     target_include_directories(${c_target} PRIVATE ${MPI_INCLUDE_PATH})
