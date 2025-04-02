@@ -16,15 +16,17 @@ if(APPLE)
     set(MPI_C_LIBRARIES "/opt/homebrew/lib/libmpi.dylib" CACHE PATH "MPI libraries")
     set(MPI_C_INCLUDE_PATH "/opt/homebrew/include" CACHE PATH "MPI include path")
 elseif(UNIX AND NOT APPLE)
-    # Linux settings
+    # Linux/Docker settings
+    # MPI settings
     set(MPI_C_COMPILER "/usr/bin/mpicc" CACHE PATH "MPI C compiler")
-    set(MPI_CXX_COMPILER "/usr/bin/mpic++" CACHE PATH "MPI C++ compiler")
-    set(MPI_C_LIBRARIES "/usr/lib/libmpi.so" CACHE PATH "MPI libraries")
-    set(MPI_C_INCLUDE_PATH "/usr/include" CACHE PATH "MPI include path")
+    set(MPI_CXX_COMPILER "/usr/bin/mpicxx" CACHE PATH "MPI C++ compiler")
+    set(MPI_C_LIBRARIES "/usr/lib/aarch64-linux-gnu/libmpi.so" CACHE PATH "MPI libraries")
+    set(MPI_CXX_LIBRARIES "/usr/lib/aarch64-linux-gnu/libmpi.so" CACHE PATH "MPI C++ libraries")
+    set(MPI_C_INCLUDE_PATH "/usr/lib/aarch64-linux-gnu/openmpi/include" CACHE PATH "MPI include path")
+    set(MPI_CXX_INCLUDE_PATH "/usr/lib/aarch64-linux-gnu/openmpi/include" CACHE PATH "MPI C++ include path")
+
+    # GDAL settings
     set(CMAKE_PREFIX_PATH "/usr/lib/gdal" CACHE PATH "GDAL installation path")
-elseif(WIN32)
-    # TODO: Windows settings
-    # Add Windows-specific paths here
 endif()
 
 # Common settings for all platforms
