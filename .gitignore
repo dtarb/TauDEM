@@ -165,5 +165,9 @@ pyfiles/.idea/
 *.db
 install
 
+# ignore folder related to build
+src/build/
+src/build-release/
+
 # VS Code settings
 .vscode/settings.json
