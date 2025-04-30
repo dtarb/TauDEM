@@ -14,6 +14,16 @@ REM Set build directory based on build type
 set BUILD_DIR=src\build
 if /i "%BUILD_TYPE%"=="Release" set BUILD_DIR=src\build-release
 
+REM Set GDAL environment variables for build
+echo Setting up GDAL environment variables for build...
+set GDAL_DATA=C:\dev\vcpkg\installed\x64-windows\share\gdal
+set PROJ_LIB=C:\dev\vcpkg\installed\x64-windows\share\proj
+set GDAL_DRIVER_PATH=C:\dev\vcpkg\installed\x64-windows\bin
+set OGR_DRIVER_PATH=C:\dev\vcpkg\installed\x64-windows\bin
+set OGR_ENABLED_DRIVERS=ESRI Shapefile SQLite GeoJSON
+set GDAL_REGISTRY=SQLITE:sqlite3.dll
+set CPL_DEBUG=ON
+
 REM Clean build directory if it exists
 if exist %BUILD_DIR% (
     echo Cleaning build directory...
