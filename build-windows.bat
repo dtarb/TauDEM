@@ -20,7 +20,7 @@ set GDAL_DATA=C:\dev\vcpkg\installed\x64-windows\share\gdal
 set PROJ_LIB=C:\dev\vcpkg\installed\x64-windows\share\proj
 set GDAL_DRIVER_PATH=C:\dev\vcpkg\installed\x64-windows\bin
 set OGR_DRIVER_PATH=C:\dev\vcpkg\installed\x64-windows\bin
-set OGR_ENABLED_DRIVERS=ESRI Shapefile SQLite GeoJSON
+set OGR_ENABLED_DRIVERS=ESRI Shapefile SQLite GeoJSON KML
 set GDAL_REGISTRY=SQLITE:sqlite3.dll
 set CPL_DEBUG=ON
 
@@ -54,6 +54,22 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo Build completed successfully!
+
+REM Copy files for release build
+if /i "%BUILD_TYPE%"=="Release" (
+    echo Copying release files to Taudem_Installation_Source/TauDEM_Exe/win_64...
+    
+    REM Create target directory if it doesn't exist
+    if not exist "..\..\Taudem_Installation_Source\TauDEM_Exe\win_64" (
+        mkdir "..\..\Taudem_Installation_Source\TauDEM_Exe\win_64"
+    )
+    
+    REM Copy all files from build-release/Release directory to target
+    xcopy ".\Release" "..\..\Taudem_Installation_Source\TauDEM_Exe\win_64" /E /I /Y
+    
+    echo Release files copied successfully!
+)
+
 goto end
 
 :error
