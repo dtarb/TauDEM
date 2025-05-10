@@ -646,17 +646,26 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletdatasrc, ch
 	delete [] twiddown;
 	
 	if(rank==0){
-		OGRRegisterAll();
+		OGRRegisterAll();         // Register all driversivers first
+		GDALAllRegister();        // Ensure GDAL is properly initialized
+		
 		int nfields;
 	    nfields=2; 		
 	    const char *pszDriverName;
-	    pszDriverName=getOGRdrivername( outletdatasrc);
-        driver = OGRGetDriverByName( pszDriverName );
-        if( driver == NULL )
-        {
-         printf( "%s warning: driver not available.\n", pszDriverName );
-         //exit( 1 );
-       }
+	    pszDriverName=getOGRdrivername(outletdatasrc);
+        driver = OGRGetDriverByName(pszDriverName);
+        if(driver == NULL) {
+			printf("Error: Could not load driver for %s. Driver name: %s\n", outletdatasrc, pszDriverName);
+			// Try printing available drivers
+			int count = OGRGetDriverCount();
+			printf("Available drivers:\n");
+			for(int i = 0; i < count; i++) {
+				OGRSFDriverH driver = OGRGetDriver(i);
+				printf("  - %s\n", OGR_Dr_GetName(driver));
+			}
+			MPI_Abort(MCW, 1);
+			return 1;
+		}
 
 		// open datasource if the datasoruce exists 
 	     if(pszDriverName=="SQLite")hDSsh= OGROpen(outletdatasrc, TRUE, NULL );
