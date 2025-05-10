@@ -871,10 +871,10 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletdatasrc, ch
     delete [] outletsY;
 	delete [] part_has;
 
-
-
-
-
+	if(rank == 0) {
+		OGRCleanupAll();
+		GDALDestroyDriverManager();
+	}
 
 	end = MPI_Wtime();
 	double total,temp;
