@@ -679,6 +679,9 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletdatasrc, ch
 	 //  hDSsh is not null when running on command line
 	 //  From inside ArcGIS the conditional for a warning hDSsh == NULL returns a true but somehow the below still works.
 
+	 char** papszOptions = NULL;
+	 papszOptions = CSLSetNameValue(papszOptions, "OVERWRITE", "YES");
+
 //	 int flag=1;
 	 if( hDSsh  != NULL ) 
 	 {
@@ -691,19 +694,27 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletdatasrc, ch
 		//OGR_L_ResetReading(hLayer1);
 	    //printf("hDSsh before: %d\n",hDSsh); fflush(stdout);
 
-		 
+
+
       // layer name is file name without extension
 	 if(strlen(outletlyr)==0){
-	 // Chris George Suggestion
+		// Chris George Suggestion
 		char outletlayername[MAXLN];
 		getLayername( outletdatasrc, outletlayername); // get layer name if the layer name is not provided
-		// char *outletlayername;
-		// outletlayername=getLayername( outletdatasrc); // get layer name if the layer name is not provided
-	    hLayersh= OGR_DS_CreateLayer( hDSsh,outletlayername,hSRSRaster,wkbPoint, NULL);} 
-
-	 else {
-		 hLayersh= OGR_DS_CreateLayer( hDSsh, outletlyr ,hSRSRaster, wkbPoint, NULL ); }// provide same spatial reference as raster in streamnetshp fil
-		
+		// Use NULL options for KML files
+		if(strstr(pszDriverName, "tif") != NULL || strstr(pszDriverName, "TIF") != NULL || strcmp(pszDriverName, "SQLite") == 0) {
+            hLayersh = OGR_DS_CreateLayer(hDSsh, outletlayername, hSRSRaster, wkbPoint, papszOptions);
+        } else {
+            hLayersh = OGR_DS_CreateLayer(hDSsh, outletlayername, hSRSRaster, wkbPoint, NULL);
+        }
+	 } else {
+		// Use NULL options for KML files  
+		if(strstr(pszDriverName, "tif") != NULL || strstr(pszDriverName, "TIF") != NULL || strcmp(pszDriverName, "SQLite") == 0) {
+            hLayersh = OGR_DS_CreateLayer(hDSsh, outletlyr, hSRSRaster, wkbPoint, papszOptions);
+        } else {
+            hLayersh = OGR_DS_CreateLayer(hDSsh, outletlyr, hSRSRaster, wkbPoint, NULL);
+        }
+	 }
 		//printf("hDSsh after: %d\n",hDSsh); fflush(stdout);
 		if( hLayersh  == NULL )
 		{
@@ -783,11 +794,20 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletdatasrc, ch
 		getLayername( movedoutletdatasrc, mvoutletlayername); // get layer name if the layer name is not provided
 	    //char *mvoutletlayername;
 		//mvoutletlayername=getLayername( movedoutletdatasrc); // get layer name if the layer name is not provided
-	     hLayershmoved= OGR_DS_CreateLayer( hDSshmoved, mvoutletlayername,hSRSRaster, wkbPoint, NULL );} 
-
-	 else {
-		 hLayershmoved= OGR_DS_CreateLayer( hDSshmoved, movedoutletlyr,hSRSRaster, wkbPoint, NULL ); }// provide same spatial reference as raster in streamnetshp fil
-		
+		// Use papszOptions only for TIF files
+        if(strstr(pszDriverName1, "tif") != NULL || strstr(pszDriverName1, "TIF") != NULL || strcmp(pszDriverName1, "SQLite") == 0) {
+            hLayershmoved = OGR_DS_CreateLayer(hDSshmoved, mvoutletlayername, hSRSRaster, wkbPoint, papszOptions);
+        } else {
+            hLayershmoved = OGR_DS_CreateLayer(hDSshmoved, mvoutletlayername, hSRSRaster, wkbPoint, NULL);
+        }
+	 } else {
+		// Use papszOptions only for TIF files
+        if(strstr(pszDriverName1, "tif") != NULL || strstr(pszDriverName1, "TIF") != NULL || strcmp(pszDriverName1, "SQLite") == 0) {
+            hLayershmoved = OGR_DS_CreateLayer(hDSshmoved, movedoutletlyr, hSRSRaster, wkbPoint, papszOptions);
+        } else {
+            hLayershmoved = OGR_DS_CreateLayer(hDSshmoved, movedoutletlyr, hSRSRaster, wkbPoint, NULL);
+        }
+	 }
 		//printf("hDSsh after: %d\n",hDSsh); fflush(stdout);
 	
 	
@@ -797,6 +817,7 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletdatasrc, ch
         //exit( 1 );
     }
  
+	CSLDestroy(papszOptions);
 	
 	
     /* Add a few fields to the layer defn */

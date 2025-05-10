@@ -234,19 +234,27 @@ int outletstosrc(char *pfile, char *srcfile, char *outletsdatasrc, char *outlets
 
 				if (hDSshmoved != NULL) {
 
+					char** papszOptions = NULL;
+					papszOptions = CSLSetNameValue(papszOptions, "OVERWRITE", "YES");
+
 					//hLayershmoved = OGR_DS_CreateLayer( hDSshmoved, outletmovedlayer, hSRSRaster, wkbPoint, NULL ); // create layer for moved outlet, where raster layer spatial reference is used fro shapefile
 					if (strlen(outletmovedlayer) == 0) {
-					// Chris George
 						char layernameshmoved[MAXLN];
-						getLayername(outletmoveddatasrc,layernameshmoved); // get layer name which is file name without extension
-						//char * layernameshmoved;
-						//layernameshmoved = getLayername(outletmoveddatasrc); // get layer name which is file name without extension
-						hLayershmoved = OGR_DS_CreateLayer(hDSshmoved, layernameshmoved, hSRSRaster, wkbPoint, NULL);
+						getLayername(outletmoveddatasrc,layernameshmoved);
+						if(strstr(pszDriverName, "tif") != NULL || strstr(pszDriverName, "TIF") != NULL || strcmp(pszDriverName, "SQLite") == 0) {
+							hLayershmoved = OGR_DS_CreateLayer(hDSshmoved, layernameshmoved, hSRSRaster, wkbPoint, papszOptions);
+						} else {
+							hLayershmoved = OGR_DS_CreateLayer(hDSshmoved, layernameshmoved, hSRSRaster, wkbPoint, NULL);
+						}
+					} else {
+						if(strstr(pszDriverName, "tif") != NULL || strstr(pszDriverName, "TIF") != NULL || strcmp(pszDriverName, "SQLite") == 0) {
+							hLayershmoved = OGR_DS_CreateLayer(hDSshmoved, outletmovedlayer, hSRSRaster, wkbPoint, papszOptions);
+						} else {
+							hLayershmoved = OGR_DS_CreateLayer(hDSshmoved, outletmovedlayer, hSRSRaster, wkbPoint, NULL);
+						}
 					}
 
-					else {
-						hLayershmoved = OGR_DS_CreateLayer(hDSshmoved, outletmovedlayer, hSRSRaster, wkbPoint, NULL);
-					}// provide same spatial reference as raster in streamnetshp file
+					CSLDestroy(papszOptions);
 
 					if (hLayershmoved == NULL)
 					{

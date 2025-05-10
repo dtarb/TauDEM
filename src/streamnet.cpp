@@ -129,25 +129,34 @@ void createStreamNetShapefile(char *streamnetsrc,char *streamnetlyr,OGRSpatialRe
 	
     if (hDS1 != NULL) {
  
-
-      // layer name is file name without extension
-	 if(strlen(streamnetlyr)==0){
-	 // Chris George suggestion
-	        char streamnetlayername[MAXLN];
-	        getLayername(streamnetsrc, streamnetlayername); // get layer name if the layer name is not provided		  
-		//char *streamnetlayername;
-		//streamnetlayername=getLayername(streamnetsrc); // get layer name if the layer name is not provided
-	    hLayer1= OGR_DS_CreateLayer( hDS1,streamnetlayername,hSRSraster, wkbLineString, NULL );} 
-
-	 else {
-		 hLayer1= OGR_DS_CreateLayer( hDS1,streamnetlyr,hSRSraster, wkbLineString, NULL ); }// provide same spatial reference as raster in streamnetshp file
+		char** papszOptions = NULL;
+		papszOptions = CSLSetNameValue(papszOptions, "OVERWRITE", "YES");
+		// layer name is file name without extension
+		if(strlen(streamnetlyr)==0){
+			// Chris George suggestion
+			char streamnetlayername[MAXLN];
+			getLayername(streamnetsrc, streamnetlayername); // get layer name if the layer name is not provided		  
+			// Use papszOptions only for TIF  and SQLite files
+			if(strstr(pszDriverName, "tif") != NULL || strstr(pszDriverName, "TIF") != NULL || strcmp(pszDriverName, "SQLite") == 0) {
+				hLayer1 = OGR_DS_CreateLayer(hDS1, streamnetlayername, hSRSraster, wkbLineString, papszOptions);
+			} else {
+				hLayer1 = OGR_DS_CreateLayer(hDS1, streamnetlayername, hSRSraster, wkbLineString, NULL);
+			}
+	 } else {
+		// Use papszOptions only for TIF and SQLite files
+		if(strstr(pszDriverName, "tif") != NULL || strstr(pszDriverName, "TIF") != NULL || strcmp(pszDriverName, "SQLite") == 0) {
+			hLayer1 = OGR_DS_CreateLayer(hDS1, streamnetlyr, hSRSraster, wkbLineString, papszOptions);
+		} else {
+			hLayer1 = OGR_DS_CreateLayer(hDS1, streamnetlyr, hSRSraster, wkbLineString, NULL);
+		}
+	 }
     if( hLayer1 == NULL )
     {
         printf( "warning: Layer creation failed.\n" );
         //exit( 1 );
     }
  
-	
+	CSLDestroy(papszOptions);
 	
 	/* Add a few fields to the layer defn */ //need some work for setfiled width
 	// add fields, field width and precision
