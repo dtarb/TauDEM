@@ -3,41 +3,34 @@
 ; Ref: http://stackoverflow.com/questions/4833831/inno-setup-32bit-and-64bit-in-one
 
 ; ****  REQUIREMENTS FOR COMPILING THIS INSTALLER SCRIPT  ****
-; The following files must exist in the directory defined by the SourceDir paramter under the [Setup] section below:
-; GDAL-2.1.0.win32-py2.7.msi (Python GDAL)
-; gdal-201-1800-core.msi   (C++ GDAL for x86)
-; gdal-201-1800-x64-core.msi  (C++ GDAL for x64)
-; msmpisdk.msi    (Microsoft MPI v7.1)
-; MSMpiSetup.exe  (Microsoft MPI v7.1)
-; vcredist_x86_2010.exe  (Micosoft C++ 2010 x86 redistributable)
-; vcredist_x64_2010.exe  (Micosoft C++ 2010 x64 redistributable); 
-; GDAL 32-bit library files must exist under the following directory (this directory should exists under the dir defined by SourceDir parameter): 
-; GDAL_32/
-; GDAL 64-bit library files must exist under the following directory (this directory should exists under the dir defined by SourceDir parameter): 
-; GDAL_64/
-; TauDEM 32-bit executables must exist under the following directory (this directory should exists under the dir defined by SourceDir parameter): 
-; TauDEM_Exe/win_32/
-; TauDEM 64-bit executables must exist under the following directory (this directory should exists under the dir defined by SourceDir parameter): 
+; The following files must exist in the directory defined by the SourceDir parameter under the [Setup] section below:
+; msmpisetup.exe  (Microsoft MPI)
+; VC_redist.x64.exe  (Microsoft C++ 2022 x64 redistributable)
+; TauDEM 64-bit executables must exist under the following directory (this directory should exist under the dir defined by SourceDir parameter): 
 ; TauDEM_Exe/win_64/
-; TauDEM ArcGIG toolbox related python files and the one .tbx file must exist under the following directory (this directory should exists under the dir defined by SourceDir parameter):
+; TauDEM ArcGIS toolbox related python files and the one .tbx file must exist under the following directory (this directory should exist under the dir defined by SourceDir parameter):
 ; TauDEMArcGIS/
 
 ; *** SOURCE CONTROL REQUIREMENTS ****
 ; All the files (as listed below) under the WindowsInstaller folder are included in source control
-; This script file (setup.ino).
-; taudem.bmp - Any time this file is updated it should be copied to the dir specified by the SoureDir param in the [Setup] section of this script
+; This script file (setup.iss).
+; taudem.bmp - Any time this file is updated it should be copied to the dir specified by the SourceDir param in the [Setup] section of this script
 
 
 #define MyAppName "TauDEM"
-#define MyAppVersion "5.3.7"
+#define MyAppVersion "5.3.8"
 #define MyAppPublisher "Utah State University"
 #define MyAppURL "http://hydrology.usu.edu/taudem/taudem5/index.html"
+#define VcpkgDir "C:\dev\vcpkg"
+#define SourcePath "..\TauDEM_Installation_Source"
+#define GdalPluginsDir VcpkgDir + "\installed\x64-windows\lib\gdalplugins"
+#define LibcurlPath VcpkgDir + "\installed\x64-windows\bin\libcurl.dll"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
 ; Do not use the same AppId value in installers for other applications.
-; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{101606B8-FCD5-4E2F-B976-6DC9D190A201}
+; (To generate a new GUID, click Tools | Generate GUID inside the IDE. - this probably Visual Studio specific)
+AppId={101606B8-FCD5-4E2F-B976-6DC9D190A201}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
@@ -45,157 +38,237 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-DefaultDirName={pf}\TauDEM
+DefaultDirName={commonpf}\TauDEM
 DefaultGroupName={#MyAppName}
-OutputBaseFilename=TauDEM_setup
+OutputBaseFilename=TauDEM_setup_x64
 Compression=lzma
 SolidCompression=yes        
 ; "ArchitecturesInstallIn64BitMode=x64" requests that the install be
 ; done in "64-bit mode" on x64, meaning it should use the native
 ; 64-bit Program Files directory and the 64-bit view of the registry.
-; On all other architectures it will install in "32-bit mode".
-ArchitecturesInstallIn64BitMode=x64
+ArchitecturesInstallIn64BitMode=x64compatible
 WizardSmallImageFile=taudem.bmp
-; Don't show the welcome wizard page  and ready to install page
+; Don't show the welcome wizard page and ready to install page
 DisableWelcomePage=yes
 DisableReadyPage=yes
 ; The following source dir should have all the files and sub directories as outlined above (REQUIREMENTS FOR COMPILING THIS INSTALLER SCRIPT)
-SourceDir=D:\SoftwareProjects\TauDEM_From_GitHub\TauDEM_Installation_Source
+SourceDir={#SourcePath}
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
-[Dirs]
-Name: "C:\GDAL"
-
-;[Messages]
-;WelcomeLabel2=This will install [name/ver] on your computer.%nIt is recommended that you close all other applications and disable any anti virus before continuing. %n%nThe following programs will be installed:%nGDAL 111 (MSVC 2010)%nMicrosoft HPC Pack 2012 MS-MPI Redistributable Pack%nMicrosoft Visual C++ 2010 x86 Redistributable%n TauDEM version 5.3
-
 [Files]
-; copy files 
-Source: "GDAL-2.1.0.win32-py2.7.msi"; DestDir: "{app}\setup_files"; Flags: ignoreversion
-Source: "gdal-201-1800-core.msi"; DestDir: "{app}\setup_files"; Flags: ignoreversion; Check: not Is64BitInstallMode
-Source: "gdal-201-1800-x64-core.msi"; DestDir: "{app}\setup_files"; Flags: ignoreversion; Check: Is64BitInstallMode
+; MS-MPI installer
+Source: "msmpisetup.exe"; DestDir: "{app}\setup_files"; Flags: ignoreversion
 
-Source: "msmpisdk.msi"; DestDir: "{app}\setup_files"; Flags: ignoreversion
-Source: "MSMpiSetup.exe"; DestDir: "{app}\setup_files"; Flags: ignoreversion
+; Visual C++ Redistributable (Visual Studio 2022)
+Source: "VC_redist.x64.exe"; DestDir: "{app}\setup_files"; Flags: ignoreversion
 
-; since for 64bit installtion we need both x86 and x64 redestributables no need to check OS architecture for copying files
-Source: "vc_redist.x86_2015.exe"; DestDir: "{app}\setup_files"; Flags: ignoreversion
-Source: "vc_redist.x64_2015.exe"; DestDir: "{app}\setup_files"; Flags: ignoreversion
+; TauDEM executables (64-bit only)
+Source: "TauDEM_Exe\win_64\*"; DestDir: "{app}\TauDEM5Exe"; Flags: ignoreversion recursesubdirs createallsubdirs
 
-Source: "GDAL_64\*"; DestDir: "C:\GDAL"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: Is64BitInstallMode
-Source: "GDAL_32\*"; DestDir: "C:\GDAL"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: not Is64BitInstallMode
-
-Source: "TauDEM_Exe\win_32\*"; DestDir: "{app}\TauDEM5Exe"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: not Is64BitInstallMode
-Source: "TauDEM_Exe\win_64\*"; DestDir: "{app}\TauDEM5Exe"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: Is64BitInstallMode
-
+; TauDEM ArcGIS toolbox files
 Source: "TauDEMArcGIS\*"; DestDir: "{app}\TauDEM5Arc"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+; GDAL from vcpkg (x64)
+Source: "{#VcpkgDir}\installed\x64-windows\bin\gdal*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
+Source: "{#VcpkgDir}\installed\x64-windows\share\gdal\*"; DestDir: "{app}\share\gdal"; Flags: ignoreversion recursesubdirs
+
+; PROJ library data files
+Source: "{#VcpkgDir}\installed\x64-windows\share\proj\*"; DestDir: "{app}\share\proj"; Flags: ignoreversion recursesubdirs
+
+; Essential GDAL dependencies
+Source: "{#VcpkgDir}\installed\x64-windows\bin\proj_9.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
+Source: "{#VcpkgDir}\installed\x64-windows\bin\sqlite3.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
+Source: "{#VcpkgDir}\installed\x64-windows\bin\zlib1.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
+
+#if DirExists(GdalPluginsDir)
+; GDAL plugins for SQLite
+Source: "{#GdalPluginsDir}\*"; DestDir: "{app}\lib\gdalplugins"; Flags: ignoreversion recursesubdirs createallsubdirs
+#endif
+
+#if FileExists(LibcurlPath)
+; Additional available GDAL dependencies
+Source: "{#VcpkgDir}\installed\x64-windows\bin\libcurl.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
+#endif
+
+; Additional dependencies for shapefile support
+Source: "{#VcpkgDir}\installed\x64-windows\bin\geotiff.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
+Source: "{#VcpkgDir}\installed\x64-windows\bin\tiff.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
+Source: "{#VcpkgDir}\installed\x64-windows\bin\jpeg62.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
+Source: "{#VcpkgDir}\installed\x64-windows\bin\turbojpeg.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
+Source: "{#VcpkgDir}\installed\x64-windows\bin\json-c.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
+
+; GDAL utilities from tools feature
+Source: "{#VcpkgDir}\installed\x64-windows\tools\gdal\*.exe"; DestDir: "{app}\bin"; Flags: ignoreversion
+Source: "{#VcpkgDir}\installed\x64-windows\tools\gdal\*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
+
+; Additional dependencies for OGR support with Spatialite
+Source: "{#VcpkgDir}\installed\x64-windows\bin\spatialite.dll"; DestDir: "{app}\bin"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "{#VcpkgDir}\installed\x64-windows\bin\freexl-1.dll"; DestDir: "{app}\bin"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "{#VcpkgDir}\installed\x64-windows\bin\libexpat.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
+
+; Additional Spatialite-related dependencies
+Source: "{#VcpkgDir}\installed\x64-windows\bin\geos.dll"; DestDir: "{app}\bin"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "{#VcpkgDir}\installed\x64-windows\bin\geos_c.dll"; DestDir: "{app}\bin"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "{#VcpkgDir}\installed\x64-windows\bin\liblzma.dll"; DestDir: "{app}\bin"; Flags: ignoreversion skipifsourcedoesntexist
+
+; Ensure ALL GDAL plugins are copied (very important for OGR support)
+Source: "{#VcpkgDir}\installed\x64-windows\lib\gdalplugins\*"; DestDir: "{app}\lib\gdalplugins"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+
+; Copy all DLLs from vcpkg bin directory to ensure all dependencies are included - TODO: commenting out the following line 5-2-2025
+; Source: "{#VcpkgDir}\installed\x64-windows\bin\*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion skipifsourcedoesntexist
+
+; Additional known OGR dependencies
+Source: "{#VcpkgDir}\installed\x64-windows\bin\charset-1.dll"; DestDir: "{app}\bin"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "{#VcpkgDir}\installed\x64-windows\bin\libxml2.dll"; DestDir: "{app}\bin"; Flags: ignoreversion skipifsourcedoesntexist
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Run]
-; install GDAL core components
-; TODO: Implement functions to check if GDAL needs to be installed (all got the registry keys for all these 3 installations)
-Filename: "{app}\setup_files\GDAL-2.1.0.win32-py2.7.msi"; Flags: waituntilterminated shellexec; Check: NeedsToInstallGDAL_PY()
-Filename: "{app}\setup_files\gdal-201-1800-core.msi"; Flags: waituntilterminated shellexec; Check: NeedsToInstallGDAL_C(False)
-Filename: "{app}\setup_files\gdal-201-1800-x64-core.msi"; Flags: waituntilterminated shellexec; Check: NeedsToInstallGDAL_C(True) 
- 
-Filename: "{app}\setup_files\vc_redist.x86_2015.exe"; Flags: waituntilterminated; Check: NeedsToInstallRedist(False)
-Filename: "{app}\setup_files\vc_redist.x64_2015.exe"; Flags: waituntilterminated; Check: NeedsToInstallRedist(True)
+; Install Visual C++ Redistributable
+Filename: "{app}\setup_files\VC_redist.x64.exe"; Flags: waituntilterminated; Check: NeedsToInstallRedist2022()
 
-Filename: "{app}\setup_files\MSMpiSetup.exe"; Flags: waituntilterminated shellexec; Check: NeedsToInstallMPI()
-
+; Install Microsoft MPI
+Filename: "{app}\setup_files\msmpisetup.exe"; Flags: waituntilterminated shellexec; Check: NeedsToInstallMPI()
 
 [Registry]
-; set PATH
-; set GDAL components path
-Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType:string; ValueName:"PATH"; ValueData:"{olddata};C:\GDAL"; Check: NeedsAddPath('C:\GDAL', True, False); Flags: preservestringtype
-;set GDAL program path
-Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType:string; ValueName:"PATH"; ValueData:"{olddata};{pf}\GDAL"; Check: NeedsAddPath('{pf}\GDAL', True, True); Flags: preservestringtype
-Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType:string; ValueName:"PATH"; ValueData:"{olddata};{pf}\GDAL"; Check: NeedsAddPath('{pf}\GDAL', False, True); Flags: preservestringtype
+; Set TauDEM path and environment variables
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
+    ValueType: string; ValueName: "PATH"; \
+    ValueData: "{olddata};{app}\bin;{app}\TauDEM5Exe"; \
+    Flags: preservestringtype
 
-;set GDAL_DATA  (new environment variable)
-Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType:string; ValueName:"GDAL_DATA"; ValueData:"{pf}\GDAL\gdal-data"; Flags: preservestringtype
+; Set GDAL_DATA for the vcpkg GDAL
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; ValueName: "GDAL_DATA"; ValueData: "{app}\share\gdal"; Flags: uninsdeletevalue
 
-; set TauDEM path
-Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType:string; ValueName:"PATH"; ValueData:"{olddata};{app}\TauDEM5Exe"; Check: NeedsAddPath('{app}\TauDEM5Exe', False, True); Flags: preservestringtype
-Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType:string; ValueName:"PATH"; ValueData:"{olddata};{app}\TauDEM5Exe"; Check: NeedsAddPath('{app}\TauDEM5Exe', True, True); Flags: preservestringtype
+; Set PROJ_LIB for GDAL to find proj.db
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; ValueName: "PROJ_LIB"; ValueData: "{app}\share\proj"; Flags: uninsdeletevalue
 
+; Set GDAL_DRIVER_PATH to point to bin directory AND plugins directory (critical for OGR)
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; ValueName: "GDAL_DRIVER_PATH"; ValueData: "{app}\bin;{app}\lib\gdalplugins"; Flags: uninsdeletevalue
+
+; Set OGR_DRIVER_PATH to point to both bin and plugins directories (critical)
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; ValueName: "OGR_DRIVER_PATH"; ValueData: "{app}\bin;{app}\lib\gdalplugins"; Flags: uninsdeletevalue
+
+; Add application directories to PATH
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; ValueName: "Path"; ValueData: "{app}\bin;{app}\TauDEM5Exe;{olddata}"; Check: NeedsAddPath('{app}\bin')
+
+; Enable all OGR drivers by default
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
+    ValueType: string; ValueName: "GDAL_SKIP"; \
+    ValueData: ""; \
+    Flags: preservestringtype
+
+; Set OGR_ENABLED_DRIVERS to ALL
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
+    ValueType: expandsz; ValueName: "OGR_ENABLED_DRIVERS"; \
+    ValueData: ""; \
+    Flags: uninsdeletevalue
+
+; Remove any explicit driver count limit
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
+    ValueType: expandsz; ValueName: "OGR_DRIVER_COUNT"; \
+    ValueData: ""; \
+    Flags: uninsdeletevalue
+
+; Set GDAL configuration for OGR with better error handling
+; NOTE: Uncomment the following line to enable debugging when testing the installer
+;Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
+;    ValueType: expandsz; ValueName: "CPL_DEBUG"; \
+;    ValueData: "ON"; \
+;    Flags: uninsdeletevalue
+
+; Configure error reporting for OGR
+; NOTE: Uncomment the following line to enable error logging when testing the installer
+; Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
+;    ValueType: expandsz; ValueName: "CPL_LOG"; \
+;    ValueData: "{app}\gdal_error.log"; \
+;    Flags: uninsdeletevalue
+
+; Enable VSI file system for GDAL
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
+    ValueType: expandsz; ValueName: "CPL_VSIL_USE_TEMP"; \
+    ValueData: "YES"; \
+    Flags: uninsdeletevalue
+
+; Add configuration for SQLite and SpatiaLite
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
+    ValueType: expandsz; ValueName: "GDAL_SQLITE_PRAGMA"; \
+    ValueData: "EMPTY_RESULT_CALLBACKS=ON"; \
+    Flags: uninsdeletevalue
+
+; Set SpatiaLite module path for GDAL
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
+    ValueType: expandsz; ValueName: "SPATIALITE_SECURITY"; \
+    ValueData: "relaxed"; \
+    Check: SpatiaLiteExists; Flags: uninsdeletevalue
+
+; Add SpatiaLite data path only if it's going to exist
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
+    ValueType: expandsz; ValueName: "SPATIALITE_LIBRARY_PATH"; \
+    ValueData: "{app}\bin\spatialite.dll"; \
+    Check: SpatiaLiteExists; Flags: uninsdeletevalue
+
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
+    ValueType: expandsz; ValueName: "CPL_LOG_ERRORS"; \
+    ValueData: "ON"; \
+    Flags: uninsdeletevalue
+
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
+    ValueType: expandsz; ValueName: "GDAL_ERROR_ON_LIBC_ERROR"; \
+    ValueData: "TRUE"; \
+    Flags: uninsdeletevalue
 
 [code]
-// add a custome wizard page after the welcome page to show the list of programs that will be installed
+// add a custom wizard page after the welcome page to show the list of programs that will be installed
 procedure InitializeWizard();
 var UserPage: TInputQueryWizardPage;
 var notes_string: string;
-
 begin
   notes_string := 'NOTES:'#13'1. The redistributables listed above will only be installed if they are not already installed.'#13 +
       '2. You will need to accept the license agreements associated with this software and click through several screens.'#13 +
-      '3. When prompted to Choose Setup Type for GDAL, choose "Typical".'#13 +
-      '4. The installer will also add firewall exceptions to allow TauDEM programs to run. These allow MPI interprocess communication used in the parallel computations.  This is communication within your computer and not over any external network.'#13 +
-      '5. The installer will also add the following path entries:' +
-      'C:\Program Files\Microsoft MPI\Bin\;C:\GDAL;C:\Program Files\GDAL;C:\Program Files\TauDEM\TauDEM5Exe'; 
-
-  if Is64BitInstallMode then
-  begin
-    UserPage := CreateInputQueryPage(wpWelcome,
-      'The following programs will be installed', '',
-      'TauDEM version 5.3.7, GDAL 2.1.0 (Python 2.7), GDAL 201 (MSVC 2013) for 64 bit Windows PC, Microsoft Visual C++ 2015 Redistributable Package (x86), ' +
-      'Microsoft Visual C++ 2015 Redistributable Package (x64), Microsoft MPI'#13#13 +  notes_string);   
-  end
-  else
-    begin
-      UserPage := CreateInputQueryPage(wpWelcome,
-      'The following programs will be installed', '',
-      'TauDEM version 5.3.7, GDAL 2.1.0 (Python 2.7), GDAL 201 (MSVC 2013) for 32 bit Windows PC, Microsoft Visual C++ 2015 Redistributable Package (x86), ' + 
-      'Microsoft MPI'#13#13 +  notes_string);
-    end
+      '3. The installer will also add firewall exceptions to allow TauDEM programs to run. These allow MPI interprocess communication used in the parallel computations. This is communication within your computer and not over any external network.'#13 +
+      '4. The installer will also configure the necessary environment variables for TauDEM, GDAL, and MPI.'; 
+  UserPage := CreateInputQueryPage(wpWelcome,
+    'The following components will be installed', '',
+    'TauDEM version 5.3.8, GDAL (from vcpkg), Microsoft Visual C++ 2022 Redistributable Package (x64), ' +
+    'Microsoft MPI'#13#13 + notes_string);   
 end;
 
-// Check if we need to install C++ Redistributable
-// If either a 64 or 32 bit version of C++ redistributable is already installed, then this function returns False, otherwise True
-function NeedsToInstallRedist(IsInstallAppX64: boolean): boolean;
+// Check if we need to install Visual C++ 2022 Redistributable
+function NeedsToInstallRedist2022(): boolean;
 begin
-    if Is64BitInstallMode and IsInstallAppX64 then
-    begin    
-       if RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\WOW6432Node\Microsoft\VisualStudio\14.0\VC\Runtimes\x64') then
-          begin
-            Result := False;
-            exit;
-          end
-       else
-          begin
-            Result := True;
-            exit;
-          end;
-    end
-    else if not Is64BitInstallMode and not IsInstallAppX64 then
-      begin      
-         if RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\WOW6432Node\Microsoft\VisualStudio\14.0\VC\Runtimes\x86') then
-            begin
-              Result := False;
-              exit;
-            end
-         else
-            begin
-              Result := True;
-              exit;
-            end;
-      end
-    else 
-      begin
-        Result := False;
-        exit;
-      end;      
+   // Check for Visual Studio 2022 redistributable (various possible registry locations)
+   if RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\VisualStudio\14.30\VC\Runtimes\x64') or
+      RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\WOW6432Node\Microsoft\VisualStudio\14.30\VC\Runtimes\x64') or
+      RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\VisualStudio\14.31\VC\Runtimes\x64') or
+      RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\WOW6432Node\Microsoft\VisualStudio\14.31\VC\Runtimes\x64') or
+      RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\VisualStudio\14.32\VC\Runtimes\x64') or
+      RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\WOW6432Node\Microsoft\VisualStudio\14.32\VC\Runtimes\x64') or
+      RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\VisualStudio\14.33\VC\Runtimes\x64') or
+      RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\WOW6432Node\Microsoft\VisualStudio\14.33\VC\Runtimes\x64') or
+      RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\VisualStudio\14.34\VC\Runtimes\x64') or
+      RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\WOW6432Node\Microsoft\VisualStudio\14.34\VC\Runtimes\x64') then
+   begin
+      Result := False;
+   end
+   else
+   begin
+      Result := True;
+   end;
 end;
 
 // Check if we need to install MPI
 // If MPI is already installed, then this function returns False, otherwise True
 function NeedsToInstallMPI(): boolean;
 begin    
-   
-   if RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\WOW6432Node\Microsoft\MPI') then
+   if FileExists('C:\Windows\System32\msmpi.dll') then
+      begin
+        Result := False;
+        exit;
+      end
+   else if RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\WOW6432Node\Microsoft\MPI') then
       begin
         Result := False;
         exit;
@@ -203,125 +276,56 @@ begin
    else
       begin
         Result := True;
-        exit;
       end;      
 end;
 
-function NeedsToInstallGDAL_PY(): boolean;
-// check if we need to install GDAL Python module
-begin      
-      
-   if RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\Classes\Installer\Products\7DB0C91EA9BCA914AAD09A56B9B9A75B') then
-      begin
-        Result := False;
-        exit;
-      end
-   else
-      begin
-        Result := True;
-        exit;
-      end;
-end;
-
-function NeedsToInstallGDAL_C(IsInstallAppX64: boolean): boolean;
-// checks if we need to install GDAL C++ library
-begin
-    if Is64BitInstallMode and IsInstallAppX64 then
-    begin    
-       if RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\Classes\Installer\Products\7E174159D1F9EFC4AA53953383A125AA') then
-          begin
-            Result := False;
-            exit;
-          end
-       else
-          begin
-            Result := True;
-            exit;
-          end;
-    end
-    else if not Is64BitInstallMode and not IsInstallAppX64 then
-      begin      
-         if RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\Classes\Installer\Products\81785C15296278C4EB911F279D9961F5') then
-            begin
-              Result := False;
-              exit;
-            end
-         else
-            begin
-              Result := True;
-              exit;
-            end;
-      end
-    else 
-      begin
-        Result := False;
-        exit;
-      end;      
-end;
-
-function NeedsAddPath(NewPath: string; Win64: boolean; CheckOSArchitecture: boolean): boolean;
+// Simplified path checking function (removed architecture checking)
+function NeedsAddPath(NewPath: string): boolean;
 var
   OrigPath: string;
 begin
-  if CheckOSArchitecture then
-  begin 
-    if not IsWin64 and Win64 then
-    begin
-      Result := False;
-      exit;
-    end;
-    if IsWin64 and not Win64 then
-    begin
-      Result := False;
-      exit;
-    end;   
-  end;
-  //MsgBox('Checking path variable', mbInformation, MB_OK);
-  //MsgBox('NewPath:' + ExpandConstant(NewPath), mbInformation, MB_OK);
-  // this will read the current path value and store in the variable OrigPath
   if not RegQueryStringValue(HKEY_LOCAL_MACHINE,
     'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
     'Path', OrigPath) then
   begin
-    // Path variable is missing
+    //MsgBox('Path variable not found.', mbInformation, MB_OK);
+    //MsgBox('Path variable not found.', mbInformation, MB_OK);
     //MsgBox('Path variable not found.', mbInformation, MB_OK);
     Result := True;
     exit;
   end;
   // look for the path with leading and trailing semicolon
-  // Pos() returns 0 if not found
+  // Pos() return
+  //MsgBox('OrigPath:' + OrigPath, mbInformation, MB_OK);t0 if n
+  //MsgBox('OrigPath:' + OrigPath, mbInformation, MB_OK);t found
   //MsgBox('OrigPath:' + OrigPath, mbInformation, MB_OK);
   Result := Pos(';' + UpperCase(ExpandConstant(NewPath)) + ';', ';' + UpperCase(OrigPath) + ';') = 0;
-  //if Result then
-  //  MsgBox('Result of path matching:match not found', mbInformation, MB_OK)
-  //else
-  //  MsgBox('Result of path matching:match found', mbInformation, MB_OK)
-end;
-
-function GetPathData(Param: String): String;
-{ The 'Param' parameter has the value of the existing value for the system 'Path' variable }
-var 
-  index: integer;
-  dataToAdd: string;
-begin 
-  { This is the data we want to add to the system 'Path' variable} 
-  dataToAdd:= ExpandConstant('{app}') + '\GDAL\gdalwin32-1.6\bin;' +  ExpandConstant('{app}') + '\GDAL_Proj\proj\bin';
-
-  { check if the data we want to add is already in the 'Path' variable }
-  index:=pos(dataToAdd, Param)
-  if index > 0 then
-     { no need to change data for the path - so return the existing data}
-     Result:= Param
-  else
-    { append new data to existing path data and return the resultant data }
-    Result:= Param + ';' + dataToAdd; 
 end;
 
 procedure CleanUp(FolderToDelete: string);
-begin         
+begin
     if DirExists(ExpandConstant(FolderToDelete)) then
     begin
         DelTree(ExpandConstant(FolderToDelete), True, True, True);
         //MsgBox('Folder deleted', mbInformation, MB_OK);
-    end;  
+    end;
+end;
+
+function InitializeSetup(): Boolean;
+begin
+  Result := True;
+  // Check if running on 64-bit Windows
+  if not IsWin64 then
+  begin
+    MsgBox('This installer requires 64-bit Windows.', mbError, MB_OK);
+    Result := False;
+  end;
+end;
+
+// Add a new function to check if SpatiaLite exists
+function SpatiaLiteExists(): Boolean;
+begin
+  Result := FileExists(ExpandConstant('{app}\bin\spatialite.dll')) or 
+           FileExists(ExpandConstant('{app}\bin\mod_spatialite.dll')) or
+           FileExists(ExpandConstant('{app}\bin\sqlite3_mod_spatialite.dll'));
 end;
