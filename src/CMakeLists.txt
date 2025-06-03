@@ -57,6 +57,8 @@ set (FLOWDIRCOND flowdirconditionmn.cpp flowdircond.cpp ${common_srcs})
 set (RETLIMFLOW RetLimFlowmn.cpp RetlimFlow.cpp ${common_srcs})
 set (SETREGION SetRegionmn.cpp SetRegion.cpp ${common_srcs})
 set (SINMAPSI SinmapSImn.cpp SinmapSI.cpp ${common_srcs})
+set (INUNMAP InunMapmn.cpp InunMap.cpp ${common_srcs})
+
 # MPI configuration for Windows
 if(WIN32)
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -79,6 +81,7 @@ else()
     # Non-Windows platforms
     find_package(MPI REQUIRED)
 endif()
+
 include_directories(${MPI_INCLUDE_PATH})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_COMPILE_FLAGS}")
 set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} ${MPI_LINK_FLAGS}")
@@ -94,6 +97,12 @@ if(NOT GDAL_FOUND)
 else()
     message(STATUS "Found GDAL using CONFIG mode: ${GDAL_VERSION}")
 endif()
+
+find_package(MPI)
+message(STATUS "MPI_FOUND: ${MPI_FOUND}")
+message(STATUS "MPI_LIBRARIES: ${MPI_LIBRARIES}")
+message(STATUS "MPI_C_LIBRARIES: ${MPI_C_LIBRARIES}")
+message(STATUS "MPI_CXX_LIBRARIES: ${MPI_CXX_LIBRARIES}")
 
 add_executable (aread8 ${AREAD8})
 add_executable (areadinf ${AREADINF})
@@ -130,6 +139,7 @@ add_executable (flowdircond ${FLOWDIRCOND})
 add_executable (retlimflow ${RETLIMFLOW})
 add_executable (setregion ${SETREGION})
 add_executable (sinmapsi ${SINMAPSI})
+add_executable (inunmap ${INUNMAP})
 
 set (MY_TARGETS aread8
                 areadinf
@@ -165,7 +175,8 @@ set (MY_TARGETS aread8
                 flowdircond
                 retlimflow
                 setregion
-                sinmapsi)
+                sinmapsi
+                inunmap)
 
 
 foreach(c_target ${MY_TARGETS})
