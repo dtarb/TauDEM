@@ -25,12 +25,14 @@
 #define SourcePath "..\TauDEM_Installation_Source"
 #define GdalPluginsDir VcpkgDir + "\installed\x64-windows\lib\gdalplugins"
 #define LibcurlPath VcpkgDir + "\installed\x64-windows\bin\libcurl.dll"
+#define GdalVersion "3.10.3"
+#define GdalInstallerVersion "1.0.2"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
 ; Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE. - this probably Visual Studio specific)
-AppId={101606B8-FCD5-4E2F-B976-6DC9D190A201}
+AppId={{101606B8-FCD5-4E2F-B976-6DC9D190A201}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
@@ -132,6 +134,20 @@ Filename: "{app}\setup_files\VC_redist.x64.exe"; Flags: waituntilterminated; Che
 ; Install Microsoft MPI
 Filename: "{app}\setup_files\msmpisetup.exe"; Flags: waituntilterminated shellexec; Check: NeedsToInstallMPI()
 
+; First install GDAL installer package
+Filename: "python"; Parameters: "-m pip install gdal-installer=={#GdalInstallerVersion}"; \
+    Flags: waituntilterminated runhidden; \
+    StatusMsg: "Installing GDAL installer package..."; \
+    Check: HasPython() and WantsPythonGDAL()
+
+; Run the GDAL installer Python script
+Filename: "python"; \
+    Parameters: "-m gdal_installer.install-gdal"; \
+    Flags: waituntilterminated; \
+    StatusMsg: "Running GDAL system installation..."; \
+    Check: HasPython() and WantsPythonGDAL(); \
+    AfterInstall: VerifyGdalInstallation
+
 [Registry]
 ; Set TauDEM path and environment variables
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
@@ -232,8 +248,8 @@ begin
       '4. The installer will also configure the necessary environment variables for TauDEM, GDAL, and MPI.'; 
   UserPage := CreateInputQueryPage(wpWelcome,
     'The following components will be installed', '',
-    'TauDEM version 5.3.8, GDAL (from vcpkg), Microsoft Visual C++ 2022 Redistributable Package (x64), ' +
-    'Microsoft MPI'#13#13 + notes_string);   
+    'TauDEM version 5.3.8, GDAL (from vcpkg), Python GDAL bindings (if Python 3.10+ is available), ' +
+    'Microsoft Visual C++ 2022 Redistributable Package (x64), Microsoft MPI'#13#13 + notes_string);   
 end;
 
 // Check if we need to install Visual C++ 2022 Redistributable
@@ -328,4 +344,78 @@ begin
   Result := FileExists(ExpandConstant('{app}\bin\spatialite.dll')) or 
            FileExists(ExpandConstant('{app}\bin\mod_spatialite.dll')) or
            FileExists(ExpandConstant('{app}\bin\sqlite3_mod_spatialite.dll'));
+end;
+
+// Check if Python is installed
+function HasPython(): Boolean;
+var
+  ResultCode: Integer;
+begin
+  Result := False;
+  
+  // Try with python command
+  if Exec('python', '-c "import sys; exit(0 if sys.version_info >= (3, 10) else 1)"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+  begin
+    Result := (ResultCode = 0);
+  end;
+  
+  // Try with py command as fallback
+  if not Result then
+  begin
+    if Exec('py', '-c "import sys; exit(0 if sys.version_info >= (3, 10) else 1)"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+    begin
+      Result := (ResultCode = 0);
+    end;
+  end;
+
+  // Show message if Python version is too old
+  if not Result then
+  begin
+    MsgBox('Python 3.10 or higher is required for GDAL installation.', mbInformation, MB_OK);
+  end;
+end;
+
+// Ask user if they want to install GDAL Python bindings
+function WantsPythonGDAL(): Boolean;
+begin
+  Result := MsgBox('Python is installed on your system. Would you like to install GDAL Python bindings? (Required for TauDEM integration with ArcGIS)', mbConfirmation, MB_YESNO) = IDYES;
+end;
+
+function CheckGdalPythonImport(): Boolean;
+var
+  ResultCode: Integer;
+begin
+  Result := False;
+  
+  // Try to import GDAL in Python and check version is 3.10+
+  if Exec('python', '-c "from osgeo import gdal; import sys; version = tuple(map(int, gdal.__version__.split(''.''))); sys.exit(0 if version >= (3, 10) else 1)"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+  begin
+    Result := (ResultCode = 0);
+  end;
+  
+  if not Result then
+  begin
+    // Try with py command as fallback
+    if Exec('py', '-c "from osgeo import gdal; import sys; version = tuple(map(int, gdal.__version__.split(''.''))); sys.exit(0 if version >= (3, 10) else 1)"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+    begin
+      Result := (ResultCode = 0);
+    end;
+  end;
+end;
+
+procedure VerifyGdalInstallation;
+begin
+  if CheckGdalPythonImport() then
+  begin
+    MsgBox('GDAL Python bindings and system components were successfully installed and verified.', mbInformation, MB_OK);
+  end
+  else
+  begin
+    MsgBox('Warning: GDAL installation could not be verified.' + #13#10 + 
+           'You may need to manually install GDAL after setup completes:' + #13#10 + 
+           '1. Open a command prompt and run:' + #13#10 + 
+           'python -m pip install gdal-installer==' + ExpandConstant('{#GdalInstallerVersion}') + #13#10 + 
+           '2. Then run:' + #13#10 + 
+           'python -m gdal_installer install-gdal', mbError, MB_OK);
+  end;
 end;
