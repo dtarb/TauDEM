@@ -169,5 +169,8 @@ install
 src/build/
 src/build-release/
 
+# ignore folder related to windows installer
+TauDEM_Installation_Source/
+
 # VS Code settings
 .vscode/settings.json
