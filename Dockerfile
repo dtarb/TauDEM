@@ -47,7 +47,10 @@ RUN chown taudem-docker:taudem-docker /home/taudem-docker/workspace/TauDEM-Test-
 RUN mkdir -p /usr/local/taudem
 
 # Set the PATH environment variable for taudem-docker user
-RUN echo "export PATH=/usr/local/taudem:\$PATH" >> /home/taudem-docker/.bashrc
+# Setting the TAUDEM_PATH environment variable which is needed only for runinng the tests
+# TAUDEM_PATH is used in the taudem-tests.sh script
+RUN echo "export PATH=/usr/local/taudem:\$PATH" >> /home/taudem-docker/.bashrc && \
+    echo "export TAUDEM_PATH=/usr/local/taudem" >> /home/taudem-docker/.bashrc
 
 # Set the working directory inside the container - this is where we will run commands to build and install TauDEM
 WORKDIR /app
