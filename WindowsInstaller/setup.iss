@@ -134,13 +134,13 @@ Filename: "{app}\setup_files\VC_redist.x64.exe"; Flags: waituntilterminated; Che
 ; Install Microsoft MPI
 Filename: "{app}\setup_files\msmpisetup.exe"; Flags: waituntilterminated shellexec; Check: NeedsToInstallMPI()
 
-; First install GDAL installer package
+; First install GDAL installer package - needed for installing GDAL Python bindings for TauDEM integration with ArcGIS
 Filename: "python"; Parameters: "-m pip install gdal-installer=={#GdalInstallerVersion}"; \
     Flags: waituntilterminated runhidden; \
     StatusMsg: "Installing GDAL installer package..."; \
     Check: HasPython() and WantsPythonGDAL()
 
-; Run the GDAL installer Python script
+; Run the GDAL installer Python script to install GDAL - this GDAL is needed for TauDEM integration with ArcGIS
 Filename: "python"; \
     Parameters: "-m gdal_installer.install-gdal"; \
     Flags: waituntilterminated; \
