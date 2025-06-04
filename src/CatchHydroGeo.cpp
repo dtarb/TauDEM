@@ -149,8 +149,16 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 			fclose(fp);
 		}
 		MPI_Bcast(&ncatch, 1, MPI_INT, 0, MCW);
-		if (rank != 0) catchlist = (int *) malloc(sizeof(int) * ncatch);
+		if (rank != 0) {
+			catchlist = (int *) malloc(sizeof(int) * ncatch);
+			slopelist = (double *) malloc(sizeof(double) * ncatch);
+			linelenlist = (double *) malloc(sizeof(double) * ncatch);
+			areasqkmlist = (double *) malloc(sizeof(double) * ncatch);
+		}
 		MPI_Bcast(catchlist, ncatch, MPI_INT, 0, MCW);
+		MPI_Bcast(slopelist, ncatch, MPI_DOUBLE, 0, MCW);
+		MPI_Bcast(linelenlist, ncatch, MPI_DOUBLE, 0, MCW);
+		MPI_Bcast(areasqkmlist, ncatch, MPI_DOUBLE, 0, MCW);
 		unordered_map<int, int> catchhash;
 		for (int i=0; i<ncatch; i++) catchhash[catchlist[i]] = i;
 
@@ -216,15 +224,20 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 					handData->getData(i, j, temphand);
 					catchData->getData(i, j, tempcatch);
 					slpData->getData(i, j, tempslp);
-					for (k = 0; k < nheight; k++) {
-						if (temphand < height[k] || fabs(temphand - 0.0)<0.000001) {  // DGT prefers strictly less than here.  If the depth is 0, treat it as wet, too 
-							CellCount[k*ncatch + catchhash[tempcatch]] += 1;
-							double dxc, dyc, cellArea;
-							handData->getdxdyc(j, dxc, dyc);  // This function gets latitude dependent dx and dy for each cell, better than averages
-							cellArea = dxc*dyc;
-							SurfaceArea[k*ncatch + catchhash[tempcatch]] += cellArea;
-							BedArea[k*ncatch + catchhash[tempcatch]] += cellArea*sqrt(1 + tempslp*tempslp);
-							Volume[k*ncatch + catchhash[tempcatch]] +=  (height[k] - temphand)*cellArea;
+					// Check if catchment ID exists in hash table
+					auto it = catchhash.find(tempcatch);
+					if (it != catchhash.end()) {
+						int catchIndex = it->second;
+						for (k = 0; k < nheight; k++) {
+							if (temphand < height[k] || fabs(temphand - 0.0)<0.000001) {  // DGT prefers strictly less than here.  If the depth is 0, treat it as wet, too 
+								CellCount[k*ncatch + catchIndex] += 1;
+								double dxc, dyc, cellArea;
+								handData->getdxdyc(j, dxc, dyc);  // This function gets latitude dependent dx and dy for each cell, better than averages
+								cellArea = dxc*dyc;
+								SurfaceArea[k*ncatch + catchIndex] += cellArea;
+								BedArea[k*ncatch + catchIndex] += cellArea*sqrt(1 + tempslp*tempslp);
+								Volume[k*ncatch + catchIndex] +=  (height[k] - temphand)*cellArea;
+							}
 						}
 					}
 				}
