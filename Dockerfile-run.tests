@@ -40,8 +40,9 @@ RUN usermod -aG sudo taudem-docker
 RUN mkdir -p /home/taudem-docker/workspace/TauDEM-Test-Data
 
 # Clone the TauDEM-Test-Data repo and make the taudem-tests.sh executable for running the tests
+# TODO: Change the branch back to main when ready
 RUN chown taudem-docker:taudem-docker /home/taudem-docker/workspace/TauDEM-Test-Data && \
-    sudo -u taudem-docker git clone https://github.com/dtarb/TauDEM-Test-Data.git /home/taudem-docker/workspace/TauDEM-Test-Data && \
+    sudo -u taudem-docker git clone -b 1-update-test-scripts --single-branch https://github.com/dtarb/TauDEM-Test-Data.git /home/taudem-docker/workspace/TauDEM-Test-Data && \
     chown taudem-docker:taudem-docker /home/taudem-docker/workspace/TauDEM-Test-Data/Input/taudem-tests.sh && \
     chmod +x /home/taudem-docker/workspace/TauDEM-Test-Data/Input/taudem-tests.sh
 
