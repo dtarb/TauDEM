@@ -101,6 +101,19 @@ dk-release:
 	@cd $(SRC_DIR) && cmake -S . -B build
 	@cd $(SRC_DIR)/build && make
 
+dk-install:
+	$(if $(filter Linux,$(UNAME_S)),,$(error dk-install is only supported on Linux))
+	@echo "Installing TauDEM to $(or $(PREFIX),/usr/local)..."
+	@if [ ! -d "$(SRC_DIR)/build" ]; then \
+		echo "Error: Build directory not found. Please run 'make dk-release' first."; \
+		exit 1; \
+	fi
+	@echo "=== Reconfiguring CMake with new install prefix ==="
+	@cd $(SRC_DIR)/build && cmake . -DCMAKE_INSTALL_PREFIX=$(or $(PREFIX),/usr/local)
+	@echo "=== Running make install ==="
+	@cd $(SRC_DIR)/build && make install VERBOSE=1
+	@echo "=== Installation completed ==="
+
 dk-run-tests:
 	@echo "Running tests..."
 	@cd /home/taudem-docker/workspace/TauDEM-Test-Data/Input && \
@@ -126,7 +139,8 @@ help:
 	@echo "Makefile usage:"
 	@echo "  make debug COMPILER=<compiler>    - Build in Debug mode with specified compiler (linux, macos, clang, gcc-apple)"
 	@echo "  make release COMPILER=<compiler>  - Build in Release mode with specified compiler (linux, macos, clang, gcc-apple)"
-	@echo "  make dk-release                   - Build in Release mode for Docker (Linux only)"
+	@echo "  make dk-release COMPILER=<compiler> - Build in Release mode for Docker (Linux only)"
+	@echo "  make dk-install [PREFIX=<path>]   - Install TauDEM to specified directory (default: /usr/local, Linux only)"
 	@echo "  make dk-run-tests                 - Run TauDEM tests in Docker environment"
 	@echo "  make clean                        - Clean build directory"
 	@echo "  make install                      - Install TauDEM"
