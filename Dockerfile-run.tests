@@ -1,7 +1,9 @@
-# Use Ubuntu as the base image
+# This Dockerfile is for compiling TauDEM for Linux and running the tests. It is not intended for running TauDEM.
+
+# Using Ubuntu as the base image
 FROM ubuntu:22.04
 
-# Install necessary dependencies
+# Install necessary dependencies to compile TauDEM
 RUN apt update && apt install -y \
     build-essential \
     cmake \
@@ -37,7 +39,7 @@ RUN usermod -aG sudo taudem-docker
 # Create workspace directory for taudem-docker
 RUN mkdir -p /home/taudem-docker/workspace/TauDEM-Test-Data
 
-# Clone the TauDEM-Test-Data repo and make the taudem-tests.sh executable
+# Clone the TauDEM-Test-Data repo and make the taudem-tests.sh executable for running the tests
 RUN chown taudem-docker:taudem-docker /home/taudem-docker/workspace/TauDEM-Test-Data && \
     sudo -u taudem-docker git clone https://github.com/dtarb/TauDEM-Test-Data.git /home/taudem-docker/workspace/TauDEM-Test-Data && \
     chown taudem-docker:taudem-docker /home/taudem-docker/workspace/TauDEM-Test-Data/Input/taudem-tests.sh && \
