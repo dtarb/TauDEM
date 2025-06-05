@@ -108,11 +108,11 @@ dk-install:
 		echo "Error: Build directory not found. Please run 'make dk-release' first."; \
 		exit 1; \
 	fi
-	@echo "=== Reconfiguring CMake with new install prefix ==="
 	@cd $(SRC_DIR)/build && cmake . -DCMAKE_INSTALL_PREFIX=$(or $(PREFIX),/usr/local)
-	@echo "=== Running make install ==="
-	@cd $(SRC_DIR)/build && make install VERBOSE=1
-	@echo "=== Installation completed ==="
+	@cd $(SRC_DIR)/build && make install
+	@echo "=== Validating installation ==="
+	@test -f "$(or $(PREFIX),/usr/local)/taudem/pitremove" || (echo "ERROR: pitremove not installed" && exit 1)
+	@echo "SUCCESS: TauDEM installation validated"
 
 dk-run-tests:
 	@echo "Running tests..."
