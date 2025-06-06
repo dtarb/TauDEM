@@ -1,0 +1,270 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build TauDEM (Debug, Clang) - macOS",
+            "type": "shell",
+            "command": "make",
+            "args": ["debug", "COMPILER=clang"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": ["$gcc"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Build TauDEM in Debug mode using Clang compiler"
+        },
+        {
+            "label": "Build TauDEM (Release, Clang) - macOS",
+            "type": "shell",
+            "command": "make",
+            "args": ["release", "COMPILER=clang"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": ["$gcc"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Build TauDEM in Release mode using Clang compiler"
+        },
+        {
+            "label": "Build TauDEM (Debug, GCC-Apple) - macOS",
+            "type": "shell",
+            "command": "make",
+            "args": ["debug", "COMPILER=gcc-apple"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": ["$gcc"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Build TauDEM in Debug mode using Apple GCC compiler"
+        },
+        {
+            "label": "Build TauDEM (Release, GCC-Apple) - macOS",
+            "type": "shell",
+            "command": "make",
+            "args": ["release", "COMPILER=gcc-apple"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": ["$gcc"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Build TauDEM in Release mode using Apple GCC compiler"
+        },
+        {
+            "label": "Build TauDEM (Debug, Homebrew GCC) - macOS",
+            "type": "shell",
+            "command": "make",
+            "args": ["debug", "COMPILER=macos"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": ["$gcc"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Build TauDEM in Debug mode using Homebrew GCC compiler"
+        },
+        {
+            "label": "Build TauDEM (Release, Homebrew GCC) - macOS",
+            "type": "shell",
+            "command": "make",
+            "args": ["release", "COMPILER=macos"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": ["$gcc"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Build TauDEM in Release mode using Homebrew GCC compiler"
+        },
+        {
+            "label": "Clean Build - macOS",
+            "type": "shell",
+            "command": "make",
+            "args": ["clean"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Clean all build artifacts and binaries"
+        },
+        {
+            "label": "Install TauDEM - macOS",
+            "type": "shell",
+            "command": "make",
+            "args": ["install"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Install TauDEM binaries to system location (/usr/local)"
+        },
+        {
+            "label": "Install TauDEM (Custom Path) - macOS",
+            "type": "shell",
+            "command": "make",
+            "args": ["install", "PREFIX=${input:installPath}"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Install TauDEM binaries to custom location"
+        },
+        {
+            "label": "Uninstall TauDEM - macOS",
+            "type": "shell",
+            "command": "make",
+            "args": ["uninstall"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Remove TauDEM binaries from system"
+        },
+        {
+            "label": "Check Dependencies - macOS",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-c",
+                "echo 'Checking TauDEM dependencies on macOS...' && echo '=== GDAL ===' && gdal-config --version && echo '=== MPI ===' && mpirun --version && echo '=== CMake ===' && cmake --version && echo '=== Clang ===' && clang --version | head -1 && echo '=== GCC (if available) ===' && (gcc --version | head -1 || echo 'GCC not found') && echo 'Dependencies check complete.'"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Check if all required dependencies are installed and accessible"
+        },
+        {
+            "label": "Run Specific TauDEM Tool - macOS",
+            "type": "shell",
+            "command": "${workspaceFolder}/src/build/${input:taudemTool}",
+            "args": ["${input:taudemArgs}"],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared"
+            },
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "PATH": "${workspaceFolder}/src/build:${env:PATH}"
+                }
+            },
+            "detail": "Run a specific TauDEM tool with custom arguments"
+        },
+        {
+            "label": "Open TauDEM Documentation",
+            "type": "shell",
+            "command": "open",
+            "args": ["http://hydrology.usu.edu/taudem/taudem5/documentation.html"],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "never",
+                "focus": false,
+                "panel": "shared"
+            },
+            "detail": "Open TauDEM documentation in default browser"
+        }
+    ],
+    "inputs": [
+        {
+            "id": "taudemTool",
+            "description": "TauDEM tool to run",
+            "default": "pitremove",
+            "type": "promptString"
+        },
+        {
+            "id": "taudemArgs",
+            "description": "Arguments for the TauDEM tool (space-separated)",
+            "default": "-z input.tif -fel output.tif",
+            "type": "promptString"
+        },
+        {
+            "id": "installPath",
+            "description": "Custom installation path",
+            "default": "/usr/local/taudem",
+            "type": "promptString"
+        }
+    ]
+}

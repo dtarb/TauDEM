@@ -1,0 +1,282 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build TauDEM (Debug) - Windows",
+            "type": "shell",
+            "command": "${workspaceFolder}/build-windows.bat",
+            "args": ["debug"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": ["$msCompile"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Build TauDEM in Debug mode using build-windows.bat script"
+        },
+        {
+            "label": "Build TauDEM (Release) - Windows",
+            "type": "shell",
+            "command": "${workspaceFolder}/build-windows.bat",
+            "args": ["release"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": ["$msCompile"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Build TauDEM in Release mode using build-windows.bat script"
+        },
+        {
+            "label": "Clean Build - Windows",
+            "type": "shell",
+            "command": "cmd",
+            "args": [
+                "/c",
+                "if exist src\\build rmdir /s /q src\\build && if exist src\\build-release rmdir /s /q src\\build-release && if exist bin rmdir /s /q bin"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Clean all build directories and binaries"
+        },
+        {
+            "label": "CMake Configure (Debug) - Windows",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "..",
+                "-C", "../../config.cmake",
+                "-DCMAKE_BUILD_TYPE=Debug",
+                "-A", "x64",
+                "-DCMAKE_TOOLCHAIN_FILE=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "options": {
+                "cwd": "${workspaceFolder}/src/build"
+            },
+            "detail": "Configure CMake build system for Debug mode with vcpkg"
+        },
+        {
+            "label": "CMake Configure (Release) - Windows",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "..",
+                "-C", "../../config.cmake",
+                "-DCMAKE_BUILD_TYPE=Release",
+                "-A", "x64",
+                "-DCMAKE_TOOLCHAIN_FILE=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "options": {
+                "cwd": "${workspaceFolder}/src/build-release"
+            },
+            "detail": "Configure CMake build system for Release mode with vcpkg"
+        },
+        {
+            "label": "CMake Build (Debug) - Windows",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build", ".",
+                "--config", "Debug",
+                "--parallel"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": ["$msCompile"],
+            "options": {
+                "cwd": "${workspaceFolder}/src/build"
+            },
+            "dependsOn": "CMake Configure (Debug) - Windows",
+            "detail": "Build TauDEM using CMake in Debug mode"
+        },
+        {
+            "label": "CMake Build (Release) - Windows",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build", ".",
+                "--config", "Release",
+                "--parallel"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": ["$msCompile"],
+            "options": {
+                "cwd": "${workspaceFolder}/src/build-release"
+            },
+            "dependsOn": "CMake Configure (Release) - Windows",
+            "detail": "Build TauDEM using CMake in Release mode"
+        },
+        {
+            "label": "Run Specific TauDEM Tool (Debug) - Windows",
+            "type": "shell",
+            "command": "${input:taudemTool}",
+            "args": ["${input:taudemArgs}"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared"
+            },
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "PATH": "${workspaceFolder}/src/build;${env:PATH}",
+                    "GDAL_DATA": "C:/dev/vcpkg/installed/x64-windows/share/gdal",
+                    "PROJ_LIB": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                }
+            },
+            "detail": "Run a specific TauDEM tool with custom arguments (Debug build)"
+        },
+        {
+            "label": "Run Specific TauDEM Tool (Release) - Windows",
+            "type": "shell",
+            "command": "${input:taudemTool}",
+            "args": ["${input:taudemArgs}"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared"
+            },
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "PATH": "${workspaceFolder}/src/build-release;${env:PATH}",
+                    "GDAL_DATA": "C:/dev/vcpkg/installed/x64-windows/share/gdal",
+                    "PROJ_LIB": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                }
+            },
+            "detail": "Run a specific TauDEM tool with custom arguments (Release build)"
+        },
+        {
+            "label": "Check Dependencies - Windows",
+            "type": "shell",
+            "command": "cmd",
+            "args": [
+                "/c",
+                "echo Checking TauDEM dependencies on Windows... && echo === CMake === && cmake --version && echo === Visual Studio === && (where cl >nul 2>&1 && echo Visual Studio compiler found || echo Visual Studio compiler not found in PATH) && echo === vcpkg === && (where vcpkg >nul 2>&1 && vcpkg version || echo vcpkg not found in PATH) && echo === GDAL === && (where gdalinfo >nul 2>&1 && gdalinfo --version || echo GDAL not found in PATH) && echo Dependencies check complete."
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Check if all required dependencies are installed and accessible"
+        },
+        {
+            "label": "Install TauDEM - Windows",
+            "type": "shell",
+            "command": "cmd",
+            "args": [
+                "/c",
+                "if not exist \"${input:installPath}\" mkdir \"${input:installPath}\" && xcopy /Y /I \"src\\build\\Release\\*.exe\" \"${input:installPath}\" && echo TauDEM installed to ${input:installPath}"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "dependsOn": "CMake Build (Release) - Windows",
+            "detail": "Install TauDEM binaries to specified location"
+        },
+        {
+            "label": "Open TauDEM Documentation",
+            "type": "shell",
+            "command": "cmd",
+            "args": [
+                "/c",
+                "start http://hydrology.usu.edu/taudem/taudem5/documentation.html"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "never",
+                "focus": false,
+                "panel": "shared"
+            },
+            "detail": "Open TauDEM documentation in default browser"
+        }
+    ],
+    "inputs": [
+        {
+            "id": "taudemTool",
+            "description": "TauDEM tool to run",
+            "default": "pitremove",
+            "type": "promptString"
+        },
+        {
+            "id": "taudemArgs",
+            "description": "Arguments for the TauDEM tool",
+            "default": "-z input.tif -fel output.tif",
+            "type": "promptString"
+        },
+        {
+            "id": "installPath",
+            "description": "Installation path for TauDEM binaries",
+            "default": "C:/Program Files/TauDEM",
+            "type": "promptString"
+        }
+    ]
+}
