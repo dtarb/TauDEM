@@ -1,0 +1,941 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug PitRemove - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/pitremove.exe",
+            "args": [
+                "-z", "test_data/dem.tif",
+                "-fel", "output/dem_fel.tif",
+                "-v"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug D8FlowDir - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/d8flowdir.exe",
+            "args": [
+                "-fel", "test_data/dem_fel.tif",
+                "-p", "output/dem_p.tif",
+                "-sd8", "output/dem_sd8.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug DinfFlowDir - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/dinfflowdir.exe",
+            "args": [
+                "-fel", "test_data/dem_fel.tif",
+                "-ang", "output/dem_ang.tif",
+                "-slp", "output/dem_slp.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug AreaD8 - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/aread8.exe",
+            "args": [
+                "-p", "test_data/dem_p.tif",
+                "-ad8", "output/dem_ad8.tif",
+                "-nc"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug Threshold - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/threshold.exe",
+            "args": [
+                "-ssa", "test_data/dem_ad8.tif",
+                "-src", "output/dem_src.tif",
+                "-thresh", "100"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug StreamNet - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/streamnet.exe",
+            "args": [
+                "-fel", "test_data/dem_fel.tif",
+                "-p", "test_data/dem_p.tif",
+                "-ad8", "test_data/dem_ad8.tif",
+                "-src", "test_data/dem_src.tif",
+                "-ord", "output/dem_ord.tif",
+                "-tree", "output/dem_tree.txt",
+                "-coord", "output/dem_coord.txt",
+                "-net", "output/dem_net.shp",
+                "-w", "output/dem_w.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug GageWatershed - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/gagewatershed.exe",
+            "args": [
+                "-p", "test_data/dem_p.tif",
+                "-gw", "output/dem_gw.tif",
+                "-o", "test_data/outlets.shp",
+                "-id", "output/outlet_ids.txt"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug DropAnalysis - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/dropanalysis.exe",
+            "args": [
+                "-p", "test_data/dem_p.tif",
+                "-fel", "test_data/dem_fel.tif",
+                "-ad8", "test_data/dem_ad8.tif",
+                "-ssa", "test_data/dem_ssa.tif",
+                "-drp", "output/dem_drp.txt",
+                "-par", "10", "500", "50", "0"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug TWI - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/twi.exe",
+            "args": [
+                "-sca", "test_data/dem_sca.tif",
+                "-slp", "test_data/dem_slp.tif",
+                "-twi", "output/dem_twi.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug D8HDistToStrm - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/d8hdisttostrm.exe",
+            "args": [
+                "-p", "test_data/dem_p.tif",
+                "-src", "test_data/dem_src.tif",
+                "-dist", "output/dem_dist.tif",
+                "-thresh", "100"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug AreaDinf - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/areadinf.exe",
+            "args": [
+                "-ang", "test_data/dem_ang.tif",
+                "-sca", "output/dem_sca.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug D8FlowPathExtremeUp - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/d8flowpathextremeup.exe",
+            "args": [
+                "-p", "test_data/dem_p.tif",
+                "-sa", "test_data/dem_sa.tif",
+                "-ssa", "output/dem_ssa.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug DinfAvalanche - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/dinfavalanche.exe",
+            "args": [
+                "-ang", "test_data/dem_ang.tif",
+                "-fel", "test_data/dem_fel.tif",
+                "-rz", "output/dem_rz.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug DinfConcLimAccum - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/dinfconclimaccum.exe",
+            "args": [
+                "-ang", "test_data/dem_ang.tif",
+                "-dg", "test_data/dem_dg.tif",
+                "-ctpt", "output/dem_ctpt.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug DinfDecayAccum - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/dinfdecayaccum.exe",
+            "args": [
+                "-ang", "test_data/dem_ang.tif",
+                "-dm", "test_data/dem_dm.tif",
+                "-td", "output/dem_td.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug DinfDistDown - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/dinfdistdown.exe",
+            "args": [
+                "-ang", "test_data/dem_ang.tif",
+                "-fel", "test_data/dem_fel.tif",
+                "-src", "test_data/dem_src.tif",
+                "-dd", "output/dem_dd.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug DinfDistUp - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/dinfdistup.exe",
+            "args": [
+                "-ang", "test_data/dem_ang.tif",
+                "-fel", "test_data/dem_fel.tif",
+                "-src", "test_data/dem_src.tif",
+                "-du", "output/dem_du.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug DinfRevAccum - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/dinfrevaccum.exe",
+            "args": [
+                "-ang", "test_data/dem_ang.tif",
+                "-wg", "test_data/dem_wg.tif",
+                "-racc", "output/dem_racc.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug DinfTransLimAccum - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/dinftranslimaccum.exe",
+            "args": [
+                "-ang", "test_data/dem_ang.tif",
+                "-tsup", "test_data/dem_tsup.tif",
+                "-tc", "output/dem_tc.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug DinfUpDependence - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/dinfupdependence.exe",
+            "args": [
+                "-ang", "test_data/dem_ang.tif",
+                "-dep", "output/dem_dep.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug GridNet - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/gridnet.exe",
+            "args": [
+                "-p", "test_data/dem_p.tif",
+                "-plen", "output/dem_plen.tif",
+                "-tlen", "output/dem_tlen.tif",
+                "-gord", "output/dem_gord.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug LengthArea - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/lengtharea.exe",
+            "args": [
+                "-plen", "test_data/dem_plen.tif",
+                "-ad8", "test_data/dem_ad8.tif",
+                "-ss", "output/dem_ss.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug MoveOutletsToStrm - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/moveoutletstostrm.exe",
+            "args": [
+                "-p", "test_data/dem_p.tif",
+                "-src", "test_data/dem_src.tif",
+                "-o", "test_data/outlets.shp",
+                "-om", "output/outlets_moved.shp"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug PeukerDouglas - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/peukerdouglas.exe",
+            "args": [
+                "-fel", "test_data/dem_fel.tif",
+                "-ss", "output/dem_ss.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug SlopeArea - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/slopearea.exe",
+            "args": [
+                "-slp", "test_data/dem_slp.tif",
+                "-sca", "test_data/dem_sca.tif",
+                "-sa", "output/dem_sa.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug SlopeAreaRatio - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/slopearearatio.exe",
+            "args": [
+                "-slp", "test_data/dem_slp.tif",
+                "-sca", "test_data/dem_sca.tif",
+                "-sar", "output/dem_sar.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug SlopeAveDown - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/slopeavedown.exe",
+            "args": [
+                "-p", "test_data/dem_p.tif",
+                "-fel", "test_data/dem_fel.tif",
+                "-slpd", "output/dem_slpd.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug ConnectDown - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/connectdown.exe",
+            "args": [
+                "-wtsd", "output/dem_wtsd.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug CatchHydroGeo - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/Debug/catchhydrogeo.exe",
+            "args": [
+                "-ctpt", "output/catchments.shp"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Debug) - Windows"
+        },
+        {
+            "name": "Debug PitRemove (Release) - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build-release/Release/pitremove.exe",
+            "args": [
+                "-z", "test_data/dem.tif",
+                "-fel", "output/dem_fel.tif",
+                "-v"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Release) - Windows"
+        },
+        {
+            "name": "Debug D8FlowDir (Release) - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build-release/Release/d8flowdir.exe",
+            "args": [
+                "-fel", "test_data/dem_fel.tif",
+                "-p", "output/dem_p.tif",
+                "-sd8", "output/dem_sd8.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Release) - Windows"
+        },
+        {
+            "name": "Debug Threshold (Release) - Windows",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build-release/Release/threshold.exe",
+            "args": [
+                "-ssa", "test_data/dem_ad8.tif",
+                "-src", "output/dem_src.tif",
+                "-thresh", "100"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GDAL_DATA",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/gdal"
+                },
+                {
+                    "name": "PROJ_LIB",
+                    "value": "C:/dev/vcpkg/installed/x64-windows/share/proj"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake Build (Release) - Windows"
+        }
+    ]
+}

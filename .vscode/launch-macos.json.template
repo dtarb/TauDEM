@@ -1,0 +1,1012 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug PitRemove",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/pitremove",
+            "args": [
+                "-z", "test_data/dem.tif",
+                "-fel", "output/dem_fel.tif",
+                "-v"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb",
+            "console": "integratedTerminal",
+            "logging": {
+                "engineLogging": false
+            }
+        },
+        {
+            "name": "Debug D8FlowDir",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/d8flowdir",
+            "args": [
+                "-fel", "test_data/dem_fel.tif",
+                "-p", "output/dem_p.tif",
+                "-sd8", "output/dem_sd8.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug DinfFlowDir",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/dinfflowdir",
+            "args": [
+                "-fel", "test_data/dem_fel.tif",
+                "-ang", "output/dem_ang.tif",
+                "-slp", "output/dem_slp.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug AreaD8",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/aread8",
+            "args": [
+                "-p", "test_data/dem_p.tif",
+                "-ad8", "output/dem_ad8.tif",
+                "-nc"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug Threshold",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/threshold",
+            "args": [
+                "-ssa", "test_data/dem_ad8.tif",
+                "-src", "output/dem_src.tif",
+                "-thresh", "100"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug StreamNet",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/streamnet",
+            "args": [
+                "-fel", "test_data/dem_fel.tif",
+                "-p", "test_data/dem_p.tif",
+                "-ad8", "test_data/dem_ad8.tif",
+                "-src", "test_data/dem_src.tif",
+                "-ord", "output/dem_ord.tif",
+                "-tree", "output/dem_tree.txt",
+                "-coord", "output/dem_coord.txt",
+                "-net", "output/dem_net.shp",
+                "-w", "output/dem_w.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug GageWatershed",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/gagewatershed",
+            "args": [
+                "-p", "test_data/dem_p.tif",
+                "-gw", "output/dem_gw.tif",
+                "-o", "test_data/outlets.shp",
+                "-id", "output/outlet_ids.txt"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug DropAnalysis",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/dropanalysis",
+            "args": [
+                "-p", "test_data/dem_p.tif",
+                "-fel", "test_data/dem_fel.tif",
+                "-ad8", "test_data/dem_ad8.tif",
+                "-ssa", "test_data/dem_ssa.tif",
+                "-drp", "output/dem_drp.txt",
+                "-par", "10", "500", "50", "0"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug TWI",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/twi",
+            "args": [
+                "-sca", "test_data/dem_sca.tif",
+                "-slp", "test_data/dem_slp.tif",
+                "-twi", "output/dem_twi.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug D8HDistToStrm",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/d8hdisttostrm",
+            "args": [
+                "-p", "test_data/dem_p.tif",
+                "-src", "test_data/dem_src.tif",
+                "-dist", "output/dem_dist.tif",
+                "-thresh", "100"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug AreaDinf",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/areadinf",
+            "args": [
+                "-ang", "test_data/dem_ang.tif",
+                "-sca", "output/dem_sca.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug D8FlowPathExtremeUp",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/d8flowpathextremeup",
+            "args": [
+                "-p", "test_data/dem_p.tif",
+                "-sa", "test_data/dem_sa.tif",
+                "-ssa", "output/dem_ssa.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug DinfAvalanche",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/dinfavalanche",
+            "args": [
+                "-ang", "test_data/dem_ang.tif",
+                "-fel", "test_data/dem_fel.tif",
+                "-rz", "output/dem_rz.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug DinfConcLimAccum",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/dinfconclimaccum",
+            "args": [
+                "-ang", "test_data/dem_ang.tif",
+                "-dg", "test_data/dem_dg.tif",
+                "-ctpt", "output/dem_ctpt.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug DinfDecayAccum",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/dinfdecayaccum",
+            "args": [
+                "-ang", "test_data/dem_ang.tif",
+                "-dm", "test_data/dem_dm.tif",
+                "-td", "output/dem_td.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug DinfDistDown",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/dinfdistdown",
+            "args": [
+                "-ang", "test_data/dem_ang.tif",
+                "-fel", "test_data/dem_fel.tif",
+                "-src", "test_data/dem_src.tif",
+                "-dd", "output/dem_dd.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug DinfDistUp",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/dinfdistup",
+            "args": [
+                "-ang", "test_data/dem_ang.tif",
+                "-fel", "test_data/dem_fel.tif",
+                "-src", "test_data/dem_src.tif",
+                "-du", "output/dem_du.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug DinfRevAccum",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/dinfrevaccum",
+            "args": [
+                "-ang", "test_data/dem_ang.tif",
+                "-wg", "test_data/dem_wg.tif",
+                "-racc", "output/dem_racc.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug DinfTransLimAccum",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/dinftranslimaccum",
+            "args": [
+                "-ang", "test_data/dem_ang.tif",
+                "-tsup", "test_data/dem_tsup.tif",
+                "-tc", "output/dem_tc.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug DinfUpDependence",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/dinfupdependence",
+            "args": [
+                "-ang", "test_data/dem_ang.tif",
+                "-dep", "output/dem_dep.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug GridNet",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/gridnet",
+            "args": [
+                "-p", "test_data/dem_p.tif",
+                "-plen", "output/dem_plen.tif",
+                "-tlen", "output/dem_tlen.tif",
+                "-gord", "output/dem_gord.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug LengthArea",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/lengtharea",
+            "args": [
+                "-plen", "test_data/dem_plen.tif",
+                "-ad8", "test_data/dem_ad8.tif",
+                "-ss", "output/dem_ss.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug MoveOutletsToStrm",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/moveoutletstostrm",
+            "args": [
+                "-p", "test_data/dem_p.tif",
+                "-src", "test_data/dem_src.tif",
+                "-o", "test_data/outlets.shp",
+                "-om", "output/outlets_moved.shp"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug PeukerDouglas",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/peukerdouglas",
+            "args": [
+                "-fel", "test_data/dem_fel.tif",
+                "-ss", "output/dem_ss.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug SlopeArea",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/slopearea",
+            "args": [
+                "-slp", "test_data/dem_slp.tif",
+                "-sca", "test_data/dem_sca.tif",
+                "-sa", "output/dem_sa.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug SlopeAreaRatio",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/slopearearatio",
+            "args": [
+                "-slp", "test_data/dem_slp.tif",
+                "-sca", "test_data/dem_sca.tif",
+                "-sar", "output/dem_sar.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug SlopeAveDown",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/slopeavedown",
+            "args": [
+                "-p", "test_data/dem_p.tif",
+                "-fel", "test_data/dem_fel.tif",
+                "-slpd", "output/dem_slpd.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug ConnectDown",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/connectdown",
+            "args": [
+                "-p", "test_data/dem_p.tif",
+                "-w", "test_data/dem_w.tif",
+                "-o", "test_data/outlets.shp",
+                "-wtsd", "output/dem_wtsd.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug CatchHydroGeo",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/catchhydrogeo",
+            "args": [
+                "-p", "test_data/dem_p.tif",
+                "-o", "test_data/outlets.shp",
+                "-ctpt", "output/catchments.shp"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug CatchOutlets",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/catchoutlets",
+            "args": [
+                "-p", "test_data/dem_p.tif",
+                "-src", "test_data/dem_src.tif",
+                "-o", "output/outlets.shp"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug EditRaster",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/editraster",
+            "args": [
+                "-input", "test_data/dem.tif",
+                "-output", "output/dem_edited.tif",
+                "-mask", "test_data/mask.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug FlowDirCond",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/flowdircond",
+            "args": [
+                "-p", "test_data/dem_p.tif",
+                "-z", "test_data/dem_z.tif",
+                "-pf", "output/dem_pf.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug RetLimFlow",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/retlimflow",
+            "args": [
+                "-p", "test_data/dem_p.tif",
+                "-src", "test_data/dem_src.tif",
+                "-ret", "output/dem_ret.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug SetRegion",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/setregion",
+            "args": [
+                "-mask", "test_data/mask.tif",
+                "-src", "test_data/dem_src.tif",
+                "-seto", "output/dem_seto.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug SinmapSI",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/sinmapsi",
+            "args": [
+                "-slp", "test_data/dem_slp.tif",
+                "-sca", "test_data/dem_sca.tif",
+                "-si", "output/dem_si.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug InunMap",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/inunmap",
+            "args": [
+                "-fel", "test_data/dem_fel.tif",
+                "-h", "test_data/depth.tif",
+                "-inun", "output/inundation.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug MPI Tool (Manual)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/usr/local/bin/mpirun",
+            "args": [
+                "-np", "2",
+                "${workspaceFolder}/src/build/aread8",
+                "-p", "test_data/dem_p.tif",
+                "-ad8", "output/dem_ad8.tif",
+                "-nc"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "MPI_ROOT",
+                    "value": "/usr/local"
+                }
+            ],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Debug Simple Test Case",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/build/pitremove",
+            "args": [
+                "${input:demFile}"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
+            "miDebuggerPath": "/usr/bin/lldb"
+        },
+        {
+            "name": "Attach to Process",
+            "type": "cppdbg",
+            "request": "attach",
+            "program": "${workspaceFolder}/src/build/pitremove",
+            "processId": "${command:pickProcess}",
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ],
+    "inputs": [
+        {
+            "id": "demFile",
+            "description": "Enter DEM file path",
+            "default": "test_data/dem.tif",
+            "type": "promptString"
+        },
+        {
+            "id": "outputFile",
+            "description": "Enter output file path",
+            "default": "output/result.tif",
+            "type": "promptString"
+        },
+        {
+            "id": "threshold",
+            "description": "Enter threshold value",
+            "default": "100",
+            "type": "promptString"
+        }
+    ]
+}
