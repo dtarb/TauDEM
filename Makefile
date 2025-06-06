@@ -124,10 +124,13 @@ clean:
 	@rm -rf $(BUILD_DIR)
 
 install:	
-	@echo "Installing TauDEM..."
+	@echo "Installing TauDEM to $(or $(PREFIX),/usr/local/taudem)..."
 	@if [ ! -d "$(BUILD_DIR)" ]; then \
 		echo "Error: Build directory not found. Please run 'make release' first."; \
 		exit 1; \
+	fi
+	@if [ -n "$(PREFIX)" ]; then \
+		cd $(BUILD_DIR) && cmake . -DCMAKE_INSTALL_PREFIX=$(PREFIX); \
 	fi
 	@cd $(BUILD_DIR) && make install
 
@@ -143,7 +146,7 @@ help:
 	@echo "  make dk-install [PREFIX=<path>]   - Install TauDEM to specified directory (default: /usr/local, Linux only)"
 	@echo "  make dk-run-tests                 - Run TauDEM tests in Docker environment"
 	@echo "  make clean                        - Clean build directory"
-	@echo "  make install                      - Install TauDEM"
+	@echo "  make install [PREFIX=<path>]      - Install TauDEM (default: /usr/local)"
 	@echo "  make uninstall                    - Remove TauDEM installation"
 	@echo "  make help                         - Show this help message"
 	@echo ""
