@@ -174,3 +174,5 @@ TauDEM_Installation_Source/
 
 # VS Code settings
 .vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
