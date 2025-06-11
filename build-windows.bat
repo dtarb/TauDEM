@@ -3,15 +3,25 @@ setlocal enabledelayedexpansion
 
 REM Check for build type parameter (default to Debug if not provided)
 set BUILD_TYPE=Debug
+set TARGET=
 if "%1"=="release" (
     set BUILD_TYPE=Release
     echo Setting build type to Release
+    set TARGET=%2
+) else if not "%2"=="" (
+    set TARGET=%2
+) else (
+    set TARGET=%1
+)
+
+if not "%TARGET%"=="" (
+    echo Building specific target: %TARGET%
 )
 
 echo Starting build process for x64 target in %BUILD_TYPE% mode...
 
 REM Set build directory based on build type
-set BUILD_DIR=src\build
+set BUILD_DIR=src\build-debug
 if /i "%BUILD_TYPE%"=="Release" set BUILD_DIR=src\build-release
 
 REM Set GDAL environment variables for build
@@ -46,8 +56,13 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo Building project in %BUILD_TYPE% mode...
-echo cmake --build . --config %BUILD_TYPE%
-cmake --build . --config %BUILD_TYPE%
+if not "%TARGET%"=="" (
+    echo cmake --build . --config %BUILD_TYPE% --target %TARGET%
+    cmake --build . --config %BUILD_TYPE% --target %TARGET%
+) else (
+    echo cmake --build . --config %BUILD_TYPE%
+    cmake --build . --config %BUILD_TYPE%
+)
 if %ERRORLEVEL% NEQ 0 (
     echo Build failed with error code %ERRORLEVEL%
     goto error
