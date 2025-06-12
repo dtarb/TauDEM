@@ -312,11 +312,17 @@ make debug COMPILER=linux
 
 #### Windows
 ```cmd
-# Release build (optimized)
+# Release build (optimized) all targets
 build-windows.bat release
 
-# Debug build (with debugging symbols)
+# Debug build (with debugging symbols) all targets
 build-windows.bat debug
+
+# Release build (optimized) specific target
+build-windows.bat release pitremove
+
+# Debug build (with debugging symbols) specific target
+build-windows.bat debug pitremove
 ```
 
 ### Build Options
@@ -324,17 +330,23 @@ build-windows.bat debug
 #### Using Make (Linux/macOS)
 
 ```bash
-# Debug build
+# Debug build - all targets
 make debug COMPILER=clang    # macOS with Clang
 make debug COMPILER=linux    # Linux with GCC
 
-# Release build
+# Release build - all targets
 make release COMPILER=clang  # macOS with Clang
 make release COMPILER=linux  # Linux with GCC
 
-# Alternative compilers (macOS)
+# Alternative compilers (macOS) - all targets
 make release COMPILER=macos      # Homebrew GCC
 make release COMPILER=gcc-apple  # Apple GCC
+
+# Debug build - specific target
+make debug COMPILER=clang TARGET=pitremove
+
+# Release build - specific target
+make release COMPILER=clang TARGET=pitremove
 
 # Clean build
 make clean
@@ -349,7 +361,7 @@ cmake .. -C ../../config.cmake -DCMAKE_BUILD_TYPE=Release
 make -j$(nproc)
 ```
 
-#### Docker Build (Building/Testing TauDEN for Linux)
+#### Docker Build (Building/Testing TauDEM for Linux)
 
 ```bash
 # Build the Docker image for testing (from the root of the project)
