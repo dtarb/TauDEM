@@ -168,6 +168,7 @@ install
 # ignore folder related to build
 src/build/
 src/build-release/
+src/build-debug/
 
 # ignore folder related to windows installer
 TauDEM_Installation_Source/
