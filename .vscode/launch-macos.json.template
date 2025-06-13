@@ -5,10 +5,10 @@
             "name": "Debug PitRemove",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/pitremove",
+            "program": "${workspaceFolder}/src/build-debug/pitremove",
             "args": [
-                "-z", "test_data/dem.tif",
-                "-fel", "output/dem_fel.tif",
+                "-z", "test_data/input/dem.tif",
+                "-fel", "test_data/output/dem_fel.tif",
                 "-v"
             ],
             "stopAtEntry": false,
@@ -23,22 +23,17 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb",
-            "console": "integratedTerminal",
-            "logging": {
-                "engineLogging": false
-            }
+            "preLaunchTask": "Build pitremove (Debug, Clang) - macOS"
         },
         {
             "name": "Debug D8FlowDir",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/d8flowdir",
+            "program": "${workspaceFolder}/src/build-debug/d8flowdir",
             "args": [
-                "-fel", "test_data/dem_fel.tif",
-                "-p", "output/dem_p.tif",
-                "-sd8", "output/dem_sd8.tif"
+                "-fel", "test_data/input/dem_fel.tif",
+                "-p", "test_data/output/dem_p.tif",
+                "-sd8", "test_data/output/dem_sd8.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -52,18 +47,17 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build d8flowdir (Debug, Clang) - macOS"
         },
         {
             "name": "Debug DinfFlowDir",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/dinfflowdir",
+            "program": "${workspaceFolder}/src/build-debug/dinfflowdir",
             "args": [
-                "-fel", "test_data/dem_fel.tif",
-                "-ang", "output/dem_ang.tif",
-                "-slp", "output/dem_slp.tif"
+                "-fel", "test_data/input/dem_fel.tif",
+                "-ang", "test_data/output/dem_ang.tif",
+                "-slp", "test_data/output/dem_slp.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -77,17 +71,16 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build dinfflowdir (Debug, Clang) - macOS"
         },
         {
             "name": "Debug AreaD8",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/aread8",
+            "program": "${workspaceFolder}/src/build-debug/aread8",
             "args": [
-                "-p", "test_data/dem_p.tif",
-                "-ad8", "output/dem_ad8.tif",
+                "-p", "test_data/input/dem_p.tif",
+                "-ad8", "test_data/output/dem_ad8.tif",
                 "-nc"
             ],
             "stopAtEntry": false,
@@ -102,17 +95,16 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build aread8 (Debug, Clang) - macOS"
         },
         {
             "name": "Debug Threshold",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/threshold",
+            "program": "${workspaceFolder}/src/build-debug/threshold",
             "args": [
-                "-ssa", "test_data/dem_ad8.tif",
-                "-src", "output/dem_src.tif",
+                "-ssa", "test_data/input/dem_ad8.tif",
+                "-src", "test_data/output/dem_src.tif",
                 "-thresh", "100"
             ],
             "stopAtEntry": false,
@@ -127,24 +119,23 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build threshold (Debug, Clang) - macOS"
         },
         {
             "name": "Debug StreamNet",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/streamnet",
+            "program": "${workspaceFolder}/src/build-debug/streamnet",
             "args": [
-                "-fel", "test_data/dem_fel.tif",
-                "-p", "test_data/dem_p.tif",
-                "-ad8", "test_data/dem_ad8.tif",
-                "-src", "test_data/dem_src.tif",
-                "-ord", "output/dem_ord.tif",
-                "-tree", "output/dem_tree.txt",
-                "-coord", "output/dem_coord.txt",
-                "-net", "output/dem_net.shp",
-                "-w", "output/dem_w.tif"
+                "-fel", "test_data/input/dem_fel.tif",
+                "-p", "test_data/input/dem_p.tif",
+                "-ad8", "test_data/input/dem_ad8.tif",
+                "-src", "test_data/input/dem_src.tif",
+                "-ord", "test_data/output/dem_ord.tif",
+                "-tree", "test_data/output/dem_tree.txt",
+                "-coord", "test_data/output/dem_coord.txt",
+                "-net", "test_data/output/dem_net.shp",
+                "-w", "test_data/output/dem_w.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -158,19 +149,18 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build streamnet (Debug, Clang) - macOS"
         },
         {
             "name": "Debug GageWatershed",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/gagewatershed",
+            "program": "${workspaceFolder}/src/build-debug/gagewatershed",
             "args": [
-                "-p", "test_data/dem_p.tif",
-                "-gw", "output/dem_gw.tif",
-                "-o", "test_data/outlets.shp",
-                "-id", "output/outlet_ids.txt"
+                "-p", "test_data/input/dem_p.tif",
+                "-gw", "test_data/output/dem_gw.tif",
+                "-o", "test_data/input/outlets.shp",
+                "-id", "test_data/output/outlet_ids.txt"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -184,20 +174,19 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build gagewatershed (Debug, Clang) - macOS"
         },
         {
             "name": "Debug DropAnalysis",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/dropanalysis",
+            "program": "${workspaceFolder}/src/build-debug/dropanalysis",
             "args": [
-                "-p", "test_data/dem_p.tif",
-                "-fel", "test_data/dem_fel.tif",
-                "-ad8", "test_data/dem_ad8.tif",
-                "-ssa", "test_data/dem_ssa.tif",
-                "-drp", "output/dem_drp.txt",
+                "-p", "test_data/input/dem_p.tif",
+                "-fel", "test_data/input/dem_fel.tif",
+                "-ad8", "test_data/input/dem_ad8.tif",
+                "-ssa", "test_data/input/dem_ssa.tif",
+                "-drp", "test_data/output/dem_drp.txt",
                 "-par", "10", "500", "50", "0"
             ],
             "stopAtEntry": false,
@@ -212,18 +201,17 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build dropanalysis (Debug, Clang) - macOS"
         },
         {
             "name": "Debug TWI",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/twi",
+            "program": "${workspaceFolder}/src/build-debug/twi",
             "args": [
-                "-sca", "test_data/dem_sca.tif",
-                "-slp", "test_data/dem_slp.tif",
-                "-twi", "output/dem_twi.tif"
+                "-sca", "test_data/input/dem_sca.tif",
+                "-slp", "test_data/input/dem_slp.tif",
+                "-twi", "test_data/output/dem_twi.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -237,18 +225,17 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build twi (Debug, Clang) - macOS"
         },
         {
             "name": "Debug D8HDistToStrm",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/d8hdisttostrm",
+            "program": "${workspaceFolder}/src/build-debug/d8hdisttostrm",
             "args": [
-                "-p", "test_data/dem_p.tif",
-                "-src", "test_data/dem_src.tif",
-                "-dist", "output/dem_dist.tif",
+                "-p", "test_data/input/dem_p.tif",
+                "-src", "test_data/input/dem_src.tif",
+                "-dist", "test_data/output/dem_dist.tif",
                 "-thresh", "100"
             ],
             "stopAtEntry": false,
@@ -263,17 +250,16 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build d8hdisttostrm (Debug, Clang) - macOS"
         },
         {
             "name": "Debug AreaDinf",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/areadinf",
+            "program": "${workspaceFolder}/src/build-debug/areadinf",
             "args": [
-                "-ang", "test_data/dem_ang.tif",
-                "-sca", "output/dem_sca.tif"
+                "-ang", "test_data/input/dem_ang.tif",
+                "-sca", "test_data/output/dem_sca.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -287,18 +273,17 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build areadinf (Debug, Clang) - macOS"
         },
         {
             "name": "Debug D8FlowPathExtremeUp",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/d8flowpathextremeup",
+            "program": "${workspaceFolder}/src/build-debug/d8flowpathextremeup",
             "args": [
-                "-p", "test_data/dem_p.tif",
-                "-sa", "test_data/dem_sa.tif",
-                "-ssa", "output/dem_ssa.tif"
+                "-p", "test_data/input/dem_p.tif",
+                "-sa", "test_data/input/dem_sa.tif",
+                "-ssa", "test_data/output/dem_ssa.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -312,18 +297,17 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Debug DinfAvalanche",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/dinfavalanche",
+            "program": "${workspaceFolder}/src/build-debug/dinfavalanche",
             "args": [
-                "-ang", "test_data/dem_ang.tif",
-                "-fel", "test_data/dem_fel.tif",
-                "-rz", "output/dem_rz.tif"
+                "-ang", "test_data/input/dem_ang.tif",
+                "-fel", "test_data/input/dem_fel.tif",
+                "-rz", "test_data/output/dem_rz.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -337,18 +321,17 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Debug DinfConcLimAccum",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/dinfconclimaccum",
+            "program": "${workspaceFolder}/src/build-debug/dinfconclimaccum",
             "args": [
-                "-ang", "test_data/dem_ang.tif",
-                "-dg", "test_data/dem_dg.tif",
-                "-ctpt", "output/dem_ctpt.tif"
+                "-ang", "test_data/input/dem_ang.tif",
+                "-dg", "test_data/input/dem_dg.tif",
+                "-ctpt", "test_data/output/dem_ctpt.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -362,18 +345,17 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Debug DinfDecayAccum",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/dinfdecayaccum",
+            "program": "${workspaceFolder}/src/build-debug/dinfdecayaccum",
             "args": [
-                "-ang", "test_data/dem_ang.tif",
-                "-dm", "test_data/dem_dm.tif",
-                "-td", "output/dem_td.tif"
+                "-ang", "test_data/input/dem_ang.tif",
+                "-dm", "test_data/input/dem_dm.tif",
+                "-td", "test_data/output/dem_td.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -387,19 +369,18 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Debug DinfDistDown",
             "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/src/build/dinfdistdown",
+            "request": "launch", 
+            "program": "${workspaceFolder}/src/build-debug/dinfdistdown",
             "args": [
-                "-ang", "test_data/dem_ang.tif",
-                "-fel", "test_data/dem_fel.tif",
-                "-src", "test_data/dem_src.tif",
-                "-dd", "output/dem_dd.tif"
+                "-ang", "test_data/input/dem_ang.tif",
+                "-fel", "test_data/input/dem_fel.tif",
+                "-src", "test_data/input/dem_src.tif",
+                "-dd", "test_data/output/dem_dd.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -413,19 +394,18 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Debug DinfDistUp",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/dinfdistup",
+            "program": "${workspaceFolder}/src/build-debug/dinfdistup",
             "args": [
-                "-ang", "test_data/dem_ang.tif",
-                "-fel", "test_data/dem_fel.tif",
-                "-src", "test_data/dem_src.tif",
-                "-du", "output/dem_du.tif"
+                "-ang", "test_data/input/dem_ang.tif",
+                "-fel", "test_data/input/dem_fel.tif",
+                "-src", "test_data/input/dem_src.tif",
+                "-du", "test_data/output/dem_du.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -439,18 +419,17 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Debug DinfRevAccum",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/dinfrevaccum",
+            "program": "${workspaceFolder}/src/build-debug/dinfrevaccum",
             "args": [
-                "-ang", "test_data/dem_ang.tif",
-                "-wg", "test_data/dem_wg.tif",
-                "-racc", "output/dem_racc.tif"
+                "-ang", "test_data/input/dem_ang.tif",
+                "-wg", "test_data/input/dem_wg.tif",
+                "-racc", "test_data/output/dem_racc.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -464,18 +443,17 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Debug DinfTransLimAccum",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/dinftranslimaccum",
+            "program": "${workspaceFolder}/src/build-debug/dinftranslimaccum",
             "args": [
-                "-ang", "test_data/dem_ang.tif",
-                "-tsup", "test_data/dem_tsup.tif",
-                "-tc", "output/dem_tc.tif"
+                "-ang", "test_data/input/dem_ang.tif",
+                "-tsup", "test_data/input/dem_tsup.tif",
+                "-tc", "test_data/output/dem_tc.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -489,17 +467,16 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Debug DinfUpDependence",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/dinfupdependence",
+            "program": "${workspaceFolder}/src/build-debug/dinfupdependence",
             "args": [
-                "-ang", "test_data/dem_ang.tif",
-                "-dep", "output/dem_dep.tif"
+                "-ang", "test_data/input/dem_ang.tif",
+                "-dep", "test_data/output/dem_dep.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -513,19 +490,18 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Debug GridNet",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/gridnet",
+            "program": "${workspaceFolder}/src/build-debug/gridnet",
             "args": [
-                "-p", "test_data/dem_p.tif",
-                "-plen", "output/dem_plen.tif",
-                "-tlen", "output/dem_tlen.tif",
-                "-gord", "output/dem_gord.tif"
+                "-p", "test_data/input/dem_p.tif",
+                "-plen", "test_data/output/dem_plen.tif",
+                "-tlen", "test_data/output/dem_tlen.tif",
+                "-gord", "test_data/output/dem_gord.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -539,18 +515,17 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Debug LengthArea",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/lengtharea",
+            "program": "${workspaceFolder}/src/build-debug/lengtharea",
             "args": [
-                "-plen", "test_data/dem_plen.tif",
-                "-ad8", "test_data/dem_ad8.tif",
-                "-ss", "output/dem_ss.tif"
+                "-plen", "test_data/input/dem_plen.tif",
+                "-ad8", "test_data/input/dem_ad8.tif",
+                "-ss", "test_data/output/dem_ss.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -564,19 +539,18 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Debug MoveOutletsToStrm",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/moveoutletstostrm",
+            "program": "${workspaceFolder}/src/build-debug/moveoutletstostrm",
             "args": [
-                "-p", "test_data/dem_p.tif",
-                "-src", "test_data/dem_src.tif",
-                "-o", "test_data/outlets.shp",
-                "-om", "output/outlets_moved.shp"
+                "-p", "test_data/input/dem_p.tif",
+                "-src", "test_data/input/dem_src.tif",
+                "-o", "test_data/input/outlets.shp",
+                "-om", "test_data/output/outlets_moved.shp"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -590,17 +564,16 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Debug PeukerDouglas",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/peukerdouglas",
+            "program": "${workspaceFolder}/src/build-debug/peukerdouglas",
             "args": [
-                "-fel", "test_data/dem_fel.tif",
-                "-ss", "output/dem_ss.tif"
+                "-fel", "test_data/input/dem_fel.tif",
+                "-ss", "test_data/output/dem_ss.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -614,18 +587,17 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Debug SlopeArea",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/slopearea",
+            "program": "${workspaceFolder}/src/build-debug/slopearea",
             "args": [
-                "-slp", "test_data/dem_slp.tif",
-                "-sca", "test_data/dem_sca.tif",
-                "-sa", "output/dem_sa.tif"
+                "-slp", "test_data/input/dem_slp.tif",
+                "-sca", "test_data/input/dem_sca.tif",
+                "-sa", "test_data/output/dem_sa.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -639,18 +611,17 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Debug SlopeAreaRatio",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/slopearearatio",
+            "program": "${workspaceFolder}/src/build-debug/slopearearatio",
             "args": [
-                "-slp", "test_data/dem_slp.tif",
-                "-sca", "test_data/dem_sca.tif",
-                "-sar", "output/dem_sar.tif"
+                "-slp", "test_data/input/dem_slp.tif",
+                "-sca", "test_data/input/dem_sca.tif",
+                "-sar", "test_data/output/dem_sar.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -664,18 +635,17 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Debug SlopeAveDown",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/slopeavedown",
+            "program": "${workspaceFolder}/src/build-debug/slopeavedown",
             "args": [
-                "-p", "test_data/dem_p.tif",
-                "-fel", "test_data/dem_fel.tif",
-                "-slpd", "output/dem_slpd.tif"
+                "-p", "test_data/input/dem_p.tif",
+                "-fel", "test_data/input/dem_fel.tif",
+                "-slpd", "test_data/output/dem_slpd.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -689,19 +659,18 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Debug ConnectDown",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/connectdown",
+            "program": "${workspaceFolder}/src/build-debug/connectdown",
             "args": [
-                "-p", "test_data/dem_p.tif",
-                "-w", "test_data/dem_w.tif",
-                "-o", "test_data/outlets.shp",
-                "-wtsd", "output/dem_wtsd.tif"
+                "-p", "test_data/input/dem_p.tif",
+                "-w", "test_data/input/dem_w.tif",
+                "-o", "test_data/input/outlets.shp",
+                "-wtsd", "test_data/output/dem_wtsd.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -715,18 +684,17 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Debug CatchHydroGeo",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/catchhydrogeo",
+            "program": "${workspaceFolder}/src/build-debug/catchhydrogeo",
             "args": [
-                "-p", "test_data/dem_p.tif",
-                "-o", "test_data/outlets.shp",
-                "-ctpt", "output/catchments.shp"
+                "-p", "test_data/input/dem_p.tif",
+                "-o", "test_data/input/outlets.shp",
+                "-ctpt", "test_data/output/catchments.shp"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -740,18 +708,17 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Debug CatchOutlets",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/catchoutlets",
+            "program": "${workspaceFolder}/src/build-debug/catchoutlets",
             "args": [
-                "-p", "test_data/dem_p.tif",
-                "-src", "test_data/dem_src.tif",
-                "-o", "output/outlets.shp"
+                "-p", "test_data/input/dem_p.tif",
+                "-src", "test_data/input/dem_src.tif",
+                "-o", "test_data/output/outlets.shp"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -765,18 +732,17 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Debug EditRaster",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/editraster",
+            "program": "${workspaceFolder}/src/build-debug/editraster",
             "args": [
-                "-input", "test_data/dem.tif",
-                "-output", "output/dem_edited.tif",
-                "-mask", "test_data/mask.tif"
+                "-input", "test_data/input/dem.tif",
+                "-output", "test_data/output/dem_edited.tif",
+                "-mask", "test_data/input/mask.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -790,18 +756,17 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Debug FlowDirCond",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/flowdircond",
+            "program": "${workspaceFolder}/src/build-debug/flowdircond",
             "args": [
-                "-p", "test_data/dem_p.tif",
-                "-z", "test_data/dem_z.tif",
-                "-pf", "output/dem_pf.tif"
+                "-p", "test_data/input/dem_p.tif",
+                "-z", "test_data/input/dem_z.tif",
+                "-pf", "test_data/output/dem_pf.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -815,18 +780,17 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Debug RetLimFlow",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/retlimflow",
+            "program": "${workspaceFolder}/src/build-debug/retlimflow",
             "args": [
-                "-p", "test_data/dem_p.tif",
-                "-src", "test_data/dem_src.tif",
-                "-ret", "output/dem_ret.tif"
+                "-p", "test_data/input/dem_p.tif",
+                "-src", "test_data/input/dem_src.tif",
+                "-ret", "test_data/output/dem_ret.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -839,19 +803,18 @@
                     "text": "-enable-pretty-printing",
                     "ignoreFailures": true
                 }
-            ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            ],            
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Debug SetRegion",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/setregion",
+            "program": "${workspaceFolder}/src/build-debug/setregion",
             "args": [
-                "-mask", "test_data/mask.tif",
-                "-src", "test_data/dem_src.tif",
-                "-seto", "output/dem_seto.tif"
+                "-mask", "test_data/input/mask.tif",
+                "-src", "test_data/input/dem_src.tif",
+                "-seto", "test_data/output/dem_seto.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -865,18 +828,17 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Debug SinmapSI",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/sinmapsi",
+            "program": "${workspaceFolder}/src/build-debug/sinmapsi",
             "args": [
-                "-slp", "test_data/dem_slp.tif",
-                "-sca", "test_data/dem_sca.tif",
-                "-si", "output/dem_si.tif"
+                "-slp", "test_data/input/dem_slp.tif",
+                "-sca", "test_data/input/dem_sca.tif",
+                "-si", "test_data/output/dem_si.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -890,18 +852,17 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Debug InunMap",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/inunmap",
+            "program": "${workspaceFolder}/src/build-debug/inunmap",
             "args": [
-                "-fel", "test_data/dem_fel.tif",
-                "-h", "test_data/depth.tif",
-                "-inun", "output/inundation.tif"
+                "-fel", "test_data/input/dem_fel.tif",
+                "-h", "test_data/input/depth.tif",
+                "-inun", "test_data/output/inundation.tif"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -915,8 +876,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Debug MPI Tool (Manual)",
@@ -925,9 +885,9 @@
             "program": "/usr/local/bin/mpirun",
             "args": [
                 "-np", "2",
-                "${workspaceFolder}/src/build/aread8",
-                "-p", "test_data/dem_p.tif",
-                "-ad8", "output/dem_ad8.tif",
+                "${workspaceFolder}/src/build-debug/aread8",
+                "-p", "test_data/input/dem_p.tif",
+                "-ad8", "test_data/output/dem_ad8.tif",
                 "-nc"
             ],
             "stopAtEntry": false,
@@ -947,14 +907,13 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Debug Simple Test Case",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build/pitremove",
+            "program": "${workspaceFolder}/src/build-debug/pitremove",
             "args": [
                 "${input:demFile}"
             ],
@@ -970,23 +929,15 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build TauDEM (Debug, Clang) - macOS",
-            "miDebuggerPath": "/usr/bin/lldb"
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
             "name": "Attach to Process",
             "type": "cppdbg",
             "request": "attach",
-            "program": "${workspaceFolder}/src/build/pitremove",
+            "program": "${workspaceFolder}/src/build-debug/pitremove",
             "processId": "${command:pickProcess}",
-            "MIMode": "lldb",
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ]
+            "MIMode": "lldb"
         }
     ],
     "inputs": [
@@ -1010,3 +961,4 @@
         }
     ]
 }
+
