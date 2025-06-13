@@ -25,6 +25,146 @@
             "detail": "Build TauDEM in Debug mode using Clang compiler"
         },
         {
+            "label": "Build pitremove (Debug, Clang) - macOS",
+            "type": "shell",
+            "command": "make",
+            "args": ["debug", "COMPILER=clang", "TARGET=pitremove"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": ["$gcc"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Build only pitremove target in Debug mode using Clang compiler"
+        },
+        {
+            "label": "Build d8flowdir (Debug, Clang) - macOS",
+            "type": "shell",
+            "command": "make",
+            "args": ["debug", "COMPILER=clang", "TARGET=d8flowdir"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": ["$gcc"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Build only d8flowdir target in Debug mode using Clang compiler"
+        },
+        {
+            "label": "Build dinfflowdir (Debug, Clang) - macOS",
+            "type": "shell",
+            "command": "make",
+            "args": ["debug", "COMPILER=clang", "TARGET=dinfflowdir"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": ["$gcc"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Build only dinfflowdir target in Debug mode using Clang compiler"
+        },
+        {
+            "label": "Build aread8 (Debug, Clang) - macOS",
+            "type": "shell",
+            "command": "make",
+            "args": ["debug", "COMPILER=clang", "TARGET=aread8"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": ["$gcc"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Build only aread8 target in Debug mode using Clang compiler"
+        },
+        {
+            "label": "Build threshold (Debug, Clang) - macOS",
+            "type": "shell",
+            "command": "make",
+            "args": ["debug", "COMPILER=clang", "TARGET=threshold"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": ["$gcc"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Build only threshold target in Debug mode using Clang compiler"
+        },
+        {
+            "label": "Build streamnet (Debug, Clang) - macOS",
+            "type": "shell",
+            "command": "make",
+            "args": ["debug", "COMPILER=clang", "TARGET=streamnet"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": ["$gcc"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Build only streamnet target in Debug mode using Clang compiler"
+        },
+        {
+            "label": "Build gagewatershed (Debug, Clang) - macOS",
+            "type": "shell",
+            "command": "make",
+            "args": ["debug", "COMPILER=clang", "TARGET=gagewatershed"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": ["$gcc"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Build only gagewatershed target in Debug mode using Clang compiler"
+        },
+        {
             "label": "Build TauDEM (Release, Clang) - macOS",
             "type": "shell",
             "command": "make",
@@ -43,6 +183,106 @@
                 "cwd": "${workspaceFolder}"
             },
             "detail": "Build TauDEM in Release mode using Clang compiler"
+        },
+        {
+            "label": "Build dropanalysis (Debug, Clang) - macOS",
+            "type": "shell",
+            "command": "make",
+            "args": ["debug", "COMPILER=clang", "TARGET=dropanalysis"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": ["$gcc"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Build only dropanalysis target in Debug mode using Clang compiler"
+        },
+        {
+            "label": "Build twi (Debug, Clang) - macOS",
+            "type": "shell",
+            "command": "make",
+            "args": ["debug", "COMPILER=clang", "TARGET=twi"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": ["$gcc"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Build only twi target in Debug mode using Clang compiler"
+        },
+        {
+            "label": "Build d8hdisttostrm (Debug, Clang) - macOS",
+            "type": "shell",
+            "command": "make",
+            "args": ["debug", "COMPILER=clang", "TARGET=d8hdisttostrm"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": ["$gcc"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Build only d8hdisttostrm target in Debug mode using Clang compiler"
+        },
+        {
+            "label": "Build areadinf (Debug, Clang) - macOS",
+            "type": "shell",
+            "command": "make",
+            "args": ["debug", "COMPILER=clang", "TARGET=areadinf"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": ["$gcc"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Build only areadinf target in Debug mode using Clang compiler"
+        },
+        {
+            "label": "Build Generic Target (Debug, Clang) - macOS",
+            "type": "shell",
+            "command": "make",
+            "args": ["debug", "COMPILER=clang", "TARGET=${input:targetName}"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": ["$gcc"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Build a specific target in Debug mode using Clang compiler (prompts for target name)"
         },
         {
             "label": "Build TauDEM (Debug, GCC-Apple) - macOS",
@@ -156,7 +396,7 @@
             "options": {
                 "cwd": "${workspaceFolder}"
             },
-            "detail": "Install TauDEM binaries to system location (/usr/local)"
+            "detail": "Install TauDEM binaries to system location (/usr/local/taudem)"
         },
         {
             "label": "Install TauDEM (Custom Path) - macOS",
@@ -265,6 +505,13 @@
             "description": "Custom installation path",
             "default": "/usr/local/taudem",
             "type": "promptString"
+        },
+        {
+            "id": "targetName",
+            "description": "Target name to build",
+            "default": "pitremove",
+            "type": "promptString"
         }
     ]
 }
+
