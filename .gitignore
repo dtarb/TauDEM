@@ -173,6 +173,9 @@ src/build-debug/
 # ignore folder related to windows installer
 TauDEM_Installation_Source/
 
+# ignore test_data folder
+test_data/
+
 # VS Code settings
 .vscode/settings.json
 .vscode/launch.json
