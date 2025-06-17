@@ -27,22 +27,23 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "C:/Program Files (x86)/Microsoft SDKs/MPI/Include",
-                "C:/Program Files/GDAL/include"
+                "C:/dev/vcpkg/installed/x64-windows/include",
+                "C:/dev/vcpkg/installed/x64-windows/include"
             ],
             "defines": [
                 "_DEBUG",
                 "UNICODE",
                 "_UNICODE"
             ],
-            "compilerPath": "C:/mingw64/bin/g++.exe",
+            "compilerPath": "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.*/bin/Hostx64/x64/cl.exe",
             "cStandard": "c11",
             "cppStandard": "c++17",
-            "intelliSenseMode": "windows-gcc-x64",
+            "intelliSenseMode": "windows-msvc-x64",
             "browse": {
                 "path": [
                     "${workspaceFolder}",
                     "C:/Program Files (x86)/Microsoft SDKs/MPI/Include",
-                    "C:/Program Files/GDAL/include"
+                   "C:/dev/vcpkg/installed/x64-windows/include"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""
