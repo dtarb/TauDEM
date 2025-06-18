@@ -7,13 +7,17 @@
 ## 📋 Table of Contents
 
 - [What's TauDEM](#-whats-taudem)
-- [Setup VS Code for TauDEM Development](#️-setup-vs-code-for-taudem-development)
-- [Building TauDEM](#-building-taudem)
+- [Setup VS Code for TauDEM Development](#-setup-vs-code-for-taudem-development)
+- Building/Compiling TauDEM
+  - [Using Command Line](#-building-taudem-from-command-line)
+  - [Using VS Code Tasks](#configure-tasks-for-buildingcompiling)
 - [Dependencies](#-dependencies)
 - [Project Structure](#-project-structure)
 - [Testing](#-testing)
 - [Contributing](#-contributing)
 - [Resources](#-resources)
+- [Support](#support)
+- [License](#-license)
 
 ## 🌍 What's TauDEM
 
@@ -39,7 +43,7 @@ For more information, visit the [official website](http://hydrology.usu.edu/taud
 
 ### Prerequisites
 
-Before setting up VS Code, ensure you have the required dependencies installed (see [Dependencies](#dependencies) section).
+Before setting up VS Code, ensure you have the required dependencies installed (see [Dependencies](#-dependencies) section).
 
 ### VS Code Extensions
 
@@ -89,7 +93,7 @@ code --install-extension ms-vscode.hexeditor  # For examining binary DEM files (
    copy .vscode\settings-windows.json.template .vscode\settings.json
    ```
 
-2. **Install vcpkg dependencies**: Follow the Windows build instructions in [Building TauDEM](#building-taudem).
+2. **Install vcpkg dependencies**: See [section] (#windows_vcpkg) for detailed instructions.
 
 3. **Configure paths**: Update the include paths in `.vscode/c_cpp_properties.json` if your vcpkg installation is in a different location.
 
@@ -117,7 +121,7 @@ The project includes pre-configured settings for:
 
 #### Configure Launch Configuration (for debugging TauDEM tools)
 
-**NOTE**: Here is an example of a `launch.json` configuration for debugging given to explain the configuration. You do not need to create this file. The `launch-*.json.template` files are already configured for each platform.
+**NOTE**: Here is an example of a `launch.json` configuration for debugging shown to explain the configuration. You do not need to create this file. The `launch-*.json.template` files are already configured for each platform.
 
 Example `.vscode/launch.json`:
 
@@ -182,13 +186,13 @@ The `launch.json` file configures VS Code's **debugging system** for TauDEM deve
 - **`"setupCommands"`** - GDB initialization commands
   - `"-enable-pretty-printing"` makes variable display more readable during debugging
 
-**🚀 How to Use This Configuration**
+**🚀 How to Use the Above Example Configuration**
 
 1. **Place test files**: Ensure `input.tif` exists in your workspace root
 
 2. **Set breakpoints**: Click in the margin next to line numbers in C++ source files
 
-3. **Start debugging**: Press `F5` or Run → Start Debugging to debug the first configuration. To debug a different target, first press `cmd+shift+d` (macos) or `ctrl+shift+d` (windows/linux) to open the Debug panel, select your desired configuration from the dropdown, then press `F5` (VS Code will automatically build the debug version via the preLaunchTask)
+3. **Start debugging**: Press `F5` or Run → Start Debugging to debug the first configuration. To debug a different target, first press `cmd+shift+d` (macos) or `ctrl+shift+d` (Windows/Linux) to open the Debug panel, select your desired configuration from the dropdown, then press `F5` (VS Code will automatically build the debug version via the preLaunchTask)
 
 5. **Debug controls available**:
    - **Step Over** (`F10`): Execute current line, don't enter function calls
@@ -230,6 +234,7 @@ This debugging setup is helpful for understanding TauDEM's flow direction algori
 
 #### Configure Tasks for Building/Compiling
 
+Tasks configurations make it possible to run build scripts, compile code, and perform other project-related tasks directly from VS Code.
 
 **For macOS development**, copy the macOS-specific tasks template:
 ```bash
@@ -281,7 +286,7 @@ copy .vscode\launch-windows.json.template .vscode\launch.json
 
 **NOTE**: Input data files needs to be placed in the `test_data/input` folder and output data files will be placed in the `test_data/output` folder. The `test_data` folder needs to be created manually at the root of the project. The subfolders `input` and `output` also need to be created manually. Name the input files as named in the `launch.json` or adjust the input file names in `launch.json`.
 
-**Usage**: First press `cmd+shift+d` (macos) or `ctrl+shift+d` (windows/linux) to open the Debug panel. Then select a configuration from the debug dropdown and press `F5` to start debugging.
+**Usage**: First press `cmd+shift+d` (macOS) or `ctrl+shift+d` (Windows/Linux) to open the Debug panel. Then select a configuration from the debug dropdown and press `F5` to start debugging.
 
 ## 🔨 Building TauDEM from Command Line
 
@@ -345,7 +350,7 @@ make debug COMPILER=clang TARGET=pitremove
 # Release build - specific target
 make release COMPILER=clang TARGET=pitremove
 
-# Clean build directories
+# Delete build directories
 make clean
 ```
 
@@ -362,6 +367,7 @@ make -j$(nproc)
 TauDEM uses separate build directories for Debug and Release builds. The build directories are:
 - `src/build-debug` for Debug builds
 - `src/build-release` for Release builds
+
 #### Docker Build (Building/Testing TauDEM for Linux)
 
 ```bash
@@ -376,13 +382,13 @@ make clean
 make dk-release COMPILER=linux
 make dk-install PREFIX=/usr/local
 
-# Run tests in Docker
+# Run tests in Docker (as user taudem-docker)
 su - taudem-docker
 cd /app
 make dk-run-tests
+exit
 
 # Exit the container
-exit
 exit
 ```
 
@@ -392,7 +398,7 @@ exit
 # Install to default location (/usr/local/taudem)
 make install
 
-# Install to custom location (now supported!)
+# Install to custom location
 make install PREFIX=/custom/path
 
 # Uninstall
@@ -489,12 +495,14 @@ TauDEM includes comprehensive testing capabilities:
 
 ### Running Tests
 
-For running tests for TauDEM Linux build, see section [Docker Build](#docker-build) for Docker build instructions.
+For running tests for TauDEM Linux build, see section [Docker Build](#docker-build-building-testing-taudem-for-linux) for Docker build instructions.
 
 ```bash
-# Manual testing with sample data
+# Manual testing with sample data (assumes TauDEM installed path is in PATH)
 cd /path/to/test/data
 pitremove -z input.tif -fel output.tif
+# Testing in parallel
+mpiexec -n 2 pitremove -z input.tif -fel output.tif
 ```
 
 #### Test Data and Test Scripts for Running TauDEM Tests
