@@ -48,15 +48,15 @@ Install the following essential extensions for TauDEM development:
 ```bash
 # Core C++ development
 code --install-extension ms-vscode.cpptools
-code --install-extension ms-vscode.cmake-tools
+code --install-extension ms-vscode.cpptools-extension-pack
 
-# IntelliSense and code completion
-code --install-extension llvm-vs-code-extensions.vscode-clangd
+# CMake integration
+code --install-extension ms-vscode.cmake-tools
 
 # Git integration
 code --install-extension eamodio.gitlens
 
-# Additional helpful extensions
+# Additional helpful extensions (better C++ syntax highlighting)
 code --install-extension jeff-hykin.better-cpp-syntax
 
 # Optional extensions for specialized tasks
@@ -78,9 +78,6 @@ code --install-extension ms-vscode.hexeditor  # For examining binary DEM files (
    brew install gdal
    brew install open-mpi
    brew install cmake
-   
-   # Development tools
-   brew install llvm  # for clangd
    ```
 
 3. **Configure IntelliSense**: The `.vscode/c_cpp_properties.json` is already configured for macOS with proper include paths.
@@ -119,6 +116,8 @@ The project includes pre-configured settings for:
 ### Debugging Setup
 
 #### Configure Launch Configuration (for debugging TauDEM tools - TODO: Need to test this configuration)
+
+**NOTE**: Here is an example of a `launch.json` configuration for debugging given to explain the configuration. You do not need to create this file. The `launch-*.json.template` files are already configured for each platform.
 
 Create `.vscode/launch.json`:
 
@@ -164,7 +163,7 @@ The `launch.json` file configures VS Code's **debugging system** for TauDEM deve
 
 **📂 Program and Arguments**
 - **`"program": "${workspaceFolder}/bin/pitremove"`** - Path to executable to debug
-  - `${workspaceFolder}` = `/Users/a01841079/Workspace/SoftwareProjects/TauDEM`
+  - `${workspaceFolder}` = `path/to/TauDEM local repository`
   - Targets the `pitremove` tool (pit removal algorithm)
 - **`"args": ["-z", "input.tif", "-fel", "output.tif"]`** - Command line arguments
   - Simulates running: `./bin/pitremove -z input.tif -fel output.tif`
@@ -189,7 +188,7 @@ The `launch.json` file configures VS Code's **debugging system** for TauDEM deve
 
 2. **Set breakpoints**: Click in the margin next to line numbers in C++ source files
 
-3. **Start debugging**: Press `F5` or Run → Start Debugging (VS Code will automatically build the debug version via the preLaunchTask)
+3. **Start debugging**: Press `F5` or Run → Start Debugging to debug the first configuration. To debug a different target, first press `cmd+shift+D` (macos) or `ctrl+shift+D` (windows/linux) to open the Debug panel, select your desired configuration from the dropdown, then press `F5` (VS Code will automatically build the debug version via the preLaunchTask)
 
 5. **Debug controls available**:
    - **Step Over** (`F10`): Execute current line, don't enter function calls
@@ -227,7 +226,7 @@ To debug different TauDEM tools, create additional configurations:
 }
 ```
 
-This debugging setup is invaluable for understanding TauDEM's flow direction algorithms, watershed delineation logic, and spatial data processing workflows!
+This debugging setup is helpful for understanding TauDEM's flow direction algorithms, watershed delineation logic, and spatial data processing workflows!
 
 #### Configure Tasks for Building/Compiling
 
@@ -269,24 +268,21 @@ The macOS launch configuration includes:
 - **MPI debugging support** for parallel processing development
 - **Process attachment** capabilities for debugging running instances
 
-**Key debugging configurations available:**
-- **PitRemove**: Debug pit filling algorithms with DEM input/output
-- **D8FlowDir**: Debug D8 flow direction computation
-- **DinfFlowDir**: Debug D-Infinity flow direction algorithms
-- **AreaD8**: Debug contributing area calculations
-- **StreamNet**: Debug stream network extraction
-- **GageWatershed**: Debug watershed delineation
-- **DropAnalysis**: Debug threshold analysis tools
-- **Distance Tools**: Debug horizontal/vertical distance calculations
+
 
 **For Windows development**, copy the Windows-specific launch template:
 ```cmd
 copy .vscode\launch-windows.json.template .vscode\launch.json
 ```
 
-**Usage**: Select a configuration from the debug dropdown and press F5 to start debugging.
+**Key debugging configurations available:**
+- Pre-configured debugging setups for some TauDEM tools. For the remaining TauDEM tools, there is a generic debugging setup (`Build Generic Target (Debug) - Windows`/`Build Generic Target (Debug, Clang) - macOS`) that would prompt the user to provide the name of the TauDEM tool.
 
-## 🔨 Building TauDEM
+**NOTE**: Input data files needs to be placed in the `test_data/input` folder and output data files will be placed in the `test_data/output` folder. The `test_data` folder needs to be created manually at the root of the project. The subfolders `input` and `output` also need to be created manually. Name the input files as named in the `launch.json` or adjust the input file names in `launch.json`.
+
+**Usage**: First press `cmd+shift+D` (macos) or `ctrl+shift+D` (windows/linux) to open the Debug panel. Then select a configuration from the debug dropdown and press `F5` to start debugging.
+
+## 🔨 Building TauDEM from Command Line
 
 TauDEM supports multiple build methods and platforms.
 
@@ -316,7 +312,7 @@ make debug COMPILER=linux
 build-windows.bat release
 
 # Debug build (with debugging symbols) all targets
-build-windows.bat debug
+build-windows.bat
 
 # Release build (optimized) specific target
 build-windows.bat release pitremove
@@ -348,7 +344,7 @@ make debug COMPILER=clang TARGET=pitremove
 # Release build - specific target
 make release COMPILER=clang TARGET=pitremove
 
-# Clean build
+# Clean build directories
 make clean
 ```
 
@@ -360,7 +356,11 @@ mkdir build && cd build
 cmake .. -C ../../config.cmake -DCMAKE_BUILD_TYPE=Release
 make -j$(nproc)
 ```
+#### Build Directories
 
+TauDEM uses separate build directories for Debug and Release builds. The build directories are:
+- `src/build-debug` for Debug builds
+- `src/build-release` for Release builds
 #### Docker Build (Building/Testing TauDEM for Linux)
 
 ```bash
@@ -404,7 +404,7 @@ TauDEM requires the following dependencies:
 
 ### Core Dependencies
 
-- **C++17 Compiler**: GCC 7+, Clang 5+, or Visual Studio 2019+
+- **C++17 Compiler**: GCC 7+, Clang 5+, or Visual Studio 2022
 - **MPI**: Message Passing Interface for parallel processing
 - **GDAL**: Geospatial Data Abstraction Library for raster/vector I/O
 - **CMake**: Build system (version 3.10+)
@@ -465,14 +465,14 @@ TauDEM/
 │   ├── c_cpp_properties.json       # IntelliSense configuration
 │   ├── settings-*.json.template    # Platform-specific VS Code settings
 │   |── launch-*.json.template      # Platform-specific debugging configurations
-│   └── tasks-*.json.template       # Platform-specific build tasks
+│   └── tasks-*.json.template       # Platform-specific build and utility tasks
 ├── config.cmake            # CMake configuration for different platforms
 ├── Makefile                # Main build system
 ├── build-windows.bat       # Windows build script
 ├── Dockerfile              # Docker configuration (running TauDEM in docker container)
 ├── Dockerfile-run.tests    # Docker configuration (building TauDEM for testing on Ubuntu)
 ├── README.md               # This file
-└── README.txt              # Original documentation
+└── README.txt              # Original documentation (TODO: delete this file)
 ```
 
 ### Key Components
@@ -509,10 +509,13 @@ brew install bats-core
 git clone https://github.com/bats-core/bats-support.git /tmp/bats-support
 git clone https://github.com/bats-core/bats-assert.git /tmp/bats-assert
 git clone https://github.com/bats-core/bats-file.git /tmp/bats-file
+
 # Run tests assuming TauDEM installed path is in PATH
 ./taudem-tests.sh
+
 # Run tests assuming TauDEM installed path is in TAUDEM_PATH
 TAUDEM_PATH=/path/to/taudem ./taudem-tests.sh
+
 # Run tests on Windows (bats testing framework is not necessary)
 testall.bat
 ```
@@ -528,7 +531,7 @@ The test suite validates:
 
 ## 🤝 Contributing
 
-We welcome contributions to TauDEM! Please see our [contribution guidelines](https://github.com/dtarb/TauDEM/wiki/Contributing).
+We welcome contributions to TauDEM! TODO: Add more details here.
 
 ### Development Workflow
 
