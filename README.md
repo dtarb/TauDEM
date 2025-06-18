@@ -7,7 +7,7 @@
 ## 📋 Table of Contents
 
 - [What's TauDEM](#-whats-taudem)
-- [Setup VS Code for TauDEM Development](#-setup-vs-code-for-taudem-development)
+- [Setup VS Code for TauDEM Development](#setup-vs-code-for-taudem-development)
 - Building/Compiling TauDEM
   - [Using Command Line](#-building-taudem-from-command-line)
   - [Using VS Code Tasks](#configure-tasks-for-buildingcompiling)
@@ -39,7 +39,7 @@ TauDEM is a comprehensive suite of tools designed for terrain analysis using Dig
 
 For more information, visit the [official website](http://hydrology.usu.edu/taudem) and the [project wiki](https://github.com/dtarb/TauDEM/wiki).
 
-## 🛠️ Setup VS Code for TauDEM Development
+## Setup VS Code for TauDEM Development
 
 ### Prerequisites
 
