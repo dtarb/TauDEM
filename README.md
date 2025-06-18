@@ -115,11 +115,11 @@ The project includes pre-configured settings for:
 
 ### Debugging Setup
 
-#### Configure Launch Configuration (for debugging TauDEM tools - TODO: Need to test this configuration)
+#### Configure Launch Configuration (for debugging TauDEM tools)
 
 **NOTE**: Here is an example of a `launch.json` configuration for debugging given to explain the configuration. You do not need to create this file. The `launch-*.json.template` files are already configured for each platform.
 
-Create `.vscode/launch.json`:
+Example `.vscode/launch.json`:
 
 ```json
 {
@@ -188,7 +188,7 @@ The `launch.json` file configures VS Code's **debugging system** for TauDEM deve
 
 2. **Set breakpoints**: Click in the margin next to line numbers in C++ source files
 
-3. **Start debugging**: Press `F5` or Run → Start Debugging to debug the first configuration. To debug a different target, first press `cmd+shift+D` (macos) or `ctrl+shift+D` (windows/linux) to open the Debug panel, select your desired configuration from the dropdown, then press `F5` (VS Code will automatically build the debug version via the preLaunchTask)
+3. **Start debugging**: Press `F5` or Run → Start Debugging to debug the first configuration. To debug a different target, first press `cmd+shift+d` (macos) or `ctrl+shift+d` (windows/linux) to open the Debug panel, select your desired configuration from the dropdown, then press `F5` (VS Code will automatically build the debug version via the preLaunchTask)
 
 5. **Debug controls available**:
    - **Step Over** (`F10`): Execute current line, don't enter function calls
@@ -250,8 +250,10 @@ copy .vscode\tasks-windows.json.template .vscode\tasks.json
 The Windows tasks configuration includes:
 - **Build tasks** using `build-windows.bat` script
 - **CMake tasks** with vcpkg integration
-- **Clean** tasks
+- **Clean** Delete all build directories and binaries
 - **Interactive tool runner** with user input prompts
+
+**Note**: The tasks defined in the `tasks.json` can be executed from the Command Palette (`cmd+shift+p` or `ctrl+shift+p`) and then typing `Tasks: Run Task` and selecting the task to run.
 
 #### Configure Launch Configuration for Debugging
 
@@ -269,7 +271,6 @@ The macOS launch configuration includes:
 - **Process attachment** capabilities for debugging running instances
 
 
-
 **For Windows development**, copy the Windows-specific launch template:
 ```cmd
 copy .vscode\launch-windows.json.template .vscode\launch.json
@@ -280,7 +281,7 @@ copy .vscode\launch-windows.json.template .vscode\launch.json
 
 **NOTE**: Input data files needs to be placed in the `test_data/input` folder and output data files will be placed in the `test_data/output` folder. The `test_data` folder needs to be created manually at the root of the project. The subfolders `input` and `output` also need to be created manually. Name the input files as named in the `launch.json` or adjust the input file names in `launch.json`.
 
-**Usage**: First press `cmd+shift+D` (macos) or `ctrl+shift+D` (windows/linux) to open the Debug panel. Then select a configuration from the debug dropdown and press `F5` to start debugging.
+**Usage**: First press `cmd+shift+d` (macos) or `ctrl+shift+d` (windows/linux) to open the Debug panel. Then select a configuration from the debug dropdown and press `F5` to start debugging.
 
 ## 🔨 Building TauDEM from Command Line
 
