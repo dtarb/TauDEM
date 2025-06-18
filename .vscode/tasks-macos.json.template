@@ -385,7 +385,7 @@
             "label": "Install TauDEM - macOS",
             "type": "shell",
             "command": "make",
-            "args": ["install"],
+            "args": ["install", "PREFIX=$HOME/local"],
             "group": "build",
             "presentation": {
                 "echo": true,
@@ -396,7 +396,7 @@
             "options": {
                 "cwd": "${workspaceFolder}"
             },
-            "detail": "Install TauDEM binaries to system location (/usr/local/taudem)"
+            "detail": "Install TauDEM binaries to $HOME/local/taudem (add $HOME/local/taudem to PATH after install)"
         },
         {
             "label": "Install TauDEM (Custom Path) - macOS",
@@ -435,11 +435,7 @@
         {
             "label": "Check Dependencies - macOS",
             "type": "shell",
-            "command": "bash",
-            "args": [
-                "-c",
-                "echo 'Checking TauDEM dependencies on macOS...' && echo '=== GDAL ===' && gdal-config --version && echo '=== MPI ===' && mpirun --version && echo '=== CMake ===' && cmake --version && echo '=== Clang ===' && clang --version | head -1 && echo '=== GCC (if available) ===' && (gcc --version | head -1 || echo 'GCC not found') && echo 'Dependencies check complete.'"
-            ],
+            "command": "echo 'Checking TauDEM dependencies on macOS...' && echo '=== GDAL ===' && gdal-config --version && echo '=== MPI ===' && mpirun --version && echo '=== CMake ===' && cmake --version && echo '=== Clang ===' && clang --version | head -1 && echo '=== GCC (if available) ===' && (gcc --version | head -1 || echo 'GCC not found') && echo 'Dependencies check complete.'",
             "group": "test",
             "presentation": {
                 "echo": true,
@@ -514,4 +510,3 @@
         }
     ]
 }
-

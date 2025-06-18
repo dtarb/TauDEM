@@ -5,7 +5,7 @@
             "label": "Build TauDEM (Debug) - Windows",
             "type": "shell",
             "command": "${workspaceFolder}/build-windows.bat",
-            "args": ["debug"],
+            "args": [],
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -50,7 +50,7 @@
             "command": "cmd",
             "args": [
                 "/c",
-                "if exist src\\build rmdir /s /q src\\build && if exist src\\build-release rmdir /s /q src\\build-release && if exist bin rmdir /s /q bin"
+                "if exist src\\build-debug rmdir /s /q src\\build-debug && if exist src\\build-release rmdir /s /q src\\build-release && if exist bin rmdir /s /q bin"
             ],
             "group": "build",
             "presentation": {
@@ -65,15 +65,12 @@
             "detail": "Clean all build directories and binaries"
         },
         {
-            "label": "CMake Configure (Debug) - Windows",
+            "label": "Create Build Directories - Windows",
             "type": "shell",
-            "command": "cmake",
+            "command": "cmd",
             "args": [
-                "..",
-                "-C", "../../config.cmake",
-                "-DCMAKE_BUILD_TYPE=Debug",
-                "-A", "x64",
-                "-DCMAKE_TOOLCHAIN_FILE=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+                "/c",
+                "if not exist \"src\\build-debug\" mkdir \"src\\build-debug\" && if not exist \"src\\build-release\" mkdir \"src\\build-release\" && echo Build directories created successfully."
             ],
             "group": "build",
             "presentation": {
@@ -83,7 +80,30 @@
                 "panel": "shared"
             },
             "options": {
-                "cwd": "${workspaceFolder}/src/build"
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Create src/build-debug and src/build-release directories if they don't exist"
+        },
+        {
+            "label": "CMake Configure (Debug) - Windows",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "..",
+                "-C", "../../config.cmake",
+                "-DCMAKE_BUILD_TYPE=Debug",
+                "-A", "x64",
+                "-DCMAKE_TOOLCHAIN_FILE=C:/dev/vcpkg/scripts/buildsystems/vcpkg.cmake"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "options": {
+                "cwd": "${workspaceFolder}/src/build-debug"
             },
             "detail": "Configure CMake build system for Debug mode with vcpkg"
         },
@@ -96,7 +116,7 @@
                 "-C", "../../config.cmake",
                 "-DCMAKE_BUILD_TYPE=Release",
                 "-A", "x64",
-                "-DCMAKE_TOOLCHAIN_FILE=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+                "-DCMAKE_TOOLCHAIN_FILE=C:/dev/vcpkg/scripts/buildsystems/vcpkg.cmake"
             ],
             "group": "build",
             "presentation": {
@@ -128,7 +148,7 @@
             },
             "problemMatcher": ["$msCompile"],
             "options": {
-                "cwd": "${workspaceFolder}/src/build"
+                "cwd": "${workspaceFolder}/src/build-debug"
             },
             "dependsOn": "CMake Configure (Debug) - Windows",
             "detail": "Build TauDEM using CMake in Debug mode"
@@ -171,7 +191,7 @@
             "options": {
                 "cwd": "${workspaceFolder}",
                 "env": {
-                    "PATH": "${workspaceFolder}/src/build;${env:PATH}",
+                    "PATH": "${workspaceFolder}/src/build-debug;${env:PATH}",
                     "GDAL_DATA": "C:/dev/vcpkg/installed/x64-windows/share/gdal",
                     "PROJ_LIB": "C:/dev/vcpkg/installed/x64-windows/share/proj"
                 }
@@ -203,10 +223,10 @@
         {
             "label": "Check Dependencies - Windows",
             "type": "shell",
-            "command": "cmd",
+            "command": "powershell",
             "args": [
-                "/c",
-                "echo Checking TauDEM dependencies on Windows... && echo === CMake === && cmake --version && echo === Visual Studio === && (where cl >nul 2>&1 && echo Visual Studio compiler found || echo Visual Studio compiler not found in PATH) && echo === vcpkg === && (where vcpkg >nul 2>&1 && vcpkg version || echo vcpkg not found in PATH) && echo === GDAL === && (where gdalinfo >nul 2>&1 && gdalinfo --version || echo GDAL not found in PATH) && echo Dependencies check complete."
+                "-Command",
+                "Write-Host 'Checking TauDEM dependencies on Windows...'; Write-Host '=== CMake ==='; cmake --version; Write-Host '=== Visual Studio ==='; if (Get-Command cl -ErrorAction SilentlyContinue) { Write-Host 'Visual Studio compiler found' } else { Write-Host 'Visual Studio compiler not found in PATH' }; Write-Host '=== vcpkg ==='; if (Get-Command vcpkg -ErrorAction SilentlyContinue) { vcpkg version } else { Write-Host 'vcpkg not found in PATH' }; Write-Host '=== GDAL ==='; if (Get-Command gdalinfo -ErrorAction SilentlyContinue) { gdalinfo --version } else { Write-Host 'GDAL not found in PATH' }; Write-Host 'Dependencies check complete.'"
             ],
             "group": "test",
             "presentation": {
@@ -226,7 +246,7 @@
             "command": "cmd",
             "args": [
                 "/c",
-                "if not exist \"${input:installPath}\" mkdir \"${input:installPath}\" && xcopy /Y /I \"src\\build\\Release\\*.exe\" \"${input:installPath}\" && echo TauDEM installed to ${input:installPath}"
+                "if not exist \"${input:installPath}\" mkdir \"${input:installPath}\" && xcopy /Y /I \"src\\build-release\\Release\\*.exe\" \"${input:installPath}\" && echo TauDEM installed to ${input:installPath}"
             ],
             "group": "build",
             "presentation": {
@@ -239,7 +259,326 @@
                 "cwd": "${workspaceFolder}"
             },
             "dependsOn": "CMake Build (Release) - Windows",
-            "detail": "Install TauDEM binaries to specified location"
+            "detail": "Install TauDEM binaries to specified location (doesnot install dependencies)"
+        },
+        {
+            "label": "Build pitremove (Debug) - Windows",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build", ".",
+                "--target", "pitremove",
+                "--config", "Debug"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": ["$msCompile"],
+            "options": {
+                "cwd": "${workspaceFolder}/src/build-debug"
+            },
+            "dependsOn": "CMake Configure (Debug) - Windows",
+            "detail": "Build pitremove target in Debug mode"
+        },
+        {
+            "label": "Build d8flowdir (Debug) - Windows",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build", ".",
+                "--target", "d8flowdir",
+                "--config", "Debug"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": ["$msCompile"],
+            "options": {
+                "cwd": "${workspaceFolder}/src/build-debug"
+            },
+            "dependsOn": "CMake Configure (Debug) - Windows",
+            "detail": "Build only d8flowdir target in Debug mode"
+        },        
+        {
+            "label": "Build dinfflowdir (Debug) - Windows",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build", ".",
+                "--target", "dinfflowdir",
+                "--config", "Debug"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": ["$msCompile"],
+            "options": {
+                "cwd": "${workspaceFolder}/src/build-debug"
+            },
+            "dependsOn": "CMake Configure (Debug) - Windows",
+            "detail": "Build only dinfflowdir target in Debug mode"
+        },
+        {
+            "label": "Build aread8 (Debug) - Windows",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build", ".",
+                "--target", "aread8",
+                "--config", "Debug"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": ["$msCompile"],
+            "options": {
+                "cwd": "${workspaceFolder}/src/build-debug"
+            },
+            "dependsOn": "CMake Configure (Debug) - Windows",
+            "detail": "Build only aread8 target in Debug mode"
+        },
+        {
+            "label": "Build threshold (Debug) - Windows",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build", ".",
+                "--target", "threshold",
+                "--config", "Debug"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": ["$msCompile"],
+            "options": {
+                "cwd": "${workspaceFolder}/src/build-debug"
+            },
+            "dependsOn": "CMake Configure (Debug) - Windows",
+            "detail": "Build only threshold target in Debug mode"
+        },
+        {
+            "label": "Build streamnet (Debug) - Windows",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build", ".",
+                "--target", "streamnet",
+                "--config", "Debug"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": ["$msCompile"],
+            "options": {
+                "cwd": "${workspaceFolder}/src/build-debug"
+            },
+            "dependsOn": "CMake Configure (Debug) - Windows",
+            "detail": "Build only streamnet target in Debug mode"
+        },
+        {
+            "label": "Build gagewatershed (Debug) - Windows",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build", ".",
+                "--target", "gagewatershed",
+                "--config", "Debug"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": ["$msCompile"],
+            "options": {
+                "cwd": "${workspaceFolder}/src/build-debug"
+            },
+            "dependsOn": "CMake Configure (Debug) - Windows",
+            "detail": "Build only gagewatershed target in Debug mode"
+        },
+        {
+            "label": "Build dropanalysis (Debug) - Windows",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build", ".",
+                "--target", "dropanalysis",
+                "--config", "Debug"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": ["$msCompile"],
+            "options": {
+                "cwd": "${workspaceFolder}/src/build-debug"
+            },
+            "dependsOn": "CMake Configure (Debug) - Windows",
+            "detail": "Build only dropanalysis target in Debug mode"
+        },
+        {
+            "label": "Build twi (Debug) - Windows",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build", ".",
+                "--target", "twi",
+                "--config", "Debug"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": ["$msCompile"],
+            "options": {
+                "cwd": "${workspaceFolder}/src/build-debug"
+            },
+            "dependsOn": "CMake Configure (Debug) - Windows",
+            "detail": "Build only twi target in Debug mode"
+        },
+        {
+            "label": "Build d8hdisttostrm (Debug) - Windows",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build", ".",
+                "--target", "d8hdisttostrm",
+                "--config", "Debug"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": ["$msCompile"],
+            "options": {
+                "cwd": "${workspaceFolder}/src/build-debug"
+            },
+            "dependsOn": "CMake Configure (Debug) - Windows",
+            "detail": "Build only d8hdisttostrm target in Debug mode"
+        },
+        {
+            "label": "Build areadinf (Debug) - Windows",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build", ".",
+                "--target", "areadinf",
+                "--config", "Debug"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": ["$msCompile"],
+            "options": {
+                "cwd": "${workspaceFolder}/src/build-debug"
+            },
+            "dependsOn": "CMake Configure (Debug) - Windows",
+            "detail": "Build only areadinf target in Debug mode"
+        },
+        {
+            "label": "Build Generic Target (Debug) - Windows",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build", ".",
+                "--target", "${input:targetName}",
+                "--config", "Debug"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": ["$msCompile"],
+            "options": {
+                "cwd": "${workspaceFolder}/src/build-debug"
+            },
+            "dependsOn": "CMake Configure (Debug) - Windows",
+            "detail": "Build a specific target in Debug mode (prompts for target name)"
+        },
+        {
+            "label": "Build Generic Target (Release) - Windows",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build", ".",
+                "--target", "${input:targetName}",
+                "--config", "Release"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": ["$msCompile"],
+            "options": {
+                "cwd": "${workspaceFolder}/src/build-release"
+            },
+            "dependsOn": "CMake Configure (Release) - Windows",
+            "detail": "Build a specific target in Release mode (prompts for target name)"
+        },
+        {
+            "label": "Uninstall TauDEM - Windows",
+            "type": "shell",
+            "command": "cmd",
+            "args": [
+                "/c",
+                "if exist \"${input:installPath}\" (rmdir /s /q \"${input:installPath}\" && echo TauDEM uninstalled from ${input:installPath}) else (echo TauDEM installation directory not found at ${input:installPath})"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Remove TauDEM binaries from specified installation location"
         },
         {
             "label": "Open TauDEM Documentation",
@@ -276,6 +615,12 @@
             "id": "installPath",
             "description": "Installation path for TauDEM binaries",
             "default": "C:/Program Files/TauDEM",
+            "type": "promptString"
+        },
+        {
+            "id": "targetName",
+            "description": "Target name to build",
+            "default": "pitremove",
             "type": "promptString"
         }
     ]
