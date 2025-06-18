@@ -152,9 +152,7 @@ install:
 		echo "Error: Release build directory not found. Please run 'make release' first."; \
 		exit 1; \
 	fi
-	@if [ -n "$(PREFIX)" ]; then \
-		cd $(BUILD_DIR_RELEASE) && cmake . -DCMAKE_INSTALL_PREFIX=$(PREFIX); \
-	fi
+	@cd $(BUILD_DIR_RELEASE) && cmake . -DCMAKE_INSTALL_PREFIX=$(or $(PREFIX),/usr/local)
 	@cd $(BUILD_DIR_RELEASE) && make install
 
 uninstall:
