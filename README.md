@@ -93,7 +93,7 @@ code --install-extension ms-vscode.hexeditor  # For examining binary DEM files (
    copy .vscode\settings-windows.json.template .vscode\settings.json
    ```
 
-2. **Install vcpkg dependencies**: See [section] (#windows_vcpkg) for detailed instructions.
+2. **Install vcpkg dependencies**: See [section](#windows-vcpkg) for detailed instructions.
 
 3. **Configure paths**: Update the include paths in `.vscode/c_cpp_properties.json` if your vcpkg installation is in a different location.
 
@@ -268,7 +268,7 @@ cp .vscode/launch-macos.json.template .vscode/launch.json
 ```
 
 The macOS launch configuration includes:
-- **Debug configurations** for all major TauDEM tools (PitRemove, D8FlowDir, StreamNet, etc.)
+- **Debug configurations** for all TauDEM tools (PitRemove, D8FlowDir, StreamNet, etc.)
 - **LLDB debugger integration** optimized for macOS
 - **Pre-launch build tasks** that automatically compile before debugging
 - **Interactive debugging** with user input prompts for file paths and parameters
@@ -495,7 +495,7 @@ TauDEM includes comprehensive testing capabilities:
 
 ### Running Tests
 
-For running tests for TauDEM Linux build, see section [Docker Build](#docker-build-building-testing-taudem-for-linux) for Docker build instructions.
+For running tests for TauDEM Linux build, see section [Docker Build](#docker-build-buildingtesting-taudem-for-linux) for Docker build instructions.
 
 ```bash
 # Manual testing with sample data (assumes TauDEM installed path is in PATH)
@@ -547,7 +547,7 @@ We welcome contributions to TauDEM! TODO: Add more details here.
 1. **Fork the repository**
 2. **Create a feature branch**: `git checkout -b feature/new-algorithm`
 3. **Setup development environment**: Follow the VS Code setup instructions
-4. **Make changes**: Follow our coding standards (see `.github/copilot-instructions-WIP.md`)
+4. **Make changes**: Follow [coding standards](#coding-standards)
 5. **Test thoroughly**: Ensure all tests pass
 6. **Submit a pull request**
 
