@@ -879,23 +879,29 @@
             "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
-            "name": "Debug MPI Tool (Manual)",
+            "name": "Debug MPI Tool Using Pitrmove (Manual)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "/usr/local/bin/mpirun",
+            "program": "${workspaceFolder}/src/build-debug/pitremove",
             "args": [
-                "-np", "2",
-                "${workspaceFolder}/src/build-debug/aread8",
-                "-p", "test_data/input/dem_p.tif",
-                "-ad8", "test_data/output/dem_ad8.tif",
-                "-nc"
+                "-z", "test_data/input/dem.tif",
+                "-fel", "test_data/output/dem_fel.tif",
+                "-v"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [
                 {
                     "name": "MPI_ROOT",
-                    "value": "/usr/local"
+                    "value": "/opt/homebrew"
+                },
+                {
+                    "name": "OMPI_COMM_WORLD_SIZE",
+                    "value": "2"
+                },
+                {
+                    "name": "OMPI_COMM_WORLD_RANK", 
+                    "value": "0"
                 }
             ],
             "externalConsole": false,
@@ -907,35 +913,13 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
-        },
+            "preLaunchTask": "Build pitremove (Debug, Clang) - macOS"
+        },        
         {
-            "name": "Debug Simple Test Case",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/pitremove",
-            "args": [
-                "${input:demFile}"
-            ],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "lldb",
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ],
-            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
-        },
-        {
-            "name": "Attach to Process",
+            "name": "Attach to Process (Generic)",
             "type": "cppdbg",
             "request": "attach",
-            "program": "${workspaceFolder}/src/build-debug/pitremove",
+            "program": "${workspaceFolder}/src/build-debug/${input:programName}",
             "processId": "${command:pickProcess}",
             "MIMode": "lldb"
         }
@@ -958,7 +942,12 @@
             "description": "Enter threshold value",
             "default": "100",
             "type": "promptString"
+        },
+        {
+            "id": "programName",
+            "description": "Enter program name",
+            "default": "pitremove",
+            "type": "promptString"
         }
     ]
 }
-
