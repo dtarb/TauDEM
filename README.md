@@ -7,7 +7,7 @@
 ## 📋 Table of Contents
 
 - [What's TauDEM](#-whats-taudem)
-- [Setup VS Code for TauDEM Development](#setup-vs-code-for-taudem-development)
+- [Setup Visual Studio Code for TauDEM Development](#setup-vs-code-for-taudem-development)
 - Building/Compiling TauDEM
   - [Using Command Line](#-building-taudem-from-command-line)
   - [Using VS Code Tasks](#configure-tasks-for-buildingcompiling)
@@ -40,6 +40,55 @@ TauDEM is a comprehensive suite of tools designed for terrain analysis using Dig
 For more information, visit the [official website](http://hydrology.usu.edu/taudem) and the [project wiki](https://github.com/dtarb/TauDEM/wiki).
 
 ## Setup VS Code for TauDEM Development
+
+### Clone the TauDEM Github Repository
+
+#### Installing Git
+
+Before cloning the repository, you'll need to install Git if you don't have it already:
+
+**macOS**:
+```bash
+# Using Homebrew
+brew install git
+
+# Or download the installer from
+# https://git-scm.com/download/mac
+```
+
+**Windows**:
+```bash
+# Download and run the installer from
+# https://git-scm.com/download/win
+```
+
+**Linux (Debian/Ubuntu)**:
+```bash
+sudo apt update
+sudo apt install git
+```
+
+Verify your installation:
+```bash
+git --version
+```
+
+#### Cloning the Repository
+
+After installing Git, clone the TauDEM repository at a location of your choice:
+
+```bash
+git clone https://github.com/dtarb/TauDEM.git
+cd TauDEM
+git status
+# Should show 'On branch Develop'
+# You can then checkout the branch you want to work on or create a new branch
+```
+
+### Install Visual Studio Code (VS Code)
+
+Download and install Visual Studio Code for your operating system using this link:
+https://code.visualstudio.com/download
 
 ### Prerequisites
 
