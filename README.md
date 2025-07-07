@@ -146,6 +146,10 @@ code --install-extension ms-vscode.hexeditor  # For examining binary DEM files (
 
 3. **Configure paths**: Update the include paths in `.vscode/c_cpp_properties.json` if your vcpkg installation is in a different location.
 
+4. **Install CMake**: Download and install CMake for Windows (look for the binary distribution for platform 'Windows x64 Installer') from the following link:
+
+   https://cmake.org/download/
+
 #### Linux Setup
 
 1. **Install dependencies**:
