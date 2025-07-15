@@ -149,42 +149,60 @@ Filename: "python"; \
     AfterInstall: VerifyGdalInstallation
 
 [Registry]
-; Set TauDEM path and environment variables
+; Set TauDEM application path to PATH - only add paths that don't exist
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
-    ValueType: string; ValueName: "PATH"; \
-    ValueData: "{olddata};{app}\bin;{app}\TauDEM5Exe"; \
-    Flags: preservestringtype
+    ValueType: string; \
+    ValueName: "PATH"; \
+    ValueData: "{olddata}"; \
+    Flags: preservestringtype; \
+    AfterInstall: "UpdatePath('{app}\bin;{app}\TauDEM5Exe')"
 
 ; Set GDAL_DATA for the vcpkg GDAL
-Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; ValueName: "GDAL_DATA"; ValueData: "{app}\share\gdal"; Flags: uninsdeletevalue
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
+    ValueType: expandsz; \
+    ValueName: "GDAL_DATA"; \
+    ValueData: "{app}\share\gdal"; \
+    Flags: uninsdeletevalue preservestringtype
 
 ; Set PROJ_LIB for GDAL to find proj.db
-Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; ValueName: "PROJ_LIB"; ValueData: "{app}\share\proj"; Flags: uninsdeletevalue
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
+    ValueType: expandsz; \
+    ValueName: "PROJ_LIB"; \
+    ValueData: "{app}\share\proj"; \
+    Flags: uninsdeletevalue preservestringtype
 
 ; Set GDAL_DRIVER_PATH to point to bin directory AND plugins directory (critical for OGR)
-Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; ValueName: "GDAL_DRIVER_PATH"; ValueData: "{app}\bin;{app}\lib\gdalplugins"; Flags: uninsdeletevalue
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
+    ValueType: expandsz; \
+    ValueName: "GDAL_DRIVER_PATH"; \
+    ValueData: "{app}\bin;{app}\lib\gdalplugins"; \
+    Flags: uninsdeletevalue preservestringtype
 
 ; Set OGR_DRIVER_PATH to point to both bin and plugins directories (critical)
-Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; ValueName: "OGR_DRIVER_PATH"; ValueData: "{app}\bin;{app}\lib\gdalplugins"; Flags: uninsdeletevalue
-
-; Add application directories to PATH
-Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; ValueName: "Path"; ValueData: "{app}\bin;{app}\TauDEM5Exe;{olddata}"; Check: NeedsAddPath('{app}\bin')
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
+    ValueType: expandsz; \
+    ValueName: "OGR_DRIVER_PATH"; \
+    ValueData: "{app}\bin;{app}\lib\gdalplugins"; \
+    Flags: uninsdeletevalue preservestringtype
 
 ; Enable all OGR drivers by default
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
-    ValueType: string; ValueName: "GDAL_SKIP"; \
+    ValueType: string; \
+    ValueName: "GDAL_SKIP"; \
     ValueData: ""; \
     Flags: preservestringtype
 
 ; Set OGR_ENABLED_DRIVERS to ALL
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
-    ValueType: expandsz; ValueName: "OGR_ENABLED_DRIVERS"; \
+    ValueType: expandsz; \
+    ValueName: "OGR_ENABLED_DRIVERS"; \
     ValueData: ""; \
     Flags: uninsdeletevalue
 
 ; Remove any explicit driver count limit
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
-    ValueType: expandsz; ValueName: "OGR_DRIVER_COUNT"; \
+    ValueType: expandsz; \
+    ValueName: "OGR_DRIVER_COUNT"; \
     ValueData: ""; \
     Flags: uninsdeletevalue
 
@@ -204,44 +222,57 @@ Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environmen
 
 ; Enable VSI file system for GDAL
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
-    ValueType: expandsz; ValueName: "CPL_VSIL_USE_TEMP"; \
+    ValueType: expandsz; \
+    ValueName: "CPL_VSIL_USE_TEMP"; \
     ValueData: "YES"; \
-    Flags: uninsdeletevalue
+    Flags: uninsdeletevalue preservestringtype
 
 ; Add configuration for SQLite and SpatiaLite
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
-    ValueType: expandsz; ValueName: "GDAL_SQLITE_PRAGMA"; \
+    ValueType: expandsz; \
+    ValueName: "GDAL_SQLITE_PRAGMA"; \
     ValueData: "EMPTY_RESULT_CALLBACKS=ON"; \
-    Flags: uninsdeletevalue
+    Flags: uninsdeletevalue preservestringtype
 
 ; Set SpatiaLite module path for GDAL
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
-    ValueType: expandsz; ValueName: "SPATIALITE_SECURITY"; \
+    ValueType: expandsz; \
+    ValueName: "SPATIALITE_SECURITY"; \
     ValueData: "relaxed"; \
-    Check: SpatiaLiteExists; Flags: uninsdeletevalue
+    Check: SpatiaLiteExists; \
+    Flags: uninsdeletevalue preservestringtype
 
 ; Add SpatiaLite data path only if it's going to exist
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
-    ValueType: expandsz; ValueName: "SPATIALITE_LIBRARY_PATH"; \
+    ValueType: expandsz; \
+    ValueName: "SPATIALITE_LIBRARY_PATH"; \
     ValueData: "{app}\bin\spatialite.dll"; \
-    Check: SpatiaLiteExists; Flags: uninsdeletevalue
+    Check: SpatiaLiteExists; Flags: uninsdeletevalue preservestringtype
 
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
-    ValueType: expandsz; ValueName: "CPL_LOG_ERRORS"; \
+    ValueType: expandsz; \
+    ValueName: "CPL_LOG_ERRORS"; \
     ValueData: "ON"; \
-    Flags: uninsdeletevalue
+    Flags: uninsdeletevalue preservestringtype
 
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
-    ValueType: expandsz; ValueName: "GDAL_ERROR_ON_LIBC_ERROR"; \
+    ValueType: expandsz; \
+    ValueName: "GDAL_ERROR_ON_LIBC_ERROR"; \
     ValueData: "TRUE"; \
-    Flags: uninsdeletevalue
+    Flags: uninsdeletevalue preservestringtype
 
 [code]
+var
+  WantsGdalValue: Integer; // Use Integer for tri-state: 0=unset, 1=yes, 2=no
+  HasPythonValue: Integer; // Use Integer for tri-state: 0=unset, 1=yes, 2=no
+
 // add a custom wizard page after the welcome page to show the list of programs that will be installed
 procedure InitializeWizard();
 var UserPage: TInputQueryWizardPage;
 var notes_string: string;
 begin
+  WantsGdalValue := 0;
+  HasPythonValue := 0;
   notes_string := 'NOTES:'#13'1. The redistributables listed above will only be installed if they are not already installed.'#13 +
       '2. You will need to accept the license agreements associated with this software and click through several screens.'#13 +
       '3. The installer will also add firewall exceptions to allow TauDEM programs to run. These allow MPI interprocess communication used in the parallel computations. This is communication within your computer and not over any external network.'#13 +
@@ -267,64 +298,72 @@ begin
       RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\VisualStudio\14.34\VC\Runtimes\x64') or
       RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\WOW6432Node\Microsoft\VisualStudio\14.34\VC\Runtimes\x64') then
    begin
-      Result := False;
-   end
-   else
-   begin
-      Result := True;
+      Result := False; // Already installed, don't need to install
+      exit;
    end;
+
+   // Fallback: check for vcruntime140.dll in System32 (common for VC++ 2015-2022)
+   if FileExists('C:\Windows\System32\vcruntime140.dll') then
+   begin
+      Result := False; // DLL found, don't need to install
+      exit;
+   end;
+
+   Result := True; // Not found, need to install
 end;
 
 // Check if we need to install MPI
-// If MPI is already installed, then this function returns False, otherwise True
+// If MPI is already installed and version >= 10.1, then this function returns False, otherwise True
 function NeedsToInstallMPI(): boolean;
-begin    
-   if FileExists('C:\Windows\System32\msmpi.dll') then
-      begin
-        Result := False;
-        exit;
-      end
-   else if RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\WOW6432Node\Microsoft\MPI') then
-      begin
-        Result := False;
-        exit;
-      end
-   else
-      begin
-        Result := True;
-      end;      
-end;
-
-// Simplified path checking function (removed architecture checking)
-function NeedsAddPath(NewPath: string): boolean;
 var
-  OrigPath: string;
+  VersionString: string;
+  MajorVersion, MinorVersion: Integer;
 begin
-  if not RegQueryStringValue(HKEY_LOCAL_MACHINE,
-    'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
-    'Path', OrigPath) then
-  begin
-    //MsgBox('Path variable not found.', mbInformation, MB_OK);
-    //MsgBox('Path variable not found.', mbInformation, MB_OK);
-    //MsgBox('Path variable not found.', mbInformation, MB_OK);
-    Result := True;
-    exit;
-  end;
-  // look for the path with leading and trailing semicolon
-  // Pos() return
-  //MsgBox('OrigPath:' + OrigPath, mbInformation, MB_OK);t0 if n
-  //MsgBox('OrigPath:' + OrigPath, mbInformation, MB_OK);t found
-  //MsgBox('OrigPath:' + OrigPath, mbInformation, MB_OK);
-  Result := Pos(';' + UpperCase(ExpandConstant(NewPath)) + ';', ';' + UpperCase(OrigPath) + ';') = 0;
-end;
+   // First check if MPI DLL exists
+   if not FileExists('C:\Windows\System32\msmpi.dll') then
+   begin
+      Result := True;
+      exit;
+   end;
 
-procedure CleanUp(FolderToDelete: string);
-begin
-    if DirExists(ExpandConstant(FolderToDelete)) then
-    begin
-        DelTree(ExpandConstant(FolderToDelete), True, True, True);
-        //MsgBox('Folder deleted', mbInformation, MB_OK);
-    end;
+   // Check registry for MPI installation
+   if not RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\WOW6432Node\Microsoft\MPI') then
+   begin
+      Result := True;
+      exit;
+   end;
+
+   // Check version - get version string from registry
+   if RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\WOW6432Node\Microsoft\MPI', 'Version', VersionString) then
+   begin
+      // Parse version string (format: "10.1.12498.18")
+      // Extract major and minor version numbers
+      if (Length(VersionString) > 0) and (Pos('.', VersionString) > 0) then
+      begin
+         try
+            MajorVersion := StrToInt(Copy(VersionString, 1, Pos('.', VersionString) - 1));
+            Delete(VersionString, 1, Pos('.', VersionString));
+            if Pos('.', VersionString) > 0 then
+               MinorVersion := StrToInt(Copy(VersionString, 1, Pos('.', VersionString) - 1))
+            else
+               MinorVersion := StrToInt(VersionString);
+
+            // Check if version is >= 10.1
+            if (MajorVersion > 10) or ((MajorVersion = 10) and (MinorVersion >= 1)) then
+            begin
+               Result := False; // Don't need to install
+               exit;
+            end;
+         except
+            // If version parsing fails, assume we need to install
+            Result := True;
+            exit;
+         end;
+      end;
+   end;
+
+   // If we can't determine version or version is too old, install MPI
+   Result := True;
 end;
 
 function InitializeSetup(): Boolean;
@@ -338,7 +377,7 @@ begin
   end;
 end;
 
-// Add a new function to check if SpatiaLite exists
+// Function to check if SpatiaLite exists
 function SpatiaLiteExists(): Boolean;
 begin
   Result := FileExists(ExpandConstant('{app}\bin\spatialite.dll')) or 
@@ -350,49 +389,65 @@ end;
 function HasPython(): Boolean;
 var
   ResultCode: Integer;
+  PythonFound: Boolean;
 begin
-  Result := False;
-  
-  // Try with python command
-  if Exec('python', '-c "import sys; exit(0 if sys.version_info >= (3, 10) else 1)"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+  if HasPythonValue = 0 then
   begin
-    Result := (ResultCode = 0);
-  end;
-  
-  // Try with py command as fallback
-  if not Result then
-  begin
-    if Exec('py', '-c "import sys; exit(0 if sys.version_info >= (3, 10) else 1)"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+    PythonFound := False;
+
+    // Try with python command
+    if Exec('python', '-c "import sys; exit(0 if sys.version_info >= (3, 10) else 1)"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
     begin
-      Result := (ResultCode = 0);
+      PythonFound := (ResultCode = 0);
+    end;
+
+    // Try with py command as fallback
+    if not PythonFound then
+    begin
+      if Exec('py', '-c "import sys; exit(0 if sys.version_info >= (3, 10) else 1)"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+      begin
+        PythonFound := (ResultCode = 0);
+      end;
+    end;
+
+    if PythonFound then
+      HasPythonValue := 1
+    else
+    begin
+      HasPythonValue := 2;
+      // Show message if Python version is too old or not found
+      MsgBox('Python 3.10 or higher is required for GDAL installation. This step will be skipped.', mbInformation, MB_OK);
     end;
   end;
-
-  // Show message if Python version is too old
-  if not Result then
-  begin
-    MsgBox('Python 3.10 or higher is required for GDAL installation.', mbInformation, MB_OK);
-  end;
+  Result := (HasPythonValue = 1);
 end;
 
 // Ask user if they want to install GDAL Python bindings
 function WantsPythonGDAL(): Boolean;
 begin
-  Result := MsgBox('Python is installed on your system. Would you like to install GDAL Python bindings? (Required for TauDEM integration with ArcGIS)', mbConfirmation, MB_YESNO) = IDYES;
+  if WantsGdalValue = 0 then
+  begin
+    if MsgBox('Python is installed on your system. Would you like to install GDAL Python bindings? (Required for TauDEM integration with ArcGIS)', mbConfirmation, MB_YESNO) = IDYES then
+      WantsGdalValue := 1
+    else
+      WantsGdalValue := 2;
+  end;
+  Result := (WantsGdalValue = 1);
 end;
 
+// Check if GDAL Python bindings are installed correctly
 function CheckGdalPythonImport(): Boolean;
 var
   ResultCode: Integer;
 begin
   Result := False;
-  
+
   // Try to import GDAL in Python and check version is 3.10+
   if Exec('python', '-c "from osgeo import gdal; import sys; version = tuple(map(int, gdal.__version__.split(''.''))); sys.exit(0 if version >= (3, 10) else 1)"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
   begin
     Result := (ResultCode = 0);
   end;
-  
+
   if not Result then
   begin
     // Try with py command as fallback
@@ -403,6 +458,7 @@ begin
   end;
 end;
 
+// Verify GDAL installation
 procedure VerifyGdalInstallation;
 begin
   if CheckGdalPythonImport() then
@@ -417,5 +473,125 @@ begin
            'python -m pip install gdal-installer==' + ExpandConstant('{#GdalInstallerVersion}') + #13#10 + 
            '2. Then run:' + #13#10 + 
            'python -m gdal_installer install-gdal', mbError, MB_OK);
+  end;
+end;
+
+// Helper function to remove trailing backslash for consistent comparison
+function RemoveBackslash(const Path: string): string;
+begin
+  Result := Path;
+  if Length(Result) > 0 then
+    if Result[Length(Result)] = '\' then
+      Delete(Result, Length(Result), 1);
+end;
+
+// Check if path (NewPath) is in PATH environment variable
+function IsPathInEnvironment(NewPath: string): Boolean;
+var
+  OrigPath, ExpandedNewPath: string;
+  Paths: TStringList;
+  i: Integer;
+  Found: Boolean;
+begin
+  Result := False;
+  Found := False;
+  ExpandedNewPath := RemoveBackslash(ExpandConstant(NewPath));
+
+  if not RegQueryStringValue(HKEY_LOCAL_MACHINE,
+    'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
+    'Path', OrigPath) then
+  begin
+    MsgBox('PATH environment variable not found in registry', mbInformation, MB_OK);
+    Exit;
+  end;
+
+  Paths := TStringList.Create;
+  try
+    // Split PATH into individual entries
+    Paths.Delimiter := ';';
+    Paths.StrictDelimiter := True;
+    Paths.DelimitedText := OrigPath;
+
+    // Check each path
+    for i := 0 to Paths.Count - 1 do
+    begin
+      if CompareText(RemoveBackslash(Paths[i]), ExpandedNewPath) = 0 then
+      begin
+        Found := True;
+        MsgBox(Format('Found existing path: %s matches %s', [Paths[i], ExpandedNewPath]), mbInformation, MB_OK);
+        Break;
+      end;
+    end;
+
+    if not Found then
+      MsgBox(Format('Path not found: %s', [ExpandedNewPath]), mbInformation, MB_OK);
+
+    Result := Found;
+  finally
+    Paths.Free;
+  end;
+end;
+
+// Function to handle PATH updates
+procedure UpdatePath(const NewPaths: string);
+var
+  CurrentPath, Path: string;
+  PathList, NewPathList: TStringList;
+  i, j: Integer;
+  PathAdded: Boolean;
+  ExpandedPaths: string;
+begin
+  // Expand constants here
+  ExpandedPaths := ExpandConstant(NewPaths);
+
+  if not RegQueryStringValue(HKLM64,
+    'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
+    'Path', CurrentPath) then
+  begin
+    CurrentPath := '';
+  end;
+
+  PathList := TStringList.Create;
+  NewPathList := TStringList.Create;
+  try
+    // Split current PATH into list
+    PathList.Delimiter := ';';
+    PathList.StrictDelimiter := True;
+    PathList.DelimitedText := CurrentPath;
+
+    // Split new paths into list
+    NewPathList.Delimiter := ';';
+    NewPathList.StrictDelimiter := True;
+    NewPathList.DelimitedText := ExpandedPaths;
+
+    // Add each new path if it doesn't exist
+    for i := 0 to NewPathList.Count - 1 do
+    begin
+      Path := RemoveBackslash(NewPathList[i]);
+      PathAdded := False;
+
+      // Check if path already exists (case-insensitive)
+      for j := 0 to PathList.Count - 1 do
+      begin
+        if CompareText(RemoveBackslash(PathList[j]), Path) = 0 then
+        begin
+          PathAdded := True;
+          Break;
+        end;
+      end;
+
+      // Add path if it's not already there
+      if not PathAdded then
+        PathList.Add(Path);
+    end;
+
+    // Update registry with modified path
+    RegWriteStringValue(HKLM64,
+      'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
+      'Path',
+      PathList.DelimitedText);
+  finally
+    PathList.Free;
+    NewPathList.Free;
   end;
 end;
