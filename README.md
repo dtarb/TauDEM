@@ -245,7 +245,7 @@ The `launch.json` file configures VS Code's **debugging system** for TauDEM deve
 
 2. **Set breakpoints**: Click in the margin next to line numbers in C++ source files
 
-3. **Start debugging**: Press `F5` or Run → Start Debugging to debug the first configuration. To debug a different target, first press `cmd+shift+d` (macos) or `ctrl+shift+d` (Windows/Linux) to open the Debug panel, select your desired configuration from the dropdown, then press `F5` (VS Code will automatically build the debug version via the preLaunchTask)
+3. **Start debugging**: Press `F5` or Run → Start Debugging to debug the first configuration. To debug a different target, first press `cmd+shift+d` (macos) or `ctrl+shift+d` (Windows/Linux) to open the Debug panel, or click on the **Run and Debug** icon (icon with a bug symbol) in VS Code's activity bar (vertical toolbar on the left side of vscode). Then select a configuration from the debug dropdown and press `F5` to start debugging.
 
 5. **Debug controls available**:
    - **Step Over** (`F10`): Execute current line, don't enter function calls
@@ -339,7 +339,68 @@ copy .vscode\launch-windows.json.template .vscode\launch.json
 
 **NOTE**: Input data files needs to be placed in the `test_data/input` folder and output data files will be placed in the `test_data/output` folder. The `test_data` folder needs to be created manually at the root of the project. The subfolders `input` and `output` also need to be created manually. Name the input files as named in the `launch.json` or adjust the input file names in `launch.json`.
 
-**Usage**: First press `cmd+shift+d` (macOS) or `ctrl+shift+d` (Windows/Linux) to open the Debug panel. Then select a configuration from the debug dropdown and press `F5` to start debugging.
+**Usage**: First press `cmd+shift+d` (macOS) or `ctrl+shift+d` (Windows/Linux) to open the Debug panel, or click on the **Run and Debug** icon (icon with a bug symbol) in VS Code's activity bar (vertical toolbar on the left side of vscode). Then select a configuration from the debug dropdown and press `F5` to start debugging..
+
+## Building TauDEM from VS Code Command Palette
+
+VS Code provides a convenient Command Palette interface to execute build tasks without using the command line. This section shows how to use the pre-configured tasks for building TauDEM.
+
+### Windows
+
+1. **Open Command Palette**:
+   - Press `Ctrl+Shift+P` to open the Command Palette
+   - Or use the menu: `View → Command Palette...`
+
+2. **Access Build Tasks**:
+   - Type `Tasks: Run Task` and press Enter
+   - Or type `task` and select `Tasks: Run Task` from the dropdown
+
+3. **Select a Build Task**:
+   Choose from available Windows tasks:
+   - **`Create Build Directories - Windows`**: Create necessary build directories if they don't exist
+   - **`Build TauDEM (Debug) - Windows`**: Build all TauDEM tools in Debug mode
+   - **`Build TauDEM (Release) - Windows`**: Build all TauDEM tools in Release mode
+   - **`Build pitremove (Debug) - Windows`**: Build only the pitremove tool
+   - **`Build d8flowdir (Debug) - Windows`**: Build only the d8flowdir tool
+   - **`Build Generic Target (Debug) - Windows`**: Build any specific target (prompts for target name)
+   - **`Clean Build - Windows`**: Remove all build artifacts
+
+4. **Example Workflow**:
+   ```
+   Ctrl+Shift+P → type "Tasks: Run Task" → select "Build TauDEM (Debug) - Windows"
+   ```
+
+### macOS
+
+1. **Open Command Palette**:
+   - Press `Cmd+Shift+P` to open the Command Palette
+   - Or use the menu: `View → Command Palette...`
+
+2. **Access Build Tasks**:
+   - Type `Tasks: Run Task` and press Enter
+   - Or type `task` and select `Tasks: Run Task` from the dropdown
+
+3. **Select a Build Task**:
+   Choose from available macOS tasks:   
+   - **`Build TauDEM (Debug, Clang) - macOS`**: Build all TauDEM tools using Clang (default) in Debug mode
+   - **`Build TauDEM (Release, Clang) - macOS`**: Build all TauDEM tools in Release mode
+   - **`Build pitremove (Debug, Clang) - macOS`**: Build only the pitremove tool in Debug mode
+   - **`Build d8flowdir (Debug, Clang) - macOS`**: Build only the d8flowdir tool in Debug mode
+   - **`Build Generic Target (Debug, Clang) - macOS`**: Build any specific target (prompts for target name)
+   - **`Install TauDEM - macOS`**: Install TauDEM to `$HOME/local/taudem`
+   - **`Clean Build - macOS`**: Remove all build artifacts
+
+4. **Example Workflow**:
+   ```
+   Cmd+Shift+P → type "Tasks: Run Task" → select "Build TauDEM (Debug, Clang) - macOS"
+   ```
+
+**💡 Tips for VS Code Command Palette**:
+- Tasks are executed in VS Code's integrated terminal
+- Build progress and errors are displayed in real-time
+- Use `Ctrl+`` (Windows) or `Cmd+`` (macOS) to show/hide the terminal panel
+- Failed builds will show error messages with clickable file locations
+- The default build task can be run quickly with `Ctrl+Shift+B` (Windows) or `Cmd+Shift+B` (macOS)
 
 ## 🔨 Building TauDEM from Command Line
 
