@@ -48,6 +48,7 @@ For more information, visit the [official website](http://hydrology.usu.edu/taud
 Before cloning the repository, you'll need to install Git if you don't have it already:
 
 **macOS**:
+
 ```bash
 # Using Homebrew
 brew install git
@@ -57,18 +58,21 @@ brew install git
 ```
 
 **Windows**:
+
 ```bash
 # Download and run the installer from
 # https://git-scm.com/download/win
 ```
 
 **Linux (Debian/Ubuntu)**:
+
 ```bash
 sudo apt update
 sudo apt install git
 ```
 
 Verify your installation:
+
 ```bash
 git --version
 ```
@@ -121,26 +125,29 @@ code --install-extension ms-vscode.hexeditor  # For examining binary DEM files (
 #### macOS Setup
 
 1. **Copy VS Code settings template**:
-   ```bash
+
+```bash
    cp .vscode/settings-macos.json.template .vscode/settings.json
-   ```
+```
 
 2. **Install dependencies via Homebrew**:
-   ```bash
+
+```bash
    # Core dependencies
    brew install gdal
    brew install open-mpi
    brew install cmake
-   ```
+```
 
 3. **Configure IntelliSense**: The `.vscode/c_cpp_properties.json` is already configured for macOS with proper include paths.
 
 #### Windows Setup
 
 1. **Copy VS Code settings template**:
-   ```cmd
+
+```cmd
    copy .vscode\settings-windows.json.template .vscode\settings.json
-   ```
+```
 
 2. **Install vcpkg dependencies**: See [section](#windows-vcpkg) for detailed instructions.
 
@@ -153,11 +160,12 @@ code --install-extension ms-vscode.hexeditor  # For examining binary DEM files (
 #### Linux Setup
 
 1. **Install dependencies**:
-   ```bash
+
+```bash
    sudo apt update
    sudo apt install -y build-essential cmake openmpi-bin libopenmpi-dev \
                         gdal-bin libgdal-dev libproj-dev libtiff-dev libgeotiff-dev
-   ```
+```
 
 2. **Configure VS Code**: Create `.vscode/settings.json` with appropriate Linux-specific settings.
 
@@ -210,15 +218,18 @@ Example `.vscode/launch.json`:
 The `launch.json` file configures VS Code's **debugging system** for TauDEM development. Here's what each setting does:
 
 **🔧 Core Configuration**
+
 - **`"version": "0.2.0"`** - VS Code debugging configuration format version
 - **`"configurations": []`** - Array containing different debug configurations (you can have multiple)
 
 **🎯 Debug Target Settings**
+
 - **`"name": "Debug TauDEM Tool"`** - Display name in VS Code's debug dropdown menu
 - **`"type": "cppdbg"`** - Specifies C++ debugger type
 - **`"request": "launch"`** - Launch a new process (alternative: `"attach"` to running process)
 
 **📂 Program and Arguments**
+
 - **`"program": "${workspaceFolder}/bin/pitremove"`** - Path to executable to debug
   - `${workspaceFolder}` = `path/to/TauDEM local repository`
   - Targets the `pitremove` tool (pit removal algorithm)
@@ -228,12 +239,14 @@ The `launch.json` file configures VS Code's **debugging system** for TauDEM deve
   - `-fel output.tif`: Output filled DEM file
 
 **🔍 Execution Environment**
+
 - **`"stopAtEntry": false`** - Don't automatically break at `main()` function
 - **`"cwd": "${workspaceFolder}"`** - Working directory for the debugged program
 - **`"environment": []`** - Environment variables (empty array = inherit from VS Code)
 - **`"externalConsole": false`** - Use VS Code's integrated terminal instead of external console
 
 **🛠️ Debugger Configuration**
+
 - **`"MIMode": "gdb"`** - Use GDB debugger (GNU Debugger for macOS/Linux)
   - On Windows, this would be `"vsdbg"` for Visual Studio debugger
 - **`"setupCommands"`** - GDB initialization commands
@@ -247,7 +260,7 @@ The `launch.json` file configures VS Code's **debugging system** for TauDEM deve
 
 3. **Start debugging**: Press `F5` or Run → Start Debugging to debug the first configuration. To debug a different target, first press `cmd+shift+d` (macos) or `ctrl+shift+d` (Windows/Linux) to open the Debug panel, or click on the **Run and Debug** icon (icon with a bug symbol) in VS Code's activity bar (vertical toolbar on the left side of vscode). Then select a configuration from the debug dropdown and press `F5` to start debugging.
 
-5. **Debug controls available**:
+4. **Debug controls available**:
    - **Step Over** (`F10`): Execute current line, don't enter function calls
    - **Step Into** (`F11`): Enter function calls to debug inside them
    - **Step Out** (`Shift+F11`): Exit current function
@@ -290,22 +303,26 @@ This debugging setup is helpful for understanding TauDEM's flow direction algori
 Tasks configurations make it possible to run build scripts, compile code, and perform other project-related tasks directly from VS Code.
 
 **For macOS development**, copy the macOS-specific tasks template:
+
 ```bash
 cp .vscode/tasks-macos.json.template .vscode/tasks.json
 ```
 
 The macOS tasks configuration includes:
+
 - **Build tasks** with multiple compiler options (Clang, Apple GCC, Homebrew GCC)
 - **Debug and Release builds** for each compiler
 - **Install/uninstall tasks** with custom path support
 - **Interactive tool runner** with user input prompts
 
 **For Windows development**, copy the Windows-specific tasks template:
+
 ```cmd
 copy .vscode\tasks-windows.json.template .vscode\tasks.json
 ```
 
 The Windows tasks configuration includes:
+
 - **Build tasks** using `build-windows.bat` script
 - **CMake tasks** with vcpkg integration
 - **Clean** Delete all build directories and binaries
@@ -316,11 +333,13 @@ The Windows tasks configuration includes:
 #### Configure Launch Configuration for Debugging
 
 **For macOS development**, copy the macOS-specific launch template:
+
 ```bash
 cp .vscode/launch-macos.json.template .vscode/launch.json
 ```
 
 The macOS launch configuration includes:
+
 - **Debug configurations** for all TauDEM tools (PitRemove, D8FlowDir, StreamNet, etc.)
 - **LLDB debugger integration** optimized for macOS
 - **Pre-launch build tasks** that automatically compile before debugging
@@ -328,13 +347,14 @@ The macOS launch configuration includes:
 - **MPI debugging support** for parallel processing development
 - **Process attachment** capabilities for debugging running instances
 
-
 **For Windows development**, copy the Windows-specific launch template:
+
 ```cmd
 copy .vscode\launch-windows.json.template .vscode\launch.json
 ```
 
 **Key debugging configurations available:**
+
 - Pre-configured debugging setups for some TauDEM tools. For the remaining TauDEM tools, there is a generic debugging setup (`Build Generic Target (Debug) - Windows`/`Build Generic Target (Debug, Clang) - macOS`) that would prompt the user to provide the name of the TauDEM tool.
 
 **NOTE**: Input data files needs to be placed in the `test_data/input` folder and output data files will be placed in the `test_data/output` folder. The `test_data` folder needs to be created manually at the root of the project. The subfolders `input` and `output` also need to be created manually. Name the input files as named in the `launch.json` or adjust the input file names in `launch.json`.
@@ -366,9 +386,10 @@ VS Code provides a convenient Command Palette interface to execute build tasks w
    - **`Clean Build - Windows`**: Remove all build artifacts
 
 4. **Example Workflow**:
-   ```
+
+```
    Ctrl+Shift+P → type "Tasks: Run Task" → select "Build TauDEM (Debug) - Windows"
-   ```
+```
 
 ### macOS
 
@@ -391,11 +412,13 @@ VS Code provides a convenient Command Palette interface to execute build tasks w
    - **`Clean Build - macOS`**: Remove all build artifacts
 
 4. **Example Workflow**:
-   ```
+
+```
    Cmd+Shift+P → type "Tasks: Run Task" → select "Build TauDEM (Debug, Clang) - macOS"
-   ```
+```
 
 **💡 Tips for VS Code Command Palette**:
+
 - Tasks are executed in VS Code's integrated terminal
 - Build progress and errors are displayed in real-time
 - Use `Ctrl+`` (Windows) or `Cmd+`` (macOS) to show/hide the terminal panel
@@ -409,6 +432,7 @@ TauDEM supports multiple build methods and platforms.
 ### Quick Start
 
 #### macOS
+
 ```bash
 # Release build (optimized)
 make release COMPILER=clang
@@ -418,6 +442,7 @@ make debug COMPILER=clang
 ```
 
 #### Linux
+
 ```bash
 # Release build (optimized)
 make release COMPILER=linux
@@ -427,6 +452,7 @@ make debug COMPILER=linux
 ```
 
 #### Windows
+
 ```cmd
 # Release build (optimized) all targets
 build-windows.bat release
@@ -476,9 +502,11 @@ mkdir build && cd build
 cmake .. -C ../../config.cmake -DCMAKE_BUILD_TYPE=Release
 make -j$(nproc)
 ```
+
 #### Build Directories
 
 TauDEM uses separate build directories for Debug and Release builds. The build directories are:
+
 - `src/build-debug` for Debug builds
 - `src/build-release` for Release builds
 
@@ -646,6 +674,7 @@ testall.bat
 ### Validation
 
 The test suite validates:
+
 - Algorithm correctness
 - Memory management
 - Parallel processing functionality
