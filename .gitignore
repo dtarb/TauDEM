@@ -180,3 +180,6 @@ test_data/
 .vscode/settings.json
 .vscode/launch.json
 .vscode/tasks.json
+
+# Visual studio generated files
+Taudem5PCVS2019/.vs/
