@@ -121,7 +121,7 @@ add_executable (dinfupdependence ${DINFUPDEPEND})
 add_executable (dropanalysis ${DROPANALYSIS})
 add_executable (gridnet ${GRIDNET})
 add_executable (lengtharea ${LENGTHAREA})
-add_executable (moveoutletstostrm ${MVOUTLETSTOSTRM})
+add_executable (moveoutletstostreams ${MVOUTLETSTOSTRM})
 add_executable (peukerdouglas ${PEUKERDOUGLAS})
 add_executable (pitremove ${PITREMOVE})
 add_executable (slopearea ${SLOPEAREA})
@@ -158,7 +158,7 @@ set (MY_TARGETS aread8
                 dropanalysis
                 gridnet
                 lengtharea
-                moveoutletstostrm
+                moveoutletstostreams
                 peukerdouglas
                 pitremove
                 slopearea
