@@ -542,10 +542,10 @@
             "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
         },
         {
-            "name": "Debug MoveOutletsToStrm",
+            "name": "Debug MoveOutletsToStreams",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/moveoutletstostrm",
+            "program": "${workspaceFolder}/src/build-debug/moveoutletstostreams",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-src", "test_data/input/dem_src.tif",

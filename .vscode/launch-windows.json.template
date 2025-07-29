@@ -652,10 +652,10 @@
             "preLaunchTask": "Build Generic Target (Debug) - Windows"
         },
         {
-            "name": "Debug MoveOutletsToStrm - Windows",
+            "name": "Debug MoveOutletsToStreams - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/moveoutletstostrm.exe",
+            "program": "${workspaceFolder}/src/build-debug/Debug/moveoutletstostreams.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-src", "test_data/input/dem_src.tif",
@@ -1506,10 +1506,10 @@
             "preLaunchTask": "Build Generic Target (Release) - Windows"
         },
         {
-            "name": "Debug MoveOutletsToStrm (Release) - Windows",
+            "name": "Debug MoveOutletsToStreams (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/moveoutletstostrm.exe",
+            "program": "${workspaceFolder}/src/build-release/Release/moveoutletstostreams.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-src", "test_data/input/dem_src.tif",
