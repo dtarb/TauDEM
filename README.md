@@ -534,7 +534,7 @@ exit
 exit
 ```
 
-### Installation
+### Installation (macOS/Linux)
 
 ```bash
 # Install to default location (/usr/local/taudem)
@@ -546,6 +546,60 @@ make install PREFIX=/custom/path
 # Uninstall
 make uninstall
 ```
+
+### Installation (Windows)
+
+Download the latest TauDEM Windows installer from the [TauDEM Downloads page](https://hydrology.usu.edu/taudem/taudem5/downloads.html) and run it.
+
+### Installation using Docker
+
+TauDEM can be built and run inside a Docker container for a consistent, cross-platform environment.
+
+#### Requirements
+
+- [Docker](https://www.docker.com/products/docker-desktop) (Docker Desktop for Windows/macOS, or Docker Engine for Linux)
+- Sufficient disk space for DEM data and TauDEM build artifacts
+
+#### Build the Docker Image
+
+Download the `Dockerfile` from the TauDEM repository and build the image if you haven't previously done so:
+
+```bash
+curl -O https://raw.githubusercontent.com/dtarb/TauDEM/Develop/Dockerfile
+docker build -t taudem-docker .
+```
+
+This creates a Docker image named `taudem-docker` with all dependencies and TauDEM build tools installed. You need to build the Docker image only once unlless the TauDEM source code changes.
+
+
+#### Running TauDEM in a Docker Container
+
+Once you have built the Docker image, you can run TauDEM tools inside a container anytime. To run TauDEM tools on your local data, use Docker's volume mounting to access files from your host system inside the container.
+
+**General command pattern:**
+
+```bash
+docker run --rm -it -v /path/to/your/data:/data --user taudem taudem-docker <taudem-command>
+```
+
+This command runs a TauDEM tool inside a Docker container:
+
+- `--rm` automatically removes the container after it exits.
+- `-it` runs the container interactively (so you can see output/errors).
+- `-v /path/to/your/data:/data` mounts your local data directory into the container at `/data`.
+- `--user taudem` runs the command as the non-root `taudem` user inside the container for safer file permissions.
+- `taudem-docker` is the name of the Docker image you built.
+- `<taudem-command>` is the TauDEM tool and its arguments (e.g., `pitremove -z /data/input.tif -fel /data/output.tif`).
+
+**Example: Running `pitremove`**
+
+```bash
+docker run --rm -it -v $(pwd):/data --user taudem taudem-docker pitremove -z /data/input.tif -fel /data/output.tif
+# or with mpi
+docker run --rm -it -v $(pwd):/data --user taudem taudem-docker mpiexec -n 2 pitremove -z /data/input.tif -fel /data/output.tif
+```
+
+- This runs the `pitremove` tool on `input.tif` in your current directory and writes `output.tif` to the same directory.
 
 ## 📦 Dependencies
 
