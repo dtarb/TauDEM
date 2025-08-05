@@ -4,9 +4,8 @@ UNAME_S := $(shell uname -s)
 BUILD_TYPE ?= Debug
 
 # Directories
-SRC_DIR = src
-BUILD_DIR_DEBUG = $(SRC_DIR)/build-debug
-BUILD_DIR_RELEASE = $(SRC_DIR)/build-release
+BUILD_DIR_DEBUG = build/debug
+BUILD_DIR_RELEASE = build/release
 CONFIG_FILE = config.cmake
 
 # Build commands
@@ -73,7 +72,7 @@ debug:
 	$(call check_compiler)
 	@echo "Building in Debug mode with $(COMPILER) compiler..."
 	@mkdir -p $(BUILD_DIR_DEBUG)
-	@cd $(BUILD_DIR_DEBUG) && cmake .. -C ../../$(CONFIG_FILE) -DCMAKE_BUILD_TYPE=Debug $(CMAKE_COMPILER_OPTIONS) -G $(CMAKE_GENERATOR)
+	@cd $(BUILD_DIR_DEBUG) && cmake ../.. -C ../../$(CONFIG_FILE) -DCMAKE_BUILD_TYPE=Debug $(CMAKE_COMPILER_OPTIONS) -G $(CMAKE_GENERATOR)
 	$(if $(TARGET),\
 		@echo "Building specific target: $(TARGET)" && cd $(BUILD_DIR_DEBUG) && make $(TARGET),\
 		@echo "Building all targets" && cd $(BUILD_DIR_DEBUG) && make\
@@ -86,7 +85,7 @@ release:
 	$(call check_compiler)
 	@echo "Building in Release mode with $(COMPILER) compiler..."
 	@mkdir -p $(BUILD_DIR_RELEASE)
-	@cd $(BUILD_DIR_RELEASE) && cmake .. -C ../../$(CONFIG_FILE) -DCMAKE_BUILD_TYPE=Release $(CMAKE_COMPILER_OPTIONS) -G $(CMAKE_GENERATOR)
+	@cd $(BUILD_DIR_RELEASE) && cmake ../.. -C ../../$(CONFIG_FILE) -DCMAKE_BUILD_TYPE=Release $(CMAKE_COMPILER_OPTIONS) -G $(CMAKE_GENERATOR)
 	$(if $(TARGET),\
 		@echo "Building specific target: $(TARGET)" && cd $(BUILD_DIR_RELEASE) && make $(TARGET),\
 		@echo "Building all targets" && cd $(BUILD_DIR_RELEASE) && make\
@@ -103,13 +102,16 @@ clean:
 	@rm -rf $(BUILD_DIR_DEBUG) $(BUILD_DIR_RELEASE)
 
 install:	
-	@echo "Installing TauDEM to $(or $(PREFIX),/usr/local/taudem)..."
+	@echo "Installing TauDEM to $(or $(PREFIX),/usr/local)/taudem..."
 	@if [ ! -d "$(BUILD_DIR_RELEASE)" ]; then \
 		echo "Error: Release build directory not found. Please run 'make release' first."; \
 		exit 1; \
 	fi
 	@cd $(BUILD_DIR_RELEASE) && cmake . -DCMAKE_INSTALL_PREFIX=$(or $(PREFIX),/usr/local)
 	@cd $(BUILD_DIR_RELEASE) && make install
+	@echo "=== Validating installation ==="
+	@test -f "$(or $(PREFIX),/usr/local)/taudem/pitremove" || (echo "ERROR: pitremove not installed" && exit 1)
+	@echo "SUCCESS: TauDEM installation validated"
 
 uninstall:
 	@echo "Uninstalling TauDEM..."
