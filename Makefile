@@ -92,45 +92,7 @@ release:
 		@echo "Building all targets" && cd $(BUILD_DIR_RELEASE) && make\
 	)
 
-dk-debug:
-	$(if $(filter Linux,$(UNAME_S)),,$(error dk-debug is only supported on Linux))
-	$(warning COMPILER is $(COMPILER))
-	$(warning UNAME_S is $(UNAME_S))
-	$(call check_compiler)
-	@echo "Building in Debug mode with $(COMPILER) compiler..."
-	@mkdir -p $(BUILD_DIR_DEBUG)
-	@cd $(SRC_DIR) && cmake -S . -B build-debug
-	$(if $(TARGET),\
-		@echo "Building specific target: $(TARGET)" && cd $(BUILD_DIR_DEBUG) && make $(TARGET),\
-		@echo "Building all targets" && cd $(BUILD_DIR_DEBUG) && make\
-	)
-
-dk-release:
-	$(if $(filter Linux,$(UNAME_S)),,$(error dk-release is only supported on Linux))
-	$(warning COMPILER is $(COMPILER))
-	$(warning UNAME_S is $(UNAME_S))
-	$(call check_compiler)
-	@echo "Building in Release mode with $(COMPILER) compiler..."
-	@mkdir -p $(BUILD_DIR_RELEASE)
-	@cd $(SRC_DIR) && cmake -S . -B build-release
-	$(if $(TARGET),\
-		@echo "Building specific target: $(TARGET)" && cd $(BUILD_DIR_RELEASE) && make $(TARGET),\
-		@echo "Building all targets" && cd $(BUILD_DIR_RELEASE) && make\
-	)
-
-dk-install:
-	$(if $(filter Linux,$(UNAME_S)),,$(error dk-install is only supported on Linux))
-	@echo "Installing TauDEM to $(or $(PREFIX),/usr/local)..."
-	@if [ ! -d "$(BUILD_DIR_RELEASE)" ]; then \
-		echo "Error: Build directory not found. Please run 'make dk-release' first."; \
-		exit 1; \
-	fi
-	@cd $(BUILD_DIR_RELEASE) && cmake . -DCMAKE_INSTALL_PREFIX=$(or $(PREFIX),/usr/local)
-	@cd $(BUILD_DIR_RELEASE) && make install
-	@echo "=== Validating installation ==="
-	@test -f "$(or $(PREFIX),/usr/local)/taudem/pitremove" || (echo "ERROR: pitremove not installed" && exit 1)
-	@echo "SUCCESS: TauDEM installation validated"
-
+# This target is used to run the tests in the Docker container built from the Dockerfile-run.tests Dockerfile
 dk-run-tests:
 	@echo "Running tests..."
 	@cd /home/taudem-docker/workspace/TauDEM-Test-Data/Input && \
@@ -159,11 +121,6 @@ help:
 	@echo "  make debug COMPILER=<compiler> TARGET=<target> - Build specific target in Debug mode with specified compiler (linux, macos, clang, gcc-apple)"
 	@echo "  make release COMPILER=<compiler>  - Build in Release mode with specified compiler (linux, macos, clang, gcc-apple)"
 	@echo "  make release COMPILER=<compiler> TARGET=<target> - Build specific target in Release mode with specified compiler (linux, macos, clang, gcc-apple)"
-	@echo "  make dk-debug COMPILER=<compiler> - Build in Debug mode for Docker (Linux only)"
-	@echo "  make dk-debug COMPILER=<compiler> TARGET=<target> - Build specific target in Debug mode for Docker (Linux only)"
-	@echo "  make dk-release COMPILER=<compiler> - Build in Release mode for Docker (Linux only)"
-	@echo "  make dk-release COMPILER=<compiler> TARGET=<target> - Build specific target in Release mode for Docker (Linux only)"
-	@echo "  make dk-install [PREFIX=<path>]   - Install TauDEM to specified directory (default: /usr/local, Linux only)"
 	@echo "  make dk-run-tests                 - Run TauDEM tests in Docker environment"
 	@echo "  make clean                        - Clean build directories"
 	@echo "  make install [PREFIX=<path>]      - Install TauDEM (default: /usr/local)"
