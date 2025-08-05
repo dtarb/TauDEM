@@ -431,6 +431,10 @@ TauDEM supports multiple build methods and platforms.
 
 ### Quick Start
 
+#### Build Directories
+
+TauDEM uses separate build directories for Debug and Release builds. The build directories are: `build/debug` and `build/release`.
+
 #### macOS
 
 ```bash
@@ -496,19 +500,44 @@ make clean
 
 #### Using CMake Directly
 
+**From project root:**
+
 ```bash
-cd src
-mkdir build && cd build
-cmake .. -C ../../config.cmake -DCMAKE_BUILD_TYPE=Release
+# Create build directory and configure for release build
+mkdir -p build/release
+cd build/release
+
+# macOS with Clang (default)
+cmake ../.. -C ../../config.cmake -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_C_COMPILER=/usr/bin/clang \
+  -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+
+# macOS with Homebrew GCC
+cmake ../.. -C ../../config.cmake -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_C_COMPILER=/opt/homebrew/bin/gcc-15 \
+  -DCMAKE_CXX_COMPILER=/opt/homebrew/bin/g++-15 \
+  -DMPI_C_COMPILER=/opt/homebrew/opt/open-mpi/bin/mpicc \
+  -DMPI_CXX_COMPILER=/opt/homebrew/opt/open-mpi/bin/mpicxx
+
+# Linux with GCC
+cmake ../.. -C ../../config.cmake -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_C_COMPILER=/usr/bin/gcc \
+  -DCMAKE_CXX_COMPILER=/usr/bin/g++ \
+  -DMPI_C_COMPILER=/usr/bin/mpicc \
+  -DMPI_CXX_COMPILER=/usr/bin/mpicxx
+
 make -j$(nproc)
 ```
 
-#### Build Directories
+**For debug builds:**
 
-TauDEM uses separate build directories for Debug and Release builds. The build directories are:
-
-- `src/build-debug` for Debug builds
-- `src/build-release` for Release builds
+```bash
+# Create build directory and configure for debug build
+mkdir -p build/debug
+cd build/debug
+cmake ../.. -C ../../config.cmake -DCMAKE_BUILD_TYPE=Debug [compiler options...]
+make -j$(nproc)
+```
 
 #### Docker Build (Building/Testing TauDEM for Linux)
 
@@ -519,10 +548,11 @@ docker build -f Dockerfile-run.tests -t taudem-linux-run-tests .
 # Run the Docker container with volume mounting
 docker run --rm -it -v $(pwd):/app taudem-linux-run-tests
 
-# Inside the container - clean and build
+# Inside the container - clean, build, and install TauDEM
 make clean
-make dk-release COMPILER=linux
-make dk-install PREFIX=/usr/local
+make release COMPILER=linux
+# Install to /usr/local/taudem by default
+make install
 
 # Run tests in Docker (as user taudem-docker)
 su - taudem-docker
@@ -540,7 +570,7 @@ exit
 # Install to default location (/usr/local/taudem)
 make install
 
-# Install to custom location
+# Install to custom location (/custom/path/taudem)
 make install PREFIX=/custom/path
 
 # Uninstall
@@ -586,7 +616,7 @@ This command runs a TauDEM tool inside a Docker container:
 
 - `--rm` automatically removes the container after it exits.
 - `-it` runs the container interactively (so you can see output/errors).
-- `-v /path/to/your/data:/data` mounts your local data directory into the container at `/data`.
+- `-v /path/to/your/data:/data` mounts your local data directory (containing input files) into the container at `/data`.
 - `--user taudem` runs the command as the non-root `taudem` user inside the container for safer file permissions.
 - `taudem-docker` is the name of the Docker image you built.
 - `<taudem-command>` is the TauDEM tool and its arguments (e.g., `pitremove -z /data/input.tif -fel /data/output.tif`).
@@ -594,6 +624,7 @@ This command runs a TauDEM tool inside a Docker container:
 **Example: Running `pitremove`**
 
 ```bash
+# cd to the directory containing your input data files and run:
 docker run --rm -it -v $(pwd):/data --user taudem taudem-docker pitremove -z /data/input.tif -fel /data/output.tif
 # or with mpi
 docker run --rm -it -v $(pwd):/data --user taudem taudem-docker mpiexec -n 2 pitremove -z /data/input.tif -fel /data/output.tif
@@ -659,8 +690,10 @@ vcpkg install gdal[core,tools,sqlite3,libkml]:x64-windows mpi:x64-windows
 TauDEM/
 ├── src/                    # Source code
 │   ├── *.cpp, *.h          # TauDEM algorithms implementation
-│   ├── CMakeLists.txt      # CMake build configuration
-│   └── build/              # Build directory (generated)
+│   ├── CMakeLists.txt      # CMake build configuration│
+├── build/                  # Build outputs (generated)(gitignored)
+│   ├── debug/              # Debug build directory
+│   └── release/            # Release build directory
 ├── pyfiles/                # Python tools and ArcGIS integration
 │   ├── *.py                # Python wrappers for TauDEM tools
 │   └── *.tbx               # ArcGIS toolbox files
@@ -669,6 +702,7 @@ TauDEM/
 │   ├── settings-*.json.template    # Platform-specific VS Code settings
 │   |── launch-*.json.template      # Platform-specific debugging configurations
 │   └── tasks-*.json.template       # Platform-specific build and utility tasks
+├── CMakeLists.txt          # Root CMake configuration
 ├── config.cmake            # CMake configuration for different platforms
 ├── Makefile                # Main build system
 ├── build-windows.bat       # Windows build script
