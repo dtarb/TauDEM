@@ -8,18 +8,12 @@ SRC_DIR = src
 BUILD_DIR_DEBUG = $(SRC_DIR)/build-debug
 BUILD_DIR_RELEASE = $(SRC_DIR)/build-release
 CONFIG_FILE = config.cmake
-INSTALL_DIR = $(shell sed -n 's/.*CMAKE_INSTALL_PREFIX "\([^"]*\)".*/\1/p' $(CONFIG_FILE))
 
 # Build commands
 .PHONY: all debug release dk-debug dk-release dk-install dk-run-tests clean install uninstall help
 
 # Default target
 all: debug
-
-# Set default installation directory if not found in CONFIG_FILE
-ifeq ($(INSTALL_DIR),)
-	INSTALL_DIR = /usr/local
-endif
 
 # Function to check compiler and set options
 check_compiler = $(if $(COMPILER),\
@@ -157,7 +151,7 @@ install:
 
 uninstall:
 	@echo "Uninstalling TauDEM..."
-	@rm -rf $(INSTALL_DIR)
+	@rm -rf $(or $(PREFIX),/usr/local)/taudem
 
 help:
 	@echo "Makefile usage:"
