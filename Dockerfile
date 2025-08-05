@@ -42,7 +42,7 @@ USER taudem
 WORKDIR /home/taudem/workspace
 
 # Clone the TauDEM repository (for now using the vscode-macos-dev-setup branch)
-# TODO: Change this back to main branch when ready
+# TODO: Change this back to main branch when this branch is merged into main
 RUN git clone -b vscode-macos-dev-setup --single-branch https://github.com/dtarb/TauDEM.git
 
 # Set working directory to TauDEM
@@ -50,8 +50,8 @@ WORKDIR /home/taudem/workspace/TauDEM
 
 # Build and install TauDEM
 RUN make clean && \
-    make dk-release COMPILER=linux && \
-    sudo make dk-install PREFIX=/usr/local && \
+    make release COMPILER=linux && \
+    sudo make install PREFIX=/usr/local && \
     echo "=== Validating installation ===" && \
     test -f /usr/local/taudem/pitremove || (echo "ERROR: pitremove not found in /usr/local/taudem" && exit 1) && \
     echo "SUCCESS: TauDEM installation validated - pitremove found"
