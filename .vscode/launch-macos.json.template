@@ -5,7 +5,7 @@
             "name": "Debug PitRemove",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/pitremove",
+            "program": "${workspaceFolder}/build/debug/src/pitremove",
             "args": [
                 "-z", "test_data/input/dem.tif",
                 "-fel", "test_data/output/dem_fel.tif",
@@ -29,7 +29,7 @@
             "name": "Debug D8FlowDir",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/d8flowdir",
+            "program": "${workspaceFolder}/build/debug/src/d8flowdir",
             "args": [
                 "-fel", "test_data/input/dem_fel.tif",
                 "-p", "test_data/output/dem_p.tif",
@@ -53,7 +53,7 @@
             "name": "Debug DinfFlowDir",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/dinfflowdir",
+            "program": "${workspaceFolder}/build/debug/src/dinfflowdir",
             "args": [
                 "-fel", "test_data/input/dem_fel.tif",
                 "-ang", "test_data/output/dem_ang.tif",
@@ -77,7 +77,7 @@
             "name": "Debug AreaD8",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/aread8",
+            "program": "${workspaceFolder}/build/debug/src/aread8",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-ad8", "test_data/output/dem_ad8.tif",
@@ -101,7 +101,7 @@
             "name": "Debug Threshold",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/threshold",
+            "program": "${workspaceFolder}/build/debug/src/threshold",
             "args": [
                 "-ssa", "test_data/input/dem_ad8.tif",
                 "-src", "test_data/output/dem_src.tif",
@@ -125,7 +125,7 @@
             "name": "Debug StreamNet",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/streamnet",
+            "program": "${workspaceFolder}/build/debug/src/streamnet",
             "args": [
                 "-fel", "test_data/input/dem_fel.tif",
                 "-p", "test_data/input/dem_p.tif",
@@ -155,7 +155,7 @@
             "name": "Debug GageWatershed",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/gagewatershed",
+            "program": "${workspaceFolder}/build/debug/src/gagewatershed",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-gw", "test_data/output/dem_gw.tif",
@@ -180,7 +180,7 @@
             "name": "Debug DropAnalysis",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/dropanalysis",
+            "program": "${workspaceFolder}/build/debug/src/dropanalysis",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-fel", "test_data/input/dem_fel.tif",
@@ -207,7 +207,7 @@
             "name": "Debug TWI",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/twi",
+            "program": "${workspaceFolder}/build/debug/src/twi",
             "args": [
                 "-sca", "test_data/input/dem_sca.tif",
                 "-slp", "test_data/input/dem_slp.tif",
@@ -231,7 +231,7 @@
             "name": "Debug D8HDistToStrm",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/d8hdisttostrm",
+            "program": "${workspaceFolder}/build/debug/src/d8hdisttostrm",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-src", "test_data/input/dem_src.tif",
@@ -256,7 +256,7 @@
             "name": "Debug AreaDinf",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/areadinf",
+            "program": "${workspaceFolder}/build/debug/src/areadinf",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-sca", "test_data/output/dem_sca.tif"
@@ -279,7 +279,7 @@
             "name": "Debug D8FlowPathExtremeUp",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/d8flowpathextremeup",
+            "program": "${workspaceFolder}/build/debug/src/d8flowpathextremeup",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-sa", "test_data/input/dem_sa.tif",
@@ -303,7 +303,7 @@
             "name": "Debug DinfAvalanche",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/dinfavalanche",
+            "program": "${workspaceFolder}/build/debug/src/dinfavalanche",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-fel", "test_data/input/dem_fel.tif",
@@ -327,7 +327,7 @@
             "name": "Debug DinfConcLimAccum",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/dinfconclimaccum",
+            "program": "${workspaceFolder}/build/debug/src/dinfconclimaccum",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-dg", "test_data/input/dem_dg.tif",
@@ -351,7 +351,7 @@
             "name": "Debug DinfDecayAccum",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/dinfdecayaccum",
+            "program": "${workspaceFolder}/build/debug/src/dinfdecayaccum",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-dm", "test_data/input/dem_dm.tif",
@@ -375,7 +375,7 @@
             "name": "Debug DinfDistDown",
             "type": "cppdbg",
             "request": "launch", 
-            "program": "${workspaceFolder}/src/build-debug/dinfdistdown",
+            "program": "${workspaceFolder}/build/debug/src/dinfdistdown",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-fel", "test_data/input/dem_fel.tif",
@@ -400,7 +400,7 @@
             "name": "Debug DinfDistUp",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/dinfdistup",
+            "program": "${workspaceFolder}/build/debug/src/dinfdistup",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-fel", "test_data/input/dem_fel.tif",
@@ -425,7 +425,7 @@
             "name": "Debug DinfRevAccum",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/dinfrevaccum",
+            "program": "${workspaceFolder}/build/debug/src/dinfrevaccum",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-wg", "test_data/input/dem_wg.tif",
@@ -449,7 +449,7 @@
             "name": "Debug DinfTransLimAccum",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/dinftranslimaccum",
+            "program": "${workspaceFolder}/build/debug/src/dinftranslimaccum",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-tsup", "test_data/input/dem_tsup.tif",
@@ -473,7 +473,7 @@
             "name": "Debug DinfUpDependence",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/dinfupdependence",
+            "program": "${workspaceFolder}/build/debug/src/dinfupdependence",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-dep", "test_data/output/dem_dep.tif"
@@ -496,7 +496,7 @@
             "name": "Debug GridNet",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/gridnet",
+            "program": "${workspaceFolder}/build/debug/src/gridnet",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-plen", "test_data/output/dem_plen.tif",
@@ -521,7 +521,7 @@
             "name": "Debug LengthArea",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/lengtharea",
+            "program": "${workspaceFolder}/build/debug/src/lengtharea",
             "args": [
                 "-plen", "test_data/input/dem_plen.tif",
                 "-ad8", "test_data/input/dem_ad8.tif",
@@ -545,7 +545,7 @@
             "name": "Debug MoveOutletsToStreams",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/moveoutletstostreams",
+            "program": "${workspaceFolder}/build/debug/src/moveoutletstostreams",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-src", "test_data/input/dem_src.tif",
@@ -570,7 +570,7 @@
             "name": "Debug PeukerDouglas",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/peukerdouglas",
+            "program": "${workspaceFolder}/build/debug/src/peukerdouglas",
             "args": [
                 "-fel", "test_data/input/dem_fel.tif",
                 "-ss", "test_data/output/dem_ss.tif"
@@ -593,7 +593,7 @@
             "name": "Debug SlopeArea",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/slopearea",
+            "program": "${workspaceFolder}/build/debug/src/slopearea",
             "args": [
                 "-slp", "test_data/input/dem_slp.tif",
                 "-sca", "test_data/input/dem_sca.tif",
@@ -617,7 +617,7 @@
             "name": "Debug SlopeAreaRatio",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/slopearearatio",
+            "program": "${workspaceFolder}/build/debug/src/slopearearatio",
             "args": [
                 "-slp", "test_data/input/dem_slp.tif",
                 "-sca", "test_data/input/dem_sca.tif",
@@ -641,7 +641,7 @@
             "name": "Debug SlopeAveDown",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/slopeavedown",
+            "program": "${workspaceFolder}/build/debug/src/slopeavedown",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-fel", "test_data/input/dem_fel.tif",
@@ -665,7 +665,7 @@
             "name": "Debug ConnectDown",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/connectdown",
+            "program": "${workspaceFolder}/build/debug/src/connectdown",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-w", "test_data/input/dem_w.tif",
@@ -690,7 +690,7 @@
             "name": "Debug CatchHydroGeo",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/catchhydrogeo",
+            "program": "${workspaceFolder}/build/debug/src/catchhydrogeo",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-o", "test_data/input/outlets.shp",
@@ -714,7 +714,7 @@
             "name": "Debug CatchOutlets",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/catchoutlets",
+            "program": "${workspaceFolder}/build/debug/src/catchoutlets",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-src", "test_data/input/dem_src.tif",
@@ -738,7 +738,7 @@
             "name": "Debug EditRaster",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/editraster",
+            "program": "${workspaceFolder}/build/debug/src/editraster",
             "args": [
                 "-input", "test_data/input/dem.tif",
                 "-output", "test_data/output/dem_edited.tif",
@@ -762,7 +762,7 @@
             "name": "Debug FlowDirCond",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/flowdircond",
+            "program": "${workspaceFolder}/build/debug/src/flowdircond",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-z", "test_data/input/dem_z.tif",
@@ -786,7 +786,7 @@
             "name": "Debug RetLimFlow",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/retlimflow",
+            "program": "${workspaceFolder}/build/debug/src/retlimflow",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-src", "test_data/input/dem_src.tif",
@@ -810,7 +810,7 @@
             "name": "Debug SetRegion",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/setregion",
+            "program": "${workspaceFolder}/build/debug/src/setregion",
             "args": [
                 "-mask", "test_data/input/mask.tif",
                 "-src", "test_data/input/dem_src.tif",
@@ -834,7 +834,7 @@
             "name": "Debug SinmapSI",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/sinmapsi",
+            "program": "${workspaceFolder}/build/debug/src/sinmapsi",
             "args": [
                 "-slp", "test_data/input/dem_slp.tif",
                 "-sca", "test_data/input/dem_sca.tif",
@@ -858,7 +858,7 @@
             "name": "Debug InunMap",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/inunmap",
+            "program": "${workspaceFolder}/build/debug/src/inunmap",
             "args": [
                 "-fel", "test_data/input/dem_fel.tif",
                 "-h", "test_data/input/depth.tif",
@@ -882,7 +882,7 @@
             "name": "Debug MPI Tool Using Pitrmove (Manual)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/pitremove",
+            "program": "${workspaceFolder}/build/debug/src/pitremove",
             "args": [
                 "-z", "test_data/input/dem.tif",
                 "-fel", "test_data/output/dem_fel.tif",
@@ -919,7 +919,7 @@
             "name": "Attach to Process (Generic)",
             "type": "cppdbg",
             "request": "attach",
-            "program": "${workspaceFolder}/src/build-debug/${input:programName}",
+            "program": "${workspaceFolder}/build/debug/src/${input:programName}",
             "processId": "${command:pickProcess}",
             "MIMode": "lldb"
         }

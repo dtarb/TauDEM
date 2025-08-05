@@ -449,9 +449,9 @@
             "detail": "Check if all required dependencies are installed and accessible"
         },
         {
-            "label": "Run Specific TauDEM Tool - macOS",
+            "label": "Run Specific TauDEM Tool (debug) - macOS",
             "type": "shell",
-            "command": "${workspaceFolder}/src/build/${input:taudemTool}",
+            "command": "${workspaceFolder}/build/debug/src/${input:taudemTool}",
             "args": ["${input:taudemArgs}"],
             "group": "test",
             "presentation": {
@@ -463,10 +463,10 @@
             "options": {
                 "cwd": "${workspaceFolder}",
                 "env": {
-                    "PATH": "${workspaceFolder}/src/build:${env:PATH}"
+                    "PATH": "${workspaceFolder}/build/debug/src:${env:PATH}"
                 }
             },
-            "detail": "Run a specific TauDEM tool with custom arguments"
+            "detail": "Run a specific TauDEM tool from debug build with custom arguments"
         },
         {
             "label": "Open TauDEM Documentation",

@@ -5,7 +5,7 @@
             "name": "Debug PitRemove - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/pitremove.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/pitremove.exe",
             "args": [
                 "-z", "test_data/input/dem.tif",
                 "-fel", "test_data/output/dem_fel.tif",
@@ -24,7 +24,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -34,7 +34,7 @@
             "name": "Debug D8FlowDir - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/d8flowdir.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/d8flowdir.exe",
             "args": [
                 "-fel", "test_data/input/dem_fel.tif",
                 "-p", "test_data/output/dem_p.tif",
@@ -53,7 +53,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -63,7 +63,7 @@
             "name": "Debug DinfFlowDir - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/dinfflowdir.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/dinfflowdir.exe",
             "args": [
                 "-fel", "test_data/input/dem_fel.tif",
                 "-ang", "test_data/output/dem_ang.tif",
@@ -82,7 +82,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -92,7 +92,7 @@
             "name": "Debug AreaD8 - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/aread8.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/aread8.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-ad8", "test_data/output/dem_ad8.tif",
@@ -111,7 +111,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -121,7 +121,7 @@
             "name": "Debug Threshold - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/threshold.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/threshold.exe",
             "args": [
                 "-ssa", "test_data/input/dem_ad8.tif",
                 "-src", "test_data/output/dem_src.tif",
@@ -140,7 +140,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -150,7 +150,7 @@
             "name": "Debug StreamNet - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/streamnet.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/streamnet.exe",
             "args": [
                 "-fel", "test_data/input/dem_fel.tif",
                 "-p", "test_data/input/dem_p.tif",
@@ -175,7 +175,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -185,7 +185,7 @@
             "name": "Debug GageWatershed - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/gagewatershed.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/gagewatershed.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-gw", "test_data/output/dem_gw.tif",
@@ -205,7 +205,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -215,7 +215,7 @@
             "name": "Debug DropAnalysis - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/dropanalysis.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/dropanalysis.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-fel", "test_data/input/dem_fel.tif",
@@ -237,7 +237,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -247,7 +247,7 @@
             "name": "Debug TWI - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/twi.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/twi.exe",
             "args": [
                 "-sca", "test_data/input/dem_sca.tif",
                 "-slp", "test_data/input/dem_slp.tif",
@@ -266,7 +266,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -276,7 +276,7 @@
             "name": "Debug D8HDistToStrm - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/d8hdisttostrm.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/d8hdisttostrm.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-src", "test_data/input/dem_src.tif",
@@ -296,7 +296,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -306,7 +306,7 @@
             "name": "Debug AreaDinf - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/areadinf.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/areadinf.exe",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-sca", "test_data/output/dem_sca.tif"
@@ -324,7 +324,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -334,7 +334,7 @@
             "name": "Debug D8FlowPathExtremeUp - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/d8flowpathextremeup.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/d8flowpathextremeup.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-sa", "test_data/input/dem_sa.tif",
@@ -353,7 +353,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -363,7 +363,7 @@
             "name": "Debug DinfAvalanche - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/dinfavalanche.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/dinfavalanche.exe",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-fel", "test_data/input/dem_fel.tif",
@@ -382,7 +382,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -392,7 +392,7 @@
             "name": "Debug DinfConcLimAccum - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/dinfconclimaccum.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/dinfconclimaccum.exe",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-dg", "test_data/input/dem_dg.tif",
@@ -411,7 +411,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -421,7 +421,7 @@
             "name": "Debug DinfDecayAccum - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/dinfdecayaccum.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/dinfdecayaccum.exe",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-dm", "test_data/input/dem_dm.tif",
@@ -440,7 +440,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -450,7 +450,7 @@
             "name": "Debug DinfDistDown - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/dinfdistdown.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/dinfdistdown.exe",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-fel", "test_data/input/dem_fel.tif",
@@ -470,7 +470,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -480,7 +480,7 @@
             "name": "Debug DinfDistUp - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/dinfdistup.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/dinfdistup.exe",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-fel", "test_data/input/dem_fel.tif",
@@ -500,7 +500,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -510,7 +510,7 @@
             "name": "Debug DinfRevAccum - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/dinfrevaccum.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/dinfrevaccum.exe",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-wg", "test_data/input/dem_wg.tif",
@@ -529,7 +529,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -539,7 +539,7 @@
             "name": "Debug DinfTransLimAccum - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/dinftranslimaccum.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/dinftranslimaccum.exe",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-tsup", "test_data/input/dem_tsup.tif",
@@ -558,7 +558,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -568,7 +568,7 @@
             "name": "Debug DinfUpDependence - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/dinfupdependence.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/dinfupdependence.exe",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-dep", "test_data/output/dem_dep.tif"
@@ -586,7 +586,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -596,7 +596,7 @@
             "name": "Debug GridNet - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/gridnet.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/gridnet.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-plen", "test_data/output/dem_plen.tif",
@@ -616,7 +616,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -626,7 +626,7 @@
             "name": "Debug LengthArea - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/lengtharea.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/lengtharea.exe",
             "args": [
                 "-plen", "test_data/input/dem_plen.tif",
                 "-ad8", "test_data/input/dem_ad8.tif",
@@ -645,7 +645,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -655,7 +655,7 @@
             "name": "Debug MoveOutletsToStreams - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/moveoutletstostreams.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/moveoutletstostreams.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-src", "test_data/input/dem_src.tif",
@@ -675,7 +675,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -685,7 +685,7 @@
             "name": "Debug PeukerDouglas - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/peukerdouglas.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/peukerdouglas.exe",
             "args": [
                 "-fel", "test_data/input/dem_fel.tif",
                 "-ss", "test_data/output/dem_ss.tif"
@@ -703,7 +703,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -713,7 +713,7 @@
             "name": "Debug SlopeArea - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/slopearea.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/slopearea.exe",
             "args": [
                 "-slp", "test_data/input/dem_slp.tif",
                 "-sca", "test_data/input/dem_sca.tif",
@@ -732,7 +732,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -742,7 +742,7 @@
             "name": "Debug SlopeAreaRatio - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/slopearearatio.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/slopearearatio.exe",
             "args": [
                 "-slp", "test_data/input/dem_slp.tif",
                 "-sca", "test_data/input/dem_sca.tif",
@@ -761,7 +761,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -771,7 +771,7 @@
             "name": "Debug SlopeAveDown - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/slopeavedown.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/slopeavedown.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-fel", "test_data/input/dem_fel.tif",
@@ -790,7 +790,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -800,7 +800,7 @@
             "name": "Debug ConnectDown - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/connectdown.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/connectdown.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-w", "test_data/input/dem_w.tif",
@@ -820,7 +820,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -830,7 +830,7 @@
             "name": "Debug CatchHydroGeo - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/catchhydrogeo.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/catchhydrogeo.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-o", "test_data/input/outlets.shp",
@@ -849,7 +849,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -859,7 +859,7 @@
             "name": "Debug PitRemove (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/pitremove.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/pitremove.exe",
             "args": [
                 "-z", "test_data/input/dem.tif",
                 "-fel", "test_data/output/dem_fel.tif",
@@ -878,7 +878,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -888,7 +888,7 @@
             "name": "Debug D8FlowDir (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/d8flowdir.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/d8flowdir.exe",
             "args": [
                 "-fel", "test_data/input/dem_fel.tif",
                 "-p", "test_data/output/dem_p.tif",
@@ -907,7 +907,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -917,7 +917,7 @@
             "name": "Debug Threshold (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/threshold.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/threshold.exe",
             "args": [
                 "-ssa", "test_data/input/dem_ad8.tif",
                 "-src", "test_data/output/dem_src.tif",
@@ -936,17 +936,17 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
             "preLaunchTask": "Build Generic Target (Release) - Windows"
-},
+        },
         {
             "name": "Debug DinfFlowDir (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/dinfflowdir.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/dinfflowdir.exe",
             "args": [
                 "-fel", "test_data/input/dem_fel.tif",
                 "-ang", "test_data/output/dem_ang.tif",
@@ -965,7 +965,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -975,7 +975,7 @@
             "name": "Debug AreaD8 (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/aread8.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/aread8.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-ad8", "test_data/output/dem_ad8.tif",
@@ -994,7 +994,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1004,7 +1004,7 @@
             "name": "Debug StreamNet (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/streamnet.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/streamnet.exe",
             "args": [
                 "-fel", "test_data/input/dem_fel.tif",
                 "-p", "test_data/input/dem_p.tif",
@@ -1029,7 +1029,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1039,7 +1039,7 @@
             "name": "Debug GageWatershed (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/gagewatershed.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/gagewatershed.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-gw", "test_data/output/dem_gw.tif",
@@ -1059,7 +1059,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1069,7 +1069,7 @@
             "name": "Debug DropAnalysis (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/dropanalysis.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/dropanalysis.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-fel", "test_data/input/dem_fel.tif",
@@ -1091,7 +1091,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1101,7 +1101,7 @@
             "name": "Debug TWI (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/twi.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/twi.exe",
             "args": [
                 "-sca", "test_data/input/dem_sca.tif",
                 "-slp", "test_data/input/dem_slp.tif",
@@ -1120,7 +1120,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1130,7 +1130,7 @@
             "name": "Debug D8HDistToStrm (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/d8hdisttostrm.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/d8hdisttostrm.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-src", "test_data/input/dem_src.tif",
@@ -1150,7 +1150,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1160,7 +1160,7 @@
             "name": "Debug AreaDinf (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/areadinf.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/areadinf.exe",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-sca", "test_data/output/dem_sca.tif"
@@ -1178,7 +1178,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1188,7 +1188,7 @@
             "name": "Debug D8FlowPathExtremeUp (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/d8flowpathextremeup.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/d8flowpathextremeup.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-sa", "test_data/input/dem_sa.tif",
@@ -1207,7 +1207,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1217,7 +1217,7 @@
             "name": "Debug DinfAvalanche (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/dinfavalanche.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/dinfavalanche.exe",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-fel", "test_data/input/dem_fel.tif",
@@ -1236,7 +1236,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1246,7 +1246,7 @@
             "name": "Debug DinfConcLimAccum (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/dinfconclimaccum.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/dinfconclimaccum.exe",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-dg", "test_data/input/dem_dg.tif",
@@ -1265,7 +1265,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1275,7 +1275,7 @@
             "name": "Debug DinfDecayAccum (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/dinfdecayaccum.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/dinfdecayaccum.exe",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-dm", "test_data/input/dem_dm.tif",
@@ -1294,7 +1294,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1304,7 +1304,7 @@
             "name": "Debug DinfDistDown (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/dinfdistdown.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/dinfdistdown.exe",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-fel", "test_data/input/dem_fel.tif",
@@ -1324,7 +1324,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1334,7 +1334,7 @@
             "name": "Debug DinfDistUp (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/dinfdistup.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/dinfdistup.exe",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-fel", "test_data/input/dem_fel.tif",
@@ -1354,7 +1354,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1364,7 +1364,7 @@
             "name": "Debug DinfRevAccum (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/dinfrevaccum.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/dinfrevaccum.exe",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-wg", "test_data/input/dem_wg.tif",
@@ -1383,7 +1383,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1393,7 +1393,7 @@
             "name": "Debug DinfTransLimAccum (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/dinftranslimaccum.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/dinftranslimaccum.exe",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-tsup", "test_data/input/dem_tsup.tif",
@@ -1412,7 +1412,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1422,7 +1422,7 @@
             "name": "Debug DinfUpDependence (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/dinfupdependence.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/dinfupdependence.exe",
             "args": [
                 "-ang", "test_data/input/dem_ang.tif",
                 "-dep", "test_data/output/dem_dep.tif"
@@ -1440,7 +1440,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1450,7 +1450,7 @@
             "name": "Debug GridNet (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/gridnet.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/gridnet.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-plen", "test_data/output/dem_plen.tif",
@@ -1470,7 +1470,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1480,7 +1480,7 @@
             "name": "Debug LengthArea (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/lengtharea.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/lengtharea.exe",
             "args": [
                 "-plen", "test_data/input/dem_plen.tif",
                 "-ad8", "test_data/input/dem_ad8.tif",
@@ -1499,7 +1499,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1509,7 +1509,7 @@
             "name": "Debug MoveOutletsToStreams (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/moveoutletstostreams.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/moveoutletstostreams.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-src", "test_data/input/dem_src.tif",
@@ -1529,7 +1529,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1539,7 +1539,7 @@
             "name": "Debug PeukerDouglas (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/peukerdouglas.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/peukerdouglas.exe",
             "args": [
                 "-fel", "test_data/input/dem_fel.tif",
                 "-ss", "test_data/output/dem_ss.tif"
@@ -1557,7 +1557,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1567,7 +1567,7 @@
             "name": "Debug SlopeArea (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/slopearea.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/slopearea.exe",
             "args": [
                 "-slp", "test_data/input/dem_slp.tif",
                 "-sca", "test_data/input/dem_sca.tif",
@@ -1586,7 +1586,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1596,7 +1596,7 @@
             "name": "Debug SlopeAreaRatio (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/slopearearatio.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/slopearearatio.exe",
             "args": [
                 "-slp", "test_data/input/dem_slp.tif",
                 "-sca", "test_data/input/dem_sca.tif",
@@ -1615,7 +1615,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1625,7 +1625,7 @@
             "name": "Debug SlopeAveDown (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/slopeavedown.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/slopeavedown.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-fel", "test_data/input/dem_fel.tif",
@@ -1644,7 +1644,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1654,7 +1654,7 @@
             "name": "Debug ConnectDown (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/connectdown.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/connectdown.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-w", "test_data/input/dem_w.tif",
@@ -1674,7 +1674,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1684,7 +1684,7 @@
             "name": "Debug CatchOutlets (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/catchoutlets.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/catchoutlets.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-src", "test_data/input/dem_src.tif",
@@ -1703,7 +1703,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1713,7 +1713,7 @@
             "name": "Debug EditRaster (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/editraster.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/editraster.exe",
             "args": [
                 "-input", "test_data/input/dem.tif",
                 "-output", "test_data/output/dem_edited.tif",
@@ -1732,7 +1732,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1742,7 +1742,7 @@
             "name": "Debug FlowDirCond (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/flowdircond.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/flowdircond.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-z", "test_data/input/dem_z.tif",
@@ -1761,7 +1761,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1771,7 +1771,7 @@
             "name": "Debug RetLimFlow (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/retlimflow.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/retlimflow.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-src", "test_data/input/dem_src.tif",
@@ -1790,7 +1790,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1800,7 +1800,7 @@
             "name": "Debug SetRegion (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/setregion.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/setregion.exe",
             "args": [
                 "-mask", "test_data/input/mask.tif",
                 "-src", "test_data/input/dem_src.tif",
@@ -1819,7 +1819,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1829,7 +1829,7 @@
             "name": "Debug SinmapSI (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/sinmapsi.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/sinmapsi.exe",
             "args": [
                 "-slp", "test_data/input/dem_slp.tif",
                 "-sca", "test_data/input/dem_sca.tif",
@@ -1848,7 +1848,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1858,7 +1858,7 @@
             "name": "Debug InunMap (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/inunmap.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/inunmap.exe",
             "args": [
                 "-fel", "test_data/input/dem_fel.tif",
                 "-h", "test_data/input/depth.tif",
@@ -1877,7 +1877,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1887,7 +1887,7 @@
             "name": "Debug CatchHydroGeo (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-release/Release/catchhydrogeo.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/catchhydrogeo.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-o", "test_data/input/outlets.shp",
@@ -1906,7 +1906,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-release/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/release/src/Release;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1916,7 +1916,7 @@
             "name": "Debug CatchOutlets - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/catchoutlets.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/catchoutlets.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-src", "test_data/input/dem_src.tif",
@@ -1935,7 +1935,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1945,7 +1945,7 @@
             "name": "Debug EditRaster - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/editraster.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/editraster.exe",
             "args": [
                 "-input", "test_data/input/dem.tif",
                 "-output", "test_data/output/dem_edited.tif",
@@ -1964,7 +1964,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -1974,7 +1974,7 @@
             "name": "Debug FlowDirCond - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/flowdircond.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/flowdircond.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-z", "test_data/input/dem_z.tif",
@@ -1993,7 +1993,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -2003,7 +2003,7 @@
             "name": "Debug RetLimFlow - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/retlimflow.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/retlimflow.exe",
             "args": [
                 "-p", "test_data/input/dem_p.tif",
                 "-src", "test_data/input/dem_src.tif",
@@ -2022,7 +2022,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -2032,7 +2032,7 @@
             "name": "Debug SetRegion - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/setregion.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/setregion.exe",
             "args": [
                 "-mask", "test_data/input/mask.tif",
                 "-src", "test_data/input/dem_src.tif",
@@ -2051,7 +2051,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -2061,7 +2061,7 @@
             "name": "Debug SinmapSI - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/sinmapsi.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/sinmapsi.exe",
             "args": [
                 "-slp", "test_data/input/dem_slp.tif",
                 "-sca", "test_data/input/dem_sca.tif",
@@ -2080,7 +2080,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -2090,7 +2090,7 @@
             "name": "Debug InunMap - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/inunmap.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/inunmap.exe",
             "args": [
                 "-fel", "test_data/input/dem_fel.tif",
                 "-h", "test_data/input/depth.tif",
@@ -2109,7 +2109,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
@@ -2119,7 +2119,7 @@
             "name": "Debug MPI Tool Using PitRemove (Manual) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/build-debug/Debug/pitremove.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/pitremove.exe",
             "args": [
                 "-z", "test_data/input/dem.tif",
                 "-fel", "test_data/output/dem_fel.tif",
@@ -2138,7 +2138,7 @@
                 },
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/src/build-debug/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/src/Debug;C:/dev/vcpkg/installed/x64-windows/bin;${env:PATH}"
                 }
             ],
             "console": "integratedTerminal",
