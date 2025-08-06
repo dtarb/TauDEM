@@ -104,13 +104,15 @@ bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData) 
 	return false;
 }
 
-void createStreamNetShapefile(char *streamnetsrc,char *streamnetlyr,OGRSpatialReferenceH hSRSraster){
-   
+int createStreamNetShapefile(char *streamnetsrc,char *streamnetlyr,OGRSpatialReferenceH hSRSraster){
+   // Return the kmloffset
     /* Register all OGR drivers */
     OGRRegisterAll();
     //const char *pszDriverName = "ESRI Shapefile";
 	const char *pszDriverName;
 	pszDriverName=getOGRdrivername(streamnetsrc);
+	int kmloffset = 0;
+	if(pszDriverName=="KML")kmloffset=2;
             
 	//get driver by name
     driver = OGRGetDriverByName( pszDriverName );
@@ -238,9 +240,10 @@ void createStreamNetShapefile(char *streamnetsrc,char *streamnetlyr,OGRSpatialRe
     OGR_Fld_SetPrecision(hFieldDefn1, 1);
 	OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
 	}
+	return kmloffset; // return the kmloffset for KML files
 	}
 // Write shape from tardemlib.cpp
-int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *pointx, double *pointy, long np,tiffIO &obj)
+int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *pointx, double *pointy, long np,tiffIO &obj, int kmloffset)
 {
 // Function to write stream network shapefile
 	int nVertices;
@@ -328,23 +331,25 @@ int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *poin
 
 	hFDefn1 = OGR_L_GetLayerDefn( hLayer1 );
 	hFeature1 = OGR_F_Create( hFDefn1 );
-	OGR_F_SetFieldInteger( hFeature1, 0, (int)cnet[0]); // set field value 
-	OGR_F_SetFieldInteger( hFeature1, 1, (int)cnet[3]);
-	OGR_F_SetFieldInteger( hFeature1, 2, (int)cnet[4]);
-	OGR_F_SetFieldInteger( hFeature1, 3, (int)cnet[5]);
-	OGR_F_SetFieldInteger( hFeature1, 4, (int)cnet[7]);
-	OGR_F_SetFieldInteger( hFeature1, 5, (int)cnet[6]);
-	OGR_F_SetFieldDouble( hFeature1, 6, length);
-	OGR_F_SetFieldInteger( hFeature1, 7, (int)cnet[8]);
-	OGR_F_SetFieldDouble( hFeature1, 8,  dsarea);
-	OGR_F_SetFieldDouble( hFeature1, 9, drop);
-	OGR_F_SetFieldDouble( hFeature1, 10, slope);
-	OGR_F_SetFieldDouble( hFeature1, 11, glength);
-	OGR_F_SetFieldDouble( hFeature1, 12, usarea);
-	OGR_F_SetFieldInteger( hFeature1, 13, (int)cnet[0]);
-	OGR_F_SetFieldDouble( hFeature1, 14, dsdist);
-	OGR_F_SetFieldDouble( hFeature1, 15, usdist);
-	OGR_F_SetFieldDouble( hFeature1, 16, middist);
+	// set field values
+	//kmloffset is 0 for shapefile, 2 for kml file
+	OGR_F_SetFieldInteger( hFeature1, 0+kmloffset, (int)cnet[0]); // set field value 
+	OGR_F_SetFieldInteger( hFeature1, 1+kmloffset, (int)cnet[3]);
+	OGR_F_SetFieldInteger( hFeature1, 2+kmloffset, (int)cnet[4]);
+	OGR_F_SetFieldInteger( hFeature1, 3+kmloffset, (int)cnet[5]);
+	OGR_F_SetFieldInteger( hFeature1, 4+kmloffset, (int)cnet[7]);
+	OGR_F_SetFieldInteger( hFeature1, 5+kmloffset, (int)cnet[6]);
+	OGR_F_SetFieldDouble( hFeature1, 6+kmloffset, length);
+	OGR_F_SetFieldInteger( hFeature1, 7+kmloffset, (int)cnet[8]);
+	OGR_F_SetFieldDouble( hFeature1, 8+kmloffset,  dsarea);
+	OGR_F_SetFieldDouble( hFeature1, 9+kmloffset, drop);
+	OGR_F_SetFieldDouble( hFeature1, 10+kmloffset, slope);
+	OGR_F_SetFieldDouble( hFeature1, 11+kmloffset, glength);
+	OGR_F_SetFieldDouble( hFeature1, 12+kmloffset, usarea);
+	OGR_F_SetFieldInteger( hFeature1, 13+kmloffset, (int)cnet[0]);
+	OGR_F_SetFieldDouble( hFeature1, 14+kmloffset, dsdist);
+	OGR_F_SetFieldDouble( hFeature1, 15+kmloffset, usdist);
+	OGR_F_SetFieldDouble( hFeature1, 16+kmloffset, middist);
 
     //creating geometry using OGR
 
@@ -1153,7 +1158,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 
 			//  Open shapefile 
 			//need spatial refeence information which is stored in the tiffIO object
-			createStreamNetShapefile(streamnetsrc,streamnetlyr,hSRSraster); // need raster spatail information for creating spatial reference in the shapefile
+			int kmloffset = createStreamNetShapefile(streamnetsrc,streamnetlyr,hSRSraster); // need raster spatail information for creating spatial reference in the shapefile
 			long ndots=100/size+4;  // number of dots to print per process
 			long nextdot=0;
 			long dotinc=myNumLinks/ndots;
@@ -1182,7 +1187,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 				long cnet[9];
 				for(int iref=0; iref<9; iref++)
 					cnet[iref]=LinkIdU1U2DMagShapeidCoords[ilink][iref];
-				reachshape(cnet,lengthd,elev,area,pointx,pointy,i2-i1+1,srcIO);
+				reachshape(cnet,lengthd,elev,area,pointx,pointy,i2-i1+1,srcIO,kmloffset);
 			
 				delete lengthd; // DGT to free memory
 				delete elev;
@@ -1235,7 +1240,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 							pointy[ipoint]=pbuf1[1];
 						}
 						//  Write shape
-						reachshape(treeBuf,lengthd,elev,area,pointx,pointy,procNumPoints,srcIO);
+						reachshape(treeBuf,lengthd,elev,area,pointx,pointy,procNumPoints,srcIO,kmloffset);
 						delete lengthd; // DGT to free memory
 						delete elev;
 						delete area;
