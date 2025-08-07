@@ -625,9 +625,15 @@ This command runs a TauDEM tool inside a Docker container:
 
 ```bash
 # cd to the directory containing your input data files and run:
+# for linux/macOS
 docker run --rm -it -v $(pwd):/data --user taudem taudem-docker pitremove -z /data/input.tif -fel /data/output.tif
+# for Windows
+docker run --rm -it -v %cd%:/data --user taudem taudem-docker pitremove -z /data/input.tif -fel /data/output.tif
 # or with mpi
+# for linux/macOS
 docker run --rm -it -v $(pwd):/data --user taudem taudem-docker mpiexec -n 2 pitremove -z /data/input.tif -fel /data/output.tif
+# for Windows
+docker run --rm -it -v %cd%:/data --user taudem taudem-docker mpiexec -n 2 pitremove -z /data/input.tif -fel /data/output.tif
 ```
 
 - This runs the `pitremove` tool on `input.tif` in your current directory and writes `output.tif` to the same directory.
