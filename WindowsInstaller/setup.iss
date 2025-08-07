@@ -135,16 +135,16 @@ Filename: "{app}\setup_files\VC_redist.x64.exe"; Flags: waituntilterminated; Che
 Filename: "{app}\setup_files\msmpisetup.exe"; Flags: waituntilterminated shellexec; Check: NeedsToInstallMPI()
 
 ; First install GDAL installer package - needed for installing GDAL Python bindings for TauDEM integration with ArcGIS
-Filename: "python"; Parameters: "-m pip install gdal-installer=={#GdalInstallerVersion}"; \
+Filename: "{code:GetPythonExePath}"; Parameters: "-m pip install gdal-installer=={#GdalInstallerVersion}"; \
     Flags: waituntilterminated runhidden; \
     StatusMsg: "Installing GDAL installer package..."; \
     Check: HasPython() and WantsPythonGDAL()
 
-; Run the GDAL installer Python script to install GDAL - this GDAL is needed for TauDEM integration with ArcGIS
-Filename: "python"; \
+; Run the GDAL installer Python script to install GDAL Python bindings - this is needed for TauDEM integration with ArcGIS
+Filename: "{code:GetPythonExePath}"; \
     Parameters: "-m gdal_installer.install-gdal"; \
     Flags: waituntilterminated; \
-    StatusMsg: "Running GDAL system installation..."; \
+    StatusMsg: "Running Python GDAL system installation..."; \
     Check: HasPython() and WantsPythonGDAL(); \
     AfterInstall: VerifyGdalInstallation
 
@@ -265,6 +265,7 @@ Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environmen
 var
   WantsGdalValue: Integer; // Use Integer for tri-state: 0=unset, 1=yes, 2=no
   HasPythonValue: Integer; // Use Integer for tri-state: 0=unset, 1=yes, 2=no
+  PythonExePath: string;   // Store detected Python executable path
 
 // add a custom wizard page after the welcome page to show the list of programs that will be installed
 procedure InitializeWizard();
@@ -390,15 +391,21 @@ function HasPython(): Boolean;
 var
   ResultCode: Integer;
   PythonFound: Boolean;
+  ArcGISPythonPath: string;
 begin
   if HasPythonValue = 0 then
   begin
     PythonFound := False;
+    PythonExePath := ''; // Reset
 
     // Try with python command
     if Exec('python', '-c "import sys; exit(0 if sys.version_info >= (3, 10) else 1)"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
     begin
-      PythonFound := (ResultCode = 0);
+      if ResultCode = 0 then
+      begin
+        PythonFound := True;
+        PythonExePath := 'python';
+      end;
     end;
 
     // Try with py command as fallback
@@ -406,7 +413,28 @@ begin
     begin
       if Exec('py', '-c "import sys; exit(0 if sys.version_info >= (3, 10) else 1)"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
       begin
-        PythonFound := (ResultCode = 0);
+        if ResultCode = 0 then
+        begin
+          PythonFound := True;
+          PythonExePath := 'py';
+        end;
+      end;
+    end;
+
+    if not PythonFound then
+    begin
+      // Check for ArcGIS Pro Python
+      ArcGISPythonPath := 'C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe';
+      if FileExists(ArcGISPythonPath) then
+      begin
+        if Exec(ArcGISPythonPath, '-c "import sys; exit(0 if sys.version_info >= (3, 10) else 1)"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+        begin
+          if ResultCode = 0 then
+          begin
+            PythonFound := True;
+            PythonExePath := ArcGISPythonPath;
+          end;
+        end;
       end;
     end;
 
@@ -439,22 +467,17 @@ end;
 function CheckGdalPythonImport(): Boolean;
 var
   ResultCode: Integer;
+  PythonCmd: string;
 begin
   Result := False;
+  PythonCmd := PythonExePath;
+  if PythonCmd = '' then
+    PythonCmd := 'python';
 
   // Try to import GDAL in Python and check version is 3.10+
-  if Exec('python', '-c "from osgeo import gdal; import sys; version = tuple(map(int, gdal.__version__.split(''.''))); sys.exit(0 if version >= (3, 10) else 1)"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+  if Exec(PythonCmd, '-c "from osgeo import gdal; import sys; version = tuple(map(int, gdal.__version__.split(''.''))); sys.exit(0 if version >= (3, 10) else 1)"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
   begin
     Result := (ResultCode = 0);
-  end;
-
-  if not Result then
-  begin
-    // Try with py command as fallback
-    if Exec('py', '-c "from osgeo import gdal; import sys; version = tuple(map(int, gdal.__version__.split(''.''))); sys.exit(0 if version >= (3, 10) else 1)"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
-    begin
-      Result := (ResultCode = 0);
-    end;
   end;
 end;
 
@@ -593,5 +616,23 @@ begin
   finally
     PathList.Free;
     NewPathList.Free;
+  end;
+end;
+
+// Helper to return the detected Python executable path for [Run] section
+function GetPythonExePath(Value: string): string;
+begin
+  if PythonExePath <> '' then
+    Result := PythonExePath
+  else
+    Result := 'python';
+end;
+
+// Inform user to reboot at the end of installation
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssPostInstall then
+  begin
+    MsgBox('TauDEM installation is complete. You must reboot your computer before using TauDEM to ensure all environment variables and dependencies are available.', mbInformation, MB_OK);
   end;
 end;
