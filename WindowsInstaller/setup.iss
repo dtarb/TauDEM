@@ -18,7 +18,7 @@
 
 
 #define MyAppName "TauDEM"
-#define MyAppVersion "5.3.8"
+#define MyAppVersion "5.4.0"
 #define MyAppPublisher "Utah State University"
 #define MyAppURL "http://hydrology.usu.edu/taudem/taudem5/index.html"
 #define VcpkgDir "C:\dev\vcpkg"
@@ -280,7 +280,7 @@ begin
       '4. The installer will also configure the necessary environment variables for TauDEM, GDAL, and MPI.'; 
   UserPage := CreateInputQueryPage(wpWelcome,
     'The following components will be installed', '',
-    'TauDEM version 5.3.8, GDAL (from vcpkg), Python GDAL bindings (if Python 3.10+ is available), ' +
+    'TauDEM version 5.4.0, GDAL (from vcpkg), Python GDAL bindings (if Python 3.10+ is available), ' +
     'Microsoft Visual C++ 2022 Redistributable Package (x64), Microsoft MPI'#13#13 + notes_string);   
 end;
 
