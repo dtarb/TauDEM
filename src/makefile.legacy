@@ -85,22 +85,91 @@ SINMAPSI = SinmapSI.o SinmapSImn.o $(OBJFILES)
 
 
 
-#The following are compiler flags common to all building rules
-#CC = mpic++
-CC = mpicxx
-#CFLAGS=-g -Wall -DDEBUG -std=c++11
-CFLAGS=-O2 -std=c++11
-LARGEFILEFLAG= -D_FILE_OFFSET_BITS=64
-#INCDIRS=-I/usr/lib/openmpi/include -I/usr/include/gdal
-INCDIRS=`gdal-config --cflags`
-INCDIRS+=`nc-config --cflags`
-#LIBDIRS=-lgdal
-#LDLIBS=-L/usr/local/lib -lgdal
-LDLIBS=`gdal-config --libs`
-LDLIBS+=`nc-config --libs`
+# Build configuration support
+# Usage: make release COMPILER=clang++
+#        make debug COMPILER=g++
+#        make all COMPILER=mpicxx (default)
+
+# Compiler selection - can be overridden from command line
+COMPILER ?= mpicxx
+CC = $(COMPILER)
+
+# Build type configuration
+BUILD_TYPE ?= release
+
+# Base C++ standard and common flags
+CXX_STD = -std=c++17
+LARGEFILEFLAG = -D_FILE_OFFSET_BITS=64
+# Build targets with configuration support
+
+# Make release the default target
+default: release
+
+debug:
+	@echo "Building in debug mode with $(COMPILER)"
+	@$(MAKE) -f makefile.legacy all BUILD_TYPE=debug COMPILER=$(COMPILER)
+
+release:
+	@echo "Building in release mode with $(COMPILER)"
+	@$(MAKE) -f makefile.legacy all BUILD_TYPE=release COMPILER=$(COMPILER)
+
+# Show available build options
+help:
+	@echo "Available targets:"
+	@echo "  all          - Build all executables (default: release mode)"
+	@echo "  debug        - Build in debug mode with symbols"
+	@echo "  release      - Build in release mode with optimizations"
+	@echo "  clean        - Remove object files"
+	@echo ""
+	@echo "Compiler selection:"
+	@echo "  COMPILER=mpicxx   - Use MPI C++ compiler (default)"
+	@echo "  COMPILER=clang++  - Use Clang C++ compiler"
+	@echo "  COMPILER=g++      - Use GNU C++ compiler"
+	@echo ""
+	@echo "Examples:"
+	@echo "  make -f makefile.legacy release COMPILER=clang++"
+	@echo "  make -f makefile.legacy debug COMPILER=g++"
+	@echo "  make -f makefile.legacy all COMPILER=mpicxx"
+	@echo "  make -f makefile.legacy"
+
+.PHONY: debug release help all clean default
+
+
+# Configuration-specific flags
+ifeq ($(BUILD_TYPE),debug)
+    CFLAGS = -g -Wall -DDEBUG $(CXX_STD)
+    BUILD_SUFFIX = _debug
+else ifeq ($(BUILD_TYPE),release)
+    CFLAGS = -O2 -DNDEBUG $(CXX_STD)
+    BUILD_SUFFIX =
+else
+    $(error Invalid BUILD_TYPE: $(BUILD_TYPE). Use 'debug' or 'release')
+endif
+
+# Include and library configuration
+INCDIRS = `gdal-config --cflags`
+LDLIBS = `gdal-config --libs`
+
+# Add MPI support for non-MPI compilers
+ifneq ($(findstring mpi,$(COMPILER)),mpi)
+    # For non-MPI compilers, add MPI manually
+    INCDIRS += -I`mpicc --showme:compile | cut -d' ' -f1 | sed 's/-I//'`
+    LDLIBS += `mpicc --showme:link`
+endif
+
+# Add filesystem library for older GCC compilers (GCC < 9.1)
+ifeq ($(findstring gcc,$(COMPILER)),gcc)
+    GCC_VERSION := $(shell $(CC) -dumpversion | cut -d. -f1)
+    ifeq ($(shell expr $(GCC_VERSION) \< 9), 1)
+        LDLIBS += -lstdc++fs
+    endif
+endif
+
+# Print build configuration
+$(info Building with: $(COMPILER) in $(BUILD_TYPE) mode)
 
 #Rules: when and how to make a file
-all : ../bin/areadinf ../bin/aread8 ../bin/moveoutletstostrm ../bin/dropanalysis ../bin/streamnet ../bin/gridnet ../bin/dinfflowdir ../bin/d8flowdir ../bin/d8flowpathextremeup ../bin/d8hdisttostrm ../bin/d8vdisttostrm ../bin/dinfavalanche ../bin/dinfconclimaccum ../bin/dinfdecayaccum ../bin/dinfdistdown ../bin/dinfdistup ../bin/dinfrevaccum ../bin/dinftranslimaccum ../bin/dinfupdependence ../bin/lengtharea ../bin/peukerdouglas ../bin/pitremove ../bin/slopearea ../bin/slopearearatio ../bin/slopeavedown ../bin/threshold ../bin/twi ../bin/gagewatershed ../bin/connectdown ../bin/catchhydrogeo ../bin/inunmap ../bin/editraster ../bin/catchoutlets ../bin/flowdircond ../bin/retlimflow ../bin/setregion ../bin/sinmapsi clean 
+all : ../bin/areadinf ../bin/aread8 ../bin/moveoutletstostreams ../bin/dropanalysis ../bin/streamnet ../bin/gridnet ../bin/dinfflowdir ../bin/d8flowdir ../bin/d8flowpathextremeup ../bin/d8hdisttostrm ../bin/d8vdisttostrm ../bin/dinfavalanche ../bin/dinfconclimaccum ../bin/dinfdecayaccum ../bin/dinfdistdown ../bin/dinfdistup ../bin/dinfrevaccum ../bin/dinftranslimaccum ../bin/dinfupdependence ../bin/lengtharea ../bin/peukerdouglas ../bin/pitremove ../bin/slopearea ../bin/slopearearatio ../bin/slopeavedown ../bin/threshold ../bin/twi ../bin/gagewatershed ../bin/connectdown ../bin/catchhydrogeo ../bin/inunmap ../bin/editraster ../bin/catchoutlets ../bin/flowdircond ../bin/retlimflow ../bin/setregion ../bin/sinmapsi clean
 
 ../bin/aread8 : $(D8FILES)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(D8FILES) $(LDLIBS) $(LDFLAGS)
@@ -156,7 +225,7 @@ all : ../bin/areadinf ../bin/aread8 ../bin/moveoutletstostrm ../bin/dropanalysis
 ../bin/lengtharea : $(LENGTHAREA)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(LENGTHAREA) $(LDLIBS) $(LDFLAGS) 
 
-../bin/moveoutletstostrm : $(MVOUTLETSTOSTRMFILES)
+../bin/moveoutletstostreams : $(MVOUTLETSTOSTRMFILES)
 	$(CC) $(CFLAGS) -o $@ $(LIBDIRS) $(MVOUTLETSTOSTRMFILES) $(LDLIBS) $(LDFLAGS)
 
 ../bin/peukerdouglas : $(PEUKERDOUGLAS)
@@ -218,6 +287,4 @@ all : ../bin/areadinf ../bin/aread8 ../bin/moveoutletstostrm ../bin/dropanalysis
 	$(CC) $(CFLAGS) $(INCDIRS) -c $< -o $@
 
 clean :
-	rm *.o 
-
-
+	rm -f *.o
