@@ -1,3 +1,5 @@
+TODO: The README.md file is the up to date documentation.  This file needs to be deleted.
+
 TauDEM (Terrain Analysis Using Digital Elevation Models) is a suite of Digital Elevation Model (DEM) tools for the extraction and analysis of hydrologic information from topography as represented by a DEM.
 
 For more information on the development of TauDEM please refer to the wiki https://github.com/dtarb/TauDEM/wiki.
