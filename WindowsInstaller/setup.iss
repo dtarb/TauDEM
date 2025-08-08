@@ -508,53 +508,6 @@ begin
       Delete(Result, Length(Result), 1);
 end;
 
-// Check if path (NewPath) is in PATH environment variable
-function IsPathInEnvironment(NewPath: string): Boolean;
-var
-  OrigPath, ExpandedNewPath: string;
-  Paths: TStringList;
-  i: Integer;
-  Found: Boolean;
-begin
-  Result := False;
-  Found := False;
-  ExpandedNewPath := RemoveBackslash(ExpandConstant(NewPath));
-
-  if not RegQueryStringValue(HKEY_LOCAL_MACHINE,
-    'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
-    'Path', OrigPath) then
-  begin
-    MsgBox('PATH environment variable not found in registry', mbInformation, MB_OK);
-    Exit;
-  end;
-
-  Paths := TStringList.Create;
-  try
-    // Split PATH into individual entries
-    Paths.Delimiter := ';';
-    Paths.StrictDelimiter := True;
-    Paths.DelimitedText := OrigPath;
-
-    // Check each path
-    for i := 0 to Paths.Count - 1 do
-    begin
-      if CompareText(RemoveBackslash(Paths[i]), ExpandedNewPath) = 0 then
-      begin
-        Found := True;
-        MsgBox(Format('Found existing path: %s matches %s', [Paths[i], ExpandedNewPath]), mbInformation, MB_OK);
-        Break;
-      end;
-    end;
-
-    if not Found then
-      MsgBox(Format('Path not found: %s', [ExpandedNewPath]), mbInformation, MB_OK);
-
-    Result := Found;
-  finally
-    Paths.Free;
-  end;
-end;
-
 // Function to handle PATH updates
 procedure UpdatePath(const NewPaths: string);
 var
