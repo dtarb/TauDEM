@@ -243,12 +243,12 @@
             "detail": "Check if all required dependencies are installed and accessible"
         },
         {
-            "label": "Install TauDEM - Windows",
+            "label": "Install TauDEM (for testing during development) - Windows",
             "type": "shell",
             "command": "cmd",
             "args": [
                 "/c",
-                "if not exist \"${input:installPath}\" mkdir \"${input:installPath}\" && xcopy /Y /I \"build\\release\\Release\\*.exe\" \"${input:installPath}\" && echo TauDEM installed to ${input:installPath}"
+                "if not exist \"${input:installPath}\" mkdir \"${input:installPath}\" && xcopy /Y /I \"build\\release\\src\\Release\\*.*\" \"${input:installPath}\" && echo TauDEM installed to ${input:installPath}"
             ],
             "group": "build",
             "presentation": {
@@ -261,7 +261,7 @@
                 "cwd": "${workspaceFolder}"
             },
             "dependsOn": "CMake Build (Release) - Windows",
-            "detail": "Install TauDEM binaries to specified location (doesnot install dependencies)"
+            "detail": "Install TauDEM binaries to specified location (for testing during development)"
         },
         {
             "label": "Build pitremove (Debug) - Windows",
@@ -563,7 +563,7 @@
             "detail": "Build a specific target in Release mode (prompts for target name)"
         },
         {
-            "label": "Uninstall TauDEM - Windows",
+            "label": "Uninstall TauDEM (for testing during development) - Windows",
             "type": "shell",
             "command": "cmd",
             "args": [
