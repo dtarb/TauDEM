@@ -417,7 +417,7 @@ VS Code provides a convenient Command Palette interface to execute build tasks w
 
 - Tasks are executed in VS Code's integrated terminal
 - Build progress and errors are displayed in real-time
-- Use `Ctrl+`` (Windows) or `Cmd+`` (macOS) to show/hide the terminal panel
+- Use `Ctrl+`` (Windows)` or `Cmd+`` (macOS)` to show/hide the terminal panel
 - Failed builds will show error messages with clickable file locations
 - The default build task can be run quickly with `Ctrl+Shift+B` (Windows) or `Cmd+Shift+B` (macOS)
 
@@ -430,6 +430,8 @@ TauDEM supports multiple build methods and platforms.
 #### Build Directories
 
 TauDEM uses separate build directories for Debug and Release builds. The build directories are: `build/debug` and `build/release`.
+
+**Note**: Run the `make` command from the root of the project.
 
 #### macOS
 
@@ -561,6 +563,26 @@ exit
 
 # Exit the container
 exit
+```
+
+### Legacy Build System (makefile.legacy)(macOS/Linux Only)
+
+TauDEM also provides a legacy build system using `makefile.legacy`. This system is still supported but is not actively maintained. It does not support working with VS Code tasks.
+
+```bash
+# Create bin directory at root of project
+# The executables are written to bin directory
+mkdir bin   
+cd src
+
+# Debug build - all targets
+make -f makefile.legacy debug
+
+# Release build - all targets
+make -f makefile.legacy release
+
+# Clean build artifacts
+make -f makefile.legacy clean
 ```
 
 ### Installation (macOS/Linux)
