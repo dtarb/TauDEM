@@ -92,7 +92,7 @@ git status
 ### Install Visual Studio Code (VS Code)
 
 Download and install Visual Studio Code for your operating system using this link:
-https://code.visualstudio.com/download
+<https://code.visualstudio.com/download>
 
 ### Prerequisites
 
@@ -155,7 +155,7 @@ code --install-extension ms-vscode.hexeditor  # For examining binary DEM files (
 
 4. **Install CMake**: Download and install CMake for Windows (look for the binary distribution for platform 'Windows x64 Installer') from the following link:
 
-   https://cmake.org/download/
+   <https://cmake.org/download/>
 
 #### Linux Setup
 
@@ -387,9 +387,7 @@ VS Code provides a convenient Command Palette interface to execute build tasks w
 
 4. **Example Workflow**:
 
-```
-   Ctrl+Shift+P → type "Tasks: Run Task" → select "Build TauDEM (Debug) - Windows"
-```
+   `Ctrl+Shift+P → type "Tasks: Run Task" → select "Build TauDEM (Debug) - Windows"`
 
 ### macOS
 
@@ -402,7 +400,7 @@ VS Code provides a convenient Command Palette interface to execute build tasks w
    - Or type `task` and select `Tasks: Run Task` from the dropdown
 
 3. **Select a Build Task**:
-   Choose from available macOS tasks:   
+   Choose from available macOS tasks:
    - **`Build TauDEM (Debug, Clang) - macOS`**: Build all TauDEM tools using Clang (default) in Debug mode
    - **`Build TauDEM (Release, Clang) - macOS`**: Build all TauDEM tools in Release mode
    - **`Build pitremove (Debug, Clang) - macOS`**: Build only the pitremove tool in Debug mode
@@ -413,9 +411,7 @@ VS Code provides a convenient Command Palette interface to execute build tasks w
 
 4. **Example Workflow**:
 
-```
-   Cmd+Shift+P → type "Tasks: Run Task" → select "Build TauDEM (Debug, Clang) - macOS"
-```
+   `Cmd+Shift+P → type "Tasks: Run Task" → select "Build TauDEM (Debug, Clang) - macOS"`
 
 **💡 Tips for VS Code Command Palette**:
 
@@ -545,8 +541,11 @@ make -j$(nproc)
 # Build the Docker image for testing (from the root of the project)
 docker build -f Dockerfile-run.tests -t taudem-linux-run-tests .
 
-# Run the Docker container with volume mounting
+# Run the Docker container with volume mounting from the root of the project
+# for macOS/Linux
 docker run --rm -it -v $(pwd):/app taudem-linux-run-tests
+# for Windows
+docker run --rm -it -v %cd%:/app taudem-linux-run-tests
 
 # Inside the container - clean, build, and install TauDEM
 make clean
@@ -601,12 +600,11 @@ docker build -t taudem-docker .
 
 This creates a Docker image named `taudem-docker` with all dependencies and TauDEM build tools installed. You need to build the Docker image only once unlless the TauDEM source code changes.
 
-
 #### Running TauDEM in a Docker Container
 
 Once you have built the Docker image, you can run TauDEM tools inside a container anytime. To run TauDEM tools on your local data, use Docker's volume mounting to access files from your host system inside the container.
 
-**General command pattern:**
+**General Command Pattern:**
 
 ```bash
 docker run --rm -it -v /path/to/your/data:/data --user taudem taudem-docker <taudem-command>
@@ -689,6 +687,33 @@ vcpkg install gdal[core,tools,sqlite3,libkml]:x64-windows mpi:x64-windows
 
 - **Python 3.10+**: For ArcGIS integration and Python tools
 - **ArcGIS**: For using TauDEM toolbox in ArcGIS
+
+### Creating TauDEM Windows Installer
+
+TauDEM provides a Windows installer for easy installation on Windows. The installer is built using Inno Setup and includes all dependencies and TauDEM executables.
+
+**Note**: This installer can be created only on Windows.
+
+#### Requirements
+
+- Inno Setup (for compiling the installer script). Download from <https://jrsoftware.org/isdl.php>
+- Release build of compiled TauDEM executables
+- Microsoft MPI Runtime. Download from <https://www.microsoft.com/en-us/download/details.aspx?id=57467>
+- Visual C++ 2022 Redistributable. Download from <https://aka.ms/vs/17/release/vc_redist.x64.exe>
+
+**Note**: The above requirements are in addition to the dependencies listed for [Paltform-Specific Installation](#windows-vcpkg).
+
+#### Steps
+
+1. Create the directory `TauDEM_Installation_Source` at the root of the TauDEM repository and copy the following files to it:
+   - `msmpisetup.exe` - Microsoft MPI Runtime
+   - `VC_redist.x64.exe` - Visual C++ 2022 redistributable
+   - Copy the `taudem.bmp` file from the root of the TauDEM repository to `TauDEM_Installation_Source`
+   - Create `TauDEMArcGIS` inside `TauDEM_Installation_Source` and copy all files from `pyfiles` to it - Python toolbox files for ArcGIS integration
+2. Build TauDEM in release mode: `build-windows.bat release`. This will create the `TauDEM_Exe/win_64` inside `TauDEM_Installation_Source` directory with the compiled executables.
+3. Open `setup.iss` in Inno Setup on Windows machine
+4. Verify source paths and version numbers in script
+5. Compile to generate `TauDEM_setup_x64.exe`. This installer will be created in the `TauDEM_Installation_Source/Output` directory.
 
 ## 📁 Project Structure
 
