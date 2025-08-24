@@ -116,9 +116,11 @@ int inunmap(char *handfile, char*catchfile, char *maskfile, char*fcfile, int mas
             }
 
             // Read COMID and H variables
+			// DGT 8/24/25 Modify here to read text file that has Id, flow, n 
             GDALRasterBand *poBandCOMID = poDS->GetRasterBand(1); // Adjust band number as needed
             GDALRasterBand *poBandH = poDS->GetRasterBand(2);     // Adjust band number as needed
 
+			// DGT 8/24/25 nfc to be number of records in flowtab.csv
             nfc = poBandCOMID->GetXSize(); // Assuming 1D array
             catchlist = (long *) malloc(sizeof(long) * nfc);
             hlist = (double *) malloc(sizeof(double) * nfc);
@@ -157,6 +159,8 @@ int inunmap(char *handfile, char*catchfile, char *maskfile, char*fcfile, int mas
 		unordered_map<int, float> inunratiohash;
 		if (maskpits) {
 			if (rank == 0) {
+				// DGT 8/24/25 Modify here to read hydroprop text file 
+				
 				GDALDataset *poDS = (GDALDataset *) GDALOpen(hpfile, GA_ReadOnly);
 				if (poDS == NULL) {
 					fprintf(stderr, "GDAL: error opening hydroprop file %s\n", hpfile);
