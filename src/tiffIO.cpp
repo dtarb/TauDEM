@@ -157,7 +157,14 @@ tiffIO::tiffIO(char *fname, DATA_TYPE newtype) {
     datatype = newtype;
 	//GDALDataType gdfiledt;
 	//gdfiledt = GDALGetRasterDataType(bandh);
-	nodata = GDALGetRasterNoDataValue(bandh, NULL); // noDatarefactor 11/18/17
+	
+	int pbSuccess = FALSE;
+	nodata = GDALGetRasterNoDataValue(bandh, &pbSuccess);
+
+	if (!pbSuccess) {
+    // No no-data value is set; define a value.  //DGT 8/26/25 
+    	nodata = -9999; // This means that valid -9999 will get clobbered, still a small problem but better than the default 0.
+	}
 	// Per gdal.h header and internet searches GDALGetRasterNoDataValue is a double
 	/* if (datatype == SHORT_TYPE) {
 		nodata = new int16_t;
