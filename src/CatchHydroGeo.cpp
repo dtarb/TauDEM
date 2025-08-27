@@ -260,6 +260,8 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 		double *SurfaceArea = new double[nheight * ncatch]();
 		double *BedArea = new double[nheight * ncatch]();
 		double *Volume = new double[nheight * ncatch]();
+		// Per-catchment total area (planimetric) accumulated across all cells (not stage-dependent)
+		double *CatchArea = new double[ncatch]();
 		for (int i=0; i<nheight; i++) {
 			for (int j=0; j<ncatch; j++) {
 				CellCount[i*ncatch + j] = 0;
@@ -281,6 +283,9 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 
 		// Compute hydraulic properties		
 		for (j = 0; j < ny; j++) {
+			double dxc, dyc, cellArea;
+			handData->getdxdyc(j, dxc, dyc);  // This function gets latitude dependent dx and dy for each cell
+			cellArea = dxc * dyc;
 			for (i = 0; i < nx; i++) {
 				if (!catchData->isNodata(i, j) && !handData->isNodata(i,j) && !slpData->isNodata(i,j)) {  // All 3 inputs have to have data
 					handData->getData(i, j, temphand);
@@ -290,15 +295,14 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 					auto it = catchhash.find(tempcatch);
 					if (it != catchhash.end()) {
 						int catchIndex = it->second;
+						// Accumulate total catchment area for this catchment (all cells)
+						CatchArea[catchIndex] += cellArea;
 						for (k = 0; k < nheight; k++) {
 							if (temphand < height[k] || fabs(temphand - 0.0)<0.000001) {  // DGT prefers strictly less than here.  If the depth is 0, treat it as wet, too 
 								CellCount[k*ncatch + catchIndex] += 1;
-								double dxc, dyc, cellArea;
-								handData->getdxdyc(j, dxc, dyc);  // This function gets latitude dependent dx and dy for each cell, better than averages
-								cellArea = dxc*dyc;
 								SurfaceArea[k*ncatch + catchIndex] += cellArea;
-								BedArea[k*ncatch + catchIndex] += cellArea*sqrt(1 + tempslp*tempslp);
-								Volume[k*ncatch + catchIndex] +=  (height[k] - temphand)*cellArea;
+								BedArea[k*ncatch + catchIndex] += cellArea * sqrt(1 + tempslp*tempslp);
+								Volume[k*ncatch + catchIndex] += (height[k] - temphand) * cellArea;
 							}
 						}
 					}
@@ -321,6 +325,9 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 		MPI_Reduce(SurfaceArea, GSurfaceArea, nheight * ncatch, MPI_DOUBLE, MPI_SUM, 0, MCW);
 		MPI_Reduce(BedArea, GBedArea, nheight * ncatch, MPI_DOUBLE, MPI_SUM, 0, MCW);
 		MPI_Reduce(Volume, GVolume, nheight * ncatch, MPI_DOUBLE, MPI_SUM, 0, MCW);
+		// Reduce total catchment area per catchment
+		double *GCatchArea = new double[ncatch]();
+		MPI_Reduce(CatchArea, GCatchArea, ncatch, MPI_DOUBLE, MPI_SUM, 0, MCW);
 
 		//Write results
 		if (rank == 0) {
@@ -328,9 +335,10 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 			for (int i = 0; i < ncatch; i++) {
 				for (int j = 0; j < nheight; j++) {
 					int idx = j * ncatch + i;
+					GArea[idx] = GCatchArea[i];
 					if (GVolume[idx] > 0) {
-						// Total planimetric area from cell areas
-						GArea[idx] = GVolume[idx] / height[j];
+						// Total catchment area from cell areas (use reduced GCatchArea)
+						//GArea[idx] = GCatchArea[i];
 						if (linelenlist[i] > 0) {
 							GCrossSectionalArea[idx] = GVolume[idx] / linelenlist[i];
 							GWetPerimeter[idx] = GBedArea[idx] / linelenlist[i];
@@ -345,36 +353,38 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 
 			FILE *fp;
 			fp = fopen(hpfile, "w");
-			fprintf(fp, "Id, Stage, Number of Cells, SurfaceArea (m2), BedArea (m2), Volume (m3), SLOPE, LENGTHM, AREA (m2), CrossSectionalArea (m2), WetPerimeter (m), HydRadius (m), Flow (m3/s)\n");
+			fprintf(fp, "Id, Stage_m, Number of Cells, ReachWetArea_m2, ReachBedArea_m2, ReachVolume_m3, ReachSlope, ReachLength_m, CatchArea_m2, CrossSectionalArea_m2, WetPerimeter_m, HydRadius_m, Manning_n, Flow_m3s\n");
 			for (int i = 0; i < ncatch; i++) {
 				for (int j = 0; j < nheight; j++) {
 					int idx = j * ncatch + i;
-					fprintf(fp, "%d,%.6lf,%d,%.6lf,%.6lf,%.6lf,%.10lf,%.6lf,%.6lf,%.6lf,%.6lf,%.6lf,%.6lf\n",
+					fprintf(fp, "%d,%.6lf,%d,%.6lf,%.6lf,%.6lf,%.10lf,%.6lf,%.6lf,%.6lf,%.6lf,%.6lf,%.6lf, %.6lf\n",
 						catchlist[i], height[j], GCellCount[idx], GSurfaceArea[idx], GBedArea[idx], GVolume[idx],
 						slopelist[i], linelenlist[i], GArea[idx], GCrossSectionalArea[idx], GWetPerimeter[idx],
-						GHydRadius[idx], GFlow[idx]);
+						GHydRadius[idx], manningsnlist[i], GFlow[idx]);
 				}
 			}
 			fclose(fp);
 		}
-	delete[] CellCount;
-	delete[] SurfaceArea;
-	delete[] BedArea;
-	delete[] Volume;
-	delete[] GCellCount;
-	delete[] GSurfaceArea;
-	delete[] GBedArea;
-	delete[] GVolume;
-	delete[] GArea;
-	delete[] GCrossSectionalArea;
-	delete[] GWetPerimeter;
-	delete[] GHydRadius;
-	delete[] GFlow;
-	free(catchlist);
-	free(slopelist);
-	free(linelenlist);
-	free(manningsnlist);
-	free(height);
+		delete[] CellCount;
+		delete[] SurfaceArea;
+		delete[] BedArea;
+		delete[] Volume;
+		delete[] GCatchArea;
+		delete[] CatchArea;
+		delete[] GCellCount;
+		delete[] GSurfaceArea;
+		delete[] GBedArea;
+		delete[] GVolume;
+		delete[] GArea;
+		delete[] GCrossSectionalArea;
+		delete[] GWetPerimeter;
+		delete[] GHydRadius;
+		delete[] GFlow;
+		free(catchlist);
+		free(slopelist);
+		free(linelenlist);
+		free(manningsnlist);
+		free(height);
 
 		//Stop timer
 		end = MPI_Wtime();
@@ -383,7 +393,6 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 
 		MPI_Allreduce(&compute, &temp, 1, MPI_DOUBLE, MPI_SUM, MCW);
 		compute = temp / size;
-
 
 		if (rank == 0)
 			printf("Compute time: %f\n", compute);
