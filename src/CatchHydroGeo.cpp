@@ -283,26 +283,26 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 
 		// Compute hydraulic properties		
 		for (j = 0; j < ny; j++) {
-			double dxc, dyc, cellArea;
-			handData->getdxdyc(j, dxc, dyc);  // This function gets latitude dependent dx and dy for each cell
-			cellArea = dxc * dyc;
 			for (i = 0; i < nx; i++) {
-				if (!catchData->isNodata(i, j) && !handData->isNodata(i,j) && !slpData->isNodata(i,j)) {  // All 3 inputs have to have data
-					handData->getData(i, j, temphand);
+				if (!catchData->isNodata(i, j)) {
+					double dxc, dyc, cellArea;
 					catchData->getData(i, j, tempcatch);
-					slpData->getData(i, j, tempslp);
-					// Check if catchment ID exists in hash table
+					handData->getdxdyc(j, dxc, dyc); // This function gets latitude dependent dx and dy for each cell
+					cellArea = dxc * dyc;
 					auto it = catchhash.find(tempcatch);
 					if (it != catchhash.end()) {
 						int catchIndex = it->second;
-						// Accumulate total catchment area for this catchment (all cells)
-						CatchArea[catchIndex] += cellArea;
-						for (k = 0; k < nheight; k++) {
-							if (temphand < height[k] || fabs(temphand - 0.0)<0.000001) {  // DGT prefers strictly less than here.  If the depth is 0, treat it as wet, too 
-								CellCount[k*ncatch + catchIndex] += 1;
-								SurfaceArea[k*ncatch + catchIndex] += cellArea;
-								BedArea[k*ncatch + catchIndex] += cellArea * sqrt(1 + tempslp*tempslp);
-								Volume[k*ncatch + catchIndex] += (height[k] - temphand) * cellArea;
+						CatchArea[catchIndex] += cellArea;					
+						if (!handData->isNodata(i,j) && !slpData->isNodata(i,j)) {  // All 2 inputs have to have data
+							handData->getData(i, j, temphand);
+							slpData->getData(i, j, tempslp);
+							for (k = 0; k < nheight; k++) {
+								if (temphand < height[k] || fabs(temphand - 0.0)<0.000001) {  // DGT prefers strictly less than here. If the hand is 0, on stream treat it as wet, too 
+									CellCount[k*ncatch + catchIndex] += 1;
+									SurfaceArea[k*ncatch + catchIndex] += cellArea;
+									BedArea[k*ncatch + catchIndex] += cellArea * sqrt(1 + tempslp*tempslp);
+									Volume[k*ncatch + catchIndex] += (height[k] - temphand) * cellArea;
+								}
 							}
 						}
 					}
@@ -337,8 +337,6 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 					int idx = j * ncatch + i;
 					GArea[idx] = GCatchArea[i];
 					if (GVolume[idx] > 0) {
-						// Total catchment area from cell areas (use reduced GCatchArea)
-						//GArea[idx] = GCatchArea[i];
 						if (linelenlist[i] > 0) {
 							GCrossSectionalArea[idx] = GVolume[idx] / linelenlist[i];
 							GWetPerimeter[idx] = GBedArea[idx] / linelenlist[i];
@@ -357,10 +355,21 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 			for (int i = 0; i < ncatch; i++) {
 				for (int j = 0; j < nheight; j++) {
 					int idx = j * ncatch + i;
-					fprintf(fp, "%d,%.6lf,%d,%.6lf,%.6lf,%.6lf,%.10lf,%.6lf,%.6lf,%.6lf,%.6lf,%.6lf,%.6lf, %.6lf\n",
-						catchlist[i], height[j], GCellCount[idx], GSurfaceArea[idx], GBedArea[idx], GVolume[idx],
-						slopelist[i], linelenlist[i], GArea[idx], GCrossSectionalArea[idx], GWetPerimeter[idx],
-						GHydRadius[idx], manningsnlist[i], GFlow[idx]);
+					/* Write each column with a separate fprintf to make output formatting clearer and easier to modify. */
+					fprintf(fp, "%d,", catchlist[i]);
+					fprintf(fp, "%.6lf,", height[j]);
+					fprintf(fp, "%d,", GCellCount[idx]);
+					fprintf(fp, "%.6lf,", GSurfaceArea[idx]);
+					fprintf(fp, "%.6lf,", GBedArea[idx]);
+					fprintf(fp, "%.6lf,", GVolume[idx]);
+					fprintf(fp, "%.10lf,", slopelist[i]);
+					fprintf(fp, "%.6lf,", linelenlist[i]);
+					fprintf(fp, "%.6lf,", GArea[idx]);
+					fprintf(fp, "%.6lf,", GCrossSectionalArea[idx]);
+					fprintf(fp, "%.6lf,", GWetPerimeter[idx]);
+					fprintf(fp, "%.6lf,", GHydRadius[idx]);
+					fprintf(fp, "%.6lf,", manningsnlist[i]);
+					fprintf(fp, "%.6lf\n", GFlow[idx]);
 				}
 			}
 			fclose(fp);
