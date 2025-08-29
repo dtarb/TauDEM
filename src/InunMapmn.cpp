@@ -1,5 +1,5 @@
 /*  InunMap function takes HAND raster, gets inun depth info
- *  from the COMID mask raster and inundation forecast netcdf4 input,
+ *  from the COMID mask raster and inundation forecast CSV input,
  *  then creates the inundation map raster.
 
   Yan Liu, David Tarboton, Xing Zheng
@@ -49,12 +49,13 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)  
 {
-   char handfile[MAXLN], catchfile[MAXLN], maskfile[MAXLN], fcfile[MAXLN], hpfile[MAXLN], fcmapfile[MAXLN];
-   int maskpits = 0;
+   char handfile[MAXLN], catchfile[MAXLN], maskfile[MAXLN], fcfile[MAXLN], hpfile[MAXLN], fcmapfile[MAXLN], depthfile[MAXLN];
    int err, nmax;
    int hasMask = 0;
+   int hasDepth = 0;
+   int minRequiredArgs = 5; // maksfile and depthfile are optional
       
-   if(argc < 2) goto errexit;
+   if(argc < minRequiredArgs) goto errexit;
 /*   if(argc == 2)
 	{
 //		printf("You are running %s with the simple use option.\n", argv[0]);
@@ -62,7 +63,7 @@ int main(int argc,char **argv)
 		nameadd(ad8file,argv[1],"ad8");
 		nameadd(ssfile,argv[1],"ss");
     }*/
-   if(argc > 2)
+   if(argc >= minRequiredArgs)
    {
 //		printf("You are running %s with the specific file names option.\n", argv[0]);
         int i=1;	
@@ -93,13 +94,14 @@ int main(int argc,char **argv)
 				i++;
 				if(argc > i)
 				{
-					strcpy(maskfile,argv[i]); hasMask=1;
+					strcpy(maskfile,argv[i]);
+					hasMask=1;
 					i++;
 				}
 				else goto errexit;
 			}
 
-			else if(strcmp(argv[i],"-forecast")==0)
+			else if(strcmp(argv[i],"-fc")==0)
 			{
 				i++;
 				if(argc > i)
@@ -109,7 +111,7 @@ int main(int argc,char **argv)
 				}
 				else goto errexit;
 			}
-			else if(strcmp(argv[i],"-hydrotable")==0)
+			else if(strcmp(argv[i],"-hp")==0)
 			{
 				i++;
 				if(argc > i)
@@ -119,22 +121,23 @@ int main(int argc,char **argv)
 				}
 				else goto errexit;
 			}
-			else if(strcmp(argv[i],"-maskpits")==0)
-			{
-				i++;
-				if(argc > i)
-				{
-					maskpits = 1;
-				}
-				else goto errexit;
-			}
-
-			else if (strcmp(argv[i], "-mapfile") == 0)
+			else if (strcmp(argv[i], "-inun") == 0)
 			{
 				i++;
 				if (argc > i)
 				{
 					strcpy(fcmapfile, argv[i]);
+					i++;
+				}
+				else goto errexit;
+			}
+			else if (strcmp(argv[i], "-depth") == 0)
+			{
+				i++;
+				if (argc > i)
+				{
+					strcpy(depthfile, argv[i]);
+					hasDepth = 1;
 					i++;
 				}
 				else goto errexit;
@@ -154,30 +157,34 @@ int main(int argc,char **argv)
 		    else goto errexit;
 		}
    }
-	if (hasMask)
-		err=inunmap(handfile, catchfile, maskfile, fcfile, maskpits, hpfile, fcmapfile);
+   	if(handfile == NULL || catchfile == NULL || fcfile == NULL || hpfile == NULL || fcmapfile == NULL) goto errexit;
+	if (hasMask && hasDepth)
+		err=inunmap(handfile, catchfile, maskfile, fcfile, hpfile, fcmapfile, depthfile);
+	else if (hasMask)
+		err=inunmap(handfile, catchfile, maskfile, fcfile, hpfile, fcmapfile, NULL);
+	else if (hasDepth)
+		err=inunmap(handfile, catchfile, NULL, fcfile, hpfile, fcmapfile, depthfile);
 	else
-		err=inunmap(handfile, catchfile, NULL, fcfile, maskpits, hpfile, fcmapfile);
+		err=inunmap(handfile, catchfile, NULL, fcfile, hpfile, fcmapfile, NULL);
 
-    if(err != 0)
-        printf("Inundation Map Generation Error %d\n",err);
+	if(err != 0)
+		printf("Inundation Depth Generation Error %d\n",err);
 
 	return 0;
 errexit:
 //   printf("Simple Use:\n %s <basefilename>\n",argv[0]);
    printf("Use with specific file names:\n %s -hand <handfile>\n",argv[0]);
    printf("-catch <catchfile> -mask <maskfile> \n");
-   printf("-forecast <forecastfile> -mapfile <outputmapfile> \n");
-   printf("-maskpits -hydrotable <hydropropertyfile> \n");
-   printf("-mapfile <outputmapfile> \n");
+   printf("-fc <forecastfile> -hp <hydropropertyfile> \n");
+   printf("-inun <outputinundationfile> \n");
+   printf("-depth <outputdepthfile> \n");
 //   printf("<basefilename> is the name of the base digital elevation model without suffixes for simple input. Suffixes 'plen', 'ad8' and 'ss' will be appended. \n");
-   printf("<handfile> is the name of the input hand raster file.\n");
-   printf("<catchfile> is the name of the input catchment COMID mask raster file.\n");
-   printf("<maskfile> is the name of the mask raster file, e.g. waterbody.\n");
-   printf("<forecastfile> is the name of the inundation forecast netCDF4 file.\n");
-   printf("<maskpits> is the option to mask pits in inundation mapping if pit area >0.1.\n");
-   printf("<hydropropertyfile> is the name of the hydro property netcdf file. Only when -maskpits is on\n");
-   printf("<outputmapfile> is the name of the output inundation map file.\n");
+   printf("<handfile> is the name of the input hand raster file - required file.\n");
+   printf("<catchfile> is the name of the input catchment COMID raster file - required file.\n");
+   printf("<maskfile> is the name of the mask raster file - optional file, e.g. waterbody.\n");
+   printf("<forecastfile> is the name of the inundation forecast CSV file - required file, with columns: id, flow.\n");
+   printf("<hydropropertyfile> is the name of the hydro property text file - required file.\n");
+   printf("<outputinundationfile> is the name of the output inundation raster file - required file.\n");
+   printf("<outputdepthfile> is the name of the output inundation depth text/CSV file - optional file.\n");
    return 0; 
 } 
-   

@@ -1,5 +1,5 @@
 /*  InunMap function takes HAND raster, gets inun depth info
- *  from the COMID mask raster and inundation forecast netcdf4 input,
+ *  from the COMID mask raster and inundation forecast CSV input,
  *  then creates the inundation map raster.
 
   Yan Liu, David Tarboton, Xing Zheng
@@ -47,10 +47,9 @@ email:  dtarb@usu.edu
 #include "linearpart.h"
 #include "createpart.h"
 #include "tiffIO.h"
-#include <gdal.h>
-#include <gdal_priv.h>
 
-int inunmap(char *handfile, char*catchfile, char *maskfile, char*fcfile, int maskpits, char*hpfile, char *mapfile)
+
+int inunmap(char *handfile, char*catchfile, char *maskfile, char*fcfile, char*hpfile, char *mapfile, char *depthfile)
 {
 	MPI_Init(NULL, NULL); {
 
@@ -104,93 +103,207 @@ int inunmap(char *handfile, char*catchfile, char *maskfile, char*fcfile, int mas
 			mask.read(xstart, ystart, maskData->getny(), maskData->getnx(), maskData->getGridPointer());
 		}
 
-		// get forecast from netcdf and build hash table
+		// get forecast from csv file (fcfile) and build hash table
 		long nfc; // num of COMIDs with forecast
-        long *catchlist; double *hlist;
+        long *catchlist; double *flowlist;
 		if (rank == 0) {
-			GDALAllRegister();
-            GDALDataset *poDS = (GDALDataset *) GDALOpen(fcfile, GA_ReadOnly);
-            if (poDS == NULL) {
-                fprintf(stderr, "GDAL: error opening file %s\n", fcfile);
-                exit(1);
-            }
+			FILE *fp;
+			char headers[MAXLN];
 
-            // Read COMID and H variables
-			// DGT 8/24/25 Modify here to read text file that has Id, flow, n 
-            GDALRasterBand *poBandCOMID = poDS->GetRasterBand(1); // Adjust band number as needed
-            GDALRasterBand *poBandH = poDS->GetRasterBand(2);     // Adjust band number as needed
+			// Open CSV file
+			fp = fopen(fcfile, "r");
+			if (fp == NULL) {
+				fprintf(stderr, "Error: Cannot open forecast file %s\n", fcfile);
+				exit(1);
+			}
 
-			// DGT 8/24/25 nfc to be number of records in flowtab.csv
-            nfc = poBandCOMID->GetXSize(); // Assuming 1D array
-            catchlist = (long *) malloc(sizeof(long) * nfc);
-            hlist = (double *) malloc(sizeof(double) * nfc);
+			// Read header line
+			if (!fgets(headers, sizeof(headers), fp)) {
+				fprintf(stderr, "Error: Empty forecast file %s\n", fcfile);
+				fclose(fp);
+				exit(1);
+			}
 
-            // Read data
-            if (poBandCOMID->RasterIO(GF_Read, 0, 0, nfc, 1, catchlist, nfc, 1, GDT_Int32, 0, 0) != CE_None ||
-                poBandH->RasterIO(GF_Read, 0, 0, nfc, 1, hlist, nfc, 1, GDT_Float64, 0, 0) != CE_None) {
-                fprintf(stderr, "GDAL: error reading data\n");
-                exit(1);
-            }
+			// Count number of data lines
+			nfc = 0;
+			long pos = ftell(fp);
+			char line[256];
+			while (fgets(line, sizeof(line), fp)) {
+				if (line[0] != '\n' && line[0] != '\0') nfc++;
+			}
 
-            // Get timestamp from metadata
-            char **metadata = poDS->GetMetadata();
-            printf("Forecast input: %s\n", fcfile);
-            printf("\tnum_COMIDs: %ld\n", nfc);
-            if (metadata != NULL) {
-                printf("\tTimestamp: %s\n", CSLFetchNameValue(metadata, "TIMESTAMP"));
-            }
+			if (nfc <= 0) {
+				fprintf(stderr, "Error: No data found in forecast file %s\n", fcfile);
+				fclose(fp);
+				exit(1);
+			}
 
-            GDALClose(poDS);
+			// Allocate memory
+			catchlist = (long *) malloc(sizeof(long) * nfc);
+			flowlist = (double *) malloc(sizeof(double) * nfc);
+
+			// Reset file pointer to start of data
+			fseek(fp, pos, SEEK_SET);
+
+			// Read data from CSV file (id, flow format)
+			for (long i = 0; i < nfc; i++) {
+				if (fscanf(fp, "%ld,%lf", &catchlist[i], &flowlist[i]) != 2) {
+					fprintf(stderr, "Error: Failed to read data at line %ld in file %s\n", i+2, fcfile);
+					fclose(fp);
+					exit(1);
+				}
+			}
+
+			printf("Forecast input: %s\n", fcfile);
+			printf("\tnum_COMIDs: %ld\n", nfc);
+
+			fclose(fp);
 		}
 		MPI_Bcast(&nfc, 1, MPI_LONG, 0, MCW);
 		if (rank != 0) {
 			catchlist = (long*) malloc(sizeof(long) * nfc);
-			hlist = (double*) malloc(sizeof(double) * nfc);
+			flowlist = (double*) malloc(sizeof(double) * nfc);
 		}
 		MPI_Bcast(catchlist, nfc, MPI_LONG, 0, MCW);
-		MPI_Bcast(hlist, nfc, MPI_DOUBLE, 0, MCW);
-		unordered_map<int, double> catchhash;
-		for (int i=0; i<nfc; i++) catchhash[(int)catchlist[i]] = hlist[i];
+		MPI_Bcast(flowlist, nfc, MPI_DOUBLE, 0, MCW);
+		unordered_map<int, double> catchhash;		
+		for (int i=0; i<nfc; i++) catchhash[(int)catchlist[i]] = flowlist[i]; //TODO:use interpolated depth instead
 
-		// get hydroprop table from netcdf and build comid-areasqkm hash table
-		long nhp; // num of COMIDs in the hydroproperty table
+		// get hydroprop table from CSV file and build comid-areasqkm hash table
+		long nhp = 0; // num of COMIDs in the hydroproperty table
 		long hpcount = 0; // num of COMIDs that need to be hashed
         long *hydrocatchlist; float *inunratiolist;
+		// Declare arrays for depth file generation (need to be accessible outside rank 0 block)
+		long *catchids = NULL; float *stages = NULL; float *flows = NULL;
 		unordered_map<int, float> inunratiohash;
-		if (maskpits) {
+
+		// Read hydroprop file if mask file is provided OR if depth file is requested
+		if (maskfile != NULL || depthfile != NULL) {
 			if (rank == 0) {
-				// DGT 8/24/25 Modify here to read hydroprop text file 
-				
-				GDALDataset *poDS = (GDALDataset *) GDALOpen(hpfile, GA_ReadOnly);
-				if (poDS == NULL) {
-					fprintf(stderr, "GDAL: error opening hydroprop file %s\n", hpfile);
+				FILE *fp;
+				char headers[MAXLN];
+
+				// Open hydroprop CSV file
+				fp = fopen(hpfile, "r");
+				if (fp == NULL) {
+					fprintf(stderr, "Error: Cannot open hydroprop file %s\n", hpfile);
 					exit(1);
 				}
 
-				// Read variables using GDAL bands
-				// Adjust band numbers based on your NetCDF structure
-				GDALRasterBand *poBandCatchId = poDS->GetRasterBand(1);
-				GDALRasterBand *poBandStage = poDS->GetRasterBand(2);
-				GDALRasterBand *poBandSurfArea = poDS->GetRasterBand(3);
-				GDALRasterBand *poBandAreaSqKm = poDS->GetRasterBand(4);
+				// Read header line
+				if (!fgets(headers, sizeof(headers), fp)) {
+					fprintf(stderr, "Error: Empty hydroprop file %s\n", hpfile);
+					fclose(fp);
+					exit(1);
+				}
 
-				// Get the number of records
-				nhp = poBandCatchId->GetXSize(); // Assuming 1D array
-				
+				// Count number of data lines
+				nhp = 0;
+				long pos = ftell(fp);
+				char line[256];
+				while (fgets(line, sizeof(line), fp)) {
+					if (line[0] != '\n' && line[0] != '\0') nhp++;
+				}
+
+				if (nhp <= 0) {
+					fprintf(stderr, "Error: No data found in hydroprop file %s\n", hpfile);
+					fclose(fp);
+					exit(1);
+				}
+
 				// Allocate memory for temporary arrays
 				long *catchids = (long *) malloc(sizeof(long) * nhp);
 				float *stages = (float *) malloc(sizeof(float) * nhp);
 				float *surfareas = (float *) malloc(sizeof(float) * nhp);
 				float *areasqkms = (float *) malloc(sizeof(float) * nhp);
+				float *flows = (float *) malloc(sizeof(float) * nhp);
 
-				// Read data from bands
-				if (poBandCatchId->RasterIO(GF_Read, 0, 0, nhp, 1, catchids, nhp, 1, GDT_Int32, 0, 0) != CE_None ||
-                    poBandStage->RasterIO(GF_Read, 0, 0, nhp, 1, stages, nhp, 1, GDT_Float32, 0, 0) != CE_None ||
-                    poBandSurfArea->RasterIO(GF_Read, 0, 0, nhp, 1, surfareas, nhp, 1, GDT_Float32, 0, 0) != CE_None ||
-                    poBandAreaSqKm->RasterIO(GF_Read, 0, 0, nhp, 1, areasqkms, nhp, 1, GDT_Float32, 0, 0) != CE_None) {
-                    fprintf(stderr, "GDAL: error reading hydroprop data\n");
-                    exit(1);
-                }
+				// Reset file pointer to start of data
+				fseek(fp, pos, SEEK_SET);
+
+				// Read data from CSV file (hpfile) using line-by-line parsing
+				// Expected format: Id, Stage_m, Number of Cells, ReachWetArea_m2, ReachBedArea_m2, ReachVolume_m3, ReachSlope, ReachLength_m, CatchArea_m2, CrossSectionalArea_m2, WetPerimeter_m, HydRadius_m, Manning_n, Flow_m3s
+				char line2[256];
+				for (long hp_idx = 0; hp_idx < nhp; hp_idx++) {
+					if (!fgets(line2, sizeof(line2), fp)) {
+						fprintf(stderr, "Error: Failed to read line %ld in file %s\n", hp_idx+2, hpfile);
+						fclose(fp);
+						exit(1);
+					}
+
+					// Parse the line using strtok
+					char *token = strtok(line2, ",");
+					if (!token) {
+						fprintf(stderr, "Error: Failed to parse ID at line %ld in file %s\n", hp_idx+2, hpfile);
+						fclose(fp);
+						exit(1);
+					}
+					catchids[hp_idx] = atol(token);
+
+					token = strtok(NULL, ",");
+					if (!token) {
+						fprintf(stderr, "Error: Failed to parse Stage at line %ld in file %s\n", hp_idx+2, hpfile);
+						fclose(fp);
+						exit(1);
+					}
+					stages[hp_idx] = atof(token);
+
+					// Skip columns 3 (Number of Cells)
+					token = strtok(NULL, ",");
+					if (!token) {
+						fprintf(stderr, "Error: Failed to parse column 3 at line %ld in file %s\n", hp_idx+2, hpfile);
+						fclose(fp);
+						exit(1);
+					}
+
+					// Column 4: ReachWetArea_m2 (surfareas)
+					token = strtok(NULL, ",");
+					if (!token) {
+						fprintf(stderr, "Error: Failed to parse ReachWetArea at line %ld in file %s\n", hp_idx+2, hpfile);
+						fclose(fp);
+						exit(1);
+					}
+					surfareas[hp_idx] = atof(token);
+
+					// Skip columns 5-8 (ReachBedArea_m2, ReachVolume_m3, ReachSlope, ReachLength_m)
+					for (int skip = 0; skip < 4; skip++) {
+						token = strtok(NULL, ",");
+						if (!token) {
+							fprintf(stderr, "Error: Failed to parse column %d at line %ld in file %s\n", 5+skip, hp_idx+2, hpfile);
+							fclose(fp);
+							exit(1);
+						}
+					}
+
+					// Column 9: CatchArea_m2 (areasqkms)
+					token = strtok(NULL, ",");
+					if (!token) {
+						fprintf(stderr, "Error: Failed to parse CatchArea at line %ld in file %s\n", hp_idx+2, hpfile);
+						fclose(fp);
+						exit(1);
+					}
+					areasqkms[hp_idx] = atof(token);
+
+					// Skip columns 10-13 (CrossSectionalArea_m2, WetPerimeter_m, HydRadius_m, Manning_n)
+					for (int skip = 0; skip < 4; skip++) {
+						token = strtok(NULL, ",");
+						if (!token) {
+							fprintf(stderr, "Error: Failed to parse column %d at line %ld in file %s\n", 10+skip, hp_idx+2, hpfile);
+							fclose(fp);
+							exit(1);
+						}
+					}
+
+					// Column 14: Flow_m3s (flows)
+					token = strtok(NULL, ",\n\r");  // Include newline chars in delimiter
+					if (!token) {
+						fprintf(stderr, "Error: Failed to parse Flow at line %ld in file %s\n", hp_idx+2, hpfile);
+						fclose(fp);
+						exit(1);
+					}
+					flows[hp_idx] = atof(token);
+				}
+
 				// Allocate arrays for comid and inunratio
 				hydrocatchlist = (long *) malloc(sizeof(long) * nhp);
 				inunratiolist = (float *) malloc(sizeof(float) * nhp);
@@ -211,17 +324,91 @@ int inunmap(char *handfile, char*catchfile, char *maskfile, char*fcfile, int mas
                 hydrocatchlist = (long *) realloc(hydrocatchlist, sizeof(long) * hpcount);
                 inunratiolist = (float *) realloc(inunratiolist, sizeof(float) * hpcount);
 
-                // Clean up temporary arrays
-                free(catchids);
-                free(stages);
+                // Clean up arrays we don't need anymore
                 free(surfareas);
                 free(areasqkms);
+                // Keep catchids, stages, and flows for depth file generation
 
                 printf("Hydroprop input: %s\n", hpfile);
                 printf("\tnum_COMIDs processed: %ld\n", hpcount);
 
-                GDALClose(poDS);
+                fclose(fp);
+
+				// Generate depth CSV file if requested
+				if (depthfile != NULL) {
+					FILE *depthfp = fopen(depthfile, "w");
+					if (depthfp == NULL) {
+						fprintf(stderr, "Error: Cannot create depth file %s\n", depthfile);
+					} else {
+						// Write header
+						fprintf(depthfp, "id,flow,depth\n");
+
+						// For each catchment ID and flow from fcfile, interpolate depth from hpfile
+						for (long fc_idx = 0; fc_idx < nfc; fc_idx++) {
+							long target_id = catchlist[fc_idx];
+							double target_flow = flowlist[fc_idx];
+							double interpolated_depth = -9999.0; // Default to no data value
+
+							// Find matching records in hydroprop data for this ID
+							// We need to find Q1 <= target_flow <= Q2 for the same ID
+							double Q1 = -1, Q2 = -1, h1 = -1, h2 = -1;
+							bool found_lower = false, found_upper = false;
+
+							// Search through already loaded hydroprop data
+							// Since flows are in ascending order for each ID, we can optimize:
+							for (long hp_idx = 0; hp_idx < nhp; hp_idx++) {
+								if (catchids[hp_idx] == target_id) {
+									float hp_flow = flows[hp_idx];
+									float hp_stage = stages[hp_idx];
+
+									// Check if this flow value can serve as lower bound
+									if (hp_flow <= target_flow) {
+										Q1 = hp_flow;
+										h1 = hp_stage;
+										found_lower = true;
+									}
+									// Check if this flow value can serve as upper bound
+									if (hp_flow >= target_flow) {
+										Q2 = hp_flow;
+										h2 = hp_stage;
+										found_upper = true;
+										// Since flows are sorted, once we find upper bound,
+										// we either have lower bound or none exists
+										break;
+									}
+								}
+							}
+
+							// Perform interpolation if we have valid bounds
+							if (found_lower && found_upper && Q2 > Q1) {
+								// Linear interpolation: h = (Q-Q1)/(Q2-Q1)*(h2-h1) + h1
+								interpolated_depth = (target_flow - Q1) / (Q2 - Q1) * (h2 - h1) + h1;
+							} else if (found_lower && Q1 == target_flow) { // TODO: we probaly don't need this type of interpolation
+								// Exact match with lower bound
+								interpolated_depth = h1;
+							} else if (found_upper && Q2 == target_flow) { // TODO: we probaly don't need this type of interpolation
+								// Exact match with upper bound
+								interpolated_depth = h2;
+							} else {
+								// No valid bounds found - set to no data value
+								interpolated_depth = -9999.0;
+							}
+
+							// Write result to depth file
+							fprintf(depthfp, "%ld,%.6f,%.6f\n", target_id, target_flow, interpolated_depth);
+						}
+
+						fclose(depthfp);
+						printf("Depth file written: %s\n", depthfile);
+					}
+				}
+
+				// Clean up hydroprop arrays (after depth file generation)
+				if (catchids) free(catchids);
+				if (stages) free(stages);
+				if (flows) free(flows);
 			}
+
 			MPI_Bcast(&hpcount, 1, MPI_LONG, 0, MCW);
 			if (rank != 0) {
 				hydrocatchlist = (long*) malloc(sizeof(long) * hpcount);
@@ -256,7 +443,7 @@ int inunmap(char *handfile, char*catchfile, char *maskfile, char*fcfile, int mas
 					catchData->getData(i, j, comid);
 					hfc =  catchhash[comid];
 					if (hfc < 0.0) continue;
-					if (maskpits && inunratiohash.count(comid) > 0) continue; // ignore catchments with small pit-removed waterbodies. they are in the hash if inunratio > 10%
+					if (maskfile != NULL && inunratiohash.count(comid) > 0) continue; // ignore catchments with small pit-removed waterbodies. they are in the hash if inunratio > 10%
 					float handv = 0.0;
 					handData->getData(i, j, handv);
 					if (hfc > handv + 0.001) { // need to have diff>1mm
@@ -267,9 +454,10 @@ int inunmap(char *handfile, char*catchfile, char *maskfile, char*fcfile, int mas
 				}
 			}
 		}
+
 		free(catchlist);
-		free(hlist);
-		if (maskpits) {
+		free(flowlist);
+		if (maskfile != NULL || depthfile != NULL) {
 			free(hydrocatchlist);
 			free(inunratiolist);
 		}
@@ -286,9 +474,8 @@ int inunmap(char *handfile, char*catchfile, char *maskfile, char*fcfile, int mas
 		MPI_Allreduce(&compute, &temp, 1, MPI_DOUBLE, MPI_SUM, MCW);
 		compute = temp / size;
 
-
 		if (rank == 0)
-			printf("InunMap Compute time: %f\n", compute);
+			printf("Inundation depth Compute time: %f\n", compute);
 
 			//Brackets force MPI-dependent objects to go out of scope before Finalize is called
 		}MPI_Finalize();
