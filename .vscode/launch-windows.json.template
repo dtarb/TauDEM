@@ -1855,14 +1855,17 @@
             "preLaunchTask": "Build Generic Target (Release) - Windows"
         },
         {
-            "name": "Debug InunMap (Release) - Windows",
+            "name": "Debug InunDepth (Release) - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/release/src/Release/inunmap.exe",
+            "program": "${workspaceFolder}/build/release/src/Release/inundepth.exe",
             "args": [
-                "-fel", "test_data/input/dem_fel.tif",
-                "-h", "test_data/input/depth.tif",
-                "-inun", "test_data/output/inundation.tif"
+                "-hand", "test_data/input/hand.tif",
+                "-catch", "test_data/input/w.tif",
+                "-fc", "test_data/input/flow.csv",
+                "-hp", "test_data/input/hydropropotable.txt",
+                "-inun", "test_data/output/inundation.tif",
+                "-depth", "test_data/output/depths.csv"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -2087,14 +2090,17 @@
             "preLaunchTask": "Build Generic Target (Debug) - Windows"
         },
         {
-            "name": "Debug InunMap - Windows",
+            "name": "Debug InunDepth - Windows",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/debug/src/Debug/inunmap.exe",
+            "program": "${workspaceFolder}/build/debug/src/Debug/inundepth.exe",
             "args": [
-                "-fel", "test_data/input/dem_fel.tif",
-                "-h", "test_data/input/depth.tif",
-                "-inun", "test_data/output/inundation.tif"
+                "-hand", "test_data/input/hand.tif",
+                "-catch", "test_data/input/w.tif",
+                "-fc", "test_data/input/flow.csv",
+                "-hp", "test_data/input/hydropropotable.txt",
+                "-inun", "test_data/output/inundation.tif",
+                "-depth", "test_data/output/depths.csv"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
