@@ -54,7 +54,7 @@ set (FLOWDIRCOND flowdirconditionmn.cpp flowdircond.cpp ${common_srcs})
 set (RETLIMFLOW RetLimFlowmn.cpp RetlimFlow.cpp ${common_srcs})
 set (SETREGION SetRegionmn.cpp SetRegion.cpp ${common_srcs})
 set (SINMAPSI SinmapSImn.cpp SinmapSI.cpp ${common_srcs})
-set (INUNMAP InunMapmn.cpp InunMap.cpp ${common_srcs})
+set (INUNDEPTH InunDepthmn.cpp InunDepth.cpp ${common_srcs})
 
 # MPI configuration for Windows
 if(WIN32)
@@ -136,7 +136,7 @@ add_executable (flowdircond ${FLOWDIRCOND})
 add_executable (retlimflow ${RETLIMFLOW})
 add_executable (setregion ${SETREGION})
 add_executable (sinmapsi ${SINMAPSI})
-add_executable (inunmap ${INUNMAP})
+add_executable (inundepth ${INUNDEPTH})
 
 set (MY_TARGETS aread8
                 areadinf
@@ -173,7 +173,7 @@ set (MY_TARGETS aread8
                 retlimflow
                 setregion
                 sinmapsi
-                inunmap)
+                inundepth)
 
 
 foreach(c_target ${MY_TARGETS})
