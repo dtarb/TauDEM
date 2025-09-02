@@ -1,6 +1,7 @@
-/*  InunMap function takes HAND raster, gets inun depth info
- *  from the COMID mask raster and inundation forecast CSV input,
- *  then creates the inundation map raster.
+/*  InunDepth function takes HAND raster, computes inundation depths
+ *  using flow forecast CSV input and hydro property flow input,
+ *  then creates the inundation map/depth raster file. Optionally,
+ *  it can also output the inundation depth text/CSV file.
 
   Yan Liu, David Tarboton, Xing Zheng
   NCSA/UIUC, Utah State University, University of Texas at Austin
@@ -45,12 +46,12 @@ email:  dtarb@usu.edu
 #include <stdio.h>
 #include <stdlib.h>
 #include "commonLib.h"
-#include "InunMap.h"
+#include "InunDepth.h"
 
-int main(int argc,char **argv)  
+int main(int argc,char **argv)
 {
    char handfile[MAXLN], catchfile[MAXLN], maskfile[MAXLN], fcfile[MAXLN], hpfile[MAXLN], fcmapfile[MAXLN], depthfile[MAXLN];
-   int err, nmax;
+   int err;
    int hasMask = 0;
    int hasDepth = 0;
    int minRequiredArgs = 5; // maksfile and depthfile are optional
@@ -100,7 +101,6 @@ int main(int argc,char **argv)
 				}
 				else goto errexit;
 			}
-
 			else if(strcmp(argv[i],"-fc")==0)
 			{
 				i++;
@@ -142,43 +142,29 @@ int main(int argc,char **argv)
 				}
 				else goto errexit;
 			}
-/*
-			else if (strcmp(argv[i], "-nmax") == 0)
-			{
-				i++;
-				if (argc > i)
-				{
-					sscanf(argv[i], "%d", &nmax);
-					i++;
-				}
-				else goto errexit;
-			}
-*/
 		    else goto errexit;
 		}
    }
    	if(handfile == NULL || catchfile == NULL || fcfile == NULL || hpfile == NULL || fcmapfile == NULL) goto errexit;
 	if (hasMask && hasDepth)
-		err=inunmap(handfile, catchfile, maskfile, fcfile, hpfile, fcmapfile, depthfile);
+		err=inundepth(handfile, catchfile, maskfile, fcfile, hpfile, fcmapfile, depthfile);
 	else if (hasMask)
-		err=inunmap(handfile, catchfile, maskfile, fcfile, hpfile, fcmapfile, NULL);
+		err=inundepth(handfile, catchfile, maskfile, fcfile, hpfile, fcmapfile, NULL);
 	else if (hasDepth)
-		err=inunmap(handfile, catchfile, NULL, fcfile, hpfile, fcmapfile, depthfile);
+		err=inundepth(handfile, catchfile, NULL, fcfile, hpfile, fcmapfile, depthfile);
 	else
-		err=inunmap(handfile, catchfile, NULL, fcfile, hpfile, fcmapfile, NULL);
+		err=inundepth(handfile, catchfile, NULL, fcfile, hpfile, fcmapfile, NULL);
 
 	if(err != 0)
 		printf("Inundation Depth Generation Error %d\n",err);
 
 	return 0;
 errexit:
-//   printf("Simple Use:\n %s <basefilename>\n",argv[0]);
    printf("Use with specific file names:\n %s -hand <handfile>\n",argv[0]);
    printf("-catch <catchfile> -mask <maskfile> \n");
    printf("-fc <forecastfile> -hp <hydropropertyfile> \n");
    printf("-inun <outputinundationfile> \n");
    printf("-depth <outputdepthfile> \n");
-//   printf("<basefilename> is the name of the base digital elevation model without suffixes for simple input. Suffixes 'plen', 'ad8' and 'ss' will be appended. \n");
    printf("<handfile> is the name of the input hand raster file - required file.\n");
    printf("<catchfile> is the name of the input catchment COMID raster file - required file.\n");
    printf("<maskfile> is the name of the mask raster file - optional file, e.g. waterbody.\n");

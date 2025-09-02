@@ -1,7 +1,7 @@
-// TODO: The following description needs to be updated - 8/31/2025:
-/*  InunMap function takes HAND raster, gets inun depth info
- *  from the COMID mask raster and inundation forecast CSV input,
- *  then creates the inundation map raster.
+/*  InunDepth function takes HAND raster, computes inundation depths
+ *  using flow forecast CSV input and hydro property flow input,
+ *  then creates the inundation map/depth raster file. Optionally,
+ *  it can also output the inundation depth text/CSV file.
 
   Yan Liu, David Tarboton, Xing Zheng
   NCSA/UIUC, Utah State University, University of Texas at Austin
@@ -50,14 +50,14 @@ email:  dtarb@usu.edu
 #include "tiffIO.h"
 
 
-int inunmap(char *handfile, char*catchfile, char *maskfile, char*fcfile, char*hpfile, char *mapfile, char *depthfile)
+int inundepth(char *handfile, char*catchfile, char *maskfile, char*fcfile, char*hpfile, char *mapfile, char *depthfile)
 {
 	MPI_Init(NULL, NULL); {
 
 		int rank, size;
 		MPI_Comm_rank(MCW, &rank);
 		MPI_Comm_size(MCW, &size);
-		if (rank == 0)printf("InunMap version %s\n", TDVERSION);
+		if (rank == 0)printf("InunDepth version %s\n", TDVERSION);
 
 		double begin, end;
 		//Begin timer
@@ -164,11 +164,13 @@ int inunmap(char *handfile, char*catchfile, char *maskfile, char*fcfile, char*hp
 		MPI_Bcast(catchlist, nfc, MPI_LONG, 0, MCW);
 		MPI_Bcast(flowlist, nfc, MPI_DOUBLE, 0, MCW);
 		unordered_map<int, float> catchhash; // catchment_id -> interpolated inundation depth
-		long nhp = 0; // num of catchment_ids in the hydroproperty table
-		float *areasqms; // catchment area in m2 in the hydroprop table
+		long nhp = 0; // num of records in the hydroproperty table
+		float *areasqms = NULL; // catchment area in m2 in the hydroprop table
+		long *catchids_hp = NULL; // catchment ids from hydroprop table
+		float *interpolated_depths = NULL; // interpolated inundation depth for each catchment id - to be computed
 		unordered_map<int, float> catchareahash; // catchment_id -> catchment area
 		unordered_map<int, float> inuncatchareahash; // catchment_id -> inundation catchment area
-
+		
 		// For each catchment ID and flow from fcfile (forecast file), compute interpolate depth using the flow data in hpfile (hydroprop file)
 		if(rank == 0) {
 			FILE *fp;
@@ -203,11 +205,11 @@ int inunmap(char *handfile, char*catchfile, char *maskfile, char*fcfile, char*hp
 			}
 
 			// Allocate memory for temporary arrays
-			long *catchids = (long *) malloc(sizeof(long) * nhp);
+			catchids_hp = (long *) malloc(sizeof(long) * nhp);
 			float *stages = (float *) malloc(sizeof(float) * nhp);
-			float *areasqms = (float *) malloc(sizeof(float) * nhp);
+			areasqms = (float *) malloc(sizeof(float) * nhp);
 			float *flows = (float *) malloc(sizeof(float) * nhp);
-			float *interpolated_depths = (float *) malloc(sizeof(float) * nfc);
+			interpolated_depths = (float *) malloc(sizeof(float) * nfc);
 
 			// Reset file pointer to start of data
 			fseek(fp, pos, SEEK_SET);
@@ -228,7 +230,7 @@ int inunmap(char *handfile, char*catchfile, char *maskfile, char*fcfile, char*hp
 					fclose(fp);
 					exit(1);
 				}
-				catchids[hp_idx] = atol(token);
+				catchids_hp[hp_idx] = atol(token);
 
 				token = strtok(NULL, ",");
 				if (!token) {
@@ -289,7 +291,7 @@ int inunmap(char *handfile, char*catchfile, char *maskfile, char*fcfile, char*hp
 				// Search through already loaded hydroprop data
 				// Since flows are in ascending order for each catchment ID, we can optimize:
 				for (long hp_idx = 0; hp_idx < nhp; hp_idx++) {
-					if (catchids[hp_idx] == target_id) {
+					if (catchids_hp[hp_idx] == target_id) {
 						float hp_flow = flows[hp_idx];
 						float hp_stage = stages[hp_idx];
 
@@ -320,45 +322,47 @@ int inunmap(char *handfile, char*catchfile, char *maskfile, char*fcfile, char*hp
 			}
 			fclose(fp);
 
-			MPI_Bcast(&nhp, 1, MPI_LONG, 0, MCW);
-			if (rank != 0) {
-				catchids = (long*) malloc(sizeof(long) * nhp);
-				stages = (float*) malloc(sizeof(float) * nhp);
-				flows = (float*) malloc(sizeof(float) * nhp);
-				areasqms = (float*) malloc(sizeof(float) * nhp);
-				interpolated_depths = (float*) malloc(sizeof(float) * nfc);
-			}
-			MPI_Bcast(catchids, nhp, MPI_LONG, 0, MCW);
-			MPI_Bcast(stages, nhp, MPI_FLOAT, 0, MCW);
-			MPI_Bcast(flows, nhp, MPI_FLOAT, 0, MCW);
-			MPI_Bcast(areasqms, nhp, MPI_FLOAT, 0, MCW);
-			MPI_Bcast(interpolated_depths, nfc, MPI_FLOAT, 0, MCW);
-			for (int i=0; i<nfc; i++) catchhash[(int)catchlist[i]] = interpolated_depths[i];
-			
-			// Populate catchareahash for depth file generation
-			if (depthfile != NULL) {
-				for (int idx = 0; idx < nhp; idx++) {
-					int catchment_id = (int)catchids[idx];
-					catchareahash[catchment_id] = areasqms[idx];
-				}
-			}
-			// Clean up arrays we don't need anymore
-			if (catchids) free(catchids);
+			// Clean up temporary arrays on rank 0
 			if (stages) free(stages);
 			if (flows) free(flows);
-			if (areasqms) free(areasqms);
-			if (interpolated_depths) free(interpolated_depths);
+		}
 
-			// compute cell area for each catchment using catchData and handData
-			float temphand = 0.0;
-			int32_t tempcatch = 0;
-			for (long j = 0; j < ny; j++) {
-				for (long i = 0; i < nx; i++) {
-					if (!catchData->isNodata(i, j)) {
-						catchData->getData(i, j, tempcatch);
-						auto it = catchhash.find(tempcatch);
-						if (it != catchhash.end()) {
-							float inunDepth = it->second;
+		// Broadcast data from rank 0 to all other ranks
+		MPI_Bcast(&nhp, 1, MPI_LONG, 0, MCW);
+		if (rank != 0) {
+			catchids_hp = (long*) malloc(sizeof(long) * nhp);
+			areasqms = (float*) malloc(sizeof(float) * nhp);
+			interpolated_depths = (float*) malloc(sizeof(float) * nfc);
+		}
+		MPI_Bcast(catchids_hp, nhp, MPI_LONG, 0, MCW);
+		MPI_Bcast(areasqms, nhp, MPI_FLOAT, 0, MCW);
+		MPI_Bcast(interpolated_depths, nfc, MPI_FLOAT, 0, MCW);
+
+		// All ranks populate their hash maps
+		for (int i=0; i<nfc; i++) catchhash[(int)catchlist[i]] = interpolated_depths[i];
+
+		if (depthfile != NULL) {
+			for (int idx = 0; idx < nhp; idx++) {
+				catchareahash[(int)catchids_hp[idx]] = areasqms[idx];
+			}
+		}
+
+		// Free broadcasted arrays
+		if (catchids_hp) free(catchids_hp);
+		if (areasqms) free(areasqms);
+		if (interpolated_depths) free(interpolated_depths);
+
+		// Each process computes its local inundated catchment area
+		float temphand = 0.0;
+		int32_t tempcatch = 0;
+		for (long j = 0; j < ny; j++) {
+			for (long i = 0; i < nx; i++) {
+				if (!catchData->isNodata(i, j)) {
+					catchData->getData(i, j, tempcatch);
+					auto it = catchhash.find(tempcatch);
+					if (it != catchhash.end()) {
+						float inunDepth = it->second;
+						if (inunDepth > 0) { // Only process if there is inundation
 							double dxc, dyc, cellArea;
 							handData->getdxdyc(j, dxc, dyc); // This function gets latitude dependent dx and dy for each cell
 							cellArea = dxc * dyc;
@@ -374,12 +378,66 @@ int inunmap(char *handfile, char*catchfile, char *maskfile, char*fcfile, char*hp
 			}
 		}
 
+		// MPI Reduction for inuncatchareahash. This is only needed if depthfile is requested.
+		if (depthfile != NULL) {
+			int local_map_size = inuncatchareahash.size();
+			long* local_keys = new long[local_map_size];
+			float* local_values = new float[local_map_size];
+			int idx = 0;
+			for (auto const& [key, val] : inuncatchareahash) {
+				local_keys[idx] = key;
+				local_values[idx] = val;
+				idx++;
+			}
+
+			int* recv_counts = NULL;
+			int* displs = NULL;
+			long* all_keys = NULL;
+			float* all_values = NULL;
+			int total_size = 0;
+
+			if (rank == 0) {
+				recv_counts = new int[size];
+			}
+
+			MPI_Gather(&local_map_size, 1, MPI_INT, recv_counts, 1, MPI_INT, 0, MCW);
+
+			if (rank == 0) {
+				displs = new int[size];
+				displs[0] = 0;
+				total_size = recv_counts[0];
+				for (int i = 1; i < size; i++) {
+					total_size += recv_counts[i];
+					displs[i] = displs[i-1] + recv_counts[i-1];
+				}
+				all_keys = new long[total_size];
+				all_values = new float[total_size];
+			}
+
+			MPI_Gatherv(local_keys, local_map_size, MPI_LONG, all_keys, recv_counts, displs, MPI_LONG, 0, MCW);
+			MPI_Gatherv(local_values, local_map_size, MPI_FLOAT, all_values, recv_counts, displs, MPI_FLOAT, 0, MCW);
+
+			if (rank == 0) {
+				inuncatchareahash.clear(); // Clear the partial map on rank 0
+				for (int i = 0; i < total_size; i++) {
+					inuncatchareahash[all_keys[i]] += all_values[i];
+				}
+				delete[] recv_counts;
+				delete[] displs;
+				delete[] all_keys;
+				delete[] all_values;
+			}
+
+			delete[] local_keys;
+			delete[] local_values;
+		}
+
 		long i, j, k;
 
 		//Share information and set borders to zero
 		//handData->share();
 		//catchData->share();
-		
+
 		//generate depth output file if requested
 		if (depthfile != NULL && rank == 0) {
 			FILE *depthfp = fopen(depthfile, "w");
@@ -421,17 +479,19 @@ int inunmap(char *handfile, char*catchfile, char *maskfile, char*fcfile, char*hp
 					int32_t comid = 0;
 					double hfc = 0.0;
 					catchData->getData(i, j, comid);
-					// hfc (height of forecast) is the interpolated depth/height based on flow
-					hfc =  catchhash[comid];
+
+					// Safely get forecast height (hfc) from the hash map
+					auto it_hfc = catchhash.find(comid);
+					if (it_hfc == catchhash.end()) continue; // No forecast for this catchment, so skip.
+					hfc = it_hfc->second;
+
 					if (hfc < 0.0) continue;
 					if (maskfile != NULL && catchhash.count(comid) > 0) continue; // ignore catchments with small pit-removed waterbodies. they are in the hash if inunratio > 10%
 					float handv = 0.0;
 					handData->getData(i, j, handv);
 					if (hfc > handv + 0.001) { // need to have diff>1mm
 						inunp->setData(i,j, (float)(hfc - (double)handv));
-					}// else {
-						//inunp->setToNodata(i,j);
-					//}
+					}
 				}
 			}
 		}
