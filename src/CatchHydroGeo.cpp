@@ -292,7 +292,7 @@ int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpf
 					auto it = catchhash.find(tempcatch);
 					if (it != catchhash.end()) {
 						int catchIndex = it->second;
-						CatchArea[catchIndex] += cellArea;					
+						CatchArea[catchIndex] += cellArea;
 						if (!handData->isNodata(i,j) && !slpData->isNodata(i,j)) {  // All 2 inputs have to have data
 							handData->getData(i, j, temphand);
 							slpData->getData(i, j, tempslp);
