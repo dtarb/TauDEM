@@ -57,17 +57,9 @@ int main(int argc,char **argv)
    int minRequiredArgs = 5; // maksfile and depthfile are optional
       
    if(argc < minRequiredArgs) goto errexit;
-/*   if(argc == 2)
-	{
-//		printf("You are running %s with the simple use option.\n", argv[0]);
-		nameadd(plenfile,argv[1],"plen");
-		nameadd(ad8file,argv[1],"ad8");
-		nameadd(ssfile,argv[1],"ss");
-    }*/
-   if(argc >= minRequiredArgs)
+   else
    {
-//		printf("You are running %s with the specific file names option.\n", argv[0]);
-        int i=1;	
+		int i=1;	
 		while(argc > i)
 		{
 			if(strcmp(argv[i],"-hand")==0)
@@ -142,9 +134,10 @@ int main(int argc,char **argv)
 				}
 				else goto errexit;
 			}
-		    else goto errexit;
+			else goto errexit;
 		}
-   }
+	}
+
    	if(handfile == NULL || catchfile == NULL || fcfile == NULL || hpfile == NULL || fcmapfile == NULL) goto errexit;
 	if (hasMask && hasDepth)
 		err=inundepth(handfile, catchfile, maskfile, fcfile, hpfile, fcmapfile, depthfile);
@@ -173,4 +166,4 @@ errexit:
    printf("<outputinundationfile> is the name of the output inundation raster file - required file.\n");
    printf("<outputdepthfile> is the name of the output inundation depth text/CSV file - optional file.\n");
    return 0; 
-} 
+}
