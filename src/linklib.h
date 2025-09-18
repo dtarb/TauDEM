@@ -273,13 +273,14 @@ bool sendLink(int32_t Id, int dest){
 
 	MPI_Aint extent;
 	MPI_Aint offsets[2]; 
-	MPI_Status stat; 
-	extent = sizeof(long);
+	MPI_Status stat;
 	//set up first blocks of storage
 	offsets[0] = 0;
 	oldtypes[0] = MPI_LONG;
 	blockcounts[0]= 2;
 	//set up second block of storage
+	MPI_Aint lb;
+	MPI_Type_get_extent(MPI_LONG, &lb, &extent);
 	offsets[1] = 2 * extent;
 	oldtypes[1] = MPI_FLOAT;
 	blockcounts[1] = 3;
@@ -342,13 +343,14 @@ bool recvLink(int src){
 
 	MPI_Aint extent;
 	MPI_Aint offsets[2]; 
-	MPI_Status stat1; 
-	extent = sizeof(long);
+	MPI_Status stat1;
 	//set up first blocks of storage
 	offsets[0] = 0;
 	oldtypes[0] = MPI_LONG;
 	blockcounts[0]= 2;
 	//set up second block of storage
+	MPI_Aint lb;
+	MPI_Type_get_extent(MPI_LONG, &lb, &extent);
 	offsets[1] = 2 * extent;
 	oldtypes[1] = MPI_FLOAT;
 	blockcounts[1] = 3;
