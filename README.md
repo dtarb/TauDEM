@@ -743,7 +743,7 @@ TauDEM provides a Windows installer for easy installation on Windows. The instal
 TauDEM/
 ├── src/                    # Source code
 │   ├── *.cpp, *.h          # TauDEM algorithms implementation
-│   ├── CMakeLists.txt      # CMake build configuration│
+│   ├── CMakeLists.txt      # CMake build configuration
 ├── build/                  # Build outputs (generated)(gitignored)
 │   ├── debug/              # Debug build directory
 │   └── release/            # Release build directory
@@ -758,11 +758,10 @@ TauDEM/
 ├── CMakeLists.txt          # Root CMake configuration
 ├── config.cmake            # CMake configuration for different platforms
 ├── Makefile                # Main build system
-├── build-windows.bat       # Windows build script
+├── build-windows.bat       # TauDEM build script for Windows
 ├── Dockerfile              # Docker configuration (running TauDEM in docker container)
 ├── Dockerfile-run.tests    # Docker configuration (building TauDEM for testing on Ubuntu)
 ├── README.md               # This file
-└── README.txt              # Original documentation (TODO: delete this file)
 ```
 
 ### Key Components
@@ -794,37 +793,14 @@ Download test data from the [TauDEM-Test-Data](https://github.com/dtarb/TauDEM-T
 
 ```bash
 git clone https://github.com/dtarb/TauDEM-Test-Data.git
-cd TauDEM-Test-Data/Input
-# Run tests on macOS/Linux
-# Setup bats testing framework (one-time setup)
-brew install bats-core
-git clone https://github.com/bats-core/bats-support.git /tmp/bats-support
-git clone https://github.com/bats-core/bats-assert.git /tmp/bats-assert
-git clone https://github.com/bats-core/bats-file.git /tmp/bats-file
-
-# Run tests assuming TauDEM installed path is in PATH
-./taudem-tests.sh
-
-# Run tests assuming TauDEM installed path is in TAUDEM_PATH
-TAUDEM_PATH=/path/to/taudem ./taudem-tests.sh
-
-# Run tests on Windows (bats testing framework is not necessary)
-testall.bat
 ```
 
-### Validation
+Refer to the [TauDEM-Test-Data](https://github.com/dtarb/TauDEM-Test-Data) repository for details on how to run tests.
 
-The test suite validates:
-
-- Algorithm correctness
-- Memory management
-- Parallel processing functionality
-- Cross-platform compatibility
-- Performance benchmarks
 
 ## 🤝 Contributing
 
-We welcome contributions to TauDEM! TODO: Add more details here.
+We welcome contributions to TauDEM!
 
 ### Development Workflow
 
@@ -869,6 +845,5 @@ TauDEM is licensed under the GNU General Public License v3.0. See [GPLv3license.
 
 ---
 
-**Developed by**: Utah State University  
-**Maintainer**: David Tarboton  
-**Contributors**: TODO: create a CONTRIBUTORS.md file
+**Developed by**: Utah State University
+**Maintainer**: David Tarboton
