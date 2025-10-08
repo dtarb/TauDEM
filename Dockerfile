@@ -41,9 +41,8 @@ RUN mkdir -p /home/taudem/workspace && \
 USER taudem
 WORKDIR /home/taudem/workspace
 
-# Clone the TauDEM repository (for now using the vscode-macos-dev-setup branch)
-# TODO: Change this back to main branch when this branch is merged into main
-RUN git clone -b vscode-macos-dev-setup --single-branch https://github.com/dtarb/TauDEM.git
+# Clone the TauDEM repository (clones the Develop branch)
+RUN git clone --depth 1 https://github.com/dtarb/TauDEM.git
 
 # Set working directory to TauDEM
 WORKDIR /home/taudem/workspace/TauDEM
