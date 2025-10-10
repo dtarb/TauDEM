@@ -81,10 +81,6 @@ for line in process.stdout.readlines():
     message = message+line
 arcpy.AddMessage(message)
 
-# Calculate statistics on the output so that it displays properly
-arcpy.AddMessage('Calculate Statistics\n')
-arcpy.CalculateStatistics_management(q)
-
 # Construct command 2
 cmd = 'mpiexec -n ' + inputProc + ' DinfConcLimAccum -ang ' + '"' + ang + '"' + ' -dg ' + '"' + dg + \
       '"' + ' -dm ' + '"' + dm + '"' + ' -ctpt ' + '"' + ctpt + '"' + ' -q ' + '"' + q + '"' + \
@@ -111,7 +107,6 @@ arcpy.AddMessage(message)
 
 # Calculate statistics on the output so that it displays properly
 arcpy.AddMessage('Calculate Statistics\n')
-arcpy.CalculateStatistics_management(ctpt)
 # remove converted json file
 if arcpy.Exists(ogrfile):
     extn_json = os.path.splitext(shfl)[1]    # get extension of the converted json file

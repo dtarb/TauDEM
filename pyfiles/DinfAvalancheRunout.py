@@ -65,8 +65,3 @@ for line in process.stdout.readlines():
         line = line.decode()
     message = message + line
 arcpy.AddMessage(message)
-
-# Calculate statistics on the output so that it displays properly
-arcpy.AddMessage('Calculate Statistics\n')
-arcpy.CalculateStatistics_management(rz)
-arcpy.CalculateStatistics_management(dfs)

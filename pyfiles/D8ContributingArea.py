@@ -91,10 +91,6 @@ for line in process.stdout.readlines():
     message = message + line
 arcpy.AddMessage(message)
 
-# Calculate statistics on the output so that it displays properly
-arcpy.AddMessage('Calculating Statistics\n')
-arcpy.CalculateStatistics_management(ad8)
-
 # remove converted json file
 if arcpy.Exists(ogrfile):
   extn_json = os.path.splitext(shfl)[1]     # get extension of the converted json file

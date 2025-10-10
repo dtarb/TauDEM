@@ -75,10 +75,6 @@ for line in process.stdout.readlines():
         line = line.decode()
     message = message + line
 arcpy.AddMessage(message)
-
-# Calculate statistics on the output so that it displays properly
-arcpy.AddMessage('Calculate Statistics\n')
-arcpy.CalculateStatistics_management(ssa)
 # remove converted json file
 extn_json = os.path.splitext(shfl)[1]     # get extension of the converted json file
 if extn_json == ".json":

@@ -112,7 +112,6 @@ for line in process.stdout.readlines():
         line = line.decode()
     message = message + line
 arcpy.AddMessage(message)
-arcpy.CalculateStatistics_management(ss)
 
 # Construct second command
 cmd = 'mpiexec -n ' + inputProc + ' AreaD8 -p ' + '"' + p + '"' + ' -ad8 ' + '"' + ssa + '"'
@@ -133,7 +132,6 @@ for line in process.stdout.readlines():
         line = line.decode()
     message = message + line
 arcpy.AddMessage(message)
-arcpy.CalculateStatistics_management(ssa)
 
 if (usedroprange == 'true') and arcpy.Exists(ogrlyr):
     # Construct third command
@@ -186,7 +184,6 @@ for line in process.stdout.readlines():
         line = line.decode()
     message = message + line
 arcpy.AddMessage(message)
-arcpy.CalculateStatistics_management(src)
 # remove converted json file
 if arcpy.Exists(ogrlyr):
     extn_json = os.path.splitext(shfl)[1]   # get extension of the converted json file

@@ -88,9 +88,6 @@ for line in process.stdout.readlines():
         line = line.decode()
     arcpy.AddMessage(line)
 
-# Calculate statistics on the output so that it displays properly
-#arcpy.AddMessage('Calculate Statistics\n')
-#arcpy.CalculateStatistics_management(drp)  # DGT 12/7/19 does not make sense to calculate statistics on this drop file
 if arcpy.Exists(ogrfile):
     extn_json = os.path.splitext(shfl)[1]   # get extension of the converted json file
     if extn_json == ".json":

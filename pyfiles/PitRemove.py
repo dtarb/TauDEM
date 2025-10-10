@@ -56,10 +56,6 @@ for line in process.stdout.readlines():
     message = message + line
 arcpy.AddMessage(message)
 
-#  Calculate statistics so that grids display with correct bounds
-arcpy.AddMessage('Calculate Statistics\n')
-arcpy.CalculateStatistics_management(outFile)
-
 
 
 
