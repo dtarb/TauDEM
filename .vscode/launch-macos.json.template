@@ -1,0 +1,956 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug PitRemove",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/pitremove",
+            "args": [
+                "-z", "test_data/input/dem.tif",
+                "-fel", "test_data/output/dem_fel.tif",
+                "-v"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build pitremove (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug D8FlowDir",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/d8flowdir",
+            "args": [
+                "-fel", "test_data/input/dem_fel.tif",
+                "-p", "test_data/output/dem_p.tif",
+                "-sd8", "test_data/output/dem_sd8.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build d8flowdir (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug DinfFlowDir",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/dinfflowdir",
+            "args": [
+                "-fel", "test_data/input/dem_fel.tif",
+                "-ang", "test_data/output/dem_ang.tif",
+                "-slp", "test_data/output/dem_slp.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build dinfflowdir (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug AreaD8",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/aread8",
+            "args": [
+                "-p", "test_data/input/dem_p.tif",
+                "-ad8", "test_data/output/dem_ad8.tif",
+                "-nc"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build aread8 (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug Threshold",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/threshold",
+            "args": [
+                "-ssa", "test_data/input/dem_ad8.tif",
+                "-src", "test_data/output/dem_src.tif",
+                "-thresh", "100"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build threshold (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug StreamNet",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/streamnet",
+            "args": [
+                "-fel", "test_data/input/dem_fel.tif",
+                "-p", "test_data/input/dem_p.tif",
+                "-ad8", "test_data/input/dem_ad8.tif",
+                "-src", "test_data/input/dem_src.tif",
+                "-ord", "test_data/output/dem_ord.tif",
+                "-tree", "test_data/output/dem_tree.txt",
+                "-coord", "test_data/output/dem_coord.txt",
+                "-net", "test_data/output/dem_net.shp",
+                "-w", "test_data/output/dem_w.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build streamnet (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug GageWatershed",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/gagewatershed",
+            "args": [
+                "-p", "test_data/input/dem_p.tif",
+                "-gw", "test_data/output/dem_gw.tif",
+                "-o", "test_data/input/outlets.shp",
+                "-id", "test_data/output/outlet_ids.txt"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build gagewatershed (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug DropAnalysis",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/dropanalysis",
+            "args": [
+                "-p", "test_data/input/dem_p.tif",
+                "-fel", "test_data/input/dem_fel.tif",
+                "-ad8", "test_data/input/dem_ad8.tif",
+                "-ssa", "test_data/input/dem_ssa.tif",
+                "-drp", "test_data/output/dem_drp.txt",
+                "-par", "10", "500", "50", "0"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build dropanalysis (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug TWI",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/twi",
+            "args": [
+                "-sca", "test_data/input/dem_sca.tif",
+                "-slp", "test_data/input/dem_slp.tif",
+                "-twi", "test_data/output/dem_twi.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build twi (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug D8HDistToStrm",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/d8hdisttostrm",
+            "args": [
+                "-p", "test_data/input/dem_p.tif",
+                "-src", "test_data/input/dem_src.tif",
+                "-dist", "test_data/output/dem_dist.tif",
+                "-thresh", "100"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build d8hdisttostrm (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug AreaDinf",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/areadinf",
+            "args": [
+                "-ang", "test_data/input/dem_ang.tif",
+                "-sca", "test_data/output/dem_sca.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build areadinf (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug D8FlowPathExtremeUp",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/d8flowpathextremeup",
+            "args": [
+                "-p", "test_data/input/dem_p.tif",
+                "-sa", "test_data/input/dem_sa.tif",
+                "-ssa", "test_data/output/dem_ssa.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug DinfAvalanche",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/dinfavalanche",
+            "args": [
+                "-ang", "test_data/input/dem_ang.tif",
+                "-fel", "test_data/input/dem_fel.tif",
+                "-rz", "test_data/output/dem_rz.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug DinfConcLimAccum",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/dinfconclimaccum",
+            "args": [
+                "-ang", "test_data/input/dem_ang.tif",
+                "-dg", "test_data/input/dem_dg.tif",
+                "-ctpt", "test_data/output/dem_ctpt.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug DinfDecayAccum",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/dinfdecayaccum",
+            "args": [
+                "-ang", "test_data/input/dem_ang.tif",
+                "-dm", "test_data/input/dem_dm.tif",
+                "-td", "test_data/output/dem_td.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug DinfDistDown",
+            "type": "cppdbg",
+            "request": "launch", 
+            "program": "${workspaceFolder}/build/debug/src/dinfdistdown",
+            "args": [
+                "-ang", "test_data/input/dem_ang.tif",
+                "-fel", "test_data/input/dem_fel.tif",
+                "-src", "test_data/input/dem_src.tif",
+                "-dd", "test_data/output/dem_dd.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug DinfDistUp",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/dinfdistup",
+            "args": [
+                "-ang", "test_data/input/dem_ang.tif",
+                "-fel", "test_data/input/dem_fel.tif",
+                "-src", "test_data/input/dem_src.tif",
+                "-du", "test_data/output/dem_du.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug DinfRevAccum",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/dinfrevaccum",
+            "args": [
+                "-ang", "test_data/input/dem_ang.tif",
+                "-wg", "test_data/input/dem_wg.tif",
+                "-racc", "test_data/output/dem_racc.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug DinfTransLimAccum",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/dinftranslimaccum",
+            "args": [
+                "-ang", "test_data/input/dem_ang.tif",
+                "-tsup", "test_data/input/dem_tsup.tif",
+                "-tc", "test_data/output/dem_tc.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug DinfUpDependence",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/dinfupdependence",
+            "args": [
+                "-ang", "test_data/input/dem_ang.tif",
+                "-dep", "test_data/output/dem_dep.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug GridNet",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/gridnet",
+            "args": [
+                "-p", "test_data/input/dem_p.tif",
+                "-plen", "test_data/output/dem_plen.tif",
+                "-tlen", "test_data/output/dem_tlen.tif",
+                "-gord", "test_data/output/dem_gord.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug LengthArea",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/lengtharea",
+            "args": [
+                "-plen", "test_data/input/dem_plen.tif",
+                "-ad8", "test_data/input/dem_ad8.tif",
+                "-ss", "test_data/output/dem_ss.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug MoveOutletsToStreams",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/moveoutletstostreams",
+            "args": [
+                "-p", "test_data/input/dem_p.tif",
+                "-src", "test_data/input/dem_src.tif",
+                "-o", "test_data/input/outlets.shp",
+                "-om", "test_data/output/outlets_moved.shp"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug PeukerDouglas",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/peukerdouglas",
+            "args": [
+                "-fel", "test_data/input/dem_fel.tif",
+                "-ss", "test_data/output/dem_ss.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug SlopeArea",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/slopearea",
+            "args": [
+                "-slp", "test_data/input/dem_slp.tif",
+                "-sca", "test_data/input/dem_sca.tif",
+                "-sa", "test_data/output/dem_sa.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug SlopeAreaRatio",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/slopearearatio",
+            "args": [
+                "-slp", "test_data/input/dem_slp.tif",
+                "-sca", "test_data/input/dem_sca.tif",
+                "-sar", "test_data/output/dem_sar.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug SlopeAveDown",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/slopeavedown",
+            "args": [
+                "-p", "test_data/input/dem_p.tif",
+                "-fel", "test_data/input/dem_fel.tif",
+                "-slpd", "test_data/output/dem_slpd.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug ConnectDown",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/connectdown",
+            "args": [
+                "-p", "test_data/input/dem_p.tif",
+                "-w", "test_data/input/dem_w.tif",
+                "-o", "test_data/input/outlets.shp",
+                "-wtsd", "test_data/output/dem_wtsd.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug CatchHydroGeo",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/catchhydrogeo",
+            "args": [
+                "-p", "test_data/input/dem_p.tif",
+                "-o", "test_data/input/outlets.shp",
+                "-ctpt", "test_data/output/catchments.shp"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug CatchOutlets",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/catchoutlets",
+            "args": [
+                "-p", "test_data/input/dem_p.tif",
+                "-src", "test_data/input/dem_src.tif",
+                "-o", "test_data/output/outlets.shp"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug EditRaster",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/editraster",
+            "args": [
+                "-input", "test_data/input/dem.tif",
+                "-output", "test_data/output/dem_edited.tif",
+                "-mask", "test_data/input/mask.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug FlowDirCond",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/flowdircond",
+            "args": [
+                "-p", "test_data/input/dem_p.tif",
+                "-z", "test_data/input/dem_z.tif",
+                "-pf", "test_data/output/dem_pf.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug RetLimFlow",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/retlimflow",
+            "args": [
+                "-p", "test_data/input/dem_p.tif",
+                "-src", "test_data/input/dem_src.tif",
+                "-ret", "test_data/output/dem_ret.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],            
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug SetRegion",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/setregion",
+            "args": [
+                "-mask", "test_data/input/mask.tif",
+                "-src", "test_data/input/dem_src.tif",
+                "-seto", "test_data/output/dem_seto.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug SinmapSI",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/sinmapsi",
+            "args": [
+                "-slp", "test_data/input/dem_slp.tif",
+                "-sca", "test_data/input/dem_sca.tif",
+                "-si", "test_data/output/dem_si.tif"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug InunDepth",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/inundepth",
+            "args": [
+                "-hand", "test_data/input/hand.tif",
+                "-catch", "test_data/input/w.tif",
+                "-fc", "test_data/input/flow.csv",
+                "-hp", "test_data/input/hydropropotable.txt",
+                "-inun", "test_data/output/inundation.tif",
+                "-depth", "test_data/output/depths.csv"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Generic Target (Debug, Clang) - macOS"
+        },
+        {
+            "name": "Debug MPI Tool Using Pitrmove (Manual)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/src/pitremove",
+            "args": [
+                "-z", "test_data/input/dem.tif",
+                "-fel", "test_data/output/dem_fel.tif",
+                "-v"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "MPI_ROOT",
+                    "value": "/opt/homebrew"
+                },
+                {
+                    "name": "OMPI_COMM_WORLD_SIZE",
+                    "value": "2"
+                },
+                {
+                    "name": "OMPI_COMM_WORLD_RANK", 
+                    "value": "0"
+                }
+            ],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build pitremove (Debug, Clang) - macOS"
+        },        
+        {
+            "name": "Attach to Process (Generic)",
+            "type": "cppdbg",
+            "request": "attach",
+            "program": "${workspaceFolder}/build/debug/src/${input:programName}",
+            "processId": "${command:pickProcess}",
+            "MIMode": "lldb"
+        }
+    ],
+    "inputs": [
+        {
+            "id": "demFile",
+            "description": "Enter DEM file path",
+            "default": "test_data/dem.tif",
+            "type": "promptString"
+        },
+        {
+            "id": "outputFile",
+            "description": "Enter output file path",
+            "default": "output/result.tif",
+            "type": "promptString"
+        },
+        {
+            "id": "threshold",
+            "description": "Enter threshold value",
+            "default": "100",
+            "type": "promptString"
+        },
+        {
+            "id": "programName",
+            "description": "Enter program name",
+            "default": "pitremove",
+            "type": "promptString"
+        }
+    ]
+}

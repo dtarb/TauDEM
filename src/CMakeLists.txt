@@ -1,7 +1,11 @@
-cmake_minimum_required(VERSION 3.1.0)
-project(TauDEM)
+# Update to C++17 for filesystem support
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set (CMAKE_CXX_STANDARD 11)
+# Add filesystem library for older compilers
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.1)
+    link_libraries(stdc++fs)
+endif()
 
 set (shape_srcs ReadOutlets.cpp)
 set (common_srcs commonLib.cpp tiffIO.cpp)
@@ -50,16 +54,52 @@ set (FLOWDIRCOND flowdirconditionmn.cpp flowdircond.cpp ${common_srcs})
 set (RETLIMFLOW RetLimFlowmn.cpp RetlimFlow.cpp ${common_srcs})
 set (SETREGION SetRegionmn.cpp SetRegion.cpp ${common_srcs})
 set (SINMAPSI SinmapSImn.cpp SinmapSI.cpp ${common_srcs})
+set (INUNDEPTH InunDepthmn.cpp InunDepth.cpp ${common_srcs})
 
-# MPI is required
-find_package(MPI REQUIRED)
+# MPI configuration for Windows
+if(WIN32)
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        set(MS_MPI_ARCH_DIR "x64")
+    else()
+        set(MS_MPI_ARCH_DIR "x86")
+    endif()
+    
+    # Try to find MS-MPI through vcpkg first
+    find_package(MPI)
+    
+    if(NOT MPI_FOUND)
+        # Fallback to standard MS-MPI paths
+        set(MPI_C_INCLUDE_PATH "C:/Program Files (x86)/Microsoft SDKs/MPI/Include")
+        set(MPI_CXX_INCLUDE_PATH "C:/Program Files (x86)/Microsoft SDKs/MPI/Include")
+        set(MPI_C_LIBRARIES "C:/Program Files (x86)/Microsoft SDKs/MPI/Lib/${MS_MPI_ARCH_DIR}/msmpi.lib")
+        set(MPI_CXX_LIBRARIES "C:/Program Files (x86)/Microsoft SDKs/MPI/Lib/${MS_MPI_ARCH_DIR}/msmpi.lib")
+    endif()
+else()
+    # Non-Windows platforms
+    find_package(MPI REQUIRED)
+endif()
+
 include_directories(${MPI_INCLUDE_PATH})
-set(CMAKE_CXX_FLAG "${CMAKE_CXX_FLAG} ${MPI_COMPILE_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_COMPILE_FLAGS}")
 set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} ${MPI_LINK_FLAGS}")
 
-# GDAL is required
-find_package(GDAL REQUIRED)
-include_directories(${GDAL_INCLUDE_DIR})
+# GDAL is required - try CONFIG mode first (for vcpkg)
+find_package(GDAL CONFIG QUIET)
+if(NOT GDAL_FOUND)
+    # Fall back to MODULE mode if CONFIG mode fails
+    message(STATUS "GDAL CONFIG mode failed, trying MODULE mode...")
+    find_package(GDAL REQUIRED)
+    include_directories(${GDAL_INCLUDE_DIR})
+    message(STATUS "Found GDAL using MODULE mode: ${GDAL_VERSION}")
+else()
+    message(STATUS "Found GDAL using CONFIG mode: ${GDAL_VERSION}")
+endif()
+
+find_package(MPI)
+message(STATUS "MPI_FOUND: ${MPI_FOUND}")
+message(STATUS "MPI_LIBRARIES: ${MPI_LIBRARIES}")
+message(STATUS "MPI_C_LIBRARIES: ${MPI_C_LIBRARIES}")
+message(STATUS "MPI_CXX_LIBRARIES: ${MPI_CXX_LIBRARIES}")
 
 add_executable (aread8 ${AREAD8})
 add_executable (areadinf ${AREADINF})
@@ -78,7 +118,7 @@ add_executable (dinfupdependence ${DINFUPDEPEND})
 add_executable (dropanalysis ${DROPANALYSIS})
 add_executable (gridnet ${GRIDNET})
 add_executable (lengtharea ${LENGTHAREA})
-add_executable (moveoutletstostrm ${MVOUTLETSTOSTRM})
+add_executable (moveoutletstostreams ${MVOUTLETSTOSTRM})
 add_executable (peukerdouglas ${PEUKERDOUGLAS})
 add_executable (pitremove ${PITREMOVE})
 add_executable (slopearea ${SLOPEAREA})
@@ -96,6 +136,7 @@ add_executable (flowdircond ${FLOWDIRCOND})
 add_executable (retlimflow ${RETLIMFLOW})
 add_executable (setregion ${SETREGION})
 add_executable (sinmapsi ${SINMAPSI})
+add_executable (inundepth ${INUNDEPTH})
 
 set (MY_TARGETS aread8
                 areadinf
@@ -114,7 +155,7 @@ set (MY_TARGETS aread8
                 dropanalysis
                 gridnet
                 lengtharea
-                moveoutletstostrm
+                moveoutletstostreams
                 peukerdouglas
                 pitremove
                 slopearea
@@ -131,9 +172,29 @@ set (MY_TARGETS aread8
                 flowdircond
                 retlimflow
                 setregion
-                sinmapsi)
+                sinmapsi
+                inundepth)
 
-foreach( c_target ${MY_TARGETS} )
-    target_link_libraries(${c_target} ${MPI_LIBRARIES} ${GDAL_LIBRARY})
+
+foreach(c_target ${MY_TARGETS})
+    # Link the target to MPI and GDAL
+    if(TARGET GDAL::GDAL)
+        # Modern GDAL target (from CONFIG mode)
+        target_link_libraries(${c_target} PRIVATE ${MPI_LIBRARIES} GDAL::GDAL)
+    else()
+        # Old-style GDAL variables (from MODULE mode)
+        target_link_libraries(${c_target} PRIVATE ${MPI_LIBRARIES} ${GDAL_LIBRARY})
+    endif()
+    
+    # Add MPI include directories
+    target_include_directories(${c_target} PRIVATE ${MPI_INCLUDE_PATH})
+    
+    # Add MPI compile flags
+    target_compile_options(${c_target} PRIVATE ${MPI_COMPILE_FLAGS})
+    
+    # Add MPI link flags
+    target_link_libraries(${c_target} PRIVATE ${MPI_LINK_FLAGS})
+
+    # Install the targets to the 'taudem' directory
     install(TARGETS ${c_target} DESTINATION taudem)
-endforeach( c_target ${MY_TARGETS} )
+endforeach()

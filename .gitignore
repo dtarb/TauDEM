@@ -141,7 +141,7 @@ pip-log.txt
 /dropanalysis
 /gridnet
 /lengtharea
-/moveoutletstostrm
+/moveoutletstostreams
 /peukerdouglas
 /pitremove
 /slopearea
@@ -163,3 +163,23 @@ Taudem5PCVS2015/Taudem5PC.VC.opendb
 Taudem5PCVS2015/Taudem5PC.VC.db
 pyfiles/.idea/
 *.db
+install
+
+# ignore folder related to build
+src/build/
+src/build-release/
+src/build-debug/
+
+# ignore folder related to windows installer
+TauDEM_Installation_Source/
+
+# ignore test_data folder
+test_data/
+
+# VS Code settings
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+
+# Visual studio generated files
+Taudem5PCVS2019/.vs/

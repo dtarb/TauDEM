@@ -234,19 +234,27 @@ int outletstosrc(char *pfile, char *srcfile, char *outletsdatasrc, char *outlets
 
 				if (hDSshmoved != NULL) {
 
+					char** papszOptions = NULL;
+					papszOptions = CSLSetNameValue(papszOptions, "OVERWRITE", "YES");
+
 					//hLayershmoved = OGR_DS_CreateLayer( hDSshmoved, outletmovedlayer, hSRSRaster, wkbPoint, NULL ); // create layer for moved outlet, where raster layer spatial reference is used fro shapefile
 					if (strlen(outletmovedlayer) == 0) {
-					// Chris George
 						char layernameshmoved[MAXLN];
-						getLayername(outletmoveddatasrc,layernameshmoved); // get layer name which is file name without extension
-						//char * layernameshmoved;
-						//layernameshmoved = getLayername(outletmoveddatasrc); // get layer name which is file name without extension
-						hLayershmoved = OGR_DS_CreateLayer(hDSshmoved, layernameshmoved, hSRSRaster, wkbPoint, NULL);
+						getLayername(outletmoveddatasrc,layernameshmoved);
+						if(strstr(pszDriverName, "tif") != NULL || strstr(pszDriverName, "TIF") != NULL || strcmp(pszDriverName, "SQLite") == 0) {
+							hLayershmoved = OGR_DS_CreateLayer(hDSshmoved, layernameshmoved, hSRSRaster, wkbPoint, papszOptions);
+						} else {
+							hLayershmoved = OGR_DS_CreateLayer(hDSshmoved, layernameshmoved, hSRSRaster, wkbPoint, NULL);
+						}
+					} else {
+						if(strstr(pszDriverName, "tif") != NULL || strstr(pszDriverName, "TIF") != NULL || strcmp(pszDriverName, "SQLite") == 0) {
+							hLayershmoved = OGR_DS_CreateLayer(hDSshmoved, outletmovedlayer, hSRSRaster, wkbPoint, papszOptions);
+						} else {
+							hLayershmoved = OGR_DS_CreateLayer(hDSshmoved, outletmovedlayer, hSRSRaster, wkbPoint, NULL);
+						}
 					}
 
-					else {
-						hLayershmoved = OGR_DS_CreateLayer(hDSshmoved, outletmovedlayer, hSRSRaster, wkbPoint, NULL);
-					}// provide same spatial reference as raster in streamnetshp file
+					CSLDestroy(papszOptions);
 
 					if (hLayershmoved == NULL)
 					{
@@ -367,7 +375,7 @@ int outletstosrc(char *pfile, char *srcfile, char *outletsdatasrc, char *outlets
 			if (outletsX[i] < 0 || outletsX[i] >= pTotalX || outletsY[i] < 0 || outletsY[i] >= pTotalY) {  // Here out of domain
 				is_done[i] = 0;
 				dist_moved[i] = -1;  // Cannot be moved
-			}			
+			}
 			done = done + is_done[i];
 		}
 
@@ -425,7 +433,7 @@ int outletstosrc(char *pfile, char *srcfile, char *outletsdatasrc, char *outlets
 				//  Here we drop out of the while loop.  The point is either done or has moved to another partition
 				done = done + is_done[i];
 			}
-			//  Here we drop out of the outlet loop and have looped over all outlets and done as much as this partition process can do.  
+			//  Here we drop out of the outlet loop and have looped over all outlets and done as much as this partition process can do.
 			//  done holds the number of undone outlets.
 			//  Share and reconcile across partitions
 
@@ -474,37 +482,43 @@ int outletstosrc(char *pfile, char *srcfile, char *outletsdatasrc, char *outlets
 					MPI_Recv(tis_done, nxy, MPI_INT, origin, 0, MCW, &status);
 					//  merge received outlets with local copy
 					// Logic for merging
-					//	If local copy is_done = 0 
+					//	If local copy is_done = 0
 					//     retain local copies
 					//  else
-					//	  if received is_done = 0 
+					//	  if received is_done = 0
 					//       retain received copies
 					//	  else if dist_moved received > dist_moved local
 					//		retain received copies
 
 					//  Implement this as
 					//	If local copy is_done > 0 // local copy not done so examine what is received
-					//	  if received is_done = 0 
+					//	  if received is_done = 0
 					//       retain received values
 					//	  else if dist_moved received > dist_moved local  indicating that another process moved this
 					//		retain received values
 					for (i = 0; i < nxy; i++) {
-						done = 0;
-						if (is_done[i] > 0) {
-							if (tis_done[i] == 0) {  // Retain received values
+						if (is_done[i] > 0) {  // Local outlet is not done
+							if (tis_done[i] == 0) {  // Received outlet is done - take it
 								is_done[i] = tis_done[i];
 								outletsX[i] = toutletsX[i];
 								outletsY[i] = toutletsY[i];
 								dist_moved[i] = tdist_moved[i];
 							}
-							else if (tdist_moved[i] > dist_moved[i]) {  // Retain received values
+							else if (tdist_moved[i] > dist_moved[i]) {  // Both incomplete, but received moved further
 								is_done[i] = tis_done[i];
 								outletsX[i] = toutletsX[i];
 								outletsY[i] = toutletsY[i];
 								dist_moved[i] = tdist_moved[i];
 							}
+							// Otherwise keep local values (local moved further or same distance)
 						}
-						done = done + is_done[i];  // This tracks overall completion
+						// If local outlet is done (is_done[i] == 0), always keep it regardless of received
+					}
+
+					// Recalculate done after merging
+					done = 0;
+					for (i = 0; i < nxy; i++) {
+						done = done + is_done[i];
 					}
 				}
 				else {  // Other processes recieve, merge, send
@@ -514,27 +528,29 @@ int outletstosrc(char *pfile, char *srcfile, char *outletsdatasrc, char *outlets
 					MPI_Recv(tis_done, nxy, MPI_INT, origin, 0, MCW, &status);
 
 					//  merge received outlets with local copy
-					// 
+					//
 					//	If local copy is_done > 0 // local copy not done so examine what is received
-					//	  if received is_done = 0 
+					//	  if received is_done = 0
 					//       retain received values
 					//	  else if dist_moved received > dist_moved local  indicating that another process moved this
 					//		retain received values
 					for (i = 0; i < nxy; i++) {
-						if (is_done[i] > 0) {
-							if (tis_done[i] == 0) {  // Retain received values
+						if (is_done[i] > 0) {  // Local outlet is not done
+							if (tis_done[i] == 0) {  // Received outlet is done - take it
 								is_done[i] = tis_done[i];
 								outletsX[i] = toutletsX[i];
 								outletsY[i] = toutletsY[i];
 								dist_moved[i] = tdist_moved[i];
 							}
-							else if (tdist_moved[i] > dist_moved[i]) {  // Retain received values
+							else if (tdist_moved[i] > dist_moved[i]) {  // Both incomplete, but received moved further
 								is_done[i] = tis_done[i];
 								outletsX[i] = toutletsX[i];
 								outletsY[i] = toutletsY[i];
 								dist_moved[i] = tdist_moved[i];
 							}
+							// Otherwise keep local values (local moved further or same distance)
 						}
+						// If local outlet is done (is_done[i] == 0), always keep it regardless of received
 					}
 
 					MPI_Send(outletsX, nxy, MPI_INT, dest, 0, MCW);
@@ -548,7 +564,13 @@ int outletstosrc(char *pfile, char *srcfile, char *outletsdatasrc, char *outlets
 				MPI_Bcast(outletsY, nxy, MPI_INT, 0, MCW);
 				MPI_Bcast(dist_moved, nxy, MPI_LONG, 0, MCW);
 				MPI_Bcast(is_done, nxy, MPI_INT, 0, MCW);
-				MPI_Bcast(&done, 1, MPI_INT, 0, MCW);
+
+				// All processes recalculate done after receiving the broadcast data
+				done = 0;
+				for (i = 0; i < nxy; i++) {
+					done = done + is_done[i];
+				}
+
 
 				delete[] toutletsX;
 				delete[] toutletsY;

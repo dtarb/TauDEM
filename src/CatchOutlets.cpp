@@ -207,19 +207,27 @@ int catchoutlets(char *pfile, char *streamnetsrc, char *outletsdatasrc, double m
 
 			if (hDSpt != NULL) {
 
+				char** papszOptions = NULL;
+				papszOptions = CSLSetNameValue(papszOptions, "OVERWRITE", "YES");
+
 				//hLayershmoved = OGR_DS_CreateLayer( hDSshmoved, outletmovedlayer, hSRSRaster, wkbPoint, NULL ); // create layer for moved outlet, where raster layer spatial reference is used fro shapefile
-				if (strlen(outletsdatasrc) == 0) {  //Code not ready as outletdatasrc should never be 0
-					//char * layernamept;
-					//layernamept = getLayername(outletsdatasrc); // get layer name which is file name without extension
-					// Chris George Suggestion
+				if (strlen(outletsdatasrc) == 0) {
 					char layernamept[MAXLN];
-					getLayername(outletsdatasrc,layernamept); // get layer name which is file name without extension
-					hLayerpt = OGR_DS_CreateLayer(hDSpt, layernamept, hSRSRaster, wkbPoint, NULL);
+					getLayername(outletsdatasrc,layernamept);
+					if(strstr(pszDriverName, "tif") != NULL || strstr(pszDriverName, "TIF") != NULL || strcmp(pszDriverName, "SQLite") == 0) {
+						hLayerpt = OGR_DS_CreateLayer(hDSpt, layernamept, hSRSRaster, wkbPoint, papszOptions);
+					} else {
+						hLayerpt = OGR_DS_CreateLayer(hDSpt, layernamept, hSRSRaster, wkbPoint, NULL);
+					}
+				} else {
+					if(strstr(pszDriverName, "tif") != NULL || strstr(pszDriverName, "TIF") != NULL || strcmp(pszDriverName, "SQLite") == 0) {
+						hLayerpt = OGR_DS_CreateLayer(hDSpt, outletsdatasrc, hSRSRaster, wkbPoint, papszOptions);
+					} else {
+						hLayerpt = OGR_DS_CreateLayer(hDSpt, outletsdatasrc, hSRSRaster, wkbPoint, NULL);
+					}
 				}
 
-				else {
-					hLayerpt = OGR_DS_CreateLayer(hDSpt, outletsdatasrc, hSRSRaster, wkbPoint, NULL);
-				}// provide same spatial reference as raster in point file file
+				CSLDestroy(papszOptions);
 
 				if (hLayerpt == NULL)
 				{

@@ -1,7 +1,7 @@
 /*  CatchHydroGeomn main program for function that evaluates channel 
   hydraulic properties based on HAND(Height Above Nearest Drainage), 
   D-inf slope, and catchment grid inputs, a stage height text file, 
-  and a parameter nmax.
+  and a catchment id list file.
 
   David Tarboton, Xing Zheng
   Utah State University, University of Texas at Austin
@@ -51,19 +51,11 @@ email:  dtarb@usu.edu
 int main(int argc,char **argv)  
 {
    char handfile[MAXLN], catchfile[MAXLN], catchlistfile[MAXLN], slpfile[MAXLN], hfile[MAXLN], hpfile[MAXLN];
-   int err, nmax;
-      
-   if(argc < 2) goto errexit;
-/*   if(argc == 2)
-	{
-//		printf("You are running %s with the simple use option.\n", argv[0]);
-		nameadd(plenfile,argv[1],"plen");
-		nameadd(ad8file,argv[1],"ad8");
-		nameadd(ssfile,argv[1],"ss");
-    }*/
-   if(argc > 2)
+   int err;
+
+   if(argc < 6) goto errexit;
+   else
    {
-//		printf("You are running %s with the specific file names option.\n", argv[0]);
         int i=1;	
 		while(argc > i)
 		{
@@ -127,18 +119,6 @@ int main(int argc,char **argv)
 				}
 				else goto errexit;
 			}
-/*
-			else if (strcmp(argv[i], "-nmax") == 0)
-			{
-				i++;
-				if (argc > i)
-				{
-					sscanf(argv[i], "%d", &nmax);
-					i++;
-				}
-				else goto errexit;
-			}
-*/
 		    else goto errexit;
 		}
    }
@@ -147,15 +127,14 @@ int main(int argc,char **argv)
 
 	return 0;
 errexit:
-//   printf("Simple Use:\n %s <basefilename>\n",argv[0]);
+   printf("Incorrect input.\n");
    printf("Use with specific file names:\n %s -hand <handfile>\n",argv[0]);
    printf("-catch <catchfile> -catchlist <catchidlistfile> -slp <slpfile> -h <hfile> -table <hpfile> \n");
-//   printf("<basefilename> is the name of the base digital elevation model without suffixes for simple input. Suffixes 'plen', 'ad8' and 'ss' will be appended. \n");
    printf("<handfile> is the name of the input hand raster file.\n");
    printf("<catchfile> is the name of the input catchment raster file.\n");
-   printf("<slpfile> is the name of the input D-inf slope file.\n");
-   printf("<hfile> is the name of the input stage table.\n");
-   printf("<hpfile> is the name of the output hydraulic property file.\n");
+   printf("<catchidlistfile> is the name of the input catchment id list CSV file. This file has at least 3 columns: catchment id, catchment slope, catchment length. Optionally, a 4th column for Manning's n can be provided.\n");
+   printf("<slpfile> is the name of the input D-inf slope raster file.\n");
+   printf("<hfile> is the name of the input stage table text file.\n");
+   printf("<hpfile> is the name of the output hydraulic property text file.\n");
    return 0; 
 } 
-   

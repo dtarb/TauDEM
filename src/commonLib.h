@@ -60,7 +60,7 @@ email:  dtarb@usu.edu
 #define NOTFINISHED 0
 #define FINISHED 1
 
-#define TDVERSION "5.3.9"
+#define TDVERSION "5.4.0"
 
 enum DATA_TYPE
 	{ SHORT_TYPE,
