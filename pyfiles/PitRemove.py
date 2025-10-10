@@ -53,24 +53,3 @@ message = "\n"
 for line in process.stdout.readlines():
     message = message + line
 arcpy.AddMessage(message)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

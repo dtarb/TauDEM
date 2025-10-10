@@ -190,4 +190,3 @@ if arcpy.Exists(ogrlyr):
     extn_json = os.path.splitext(shfl)[1]   # get extension of the converted json file
     if extn_json == ".json":
         os.remove(shfl)
-
