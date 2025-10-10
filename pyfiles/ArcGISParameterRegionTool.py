@@ -56,12 +56,10 @@ if len(region_feature_class) > 0:
 arcpy.AddMessage('\nEXECUTING COMMAND:\n' + cmd)
 
 # Capture the contents of shell command and print it to the arcgis dialog box
-process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, text=True)
 arcpy.AddMessage('\nProcess started:\n')
 start_message = "Please wait. It may take few seconds. Computation is in progress ..."
 arcpy.AddMessage(start_message)
 for line in process.stdout.readlines():
-    if isinstance(line, bytes):	    # true in Python 3
-        line = line.decode()
     if start_message not in line:
         arcpy.AddMessage(line)

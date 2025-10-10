@@ -197,7 +197,7 @@ def _taudem_area_dinf(weight_grid_file, demang_grid_file, output_sca_file):
     taudem_messages.append(cmd)
 
     # Capture the contents of shell command and print it to the arcgis dialog box
-    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, text=True)
     for line in process.stdout.readlines():
         taudem_messages.append(line.rstrip())
     return taudem_messages
@@ -232,7 +232,7 @@ def _generate_combined_stability_index_grid(params_dict):
     taudem_messages.append('SinmapSI started:')
     taudem_messages.append(cmd)
     # Capture the contents of shell command and print it to the arcgis dialog box
-    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, text=True)
     for line in process.stdout.readlines():
         taudem_messages.append(line.rstrip())
     return taudem_messages

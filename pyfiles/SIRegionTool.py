@@ -255,6 +255,6 @@ if __name__ == '__main__':
         main()
         print("Region computation successful.")
     except Exception as e:
-        print "Region computation failed."
-        print(e.message)
+        print("Region computation failed.")
+        print(str(e))
         sys.exit(1)

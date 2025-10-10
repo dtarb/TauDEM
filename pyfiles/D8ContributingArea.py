@@ -82,23 +82,15 @@ arcpy.AddMessage("\nCommand Line:\n" + cmd)
 # Submit command to operating system
 os.system(cmd)
 # Capture the contents of shell command and print it to the arcgis dialog box
-process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, text=True)
 
 message = "\n"
 for line in process.stdout.readlines():
-    if isinstance(line, bytes):	    # true in Python 3
-        line = line.decode()
     message = message + line
 arcpy.AddMessage(message)
-
-# Calculate statistics on the output so that it displays properly
-arcpy.AddMessage('Calculating Statistics\n')
-arcpy.CalculateStatistics_management(ad8)
 
 # remove converted json file
 if arcpy.Exists(ogrfile):
   extn_json = os.path.splitext(shfl)[1]     # get extension of the converted json file
   if extn_json == ".json":
     os.remove(shfl)
-
-

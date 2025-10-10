@@ -81,16 +81,11 @@ arcpy.AddMessage("\nCommand Line: " + cmd)
 os.system(cmd)
 
 # Capture the contents of shell command and print it to the arcgis dialog box
-process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, text=True)
 arcpy.AddMessage('\nProcess started:\n')
 for line in process.stdout.readlines():
-    if isinstance(line, bytes):	    # true in Python 3
-        line = line.decode()
     arcpy.AddMessage(line)
 
-# Calculate statistics on the output so that it displays properly
-#arcpy.AddMessage('Calculate Statistics\n')
-#arcpy.CalculateStatistics_management(drp)  # DGT 12/7/19 does not make sense to calculate statistics on this drop file
 if arcpy.Exists(ogrfile):
     extn_json = os.path.splitext(shfl)[1]   # get extension of the converted json file
     if extn_json == ".json":

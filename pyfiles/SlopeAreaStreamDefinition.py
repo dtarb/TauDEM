@@ -111,15 +111,12 @@ arcpy.AddMessage("\nCommand Line: " + cmd)
 # Submit command to operating system
 os.system(cmd)
 # Capture the contents of shell command and print it to the arcgis dialog box
-process=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+process=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, text=True)
 
 message = "\n"
 for line in process.stdout.readlines():
-    if isinstance(line, bytes):  # true in Python 3
-        line = line.decode()
     message = message + line
 arcpy.AddMessage(message)
-arcpy.CalculateStatistics_management(sa)
 
 # Construct second command
 cmd = 'mpiexec -n ' + inputProc + ' D8FlowPathExtremeUp -p ' + '"' + p + '"' + ' -sa ' + '"' + sa + '"' + \
@@ -135,15 +132,12 @@ arcpy.AddMessage("\nCommand Line: " + cmd)
 # Submit command to operating system
 os.system(cmd)
 # Capture the contents of shell command and print it to the arcgis dialog box
-process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, text=True)
 
 message = "\n"
 for line in process.stdout.readlines():
-    if isinstance(line, bytes):  # true in Python 3
-        line = line.decode()
     message = message + line
 arcpy.AddMessage(message)
-arcpy.CalculateStatistics_management(ssa)
 
 if (usedroprange == 'true') and arcpy.Exists(ogrlyr):
     # Construct third command
@@ -160,12 +154,10 @@ if (usedroprange == 'true') and arcpy.Exists(ogrlyr):
     # Submit command to operating system
     os.system(cmd)
     # Capture the contents of shell command and print it to the arcgis dialog box
-    process=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    process=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, text=True)
 
     message = "\n"
     for line in process.stdout.readlines():
-        if isinstance(line, bytes):  # true in Python 3
-            line = line.decode()
         message = message + line
     arcpy.AddMessage(message)
     # (threshold,rest)=line.split(' ',1)
@@ -187,17 +179,14 @@ arcpy.AddMessage("\nCommand Line: " + cmd)
 # Submit command to operating system
 os.system(cmd)
 # Capture the contents of shell command and print it to the arcgis dialog box
-process=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+process=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, text=True)
 
 message = "\n"
 for line in process.stdout.readlines():
-    if isinstance(line, bytes):	    # true in Python 3
-        line = line.decode()
     message = message + line
 arcpy.AddMessage(message)
-arcpy.CalculateStatistics_management(src)   # remove converted json file
+# remove converted json file
 if arcpy.Exists(ogrlyr):
     extn_json = os.path.splitext(shfl)[1]   # get extension of the converted json file
     if extn_json == ".json":
         os.remove(shfl)
-
