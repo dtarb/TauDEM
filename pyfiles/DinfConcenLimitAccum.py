@@ -72,12 +72,10 @@ arcpy.AddMessage("\nCommand Line: " + cmd)
 os.system(cmd)
 
 # Capture the contents of shell command and print it to the arcgis dialog box
-process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, text=True)
 
 message = "\n"
 for line in process.stdout.readlines():
-    if isinstance(line, bytes):	    # true in Python 3
-        line = line.decode()
     message = message+line
 arcpy.AddMessage(message)
 
@@ -96,12 +94,10 @@ arcpy.AddMessage("\nCommand Line: " + cmd)
 os.system(cmd)
 
 # Capture the contents of shell command and print it to the arcgis dialog box
-process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, text=True)
 
 message = "\n"
 for line in process.stdout.readlines():
-    if isinstance(line, bytes):	    # true in Python 3
-        line = line.decode()
     message = message + line
 arcpy.AddMessage(message)
 
