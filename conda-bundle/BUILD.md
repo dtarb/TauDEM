@@ -70,28 +70,40 @@ To test the bundle in a cloud-based JupyterHub environment:
 
 2. **Open a terminal** in JupyterHub
 
-3. **Install in the base conda environment** (or create a new one):
+3. **Create a conda environment**:
+
+   ```bash
+   # Create a named environment
+   conda create -n taudem python=3.11
+   conda activate taudem
+
+   # Or use a local prefix if you have permission issues
+   conda create --prefix ~/.local/taudem-env python=3.11
+   conda activate ~/.local/taudem-env
+   ```
+
+4. **Install the bundle**:
 
    ```bash
    # Extract the bundle
    tar -xzf taudem-conda-linux64.tar.gz
    cd taudem-conda-linux64
-   
+
    # Run the installer
    ./install.sh
    ```
 
-4. **Test a TauDEM tool**:
+5. **Test a TauDEM tool**:
 
    ```bash
    # Check if tools are available
    which pitremove
-   
+
    # Run a simple command to verify
    pitremove -h
    ```
 
-5. **Test with MPI** (if your JupyterHub supports it):
+6. **Test with MPI** (if your JupyterHub supports it):
 
    ```bash
    mpirun -n 2 pitremove -h
@@ -109,11 +121,9 @@ To test the bundle in a cloud-based JupyterHub environment:
 
 ## Architecture Notes
 
-- The current Dockerfile builds for **Linux x86_64** architecture using `--platform=linux/amd64`
+- The Dockerfile builds for **Linux x86_64** architecture using `--platform=linux/amd64`
 - This is suitable for most cloud platforms, servers, and JupyterHub instances
-- For **ARM64** systems (Apple Silicon servers, ARM cloud instances), modify the Dockerfile:
-  - Remove `--platform=linux/amd64` from the `docker build` command in `build-conda-bundle.sh`
-  - The build will automatically target the host architecture
+- Can be built on any host platform (macOS, Linux, Windows) using Docker's platform emulation
 
 ## Technical Details
 

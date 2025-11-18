@@ -24,7 +24,12 @@ This package contains TauDEM (Terrain Analysis Using Digital Elevation Models) e
    conda activate taudem
    ```
 
-   **Important:** This bundle includes GDAL 3.12.0 libraries. If you install into an existing environment with a different GDAL version, you may encounter compatibility issues. A fresh environment is strongly recommended.
+   **If you encounter permission errors** (common in shared JupyterHub environments), use a local prefix instead:
+
+   ```bash
+   conda create --prefix ~/.local/taudem-env python=3.11
+   conda activate ~/.local/taudem-env
+   ```
 
 2. Extract the archive:
 
@@ -52,6 +57,8 @@ This package contains TauDEM (Terrain Analysis Using Digital Elevation Models) e
    ```bash
    conda deactivate
    conda activate taudem
+   OR
+   conda activate ~/.local/taudem-env
    ```
 
 ## Usage
@@ -84,19 +91,20 @@ taudem-conda-linux64/
 
 ## Uninstallation
 
-To remove TauDEM from your conda environment:
+To remove TauDEM, simply delete the conda environment:
 
 ```bash
-# Remove executables
-rm $CONDA_PREFIX/bin/{pitremove,d8flowdir,aread8,areadinf,dinfflowdir,...}
+# Deactivate if currently active
+conda deactivate
 
-# Remove environment scripts
-rm -rf $CONDA_PREFIX/etc/conda/activate.d/taudem_env.sh
-rm -rf $CONDA_PREFIX/etc/conda/deactivate.d/taudem_env.sh
+# Remove named environment
+conda env remove -n taudem
 
-# Remove libraries (optional - only if you're sure nothing else needs them)
-# The libraries are in $CONDA_PREFIX/lib/ with names like libgdal.so*, libproj.so*, etc.
+# Or remove prefix-based environment
+conda env remove --prefix ~/.local/taudem-env
 ```
+
+To reinstall TauDEM later, follow the installation instructions again.
 
 ## Troubleshooting
 
