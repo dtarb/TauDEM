@@ -183,3 +183,7 @@ test_data/
 
 # Visual studio generated files
 Taudem5PCVS2019/.vs/
+
+# Taudem Conda bundle build related
+conda-bundle/build/
+conda-bundle-output/
