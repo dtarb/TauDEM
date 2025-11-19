@@ -187,3 +187,8 @@ Taudem5PCVS2019/.vs/
 # Taudem Conda bundle build related
 conda-bundle/build/
 conda-bundle-output/
+
+# Codacy and GitHub instructions (AI related)
+.codacy/
+.github/instructions/
+.github/copilot-*.md
