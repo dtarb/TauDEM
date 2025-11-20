@@ -565,6 +565,12 @@ exit
 exit
 ```
 
+### Building TauDEM for Conda Environment
+
+TauDEM can be packaged as a portable conda bundle for Linux x86_64 systems, making it easy to deploy on cloud-based platforms like JupyterHub without requiring system-wide installation or admin privileges. The bundle includes all runtime dependencies (OpenMPI, GDAL, PROJ, etc.) and can be installed into any conda environment.
+
+For detailed instructions on building and using the portable conda bundle, see [conda-bundle/README.md](conda-bundle/README.md) (user documentation) and [conda-bundle/BUILD.md](conda-bundle/BUILD.md) (builder documentation).
+
 ### Legacy Build System (makefile.legacy)(macOS/Linux Only)
 
 TauDEM also provides a legacy build system using `makefile.legacy`. This system is still supported but is not actively maintained. It does not support working with VS Code tasks.
@@ -750,6 +756,13 @@ TauDEM/
 ├── pyfiles/                # Python tools and ArcGIS integration
 │   ├── *.py                # Python wrappers for TauDEM tools
 │   └── *.tbx               # ArcGIS toolbox files
+├── conda-bundle/           # Portable conda bundle builder
+│   ├── Dockerfile          # Docker build for Linux x86_64 bundle
+│   ├── build-conda-bundle.sh  # Build script for creating bundle
+│   ├── patch-makefile.sh   # Patches Makefile for conda paths
+│   ├── install.sh          # User-facing installation script
+│   ├── BUILD.md            # Builder documentation
+│   └── README.md           # User documentation for bundle
 ├── .vscode/                # VS Code configuration
 │   ├── c_cpp_properties.json       # IntelliSense configuration
 │   ├── settings-*.json.template    # Platform-specific VS Code settings
