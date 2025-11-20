@@ -31,14 +31,33 @@ This package contains TauDEM (Terrain Analysis Using Digital Elevation Models) e
    conda activate ~/.local/taudem-env
    ```
 
-2. Extract the archive:
+2. **(Optional) Create a Jupyter kernel for running TauDEM in notebooks:**
+
+   If you want to run TauDEM commands from Jupyter notebooks, install `ipykernel` and register the environment as a Jupyter kernel:
+
+   ```bash
+   # Make sure your taudem environment is active
+   conda install -n taudem ipykernel
+   
+   # Register the kernel (for named environment)
+   python -m ipykernel install --user --name=taudem --display-name="TauDEM"
+   
+   # Or for prefix-based environment
+   conda install --prefix ~/.local/taudem-env ipykernel
+   conda activate ~/.local/taudem-env
+   python -m ipykernel install --user --name=taudem --display-name="TauDEM"
+   ```
+
+   After this, you'll see "TauDEM" as an available kernel when creating or opening notebooks in JupyterHub.
+
+3. Extract the archive:
 
    ```bash
    tar -xzf taudem-conda-linux64.tar.gz
    cd taudem-conda-linux64
    ```
 
-3. Run the installation script:
+4. Run the installation script:
 
    ```bash
    ./install.sh
@@ -52,7 +71,7 @@ This package contains TauDEM (Terrain Analysis Using Digital Elevation Models) e
 
    **All dependencies are bundled - no additional conda packages needed!**
 
-4. Restart your shell or run:
+5. Restart your shell or run:
 
    ```bash
    conda deactivate
