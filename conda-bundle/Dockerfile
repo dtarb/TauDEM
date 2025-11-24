@@ -18,6 +18,8 @@ RUN apt-get update && apt-get install -y sudo && \
 
 # Create build environment with dependencies
 # Pin GDAL version to ensure consistency between build and runtime
+# Note: GDAL 3.11 avoids ERROR 6 (AddBand) warnings seen in 3.12+
+# These warnings are cosmetic and don't affect output, but 3.11 provides cleaner logs
 RUN mamba create -n taudem-build -c conda-forge -y \
     cmake \
     make \
@@ -25,7 +27,7 @@ RUN mamba create -n taudem-build -c conda-forge -y \
     openmpi \
     openmpi-mpicc \
     openmpi-mpicxx \
-    gdal=3.12.0 \
+    gdal=3.11 \
     proj \
     sqlite \
     libspatialite \
@@ -60,7 +62,7 @@ RUN rm -rf build && \
 # Use same GDAL version as build environment
 RUN mamba create -n taudem-runtime -c conda-forge -y \
     openmpi \
-    gdal=3.12.0 \
+    gdal=3.11 \
     proj \
     sqlite \
     libspatialite \
