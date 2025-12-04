@@ -5,7 +5,7 @@ import sys
 import argparse
 
 from osgeo import ogr, gdal, osr
-from gdalconst import *
+from osgeo.gdalconst import GA_ReadOnly
 
 import arcpy
 

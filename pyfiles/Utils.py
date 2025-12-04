@@ -2,7 +2,7 @@ __author__ = 'Pabitra'
 
 from collections import namedtuple
 from osgeo import gdal, osr
-from gdalconst import *
+from osgeo.gdalconst import GA_ReadOnly
 import numpy as np
 
 NO_DATA_VALUE = -9999
