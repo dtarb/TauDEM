@@ -5,7 +5,7 @@ import sys
 import argparse
 
 from osgeo import ogr, gdal, osr
-from gdalconst import *
+from osgeo.gdalconst import GA_ReadOnly
 
 import arcpy
 
@@ -133,27 +133,12 @@ def _validate_args(dem, parreg_in, shp, shp_att_name, parreg, att):
 
 def _create_parameter_region_grid(dem, shp, shp_att_name, parreg_in, parreg):
     if os.path.exists(parreg):
-            os.remove(parreg)
+        os.remove(parreg)
 
     if shp is None and parreg_in is None:
         Utils.initialize_output_raster_file(dem, parreg, initial_data=1, data_type=gdal.GDT_UInt32)
     else:
-        # determine cell size from the dem
-        base_raster_file_obj = gdal.Open(dem, GA_ReadOnly)
-        geotransform = base_raster_file_obj.GetGeoTransform()
-        pixelWidth = geotransform[1]
-
         if shp:
-
-            # This environment settings needed  for the arcpy.PlogonToRaster_conversion function
-            #env.extent = dem
-            #env.snapRaster = dem
-            #print (">>> setting the environment for polygon to raster conversion")
-            # TODO: try if we can use the gdal api to convert shape file to raster instead of arcpy
-            # Ref: https://pcjericks.github.io/py-gdalogr-cookbook/raster_layers.html
-            #utils.initialize_output_raster_file(dem, parreg, initial_data=1, data_type=gdal.GDT_Int32)
-            #target_ds = gdal.Open(parreg)
-
             # For some reason the gdal RasterizeLayer function works with a in memory output raster dataset only
             target_ds = _create_in_memory_raster(dem, data_type=gdal.GDT_UInt32)
             source_ds = ogr.Open(shp)
@@ -169,26 +154,60 @@ def _create_parameter_region_grid(dem, shp, shp_att_name, parreg_in, parreg):
             target_ds = None
             source_ds = None
 
-            # arcpy.PolygonToRaster_conversion(shp, shp_att_name, temp_shp_raster, "CELL_CENTER", "NONE", str(pixelWidth))
-            #arcpy.ResetEnvironments()
-
         elif parreg_in:
             # TODO: This one only gets the grid cell size to the size in dem file
             # but it doesn't get the output grid size (rows and cols) same as the dem
             temp_parreg = os.path.join(os.path.dirname(dem), 'temp_parreg.tif')
             if os.path.exists(temp_parreg):
-                arcpy.Delete_management(temp_parreg)
-                #os.remove(temp_parreg)
-            target_ds = _create_in_memory_raster(dem, data_type=gdal.GDT_UInt32)
-            #utils.initialize_output_raster_file(dem, parreg, initial_data=utils.NO_DATA_VALUE, data_type=gdal.GDT_UInt32)
-            #arcpy.Resample_management(parreg_in, parreg, str(pixelWidth), "NEAREST")
-            arcpy.Resample_management(parreg_in, temp_parreg, str(pixelWidth), "NEAREST")
-            # save the in memory output raster to the disk
-            source_ds = gdal.Open(temp_parreg, GA_ReadOnly)
-            gdal.ReprojectImage(source_ds, target_ds, None, None, gdal.GRA_NearestNeighbour)
-            source_ds = None
-            gdal.GetDriverByName(Utils.GDALFileDriver.TifFile).CreateCopy(parreg, target_ds)
-            arcpy.Delete_management(temp_parreg)
+                os.remove(temp_parreg)
+
+            # Get DEM information for target resolution and extent
+            dem_ds = gdal.Open(dem, GA_ReadOnly)
+            dem_gt = dem_ds.GetGeoTransform()
+            dem_proj = dem_ds.GetProjection()
+            target_pixel_width = dem_gt[1]
+            target_pixel_height = dem_gt[5]
+
+            # Get DEM extent for proper alignment
+            dem_extent = [
+                dem_gt[0],  # xmin
+                dem_gt[3] + dem_gt[5] * dem_ds.RasterYSize,  # ymin
+                dem_gt[0] + dem_gt[1] * dem_ds.RasterXSize,  # xmax
+                dem_gt[3]  # ymax
+            ]
+
+            # Use GDAL Warp to resample directly to output with smaller block size
+            warp_options = gdal.WarpOptions(
+                xRes=target_pixel_width,
+                yRes=abs(target_pixel_height),
+                outputBounds=dem_extent,
+                resampleAlg=gdal.GRA_NearestNeighbour,
+                dstSRS=dem_proj,
+                outputType=gdal.GDT_UInt32,
+                format='GTiff',
+                creationOptions=[
+                    'COMPRESS=LZW',
+                    'TILED=YES',
+                    'BLOCKXSIZE=256',
+                    'BLOCKYSIZE=256',
+                    'BIGTIFF=YES'
+                ]
+            )
+
+            # Warp directly to final output file
+            output_ds = gdal.Warp(parreg, parreg_in, options=warp_options)
+
+            if output_ds is None:
+                raise Exception("Failed to warp/resample input region grid to match DEM")
+
+            # Ensure data is written
+            output_ds.FlushCache()
+            output_ds = None
+            dem_ds = None
+
+            # Verify the output file was successfully created
+            if not os.path.exists(parreg):
+                raise Exception("Failed to save output raster file to disk: %s" % parreg)
 
 
 def _create_in_memory_raster(base_raster, data_type):
@@ -244,8 +263,8 @@ def _create_parameter_attribute_table_text_file(parreg, parreg_in, shp, att, att
 
     with open(att, 'w') as file_obj:
         file_obj.write('SiID,tmin,tmax,cmin,cmax,phimin,phimax,SoilDens\n')
-        for id in param_ids:
-            file_obj.write(str(id) + ',' + str(att_tmin) + ',' + str(att_tmax) + ',' + str(att_cmin) + ',' +
+        for _id in param_ids:
+            file_obj.write(str(_id) + ',' + str(att_tmin) + ',' + str(att_tmax) + ',' + str(att_cmin) + ',' +
                            str(att_cmax) + ',' + str(att_phimin) + ',' + str(att_phimax) + ',' +
                            str(att_soildens) + '\n')
 
