@@ -3,10 +3,10 @@
 # Created By:  David Tarboton
 # Date:        9/28/11
 
-# Import ArcPy site-package and os modules
 import arcpy
 import os
-import subprocess
+
+import Utils
 
 # Inputs
 inlyr = arcpy.GetParameterAsText(0)
@@ -59,38 +59,21 @@ if arcpy.Exists(weightgrid):
 if edgecontamination == 'false':
     cmd = cmd + ' -nc '
 
-# TODO: Need to delete this commented code (Pabitra, Dt:9/15/2016)
-##if arcpy.Exists(shapefile) and arcpy.Exists(weightgrid) and edgecontamination == 'false':
-##    cmd = 'mpiexec -n ' + inputProc + ' AreaD8 -p ' + '"' + p + '"' + ' -o ' + '"' + shapefile + '"' + ' -ad8 ' + '"' + ad8 + '"' + ' -wg ' + '"' + weightgrid + '"' + ' -nc '
-##elif arcpy.Exists(shapefile) and arcpy.Exists(weightgrid):
-##    cmd = 'mpiexec -n ' + inputProc + ' AreaD8 -p ' + '"' + p + '"' + ' -o ' + '"' + shapefile + '"' + ' -ad8 ' + '"' + ad8 + '"' + ' -wg ' + '"' + weightgrid + '"'
-##elif arcpy.Exists(weightgrid) and edgecontamination == 'false':
-##    cmd = 'mpiexec -n ' + inputProc + ' AreaD8 -p ' + '"' + p + '"' + ' -ad8 ' + '"' + ad8 + '"' + ' -wg ' + '"' + weightgrid + '"' + ' -nc '
-##elif arcpy.Exists(shapefile) and edgecontamination == 'false':
-##    cmd = 'mpiexec -n ' + inputProc + ' AreaD8 -p ' + '"' + p + '"' + ' -o ' + '"' + shapefile + '"' + ' -ad8 ' + '"' + ad8 + '"' + ' -nc '
-##elif arcpy.Exists(shapefile):
-##    cmd = 'mpiexec -n ' + inputProc + ' AreaD8 -p ' + '"' + p + '"' + ' -o ' + '"' + shapefile + '"' + ' -ad8 ' + '"' + ad8 + '"'
-##elif arcpy.Exists(weightgrid):
-##    cmd = 'mpiexec -n ' + inputProc + ' AreaD8 -p ' + '"' + p + '"' + ' -wg ' + '"' + weightgrid + '"' + ' -ad8 ' + '"' + ad8 + '"'
-##elif edgecontamination == 'false':
-##    cmd = 'mpiexec -n ' + inputProc + ' AreaD8 -p ' + '"' + p + '"' + ' -ad8 ' + '"' + ad8 + '"' + ' -nc '
-##else:
-##    cmd = 'mpiexec -n ' + inputProc + ' AreaD8 -p ' + '"' + p + '"' + ' -ad8 ' + '"' + ad8 + '"'
-
 arcpy.AddMessage("\nCommand Line:\n" + cmd)
 
-# Submit command to operating system
-os.system(cmd)
-# Capture the contents of shell command and print it to the arcgis dialog box
-process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, text=True)
-
-message = "\n"
-for line in process.stdout.readlines():
-    message = message + line
-arcpy.AddMessage(message)
+# Run the command using the shared utility function
+return_code = Utils.run_taudem_command(cmd, arcpy.AddMessage)
 
 # remove converted json file
 if arcpy.Exists(ogrfile):
-  extn_json = os.path.splitext(shfl)[1]     # get extension of the converted json file
+  # get extension of the converted json file
+  extn_json = os.path.splitext(shfl)[1]
   if extn_json == ".json":
     os.remove(shfl)
+
+# Check return code and add error message BEFORE raising exception
+if return_code != 0:
+    err_msg = f'AreaD8 failed with return code: {return_code}'
+    arcpy.AddError(err_msg)
+    # Include all messages in the exception so they're visible
+    raise arcpy.ExecuteError()

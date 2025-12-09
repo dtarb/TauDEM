@@ -196,41 +196,8 @@ def _taudem_area_dinf(weight_grid_file, demang_grid_file, output_sca_file):
     taudem_messages.append('Areadinf started:')
     taudem_messages.append(cmd)
 
-    # Capture the contents of shell command and print it to the arcgis dialog box
-    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
-    # Communicate with the process to avoid deadlocks
-    stdout, stderr = process.communicate()
-
-    if stdout:
-        for line in stdout.splitlines():
-            taudem_messages.append(line.rstrip())
-
-    if stderr:
-        filtered_stderr = []
-        for line in stderr.strip().split('\n'):
-            if not line.strip():
-                continue
-            if "Can't load requested DLL" in line or "The specified procedure could not be found" in line:
-                taudem_messages.append(line)
-                continue
-            if "This run may take on the order of" in line or "This estimate is very approximate" in line:
-                taudem_messages.append(line)
-                continue
-            if "Run time is highly uncertain" in line or "speed and memory of the computer" in line:
-                taudem_messages.append(line)
-                continue
-            if "dual quad core Dell Xeon" in line:
-                taudem_messages.append(line)
-                continue
-            filtered_stderr.append(line)
-
-        if filtered_stderr:
-            taudem_messages.append('\nERROR OUTPUT:')
-            for line in filtered_stderr:
-                taudem_messages.append(line)
-
-    return_code = process.returncode
+    # Run the command using the shared utility function
+    taudem_messages, return_code = _run_taudem_command(cmd, taudem_messages)    
 
     # Check return code and add error message BEFORE raising exception
     if return_code != 0:
@@ -270,42 +237,9 @@ def _generate_combined_stability_index_grid(params_dict):
     taudem_messages = []
     taudem_messages.append('SinmapSI started:')
     taudem_messages.append(cmd)
+    # Run the command using the shared utility function
+    taudem_messages, return_code = _run_taudem_command(cmd, taudem_messages)
     
-    # Capture the contents of shell command and print it to the dialog box
-    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
-    # Communicate with the process to avoid deadlocks
-    stdout, stderr = process.communicate()
-
-    if stdout:
-        for line in stdout.splitlines():
-            taudem_messages.append(line.rstrip())
-
-    if stderr:
-        filtered_stderr = []
-        for line in stderr.strip().split('\n'):
-            if not line.strip():
-                continue
-            if "Can't load requested DLL" in line or "The specified procedure could not be found" in line:
-                continue
-            if "This run may take on the order of" in line or "This estimate is very approximate" in line:
-                taudem_messages.append(line)
-                continue
-            if "Run time is highly uncertain" in line or "speed and memory of the computer" in line:
-                taudem_messages.append(line)
-                continue
-            if "dual quad core Dell Xeon" in line:
-                taudem_messages.append(line)
-                continue
-            filtered_stderr.append(line)
-
-        if filtered_stderr:
-            taudem_messages.append('\nERROR OUTPUT:')
-            for line in filtered_stderr:
-                taudem_messages.append(line)
-
-    return_code = process.returncode
-
     # Check return code and add error message BEFORE raising exception
     if return_code != 0:
         error_msg = f'SinmapSI failed with return code: {return_code}'
@@ -314,6 +248,40 @@ def _generate_combined_stability_index_grid(params_dict):
         raise Exception('\n'.join(taudem_messages))
 
     return taudem_messages
+
+
+def _run_taudem_command(cmd, messages):
+    env = Utils.get_adjusted_env()
+    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
+    stdout, stderr = process.communicate()
+    if stdout:
+        for line in stdout.splitlines():
+            messages.append(line.rstrip())
+
+    if stderr:
+        filtered_stderr = []
+        patterns = [
+            "This run may take on the order of",
+            "This estimate is very approximate",
+            "Run time is highly uncertain",
+            "speed and memory of the computer",
+            "dual quad core Dell Xeon"
+        ]
+        for line in stderr.strip().split('\n'):
+            if not line.strip():
+                continue
+            if any(pattern in line for pattern in patterns):
+                # this is not really an error, so don't include it in filtered_stderr
+                messages.append(line)
+                continue
+            filtered_stderr.append(line)
+
+        if filtered_stderr:
+            messages.append('\nERROR OUTPUT:')
+            for line in filtered_stderr:
+                messages.append(line)
+    return_code = process.returncode
+    return messages, return_code
 
 
 def _delete_intermediate_output_files(parm_dict):

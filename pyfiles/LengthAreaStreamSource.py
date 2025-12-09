@@ -3,10 +3,8 @@
 # Created By:  David Tarboton
 # Date:        9/29/11
 
-# Import ArcPy site-package and os modules
 import arcpy
-import os
-import subprocess
+import Utils
 
 # Inputs
 inlyr = arcpy.GetParameterAsText(0)
@@ -39,13 +37,12 @@ cmd = 'mpiexec -n ' + inputProc + ' LengthArea -plen ' + '"' + plen + '"' + ' -a
 
 arcpy.AddMessage("\nCommand Line: " + cmd)
 
-# Submit command to operating system
-os.system(cmd)
+# Run the command using the shared utility function
+return_code = Utils.run_taudem_command(cmd, arcpy.AddMessage)
 
-# Capture the contents of shell command and print it to the arcgis dialog box
-process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, text=True)
-
-message = "\n"
-for line in process.stdout.readlines():
-    message = message + line
-arcpy.AddMessage(message)
+# Check return code and add error message BEFORE raising exception
+if return_code != 0:
+    err_msg = f'LengthArea failed with return code: {return_code}'
+    arcpy.AddError(err_msg)
+    # Include all messages in the exception so they're visible
+    raise arcpy.ExecuteError()
