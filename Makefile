@@ -1,4 +1,14 @@
 UNAME_S := $(shell uname -s)
+UNAME_M := $(shell uname -m)
+
+# Determine Linux architecture triplet
+ifeq ($(UNAME_M),x86_64)
+    LINUX_TRIPLET := x86_64-linux-gnu
+else ifeq ($(UNAME_M),aarch64)
+    LINUX_TRIPLET := aarch64-linux-gnu
+else
+    LINUX_TRIPLET := $(UNAME_M)-linux-gnu
+endif
 
 # Default build type
 BUILD_TYPE ?= Debug
@@ -31,10 +41,10 @@ $(if $(filter linux,$1),\
 	-DCMAKE_CXX_COMPILER=/usr/bin/g++ \
 	-DMPI_C_COMPILER=/usr/bin/mpicc \
 	-DMPI_CXX_COMPILER=/usr/bin/mpicxx \
-	-DMPI_C_LIBRARIES=/usr/lib/aarch64-linux-gnu/libmpi.so \
-	-DMPI_CXX_LIBRARIES=/usr/lib/aarch64-linux-gnu/libmpi.so \
-	-DMPI_C_INCLUDE_PATH=/usr/lib/aarch64-linux-gnu/openmpi/include \
-	-DMPI_CXX_INCLUDE_PATH=/usr/lib/aarch64-linux-gnu/openmpi/include \
+	-DMPI_C_LIBRARIES=/usr/lib/$(LINUX_TRIPLET)/libmpi.so \
+	-DMPI_CXX_LIBRARIES=/usr/lib/$(LINUX_TRIPLET)/libmpi.so \
+	-DMPI_C_INCLUDE_PATH=/usr/lib/$(LINUX_TRIPLET)/openmpi/include \
+	-DMPI_CXX_INCLUDE_PATH=/usr/lib/$(LINUX_TRIPLET)/openmpi/include \
 	-DMPI_CXX_FOUND=TRUE,\
 $(if $(filter macos,$1),-DCMAKE_C_COMPILER=/opt/homebrew/bin/gcc-15 -DCMAKE_CXX_COMPILER=/opt/homebrew/bin/g++-15 \
 	-DMPI_C_COMPILER=/opt/homebrew/opt/open-mpi/bin/mpicc \
