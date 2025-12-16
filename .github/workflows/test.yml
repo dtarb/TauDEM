@@ -23,5 +23,5 @@ jobs:
           make clean && \
           make release COMPILER=linux && \
           make install && \
-          su - taudem-docker -c 'export OMPI_MCA_rmaps_base_oversubscribe=1 && cd /app && make dk-run-tests'
+          su - taudem-docker -c 'export TAUDEM_PATH=/usr/local/taudem && export PATH=/usr/local/taudem:\$PATH && export OMPI_MCA_rmaps_base_oversubscribe=1 && cd /app && make dk-run-tests'
         "
