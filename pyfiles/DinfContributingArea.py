@@ -3,10 +3,9 @@
 # Created By:  David Tarboton
 # Date:        9/28/11
 
-# Import ArcPy site-package and os modules
 import arcpy
 import os
-import subprocess
+import Utils
 
 # Inputs
 inlyr = arcpy.GetParameterAsText(0)
@@ -57,38 +56,20 @@ if arcpy.Exists(weightgrid):
 if edgecontamination == 'false':
     cmd = cmd + ' -nc '
 
-# TODO: Deleted these commented code lines (Pabitra, Dt:9/16/2016)
-##if arcpy.Exists(shapefile) and arcpy.Exists(weightgrid) and edgecontamination == 'false':
-##    cmd = 'mpiexec -n ' + inputProc + ' AreaDinf -ang ' + '"' + ang + '"' + ' -o ' + '"' + shapefile + '"' + ' -sca ' + '"' + sca + '"' + ' -wg ' + '"' + weightgrid + '"' + ' -nc '
-##elif arcpy.Exists(shapefile) and arcpy.Exists(weightgrid):
-##    cmd = 'mpiexec -n ' + inputProc + ' AreaDinf -ang ' + '"' + ang + '"' + ' -o ' + '"' + shapefile + '"' + ' -sca ' + '"' + sca + '"' + ' -wg ' + '"' + weightgrid + '"'
-##elif arcpy.Exists(weightgrid) and edgecontamination == 'false':
-##    cmd = 'mpiexec -n ' + inputProc + ' AreaDinf -ang ' + '"' + ang + '"' + ' -sca ' + '"' + sca + '"' + ' -wg ' + '"' + weightgrid + '"' + ' -nc '
-##elif arcpy.Exists(shapefile) and edgecontamination == 'false':
-##    cmd = 'mpiexec -n ' + inputProc + ' AreaDinf -ang ' + '"' + ang + '"' + ' -o ' + '"' + shapefile + '"' + ' -sca ' + '"' + sca + '"' + ' -nc '
-##elif arcpy.Exists(shapefile):
-##    cmd = 'mpiexec -n ' + inputProc + ' AreaDinf -ang ' + '"' + ang + '"' + ' -o ' + '"' + shapefile + '"' + ' -sca ' + '"' + sca + '"'
-##elif arcpy.Exists(weightgrid):
-##    cmd = 'mpiexec -n ' + inputProc + ' AreaDinf -ang ' + '"' + ang + '"' + ' -wg ' + '"' + weightgrid + '"' + ' -sca ' + '"' + sca + '"'
-##elif edgecontamination == 'false':
-##    cmd = 'mpiexec -n ' + inputProc + ' AreaDinf -ang ' + '"' + ang + '"' + ' -sca ' + '"' + sca + '"' + ' -nc '
-##else:
-##    cmd = 'mpiexec -n ' + inputProc + ' AreaDinf -ang ' + '"' + ang + '"' + ' -sca ' + '"' + sca + '"'
-
 arcpy.AddMessage("\nCommand Line: " + cmd)
 
-# Submit command to operating system
-os.system(cmd)
+# Run the command using the shared utility function
+return_code = Utils.run_taudem_command(cmd, arcpy.AddMessage)
 
-# Capture the contents of shell command and print it to the arcgis dialog box
-process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, text=True)
-
-message = "\n"
-for line in process.stdout.readlines():
-    message = message + line
-arcpy.AddMessage(message)
 # remove converted json file
 if arcpy.Exists(ogrfile):
     extn_json = os.path.splitext(shfl)[1]    # get extension of the converted json file
     if extn_json == ".json":
         os.remove(shfl)
+
+# Check return code and add error message BEFORE raising exception
+if return_code != 0:
+    err_msg = f'AreaDinf failed with return code: {return_code}'
+    arcpy.AddError(err_msg)
+    # Include all messages in the exception so they're visible
+    raise arcpy.ExecuteError()

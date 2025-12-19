@@ -3,14 +3,10 @@
 # Created By:  David Tarboton
 # Date:        9/21/11
 
-# Import ArcPy site-package and os modules
-#
 import arcpy
-import os
-import subprocess
+import Utils
 
 # Get and describe the first argument
-#
 inLyr = arcpy.GetParameterAsText(0)
 desc = arcpy.Describe(inLyr)
 inZfile = str(desc.catalogPath)
@@ -26,12 +22,10 @@ if arcpy.Exists(maskgrid):
     arcpy.AddMessage("Input Mask Grid: "+mkgr)
 
 # Get the Input No. of Processes
-#
 inputProc=arcpy.GetParameterAsText(3)
 arcpy.AddMessage(" Number of Processes: "+inputProc)
 
 # Get the output file
-#
 outFile = arcpy.GetParameterAsText(4)
 arcpy.AddMessage("Output Pit Removed Elevation file: " + outFile)
 
@@ -46,10 +40,12 @@ if arcpy.Exists(maskgrid) and considering4way == 'true':
     cmd = cmd + ' -depmask ' + '"' + mkgr + '"' + ' -4way '
 
 arcpy.AddMessage("\nCommand Line: "+cmd)
-os.system(cmd)
-process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, text=True)
 
-message = "\n"
-for line in process.stdout.readlines():
-    message = message + line
-arcpy.AddMessage(message)
+# Run the command using the shared utility function
+return_code = Utils.run_taudem_command(cmd, arcpy.AddMessage)
+
+# Check return code and add error message BEFORE raising exception
+if return_code != 0:
+    err_msg = f'PitRemove failed with return code: {return_code}'
+    arcpy.AddError(err_msg)
+    raise arcpy.ExecuteError()

@@ -3,10 +3,9 @@
 # Created By:  David Tarboton
 # Date:        9/29/11
 
-# Import ArcPy site-package and os modules
 import arcpy
 import os
-import subprocess
+import Utils
 
 # Inputs
 inlyr = arcpy.GetParameterAsText(0)
@@ -100,16 +99,18 @@ arcpy.AddMessage("Logarithmic Spacing: " + logspace)
 # Construct first command
 cmd = 'mpiexec -n ' + inputProc + ' PeukerDouglas -fel ' + '"' + fel + '"' + ' -ss ' + '"' + ss + '"' + \
       ' -par ' + weightcenter + ' ' + weightside + ' ' + weightdiag
-arcpy.AddMessage("\nCommand Line: " + cmd)
-# Submit command to operating system
-os.system(cmd)
-# Capture the contents of shell command and print it to the arcgis dialog box
-process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, text=True)
 
-message = "\n"
-for line in process.stdout.readlines():
-    message = message + line
-arcpy.AddMessage(message)
+arcpy.AddMessage("\nCommand Line: " + cmd)
+
+# Run the command using the shared utility function
+return_code = Utils.run_taudem_command(cmd, arcpy.AddMessage)
+
+# Check return code and add error message BEFORE raising exception
+if return_code != 0:
+    err_msg = f'PeukerDouglas failed with return code: {return_code}'
+    arcpy.AddError(err_msg)
+    # Include all messages in the exception so they're visible
+    raise arcpy.ExecuteError(err_msg)
 
 # Construct second command
 cmd = 'mpiexec -n ' + inputProc + ' AreaD8 -p ' + '"' + p + '"' + ' -ad8 ' + '"' + ssa + '"'
@@ -119,15 +120,16 @@ if arcpy.Exists(ogrlyr):
 if contcheck == 'false':
     cmd = cmd + ' -nc'
 arcpy.AddMessage("\nCommand Line: " + cmd)
-# Submit command to operating system
-os.system(cmd)
-# Capture the contents of shell command and print it to the arcgis dialog box
-process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, text=True)
 
-message = "\n"
-for line in process.stdout.readlines():
-    message = message + line
-arcpy.AddMessage(message)
+# Run the command using the shared utility function
+return_code = Utils.run_taudem_command(cmd, arcpy.AddMessage)
+
+# Check return code and add error message BEFORE raising exception
+if return_code != 0:
+    err_msg = f'AreaD8 failed with return code: {return_code}'
+    arcpy.AddError(err_msg)
+    # Include all messages in the exception so they're visible
+    raise arcpy.ExecuteError(err_msg)
 
 if (usedroprange == 'true') and arcpy.Exists(ogrlyr):
     # Construct third command
@@ -141,15 +143,14 @@ if (usedroprange == 'true') and arcpy.Exists(ogrlyr):
         cmd = cmd + '0'
 
     arcpy.AddMessage("\nCommand Line: " + cmd)
-    # Submit command to operating system
-    os.system(cmd)
-    # Capture the contents of shell command and print it to the arcgis dialog box
-    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, text=True)
-
-    message = "\n"
-    for line in process.stdout.readlines():
-        message = message + line
-    arcpy.AddMessage(message)
+    # Run the command using the shared utility function
+    return_code = Utils.run_taudem_command(cmd, arcpy.AddMessage)
+    # Check return code and add error message BEFORE raising exception
+    if return_code != 0:
+        err_msg = f'DropAnalysis failed with return code: {return_code}'
+        arcpy.AddError(err_msg)
+        # Include all messages in the exception so they're visible
+        raise arcpy.ExecuteError(err_msg)
 
     # (threshold,rest)=line.split(' ',1)
 
@@ -167,17 +168,19 @@ else:
 if arcpy.Exists(masklyr):
     cmd = cmd + ' -mask ' + '"' + mask + '"'
 arcpy.AddMessage("\nCommand Line: " + cmd)
-# Submit command to operating system
-os.system(cmd)
-# Capture the contents of shell command and print it to the arcgis dialog box
-process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, text=True)
 
-message = "\n"
-for line in process.stdout.readlines():
-    message = message + line
-arcpy.AddMessage(message)
+# Run the command using the shared utility function
+return_code = Utils.run_taudem_command(cmd, arcpy.AddMessage)
+
 # remove converted json file
 if arcpy.Exists(ogrlyr):
     extn_json = os.path.splitext(shfl)[1]   # get extension of the converted json file
     if extn_json == ".json":
         os.remove(shfl)
+
+# Check return code and add error message BEFORE raising exception
+if return_code != 0:
+    err_msg = f'Threshold failed with return code: {return_code}'
+    arcpy.AddError(err_msg)
+    # Include all messages in the exception so they're visible
+    raise arcpy.ExecuteError()

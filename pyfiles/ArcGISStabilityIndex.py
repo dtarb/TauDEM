@@ -131,5 +131,5 @@ except Exception as e:
     import traceback
     arcpy.AddError('\nFull traceback:')
     arcpy.AddError(traceback.format_exc())
-    # Exit with error code to signal failure to ArcGIS
+    # let ArcGIS know the execution failed
     raise
