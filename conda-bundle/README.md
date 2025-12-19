@@ -69,7 +69,7 @@ This package contains TauDEM (Terrain Analysis Using Digital Elevation Models) e
    - Set up necessary environment variables in your conda activate.d scripts
    - Configure library paths
 
-   **All dependencies are bundled - no additional conda packages needed!**
+   **Note:** Most dependencies are bundled, but you must install OpenMPI separately (see next step).
 
 5. Restart your shell or run:
 
@@ -78,6 +78,14 @@ This package contains TauDEM (Terrain Analysis Using Digital Elevation Models) e
    conda activate taudem
    OR
    conda activate ~/.local/taudem-env
+   ```
+
+6. **Install OpenMPI:**
+
+   Since OpenMPI is system-dependent, you must install it separately in your environment:
+
+   ```bash
+   conda install -c conda-forge openmpi
    ```
 
 ## Usage
@@ -163,7 +171,6 @@ conda activate taudem
 Check that the environment variables are set:
 
 ```bash
-echo $LD_LIBRARY_PATH
 echo $GDAL_DATA
 echo $PROJ_LIB
 ```
@@ -172,7 +179,7 @@ These should include paths to your conda environment.
 
 ### MPI errors
 
-This bundle uses OpenMPI. If you have other MPI implementations installed system-wide, there may be conflicts. The bundled OpenMPI libraries should take precedence due to the LD_LIBRARY_PATH configuration.
+This bundle relies on OpenMPI installed in your conda environment. If you have other MPI implementations installed system-wide, ensure you are using the `mpiexec` from your conda environment. You can verify this with `which mpiexec`.
 
 ## License
 

@@ -32,7 +32,8 @@ RUN mamba create -n taudem-build -c conda-forge -y \
     sqlite \
     libspatialite \
     libtiff \
-    geotiff
+    geotiff \
+    patchelf
 
 # Activate environment for subsequent RUN commands
 SHELL ["conda", "run", "-n", "taudem-build", "/bin/bash", "-c"]
@@ -86,18 +87,6 @@ RUN if [ -d /opt/taudem-runtime/lib ]; then \
 # Get conda environment path
 RUN conda info --base | xargs -I {} echo {}/envs/taudem-runtime > /tmp/conda_prefix
 
-# Copy MPI executables (mpirun, mpiexec, etc.)
-RUN CONDA_PREFIX=$(cat /tmp/conda_prefix) && \
-    echo "Copying MPI executables..." && \
-    cp -v ${CONDA_PREFIX}/bin/mpirun taudem-conda-linux64/bin/ && \
-    cp -v ${CONDA_PREFIX}/bin/mpiexec taudem-conda-linux64/bin/ && \
-    cp -v ${CONDA_PREFIX}/bin/prterun taudem-conda-linux64/bin/ 2>/dev/null || true && \
-    cp -v ${CONDA_PREFIX}/bin/prte taudem-conda-linux64/bin/ 2>/dev/null || true && \
-    cp -v ${CONDA_PREFIX}/bin/prun taudem-conda-linux64/bin/ 2>/dev/null || true && \
-    cp -v ${CONDA_PREFIX}/bin/orterun taudem-conda-linux64/bin/ 2>/dev/null || true && \
-    cp -v ${CONDA_PREFIX}/bin/orted taudem-conda-linux64/bin/ 2>/dev/null || true && \
-    echo "MPI executables copied."
-
 # Copy required runtime libraries from conda environment
 RUN CONDA_PREFIX=$(cat /tmp/conda_prefix) && \
     echo "Copying all shared libraries from conda environment..." && \
@@ -119,31 +108,18 @@ RUN CONDA_PREFIX=$(cat /tmp/conda_prefix) && \
         cp -r ${CONDA_PREFIX}/share/proj taudem-conda-linux64/share/; \
     fi
 
-# Copy OpenMPI data files (help files, etc.)
-RUN CONDA_PREFIX=$(cat /tmp/conda_prefix) && \
-    if [ -d ${CONDA_PREFIX}/share/openmpi ]; then \
-        echo "Copying OpenMPI share files..." && \
-        cp -r ${CONDA_PREFIX}/share/openmpi taudem-conda-linux64/share/; \
-    fi
-
-# Copy PMIx data files (help files for PMIx)
-RUN CONDA_PREFIX=$(cat /tmp/conda_prefix) && \
-    if [ -d ${CONDA_PREFIX}/share/pmix ]; then \
-        echo "Copying PMIx share files..." && \
-        cp -r ${CONDA_PREFIX}/share/pmix taudem-conda-linux64/share/; \
-    fi
-
-# Copy PRTE data files (help files for PRRTE)
-RUN CONDA_PREFIX=$(cat /tmp/conda_prefix) && \
-    if [ -d ${CONDA_PREFIX}/share/prte ]; then \
-        echo "Copying PRTE share files..." && \
-        cp -r ${CONDA_PREFIX}/share/prte taudem-conda-linux64/share/; \
-    fi
-
 # Copy installation script and README from repository
 COPY conda-bundle/install.sh taudem-conda-linux64/
 COPY conda-bundle/README.md taudem-conda-linux64/
 RUN chmod +x taudem-conda-linux64/install.sh
+
+# Patch RPATH (runtime library search path) for all executables
+# TauDEM executables will automatically find their dependencies in ../lib/ relative to their location
+RUN for exe in taudem-conda-linux64/bin/*; do \
+      if [ -x "$exe" ] && [ -f "$exe" ]; then \
+          patchelf --set-rpath '$ORIGIN/../lib' "$exe"; \
+      fi; \
+    done
 
 # Create tarball
 RUN tar -czf taudem-conda-linux64.tar.gz taudem-conda-linux64
