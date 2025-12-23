@@ -19,6 +19,6 @@ jobs:
 
     - name: Run tests
       run: |
-        docker run --rm -v $(pwd):/app --user taudem-docker taudem-linux-run-tests /bin/bash -l -c "
-          export OMPI_MCA_rmaps_base_oversubscribe=1 && cd /app && make dk-run-tests
+        docker run --rm -v $(pwd):/app --user taudem-docker taudem-linux-run-tests /bin/bash -c "
+          source /home/taudem-docker/.bashrc && export OMPI_MCA_rmaps_base_oversubscribe=1 && cd /app && make dk-run-tests
         "
