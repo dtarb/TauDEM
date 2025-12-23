@@ -1,61 +1,88 @@
 # This Dockerfile is for compiling TauDEM for Linux and running the tests. It is not intended for running TauDEM.
 
-# Using Ubuntu as the base image
-FROM ubuntu:22.04
+# --- Builder Stage ---
+FROM ubuntu:22.04 AS builder
 
-# Install necessary dependencies to compile TauDEM
-RUN apt update && apt install -y \
+LABEL maintainer="TauDEM Developers"
+LABEL description="Builder stage for TauDEM test image"
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     cmake \
-    openmpi-bin \
     libopenmpi-dev \
-    gdal-bin \
     libgdal-dev \
     libproj-dev \
     libtiff-dev \
     libgeotiff-dev \
     git \
-    nano \
+    ca-certificates \
     sudo \
-    && rm -rf /var/lib/apt/lists/*  # Clean up to reduce image size
+    nano \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install bats testing framework
-RUN git clone https://github.com/sstephenson/bats.git && \
-    cd bats && \
-    ./install.sh /usr/local && \
+WORKDIR /src
+
+# Copy only source code and essential files (use .dockerignore to exclude build, test_data, etc.)
+COPY . .
+
+# Build TauDEM and install to /install/taudem
+RUN make clean && \
+    make release COMPILER=linux && \
+    make install PREFIX=/install && \
+    test -f /install/taudem/pitremove || (echo "ERROR: pitremove not found" && exit 1)
+
+# --- Test Stage ---
+FROM ubuntu:22.04 AS test
+
+LABEL maintainer="TauDEM Developers"
+LABEL description="Test stage for TauDEM with bats and test data"
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install only runtime and test dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openmpi-bin \
+    libgdal30 \
+    git \
+    ca-certificates \
+    build-essential \
+    cmake \
+    sudo \
+    nano \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install bats testing framework and extensions
+RUN git clone https://github.com/sstephenson/bats.git /tmp/bats && \
+    /tmp/bats/install.sh /usr/local && \
     git clone https://github.com/ztombol/bats-support /tmp/bats-support && \
     git clone https://github.com/ztombol/bats-assert /tmp/bats-assert && \
-    git clone https://github.com/ztombol/bats-file /tmp/bats-file
+    git clone https://github.com/ztombol/bats-file /tmp/bats-file && \
+    rm -rf /tmp/bats
 
-# Create a non-root user
-RUN useradd -m -s /bin/bash taudem-docker
+# Copy TauDEM binaries from builder
+COPY --from=builder /install/taudem /usr/local/taudem
 
-# Set the password for the taudem-docker user (less secure, for demonstration purposes)
-RUN echo "taudem-docker:taudem-docker" | chpasswd
+# Create non-root user for running tests
+RUN useradd -m -s /bin/bash taudem-docker && \
+    echo "taudem-docker:taudem-docker" | chpasswd && \
+    usermod -aG sudo taudem-docker && \
+    echo 'export PATH="/usr/local/taudem:${PATH}"' >> /home/taudem-docker/.bashrc && \
+    echo 'export TAUDEM_PATH="/usr/local/taudem"' >> /home/taudem-docker/.bashrc
 
-# Grant the taudem-docker user sudo privileges
-RUN usermod -aG sudo taudem-docker
+# Set up test data directory and permissions
+WORKDIR /home/taudem-docker/workspace
+RUN chown taudem-docker:taudem-docker /home/taudem-docker/workspace
 
-# Create workspace directory for taudem-docker
+# Clone TauDEM-Test-Data as non-root user
+USER taudem-docker
 RUN mkdir -p /home/taudem-docker/workspace/TauDEM-Test-Data
-
-# Clone the TauDEM-Test-Data repo and make the taudem-tests.sh executable for running the tests
-RUN chown taudem-docker:taudem-docker /home/taudem-docker/workspace/TauDEM-Test-Data && \
-    sudo -u taudem-docker git clone https://github.com/dtarb/TauDEM-Test-Data.git /home/taudem-docker/workspace/TauDEM-Test-Data && \
-    chown taudem-docker:taudem-docker /home/taudem-docker/workspace/TauDEM-Test-Data/Input/taudem-tests.sh && \
+RUN git clone https://github.com/dtarb/TauDEM-Test-Data.git /home/taudem-docker/workspace/TauDEM-Test-Data && \
     chmod +x /home/taudem-docker/workspace/TauDEM-Test-Data/Input/taudem-tests.sh
 
-# Create the taudem directory
-RUN mkdir -p /usr/local/taudem
-
-# Set the PATH environment variable for taudem-docker user
-# Setting the TAUDEM_PATH environment variable which is needed only for runinng the tests
-# TAUDEM_PATH is used in the taudem-tests.sh script
-RUN echo "export PATH=/usr/local/taudem:\$PATH" >> /home/taudem-docker/.bashrc && \
-    echo "export TAUDEM_PATH=/usr/local/taudem" >> /home/taudem-docker/.bashrc
-
-# Set the working directory inside the container - this is where we will run commands to build and install TauDEM
 WORKDIR /app
 
-# Set the default command to run an interactive shell
+# Default to interactive shell
 CMD ["/bin/bash"]
