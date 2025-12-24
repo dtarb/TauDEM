@@ -40,7 +40,7 @@ fi
 # Install binaries
 # ------------------------------------------------------------------
 echo "Installing TauDEM executables..."
-cp -v "$BUNDLE_DIR/bin/"* "$CONDA_PREFIX/bin/"
+cp -Pr "$BUNDLE_DIR/bin/"* "$CONDA_PREFIX/bin/"
 chmod +x "$CONDA_PREFIX/bin/"*
 
 # ------------------------------------------------------------------
@@ -49,7 +49,7 @@ chmod +x "$CONDA_PREFIX/bin/"*
 echo ""
 echo "Installing runtime libraries..."
 mkdir -p "$CONDA_PREFIX/lib"
-cp -v "$BUNDLE_DIR/lib/"* "$CONDA_PREFIX/lib/"
+cp -Pr "$BUNDLE_DIR/lib/"* "$CONDA_PREFIX/lib/"
 
 # ------------------------------------------------------------------
 # Install shared data (GDAL / PROJ)
@@ -58,7 +58,7 @@ if [ -d "$BUNDLE_DIR/share" ]; then
     echo ""
     echo "Installing shared data files..."
     mkdir -p "$CONDA_PREFIX/share"
-    cp -rv "$BUNDLE_DIR/share/"* "$CONDA_PREFIX/share/"
+    cp -Pr "$BUNDLE_DIR/share/"* "$CONDA_PREFIX/share/"
 fi
 
 # ------------------------------------------------------------------
@@ -83,6 +83,28 @@ if [ -d "$CONDA_PREFIX/share/proj" ]; then
     export PROJ_LIB="$CONDA_PREFIX/share/proj"
 fi
 
+# OpenMPI data (help files, etc.)
+# OPAL_PREFIX tells OpenMPI to look inside this conda environment for its
+# runtime help files and configuration data, ensuring bundled mpiexec/mpirun
+# behave correctly without relying on system-wide OpenMPI installs.
+if [ -d "$CONDA_PREFIX/share/openmpi" ]; then
+    export OPAL_PREFIX="$CONDA_PREFIX"
+fi
+
+# PRTE (PMIx Reference RunTime Environment) is part of the modern OpenMPI
+# runtime stack. Setting PRTE_PREFIX ensures PRTE can locate its data/help
+# files within this conda environment.
+if [ -d "$CONDA_PREFIX/share/prte" ]; then
+    export PRTE_PREFIX="$CONDA_PREFIX"
+fi
+
+# PMIx (Process Management Interface for Exascale) is used by modern OpenMPI
+# for process management; PMIX_PREFIX ensures PMIx/OpenMPI can find their
+# runtime data in this conda environment.
+if [ -d "$CONDA_PREFIX/share/pmix" ]; then
+    export PMIX_PREFIX="$CONDA_PREFIX"
+fi
+
 # GDAL plugins
 export GDAL_DRIVER_PATH="$CONDA_PREFIX/lib/gdalplugins"
 
@@ -103,14 +125,15 @@ echo "Next steps:"
 echo "  1. conda deactivate"
 echo "  2. conda activate \"$CONDA_PREFIX\""
 echo ""
-echo "IMPORTANT: You must install OpenMPI separately if not already present:"
-echo "  conda install -c conda-forge openmpi"
+echo "Test TauDEM:"
+echo "  pitremove -h"
 echo ""
-echo "Test with:"
+echo "Test with MPI (parallel processing):"
 echo "  mpiexec -n 4 pitremove -z input.tif -fel output.tif"
 echo ""
-echo "If MPI fails, verify:"
-echo "  ldd \$(which pitremove) | grep libmpi"
+echo "Note: OpenMPI is included in this bundle and configured to work with"
+echo "the TauDEM binaries. The binaries use RPATH to locate all required"
+echo "libraries within the conda environment."
 echo ""
 echo "See README.md for usage examples and documentation."
 echo ""
