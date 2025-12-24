@@ -69,8 +69,8 @@ COPY --from=builder /install/taudem /usr/local/taudem
 RUN useradd -m -s /bin/bash taudem-docker && \
     echo "taudem-docker:taudem-docker" | chpasswd && \
     usermod -aG sudo taudem-docker && \
-    echo 'export PATH="/usr/local/taudem:${PATH}"' >> /home/taudem-docker/.bashrc && \
-    echo 'export TAUDEM_PATH="/usr/local/taudem"' >> /home/taudem-docker/.bashrc
+    echo "export PATH=/usr/local/taudem:\$PATH" >> /home/taudem-docker/.bashrc && \
+    echo "export TAUDEM_PATH=/usr/local/taudem" >> /home/taudem-docker/.bashrc
 
 # Set up test data directory and permissions
 WORKDIR /home/taudem-docker/workspace
