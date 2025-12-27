@@ -50,9 +50,8 @@ int editraster(char *rasterfile, char *newfile, char *changefile);
 int main(int argc,char **argv)  
 {
    char rasterfile[MAXLN],changefile[MAXLN],newfile[MAXLN];
-      
-   if(argc <= 2) goto errexit;
-    int i=1;	
+   int i = 1;
+   if(argc <= 2) goto errexit;	
 	while (argc > i)
 	{
 		if (strcmp(argv[i], "-in") == 0)
@@ -93,10 +92,10 @@ int main(int argc,char **argv)
         printf("Threshold Error %d\n",err);
 
 	return 0;
-errexit:
-   printf("Editraster use:\n %s -in <filetochange>\n",argv[0]);
-   printf("-out <filetowrite> \n");
-   printf("-changes <file with change values (x,y,newvalue)> \n");
-   return 0; 
+   errexit:
+     printf("Editraster use:\n %s -in <filetochange>\n",argv[0]);
+     printf("-out <filetowrite> \n");
+     printf("-changes <file with change values (x,y,newvalue)> \n");
+     return 0; 
 } 
    

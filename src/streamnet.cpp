@@ -93,9 +93,19 @@ OGRSpatialReferenceH  hSRSraster,hSRSshapefile;
 //	doutmidIdx = DBFAddField(dbf1,"DOUT_MID",FTDouble,16,1);
 //}
 
+//returns true iff cell at [nrow][ncol] points to cell at [row][col]
+bool pointsToMe(long col, long row, long ncol, long nrow, tdpartition *dirData) {
+	short d;
+	if (!dirData->hasAccess(ncol, nrow) || dirData->isNodata(ncol, nrow)) { return false; }
+	d = dirData->getData(ncol, nrow, d);
+	if (nrow + d2[d] == row && ncol + d1[d] == col) {
+		return true;
+	}
+	return false;
+}
 
-void createStreamNetShapefile(char *streamnetsrc,char *streamnetlyr,OGRSpatialReferenceH hSRSraster){
-   
+int createStreamNetShapefile(char *streamnetsrc,char *streamnetlyr,OGRSpatialReferenceH hSRSraster){
+   // Return the kmloffset
     /* Register all OGR drivers */
     OGRRegisterAll();
     //const char *pszDriverName = "ESRI Shapefile";
@@ -119,22 +129,34 @@ void createStreamNetShapefile(char *streamnetsrc,char *streamnetlyr,OGRSpatialRe
 	
     if (hDS1 != NULL) {
  
-
-      // layer name is file name without extension
-	 if(strlen(streamnetlyr)==0){
-		char *streamnetlayername;
-		streamnetlayername=getLayername(streamnetsrc); // get layer name if the layer name is not provided
-	    hLayer1= OGR_DS_CreateLayer( hDS1,streamnetlayername,hSRSraster, wkbLineString, NULL );} 
-
-	 else {
-		 hLayer1= OGR_DS_CreateLayer( hDS1,streamnetlyr,hSRSraster, wkbLineString, NULL ); }// provide same spatial reference as raster in streamnetshp file
+		char** papszOptions = NULL;
+		papszOptions = CSLSetNameValue(papszOptions, "OVERWRITE", "YES");
+		// layer name is file name without extension
+		if(strlen(streamnetlyr)==0){
+			// Chris George suggestion
+			char streamnetlayername[MAXLN];
+			getLayername(streamnetsrc, streamnetlayername); // get layer name if the layer name is not provided		  
+			// Use papszOptions only for TIF  and SQLite files
+			if(strstr(pszDriverName, "tif") != NULL || strstr(pszDriverName, "TIF") != NULL || strcmp(pszDriverName, "SQLite") == 0) {
+				hLayer1 = OGR_DS_CreateLayer(hDS1, streamnetlayername, hSRSraster, wkbLineString, papszOptions);
+			} else {
+				hLayer1 = OGR_DS_CreateLayer(hDS1, streamnetlayername, hSRSraster, wkbLineString, NULL);
+			}
+	 } else {
+		// Use papszOptions only for TIF and SQLite files
+		if(strstr(pszDriverName, "tif") != NULL || strstr(pszDriverName, "TIF") != NULL || strcmp(pszDriverName, "SQLite") == 0) {
+			hLayer1 = OGR_DS_CreateLayer(hDS1, streamnetlyr, hSRSraster, wkbLineString, papszOptions);
+		} else {
+			hLayer1 = OGR_DS_CreateLayer(hDS1, streamnetlyr, hSRSraster, wkbLineString, NULL);
+		}
+	 }
     if( hLayer1 == NULL )
     {
         printf( "warning: Layer creation failed.\n" );
         //exit( 1 );
     }
  
-	
+	CSLDestroy(papszOptions);
 	
 	/* Add a few fields to the layer defn */ //need some work for setfiled width
 	// add fields, field width and precision
@@ -216,6 +238,7 @@ void createStreamNetShapefile(char *streamnetsrc,char *streamnetlyr,OGRSpatialRe
     OGR_Fld_SetPrecision(hFieldDefn1, 1);
 	OGR_L_CreateField(hLayer1,  hFieldDefn1, 0);
 	}
+	return 0; 
 	}
 // Write shape from tardemlib.cpp
 int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *pointx, double *pointy, long np,tiffIO &obj)
@@ -306,23 +329,25 @@ int reachshape(long *cnet,float *lengthd, float *elev, float *area, double *poin
 
 	hFDefn1 = OGR_L_GetLayerDefn( hLayer1 );
 	hFeature1 = OGR_F_Create( hFDefn1 );
-	OGR_F_SetFieldInteger( hFeature1, 0, (int)cnet[0]); // set field value 
-	OGR_F_SetFieldInteger( hFeature1, 1, (int)cnet[3]);
-	OGR_F_SetFieldInteger( hFeature1, 2, (int)cnet[4]);
-	OGR_F_SetFieldInteger( hFeature1, 3, (int)cnet[5]);
-	OGR_F_SetFieldInteger( hFeature1, 4, (int)cnet[7]);
-	OGR_F_SetFieldInteger( hFeature1, 5, (int)cnet[6]);
-	OGR_F_SetFieldDouble( hFeature1, 6, length);
-	OGR_F_SetFieldInteger( hFeature1, 7, (int)cnet[8]);
-	OGR_F_SetFieldDouble( hFeature1, 8,  dsarea);
-	OGR_F_SetFieldDouble( hFeature1, 9, drop);
-	OGR_F_SetFieldDouble( hFeature1, 10, slope);
-	OGR_F_SetFieldDouble( hFeature1, 11, glength);
-	OGR_F_SetFieldDouble( hFeature1, 12, usarea);
-	OGR_F_SetFieldInteger( hFeature1, 13, (int)cnet[0]);
-	OGR_F_SetFieldDouble( hFeature1, 14, dsdist);
-	OGR_F_SetFieldDouble( hFeature1, 15, usdist);
-	OGR_F_SetFieldDouble( hFeature1, 16, middist);
+	// set field values
+	
+	OGR_F_SetFieldInteger( hFeature1, OGR_F_GetFieldIndex(hFeature1, "LINKNO"), (int)cnet[0]); // set field value 
+	OGR_F_SetFieldInteger( hFeature1, OGR_F_GetFieldIndex(hFeature1, "DSLINKNO"), (int)cnet[3]);
+	OGR_F_SetFieldInteger( hFeature1, OGR_F_GetFieldIndex(hFeature1, "USLINKNO1"), (int)cnet[4]);
+	OGR_F_SetFieldInteger( hFeature1, OGR_F_GetFieldIndex(hFeature1, "USLINKNO2"), (int)cnet[5]);
+	OGR_F_SetFieldInteger( hFeature1, OGR_F_GetFieldIndex(hFeature1, "DSNODEID"), (int)cnet[7]);
+	OGR_F_SetFieldInteger( hFeature1, OGR_F_GetFieldIndex(hFeature1, "strmOrder"), (int)cnet[6]);
+	OGR_F_SetFieldDouble( hFeature1, OGR_F_GetFieldIndex(hFeature1, "Length"), length);
+	OGR_F_SetFieldInteger( hFeature1, OGR_F_GetFieldIndex(hFeature1, "Magnitude"), (int)cnet[8]);
+	OGR_F_SetFieldDouble( hFeature1, OGR_F_GetFieldIndex(hFeature1, "DSContArea"),  dsarea);
+	OGR_F_SetFieldDouble( hFeature1, OGR_F_GetFieldIndex(hFeature1, "strmDrop"), drop);
+	OGR_F_SetFieldDouble( hFeature1, OGR_F_GetFieldIndex(hFeature1, "Slope"), slope);
+	OGR_F_SetFieldDouble( hFeature1, OGR_F_GetFieldIndex(hFeature1, "StraightL"), glength);
+	OGR_F_SetFieldDouble( hFeature1, OGR_F_GetFieldIndex(hFeature1, "USContArea"), usarea);
+	OGR_F_SetFieldInteger( hFeature1, OGR_F_GetFieldIndex(hFeature1, "WSNO"), (int)cnet[0]);
+	OGR_F_SetFieldDouble( hFeature1, OGR_F_GetFieldIndex(hFeature1, "DOUTEND"), dsdist);
+	OGR_F_SetFieldDouble( hFeature1, OGR_F_GetFieldIndex(hFeature1, "DOUTSTART"), usdist);
+	OGR_F_SetFieldDouble( hFeature1, OGR_F_GetFieldIndex(hFeature1, "DOUTMID"), middist);
 
     //creating geometry using OGR
 
@@ -401,6 +426,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 		tiffIO dirIO(pfile, SHORT_TYPE);
 		if(!dirIO.compareTiff(srcIO)){
 			printf("pfile and src files not the same size. Exiting \n");
+			fflush(stdout);
 			MPI_Abort(MCW,4);
 		}
 		//Create partition and read data
@@ -412,6 +438,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 		tiffIO ad8IO(ad8file, FLOAT_TYPE);
 		if(!ad8IO.compareTiff(srcIO)){
 			printf("ad8file and src files not the same size. Exiting \n");
+			fflush(stdout);
 			MPI_Abort(MCW,4);
 		}
 		//Create partition and read data
@@ -422,6 +449,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 		tiffIO elevIO(elevfile, FLOAT_TYPE);
 		if(!elevIO.compareTiff(srcIO)){
 			printf("elevfile and src files not the same size. Exiting \n");
+			fflush(stdout);
 			MPI_Abort(MCW,4);
 		}
 		//Create partition and read data
@@ -453,7 +481,8 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 		if( useOutlets == 1) {
 			if(rank==0){
 				if(readoutlets(outletsds,lyrname,uselayername,lyrno,hSRSraster, &numOutlets, x, y,ids) !=0){
-					printf("Exiting \n");
+					printf("Read outlets error. Exiting \n");
+					fflush(stdout);
 					MPI_Abort(MCW,5);
 				}else {
 					MPI_Bcast(&numOutlets, 1, MPI_INT, 0, MCW);
@@ -936,6 +965,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
         		MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MCW, &messageFlag, &stat);
        		 	if(messageFlag == true){
                 		cout << rank << ": I have a message waiting before I try to pass links!!!" << stat.MPI_TAG << endl;
+						fflush(stdout);
                 		MPI_Abort(MCW,4);
         		}
 				MPI_Barrier(MCW);
@@ -1057,6 +1087,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
             MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MCW, &messageFlag, &stat);
             if(messageFlag == true){
                     cout << rank << ": I have failed to received a message!!!" << endl;
+					fflush(stdout);
                     MPI_Abort(MCW,2);
             }
 			MPI_Barrier(MCW);
@@ -1280,6 +1311,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 			MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MCW, &messageFlag, &stat);
 			if(messageFlag == true){
 					cout << rank << ": I have failed to received a message!!!" << endl;
+					fflush(stdout);
 					MPI_Abort(MCW,1);
 			}
 			MPI_Barrier(MCW);
@@ -1416,8 +1448,8 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 	
 
 		int32_t wsGridNodata=MISSINGLONG;
-		short ordNodata=MISSINGSHORT;
-		tiffIO wsIO(wfile, LONG_TYPE,&wsGridNodata,ad8IO);
+		int16_t ordNodata=MISSINGSHORT;
+		tiffIO wsIO(wfile, LONG_TYPE,wsGridNodata,ad8IO);
 		wsIO.write(xstart, ystart, ny, nx, wsGrid->getGridPointer());
 		if(verbose)
 		{
@@ -1438,7 +1470,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 		{
 			cout << rank << " Writing order file"  << endl;
 		}
-		tiffIO ordIO(ordfile, SHORT_TYPE,&ordNodata,ad8IO);
+		tiffIO ordIO(ordfile, SHORT_TYPE,ordNodata,ad8IO);
 		ordIO.write(xstart, ystart, ny, nx, contribs->getGridPointer());
 		
 		// Timer - write time

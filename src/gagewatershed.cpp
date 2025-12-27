@@ -104,6 +104,7 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 		}//5
 		else {
 			printf("Error opening shapefile. Exiting \n");
+			fflush(stdout);
 			MPI_Abort(MCW,5);
 		}
 	}//4
@@ -343,7 +344,7 @@ int gagewatershed( char *pfile,char *wfile, char* datasrc,char* lyrname,int usel
 	
 	//Create and write TIFF file
 	long lNodata = MISSINGLONG;
-	tiffIO wshedIO(wfile, LONG_TYPE, &lNodata, p);
+	tiffIO wshedIO(wfile, LONG_TYPE, lNodata, p);
 	wshedIO.write(xstart, ystart, ny, nx, wshed->getGridPointer());
 
 	double writet = MPI_Wtime();

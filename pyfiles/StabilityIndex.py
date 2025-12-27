@@ -1,16 +1,17 @@
 __author__ = 'Pabitra'
-"""
- Note: This script is a subset of the same script (StabilityIndex.py) in GRAIP-2 PythonTools
-"""
+
 import os
 import sys
 import subprocess
 import argparse
 
-from osgeo import ogr, gdal, osr
+from osgeo import ogr, gdal
 
 import Utils
 
+"""
+ Note: This script is a subset of the same script (StabilityIndex.py) in GRAIP-2 PythonTools
+"""
 # TODO: Need to find out how to catch gdal exceptions
 
 gdal.UseExceptions()
@@ -160,7 +161,7 @@ def _validate_args(params, params_dict):
                 dem = gdal.Open(input_file)
                 dem = None
             except Exception as ex:
-                raise Utils.ValidationException(ex.message)
+                raise Utils.ValidationException(str(ex))
 
         # check that the output grid file path exists
         if key in (ParameterNames.csi_grid_file, ParameterNames.sat_grid_file):
@@ -185,7 +186,6 @@ def _validate_args(params, params_dict):
 def _taudem_area_dinf(weight_grid_file, demang_grid_file, output_sca_file):
 
     # mpiexec -n 4 Areadinf -ang demang.tif -wg demdpsi.tif -sca demsac.tif
-    # taudem_funtion_to_run = 'mpiexec -n 4 Areadinf'
     taudem_function_to_run = 'Areadinf'
     cmd = taudem_function_to_run + \
           ' -ang ' + demang_grid_file + \
@@ -196,19 +196,25 @@ def _taudem_area_dinf(weight_grid_file, demang_grid_file, output_sca_file):
     taudem_messages.append('Areadinf started:')
     taudem_messages.append(cmd)
 
-    # Capture the contents of shell command and print it to the arcgis dialog box
-    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    for line in process.stdout.readlines():
-        taudem_messages.append(line.rstrip())
+    # Run the command using the shared utility function
+    taudem_messages, return_code = _run_taudem_command(cmd, taudem_messages)    
+
+    # Check return code and add error message BEFORE raising exception
+    if return_code != 0:
+        error_msg = f'Areadinf failed with return code: {return_code}'
+        taudem_messages.append(error_msg)
+        # Return messages first so they can be displayed
+        # Then caller should check for exception
+        raise Exception('\n'.join(taudem_messages))
+
     return taudem_messages
 
 
 def _generate_combined_stability_index_grid(params_dict):
 
-    # TauDEMm SinmapSI calling format
+    # TauDEM SinmapSI calling format
     # mpiexec -n 4 SinmapSI -slp demslp.tif -sca demsca.tif -calpar demcalp.txt -cal demcal.tif -si demsi.tif -sat demsat.tif -par 0.0009 0.00135 9.81 1000 -scamin scamin.tif -scamax scamax.tif
 
-    #taudem_function_to_run = r'E:\SoftwareProjects\TauDEM\Taudem5PCVS2010\x64\Release\SinmapSI'
     taudem_function_to_run = 'SinmapSI'
 
     cmd = taudem_function_to_run + \
@@ -231,11 +237,51 @@ def _generate_combined_stability_index_grid(params_dict):
     taudem_messages = []
     taudem_messages.append('SinmapSI started:')
     taudem_messages.append(cmd)
-    # Capture the contents of shell command and print it to the arcgis dialog box
-    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    for line in process.stdout.readlines():
-        taudem_messages.append(line.rstrip())
+    # Run the command using the shared utility function
+    taudem_messages, return_code = _run_taudem_command(cmd, taudem_messages)
+    
+    # Check return code and add error message BEFORE raising exception
+    if return_code != 0:
+        error_msg = f'SinmapSI failed with return code: {return_code}'
+        taudem_messages.append(error_msg)
+        # Include all messages in the exception so they're visible
+        raise Exception('\n'.join(taudem_messages))
+
     return taudem_messages
+
+
+def _run_taudem_command(cmd, messages):
+    env = Utils.get_adjusted_env()
+    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
+    stdout, stderr = process.communicate()
+    if stdout:
+        for line in stdout.splitlines():
+            messages.append(line.rstrip())
+
+    if stderr:
+        filtered_stderr = []
+        patterns = [
+            "This run may take on the order of",
+            "This estimate is very approximate",
+            "Run time is highly uncertain",
+            "speed and memory of the computer",
+            "dual quad core Dell Xeon"
+        ]
+        for line in stderr.strip().split('\n'):
+            if not line.strip():
+                continue
+            if any(pattern in line for pattern in patterns):
+                # this is not really an error, so don't include it in filtered_stderr
+                messages.append(line)
+                continue
+            filtered_stderr.append(line)
+
+        if filtered_stderr:
+            messages.append('\nERROR OUTPUT:')
+            for line in filtered_stderr:
+                messages.append(line)
+    return_code = process.returncode
+    return messages, return_code
 
 
 def _delete_intermediate_output_files(parm_dict):
@@ -250,11 +296,12 @@ def _delete_intermediate_output_files(parm_dict):
         if os.path.isfile(file_to_delete):
             os.remove(file_to_delete)
 
+
 if __name__ == '__main__':
     try:
         main()
         sys.exit(0)
     except Exception as e:
         print("Combined stability index computation failed.\n")
-        print(e.message)
+        print(str(e))
         sys.exit(1)

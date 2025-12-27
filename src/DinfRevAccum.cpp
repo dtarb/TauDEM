@@ -95,6 +95,7 @@ int dsaccum(char *angfile,char *wgfile, char *raccfile, char *dmaxfile)
 	tiffIO wg(wgfile, FLOAT_TYPE);
 	if(!ang.compareTiff(wg)) {
 		printf("File sizes do not match\n%s\n",wgfile);
+		fflush(stdout);
 		MPI_Abort(MCW,5);
 		return 1;  
 	}
@@ -255,10 +256,10 @@ int dsaccum(char *angfile,char *wgfile, char *raccfile, char *dmaxfile)
 
 	//Create and write TIFF file
 	float raccNodata = MISSINGFLOAT;
-	tiffIO rrac(raccfile, FLOAT_TYPE, &raccNodata, ang);
+	tiffIO rrac(raccfile, FLOAT_TYPE, raccNodata, ang);
 	rrac.write(xstart, ystart, ny, nx, racc->getGridPointer());
 
-	tiffIO ddmax(dmaxfile, FLOAT_TYPE, &raccNodata, ang);
+	tiffIO ddmax(dmaxfile, FLOAT_TYPE, raccNodata, ang);
 	ddmax.write(xstart, ystart, ny, nx, dmax->getGridPointer());
 
 	double writet = MPI_Wtime();

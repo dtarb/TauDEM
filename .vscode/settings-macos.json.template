@@ -1,0 +1,15 @@
+{
+    "cmake.sourceDirectory": "${workspaceFolder}/src",
+    // Platform-specific IntelliSense settings for macOS
+    "[cpp]": {
+        "editor.defaultFormatter": "ms-vscode.cpptools"
+    },
+    "C_Cpp.intelliSenseEngine": "default",
+    "cmake.configureOnOpen": false,
+    "[makefile]": {
+        "editor.insertSpaces": false,
+        "editor.detectIndentation": false
+    },
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 1000, // Auto-save after 1 second
+}

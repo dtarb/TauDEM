@@ -3,10 +3,9 @@
 # Created By:  David Tarboton
 # Date:        9/28/11
 
-# Import ArcPy site-package and os modules
 import arcpy
 import os
-import subprocess
+import Utils
 
 # Inputs
 inlyr = arcpy.GetParameterAsText(0)
@@ -63,38 +62,20 @@ if arcpy.Exists(ogrfile):
 if arcpy.Exists(maskgrid):
     cmd = cmd + ' -mask ' + '"' + mkgr + '"' + ' -thresh ' + maskthreshold
 
-# TODO: Delete these commented code line (Pabitra, Dt:9/16/2016)
-##if arcpy.Exists(shapefile) and arcpy.Exists(maskgrid):
-##    cmd = 'mpiexec -n ' + inputProc + ' GridNet -p ' + '"' + p + '"' + ' -plen ' + '"' + plen + '"' + ' -tlen ' + '"' + tlen + '"' + ' -gord ' + '"' + gord + '"' + ' -o ' + '"' + shapefile + '"' + ' -mask ' + '"' + maskgrid + '"' + ' -thresh ' + maskthreshold
-##elif arcpy.Exists(shapefile):
-##    cmd = 'mpiexec -n ' + inputProc + ' GridNet -p ' + '"' + p + '"' + ' -plen ' + '"' + plen + '"' + ' -tlen ' + '"' + tlen + '"' + ' -gord ' + '"' + gord + '"' + ' -o ' + '"' + shapefile + '"'
-##elif arcpy.Exists(maskgrid):
-##    cmd = 'mpiexec -n ' + inputProc + ' GridNet -p ' + '"' + p + '"' + ' -plen ' + '"' + plen + '"' + ' -tlen ' + '"' + tlen + '"' + ' -gord ' + '"' + gord + '"' + ' -mask ' + '"' + maskgrid + '"' + ' -thresh ' + maskthreshold
-##else:
-##    cmd = 'mpiexec -n ' + inputProc + ' GridNet -p ' + '"' + p + '"' + ' -plen ' + '"' + plen + '"' + ' -tlen ' + '"' + tlen + '"' + ' -gord ' + '"' + gord + '"'
-
 arcpy.AddMessage("\nCommand Line: " + cmd)
 
-# Submit command to operating system
-os.system(cmd)
+return_code = Utils.run_taudem_command(cmd, arcpy.AddMessage)
 
-# Capture the contents of shell command and print it to the arcgis dialog box
-process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-
-message = "\n"
-for line in process.stdout.readlines():
-    if isinstance(line, bytes):  # true in Python 3
-        line = line.decode()
-    message = message + line
-arcpy.AddMessage(message)
-
-# Calculate statistics on the output so that it displays properly
-arcpy.AddMessage('Calculate Statistics\n')
-arcpy.CalculateStatistics_management(gord)
-arcpy.CalculateStatistics_management(plen)
-arcpy.CalculateStatistics_management(tlen)
 # remove converted json file
 if arcpy.Exists(ogrfile):
-    extn_json = os.path.splitext(shfl)[1]   # get extension of the converted json file
+    # get extension of the converted json file
+    extn_json = os.path.splitext(shfl)[1]
     if extn_json == ".json":
         os.remove(shfl)
+
+# Check return code and add error message BEFORE raising exception
+if return_code != 0:
+    err_msg = f'GridNetwork failed with return code: {return_code}'
+    arcpy.AddError(err_msg)
+    # Include all messages in the exception so they're visible
+    raise arcpy.ExecuteError()

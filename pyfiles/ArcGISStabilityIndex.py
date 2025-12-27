@@ -1,9 +1,11 @@
 # Created by: Pabitra Dash
 
 import os
-import subprocess
+import sys
 
 import arcpy
+
+import Utils
 
 # get the input parameters
 slp_raster_file = arcpy.GetParameterAsText(0)
@@ -27,10 +29,16 @@ temp_output_files_directory = arcpy.GetParameterAsText(8)
 is_delete_intermediate_output_files = arcpy.GetParameterAsText(9)
 
 # create the cis_inputs.txt file from the provided above parameters
+
+# Add the current script directory to sys.path to allow importing StabilityIndex
 this_script_dir = os.path.dirname(os.path.realpath(__file__))
+if this_script_dir not in sys.path:
+    sys.path.insert(0, this_script_dir)
+
+# Import the StabilityIndex module
+import StabilityIndex
 
 si_control_file = os.path.join(temp_output_files_directory, 'Si_Control.txt')
-si_control_file = r'' + si_control_file
 
 with open(si_control_file, 'w') as file_obj:
     file_obj.write('# input parameters for combined stability index computation with road impact\n')
@@ -54,24 +62,74 @@ with open(si_control_file, 'w') as file_obj:
     else:
         file_obj.write('is_delete_intermediate_output_files=False\n')
 
-# put quotes around file paths in case they have spaces
-si_control_file = '"' + si_control_file + '"'
-py_script_to_execute = os.path.join(this_script_dir, 'StabilityIndex.py')
-py_script_to_execute = '"' + py_script_to_execute + '"'
-cmd = py_script_to_execute + \
-      ' --params ' + si_control_file
+try:
+    arcpy.AddMessage('\nStarting Stability Index computation...')
 
-# show executing command
-arcpy.AddMessage('\nEXECUTING COMMAND:\n' + cmd)
+    # Initialize parameters dictionary
+    params_dict = StabilityIndex._get_initialized_parameters_dict()
 
-# Capture the contents of shell command and print it to the arcgis dialog box
-process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-arcpy.AddMessage('\nProcess started:\n')
-start_message = "Please wait a few seconds. Computation is in progress ..."
-arcpy.AddMessage('\n' + start_message + '\n')
-for line in process.stdout.readlines():
-    if isinstance(line, bytes):	    # true in Python 3
-        line = line.decode()
+    # Validate and populate parameters from control file
+    StabilityIndex._validate_args(si_control_file, params_dict)
 
-    if start_message not in line:
-        arcpy.AddMessage(line)
+    # Process base raster file for weight grids if demang_file is provided
+    base_raster_file = params_dict[StabilityIndex.ParameterNames.dinf_slope_file]
+    if params_dict[StabilityIndex.ParameterNames.demang_file]:
+        temp_raster_file_weight_min = os.path.join(
+            params_dict[StabilityIndex.ParameterNames.temporary_output_files_directory],
+            StabilityIndex.IntermediateFiles.weight_min_raster
+        )
+        temp_raster_file_weight_max = os.path.join(
+            params_dict[StabilityIndex.ParameterNames.temporary_output_files_directory],
+            StabilityIndex.IntermediateFiles.weight_max_raster
+        )
+        Utils.initialize_output_raster_file(base_raster_file, temp_raster_file_weight_min)
+        Utils.initialize_output_raster_file(base_raster_file, temp_raster_file_weight_max)
+
+        # Generate catchment areas
+        temp_raster_file_sca_min = os.path.join(
+            params_dict[StabilityIndex.ParameterNames.temporary_output_files_directory],
+            StabilityIndex.IntermediateFiles.sca_min_raster
+        )
+        temp_raster_file_sca_max = os.path.join(
+            params_dict[StabilityIndex.ParameterNames.temporary_output_files_directory],
+            StabilityIndex.IntermediateFiles.sca_max_raster
+        )
+
+        messages = StabilityIndex._taudem_area_dinf(
+            temp_raster_file_weight_min,
+            params_dict[StabilityIndex.ParameterNames.demang_file],
+            temp_raster_file_sca_min
+        )
+        for msg in messages:
+            arcpy.AddMessage(msg)
+
+        messages = StabilityIndex._taudem_area_dinf(
+            temp_raster_file_weight_max,
+            params_dict[StabilityIndex.ParameterNames.demang_file],
+            temp_raster_file_sca_max
+        )
+        for msg in messages:
+            arcpy.AddMessage(msg)
+
+    # Generate combined stability index grid
+    messages = StabilityIndex._generate_combined_stability_index_grid(params_dict)
+    for msg in messages:
+        arcpy.AddMessage(msg)
+
+    # Delete intermediate files if requested
+    if params_dict[StabilityIndex.ParameterNames.is_delete_intermediate_output_files] == 'True':
+        StabilityIndex._delete_intermediate_output_files(params_dict)
+
+    # Only show success message if we reach here without exceptions
+    arcpy.AddMessage('\nStability Index computation completed successfully.')
+
+except Exception as e:
+    arcpy.AddError('\n' + '='*50)
+    arcpy.AddError('STABILITY INDEX COMPUTATION FAILED')
+    arcpy.AddError('='*50)
+    arcpy.AddError(str(e))
+    import traceback
+    arcpy.AddError('\nFull traceback:')
+    arcpy.AddError(traceback.format_exc())
+    # let ArcGIS know the execution failed
+    raise

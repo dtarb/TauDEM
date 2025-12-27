@@ -90,7 +90,8 @@ int dsllArea(char* angfile,char* ctptfile,char* dmfile,char* datasrc,char* lyrna
 	if( useOutlets == 1) {
 		if(rank==0){
 			if(readoutlets(datasrc,lyrname,uselyrname,lyrno,hSRSRaster, &numOutlets, x, y) !=0){
-				printf("Exiting \n");
+				printf("Read outlets error. Exiting \n");
+				fflush(stdout);
 				MPI_Abort(MCW,5);
 			}else {
 				MPI_Bcast(&numOutlets, 1, MPI_INT, 0, MCW);
@@ -141,6 +142,7 @@ int dsllArea(char* angfile,char* ctptfile,char* dmfile,char* datasrc,char* lyrna
 	tiffIO dm(dmfile, FLOAT_TYPE);
 	if(!ang.compareTiff(dm)) {
 		printf("File sizes do not match\n%s\n",dmfile);
+		fflush(stdout);
 		MPI_Abort(MCW,5);
 		return 1;  
 	}
@@ -152,6 +154,7 @@ int dsllArea(char* angfile,char* ctptfile,char* dmfile,char* datasrc,char* lyrna
 	tiffIO dg(dgfile, SHORT_TYPE);
 	if(!ang.compareTiff(dg)) {
 		printf("File sizes do not match\n%s\n",dgfile);
+		fflush(stdout);
 		MPI_Abort(MCW,5);
 		return 1;  
 	}
@@ -162,6 +165,7 @@ int dsllArea(char* angfile,char* ctptfile,char* dmfile,char* datasrc,char* lyrna
 	tiffIO q(qfile, FLOAT_TYPE);
 	if(!ang.compareTiff(q)) {
 		printf("File sizes do not match\n%s\n",qfile);
+		fflush(stdout);
 		MPI_Abort(MCW,5);
 		return 1;  
 	}
@@ -311,7 +315,7 @@ int dsllArea(char* angfile,char* ctptfile,char* dmfile,char* datasrc,char* lyrna
 
 	//Create and write TIFF file
 	float scaNodata = MISSINGFLOAT;
-	tiffIO cctpt(ctptfile, FLOAT_TYPE, &scaNodata, ang);
+	tiffIO cctpt(ctptfile, FLOAT_TYPE, scaNodata, ang);
 	cctpt.write(xstart, ystart, ny, nx, ctpt->getGridPointer());
 
 	double writet = MPI_Wtime();

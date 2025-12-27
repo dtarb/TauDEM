@@ -187,21 +187,29 @@ int main(int argc,char **argv)
 
 errexit:
 	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
-	   printf("Usage with specific file names:\n %s -p <pfile>\n",argv[0]);
-       printf("-plen <plenfile> -tlen <tlenfile> -gord <gordfile> [-o <outletfine>] [-mask <maskfile>]\n");
 	   printf("<basefilename> is the name of the raw digital elevation model\n");
+	   printf("The following are appended to the file names\n");
+	   printf("before the files are opened:\n");
+	   printf("p   D8 flow direction output file\n");
+	   printf("plen   the longest flow length upstream of each point output file.\n");
+	   printf("tlen   the total path length upstream of each point output file.\n");
+	   printf("gord   the grid of strahler order output file.\n\n");
+
+	   printf("Usage with specific file names:\n %s -p <pfile>\n",argv[0]);
+       printf("-plen <plenfile> -tlen <tlenfile> -gord <gordfile> [-o <outletfine>] [-lyrname <layer name>] [-lyrno <layer number>] [-mask <maskfile> [-thresh <threshold>]]\n");   
 	   printf("<pfile> is the D8 flow direction input file.\n");
 	   printf("<plenfile> is the longest flow length upstream of each point output file.\n");
 	   printf("<tlenfile> is the total path length upstream of each point output file.\n");
 	   printf("<gordfile> is the grid of strahler order output file.\n");
 	   printf("[-o <outletfile>] is the optional outlet shape input file.\n");
-       printf("[-mask <maskfile>] is the optional weight grid input file.\n");
-	   printf("The following are appended to the file names\n");
-       printf("before the files are opened:\n");
-       printf("p   D8 flow direction output file\n");
-       printf("plen   the longest flow length upstream of each point output file.\n");
-       printf("tlen   the total path length upstream of each point output file.\n");
-       printf("gord   the grid of strahler order output file.\n");
+	   printf("[-lyrname <layer name>] OGR layer name if outlets are not the first layer in outletfile (optional).\n");
+	   printf("[-lyrno <layer number>] OGR layer number if outlets are not the first layer in outletfile (optional).\n");
+	   printf("Layer name and layer number should not both be specified.\n");
+       printf("[-mask <maskfile> [-thresh <threshold>]].  maskfile is an optional mask grid input file.\n");
+	   printf("Where a maskfile is input, there is an additional option to specify a threshold.  This has to");
+	   printf("be immediately following the maskfile on the argument list.  The grid network is evaluated for");
+	   printf("grid cells where values of the maskfile grid read as 4 byte integers are >= threshold.");
+	   
        exit(0);
 } 
 

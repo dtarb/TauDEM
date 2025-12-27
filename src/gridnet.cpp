@@ -89,6 +89,7 @@ int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *
 			}//5
 			else {
 				printf("Error opening shapefile. Exiting \n");
+				fflush(stdout);
 				MPI_Abort(MCW,5);
 			}
 	}//4
@@ -145,6 +146,7 @@ int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *
 		tiffIO mask(maskfile,LONG_TYPE);
 		if(!p.compareTiff(mask)) {
 			printf("File sizes do not match\n%s\n",maskfile);
+			fflush(stdout);
 			MPI_Abort(MCW,5);
 			return 1;  
 		}
@@ -153,7 +155,7 @@ int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *
 	}
 	else
 	{
-		maskData = CreateNewPartition(LONG_TYPE, totalX, totalY, dxA, dyA, 1);
+		maskData = CreateNewPartition(LONG_TYPE, totalX, totalY, dxA, dyA, (int32_t)1);
 		thresh=0;  //  Here we have a partition filled with ones and a 0 threshold so mask condition is always satisfied
 	}
 	//Begin timer
@@ -176,7 +178,7 @@ int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *
 	tdpartition *gord;
 	plen = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, -1.0f);
 	tlen = CreateNewPartition(FLOAT_TYPE, totalX, totalY, dxA, dyA, -1.0f);
-	gord = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -1);
+	gord = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, (int16_t)-1);
 
 	// con is used to check for contamination at the edges
 	long i,j;
@@ -207,7 +209,7 @@ int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *
 	}
 
 	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -32768);
+	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, (int16_t)-32768);
 	
 	//Share information and set borders to zero
 	flowData->share();
@@ -288,6 +290,7 @@ int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *
 		//TODO - consider copying this statement into other memory allocations
 		if( bufferAbove == NULL || bufferBelow == NULL ) {
 			printf("Error allocating memory\n");
+			fflush(stdout);
 			MPI_Abort(MCW,5);
 		}
 		
@@ -473,11 +476,11 @@ int gridnet( char *pfile, char *plenfile, char *tlenfile, char *gordfile, char *
 	//Create and write TIFF file
 	short sNodata = -1;
 	float fNodata = -1.0f;
-	tiffIO gordIO(gordfile, SHORT_TYPE, &sNodata, p);
+	tiffIO gordIO(gordfile, SHORT_TYPE, sNodata, p);
 	gordIO.write(xstart, ystart, ny, nx, gord->getGridPointer());
-	tiffIO plenIO(plenfile, FLOAT_TYPE, &fNodata, p);
+	tiffIO plenIO(plenfile, FLOAT_TYPE, fNodata, p);
 	plenIO.write(xstart, ystart, ny, nx, plen->getGridPointer());
-	tiffIO tlenIO(tlenfile, FLOAT_TYPE, &fNodata, p);
+	tiffIO tlenIO(tlenfile, FLOAT_TYPE, fNodata, p);
 	tlenIO.write(xstart, ystart, ny, nx, tlen->getGridPointer());
 
 	double writet = MPI_Wtime();

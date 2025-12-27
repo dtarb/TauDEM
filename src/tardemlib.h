@@ -319,3 +319,5 @@ int threshold(char *ssafile,char *srcfile,char *maskfile, float thresh, int usem
 int sindexcombined(char *slopefile,  char *scaterrainfile, char *scarminroadfile,char* scarmaxroadfile,
            char *tergridfile, char *terparfile, char *satfile,char* sincombinedfile,double Rminter,double Rmaxter, 
 		   double *par);
+//This function calculates catchment hydraulic properties from HAND
+int catchhydrogeo(char *handfile, char*catchfile, char*catchlistfile, char *slpfile, char *hfile, char *hpfile);

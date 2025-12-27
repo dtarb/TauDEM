@@ -1,8 +1,9 @@
 # created by: Pabitra Dash
 
-import arcpy
 import os
-import subprocess
+import sys
+
+import arcpy
 
 # get the input parameters
 dem_grid = arcpy.GetParameterAsText(0)
@@ -25,43 +26,52 @@ region_feature_class_selected_attribute = arcpy.GetParameterAsText(4)
 output_region_grid = arcpy.GetParameterAsText(5)
 calibration_table_text_file = arcpy.GetParameterAsText(6)
 
-# construct command to execute
+# Add the current script directory to sys.path to allow importing SIRegionTool
 current_script_dir = os.path.dirname(os.path.realpath(__file__))
-# put quotes around file paths in case they have spaces
-dem_grid = '"' + dem_grid + '"'
-if len(region_grid) > 0:
-    region_grid = '"' + region_grid + '"'
+if current_script_dir not in sys.path:
+    sys.path.insert(0, current_script_dir)
 
-if len(region_feature_class) > 0:
-    region_feature_class = '"' + region_feature_class + '"'
+# Import the SIRegionTool module
+import SIRegionTool
 
-output_region_grid = '"' + output_region_grid + '"'
-calibration_table_text_file = '"' + calibration_table_text_file + '"'
+try:
+    arcpy.AddMessage('\nStarting region computation...')
 
-py_script_to_execute = os.path.join(current_script_dir, 'SIRegionTool.py')
-py_script_to_execute = '"' + py_script_to_execute + '"'
-cmd = py_script_to_execute + \
-      ' --dem ' + dem_grid + \
-      ' --parreg ' + output_region_grid + \
-      ' --att ' + calibration_table_text_file
+    # Call the validation function
+    SIRegionTool._validate_args(
+        dem_grid, region_grid if region_grid else None,
+        region_feature_class if region_feature_class else None,
+        region_feature_class_selected_attribute if region_feature_class_selected_attribute else 'ID',
+        output_region_grid, calibration_table_text_file
+        )
 
-if len(region_grid) > 0:
-    cmd += ' --parreg-in ' + region_grid
+    # Create parameter region grid
+    SIRegionTool._create_parameter_region_grid(
+        dem_grid,
+        region_feature_class if region_feature_class else None,
+        region_feature_class_selected_attribute if region_feature_class_selected_attribute else 'ID',
+        region_grid if region_grid else None,
+        output_region_grid
+        )
 
-if len(region_feature_class) > 0:
-    cmd += ' --shp ' + region_feature_class
-    cmd += ' --shp-att-name ' + region_feature_class_selected_attribute
+    # Create parameter attribute table
+    SIRegionTool._create_parameter_attribute_table_text_file(
+        output_region_grid,
+        region_grid if region_grid else None,
+        region_feature_class if region_feature_class else None,
+        calibration_table_text_file,
+        2.708, 2.708, 0.0, 0.25, 30.0, 45.0, 2000.0
+        )
 
-# show executing command
-arcpy.AddMessage('\nEXECUTING COMMAND:\n' + cmd)
+    arcpy.AddMessage('\nRegion computation successful.')
 
-# Capture the contents of shell command and print it to the arcgis dialog box
-process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-arcpy.AddMessage('\nProcess started:\n')
-start_message = "Please wait. It may take few seconds. Computation is in progress ..."
-arcpy.AddMessage(start_message)
-for line in process.stdout.readlines():
-    if isinstance(line, bytes):	    # true in Python 3
-        line = line.decode()
-    if start_message not in line:
-        arcpy.AddMessage(line)
+except Exception as e:
+    arcpy.AddError('\n' + '='*50)
+    arcpy.AddError('REGION COMPUTATION FAILED')
+    arcpy.AddError('='*50)
+    arcpy.AddError(str(e))
+    import traceback
+    arcpy.AddError('\nFull traceback:')
+    arcpy.AddError(traceback.format_exc())
+    # let ArcGIS know the execution failed
+    raise

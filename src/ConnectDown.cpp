@@ -166,6 +166,7 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletdatasrc, ch
 
 	if(!ad8IO.compareTiff(wIO)){
 		printf("ad8 and w files not the same size. Exiting \n");
+		fflush(stdout);
 		MPI_Abort(MCW,4);
 	}
 
@@ -645,17 +646,26 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletdatasrc, ch
 	delete [] twiddown;
 	
 	if(rank==0){
-		OGRRegisterAll();
+		OGRRegisterAll();         // Register all driversivers first
+		GDALAllRegister();        // Ensure GDAL is properly initialized
+		
 		int nfields;
 	    nfields=2; 		
 	    const char *pszDriverName;
-	    pszDriverName=getOGRdrivername( outletdatasrc);
-        driver = OGRGetDriverByName( pszDriverName );
-        if( driver == NULL )
-        {
-         printf( "%s warning: driver not available.\n", pszDriverName );
-         //exit( 1 );
-       }
+	    pszDriverName=getOGRdrivername(outletdatasrc);
+        driver = OGRGetDriverByName(pszDriverName);
+        if(driver == NULL) {
+			printf("Error: Could not load driver for %s. Driver name: %s\n", outletdatasrc, pszDriverName);
+			// Try printing available drivers
+			int count = OGRGetDriverCount();
+			printf("Available drivers:\n");
+			for(int i = 0; i < count; i++) {
+				OGRSFDriverH driver = OGRGetDriver(i);
+				printf("  - %s\n", OGR_Dr_GetName(driver));
+			}
+			MPI_Abort(MCW, 1);
+			return 1;
+		}
 
 		// open datasource if the datasoruce exists 
 	     if(pszDriverName=="SQLite")hDSsh= OGROpen(outletdatasrc, TRUE, NULL );
@@ -669,6 +679,9 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletdatasrc, ch
 	 //  hDSsh is not null when running on command line
 	 //  From inside ArcGIS the conditional for a warning hDSsh == NULL returns a true but somehow the below still works.
 
+	 char** papszOptions = NULL;
+	 papszOptions = CSLSetNameValue(papszOptions, "OVERWRITE", "YES");
+
 //	 int flag=1;
 	 if( hDSsh  != NULL ) 
 	 {
@@ -681,16 +694,27 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletdatasrc, ch
 		//OGR_L_ResetReading(hLayer1);
 	    //printf("hDSsh before: %d\n",hDSsh); fflush(stdout);
 
-		 
+
+
       // layer name is file name without extension
 	 if(strlen(outletlyr)==0){
-		char *outletlayername;
-		outletlayername=getLayername( outletdatasrc); // get layer name if the layer name is not provided
-	    hLayersh= OGR_DS_CreateLayer( hDSsh,outletlayername,hSRSRaster,wkbPoint, NULL);} 
-
-	 else {
-		 hLayersh= OGR_DS_CreateLayer( hDSsh, outletlyr ,hSRSRaster, wkbPoint, NULL ); }// provide same spatial reference as raster in streamnetshp fil
-		
+		// Chris George Suggestion
+		char outletlayername[MAXLN];
+		getLayername( outletdatasrc, outletlayername); // get layer name if the layer name is not provided
+		// Use NULL options for KML files
+		if(strstr(pszDriverName, "tif") != NULL || strstr(pszDriverName, "TIF") != NULL || strcmp(pszDriverName, "SQLite") == 0) {
+            hLayersh = OGR_DS_CreateLayer(hDSsh, outletlayername, hSRSRaster, wkbPoint, papszOptions);
+        } else {
+            hLayersh = OGR_DS_CreateLayer(hDSsh, outletlayername, hSRSRaster, wkbPoint, NULL);
+        }
+	 } else {
+		// Use NULL options for KML files  
+		if(strstr(pszDriverName, "tif") != NULL || strstr(pszDriverName, "TIF") != NULL || strcmp(pszDriverName, "SQLite") == 0) {
+            hLayersh = OGR_DS_CreateLayer(hDSsh, outletlyr, hSRSRaster, wkbPoint, papszOptions);
+        } else {
+            hLayersh = OGR_DS_CreateLayer(hDSsh, outletlyr, hSRSRaster, wkbPoint, NULL);
+        }
+	 }
 		//printf("hDSsh after: %d\n",hDSsh); fflush(stdout);
 		if( hLayersh  == NULL )
 		{
@@ -765,13 +789,25 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletdatasrc, ch
     //hLayer1 = OGR_DS_GetLayerByName( hDS1,layername );
     //OGR_L_ResetReading(hLayer1);
 	 if(strlen(movedoutletlyr)==0){
-		char *mvoutletlayername;
-		mvoutletlayername=getLayername( movedoutletdatasrc); // get layer name if the layer name is not provided
-	     hLayershmoved= OGR_DS_CreateLayer( hDSshmoved, mvoutletlayername,hSRSRaster, wkbPoint, NULL );} 
-
-	 else {
-		 hLayershmoved= OGR_DS_CreateLayer( hDSshmoved, movedoutletlyr,hSRSRaster, wkbPoint, NULL ); }// provide same spatial reference as raster in streamnetshp fil
-		
+	 // Chris George Suggestion
+		char mvoutletlayername[MAXLN];
+		getLayername( movedoutletdatasrc, mvoutletlayername); // get layer name if the layer name is not provided
+	    //char *mvoutletlayername;
+		//mvoutletlayername=getLayername( movedoutletdatasrc); // get layer name if the layer name is not provided
+		// Use papszOptions only for TIF files
+        if(strstr(pszDriverName1, "tif") != NULL || strstr(pszDriverName1, "TIF") != NULL || strcmp(pszDriverName1, "SQLite") == 0) {
+            hLayershmoved = OGR_DS_CreateLayer(hDSshmoved, mvoutletlayername, hSRSRaster, wkbPoint, papszOptions);
+        } else {
+            hLayershmoved = OGR_DS_CreateLayer(hDSshmoved, mvoutletlayername, hSRSRaster, wkbPoint, NULL);
+        }
+	 } else {
+		// Use papszOptions only for TIF files
+        if(strstr(pszDriverName1, "tif") != NULL || strstr(pszDriverName1, "TIF") != NULL || strcmp(pszDriverName1, "SQLite") == 0) {
+            hLayershmoved = OGR_DS_CreateLayer(hDSshmoved, movedoutletlyr, hSRSRaster, wkbPoint, papszOptions);
+        } else {
+            hLayershmoved = OGR_DS_CreateLayer(hDSshmoved, movedoutletlyr, hSRSRaster, wkbPoint, NULL);
+        }
+	 }
 		//printf("hDSsh after: %d\n",hDSsh); fflush(stdout);
 	
 	
@@ -781,6 +817,7 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletdatasrc, ch
         //exit( 1 );
     }
  
+	CSLDestroy(papszOptions);
 	
 	
     /* Add a few fields to the layer defn */
@@ -834,10 +871,10 @@ int connectdown(char *pfile, char *wfile, char *ad8file, char *outletdatasrc, ch
     delete [] outletsY;
 	delete [] part_has;
 
-
-
-
-
+	if(rank == 0) {
+		OGRCleanupAll();
+		GDALDestroyDriverManager();
+	}
 
 	end = MPI_Wtime();
 	double total,temp;

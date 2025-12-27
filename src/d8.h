@@ -1,4 +1,4 @@
-//#include "linearpart.h"
+#include "linearpart.h"
 
 //Write the slope information
 void writeSlope(tdpartition *flowDir, tdpartition *elevDEM, tdpartition* slopefile);

@@ -79,7 +79,8 @@ MPI_Init(NULL,NULL);
 	if( useOutlets == 1) {
 		if(rank==0){
 			if(readoutlets(datasrc,lyrname,uselyrname,lyrno, hSRSRaster,&numOutlets, x, y) !=0){
-				printf("Exiting \n");
+				printf("Read outlets error. Exiting \n");
+				fflush(stdout);
 				MPI_Abort(MCW,5);
 			}else {
 				MPI_Bcast(&numOutlets, 1, MPI_INT, 0, MCW);
@@ -123,6 +124,7 @@ MPI_Init(NULL,NULL);
 	tiffIO sa(safile,FLOAT_TYPE);
 	if(!p.compareTiff(sa)) {
 		printf("File sizes do not match\n%s\n",safile);
+		fflush(stdout);
 		MPI_Abort(MCW,5);
 		return 1;  
 	}
@@ -155,7 +157,7 @@ MPI_Init(NULL,NULL);
 	short tempShort=0;
 
 	tdpartition *neighbor;
-	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -32768);
+	neighbor = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, (int16_t)-32768);
 	
 	//Share information and set borders to zero
 	flowData->share();
@@ -255,7 +257,7 @@ MPI_Init(NULL,NULL);
 
 	//Create and write TIFF file
 	float aNodata = MISSINGFLOAT;
-	tiffIO a(ssafile, FLOAT_TYPE, &aNodata, p);
+	tiffIO a(ssafile, FLOAT_TYPE, aNodata, p);
 	a.write(xstart, ystart, ny, nx, ssa->getGridPointer());
 	double writet = MPI_Wtime();
  	double dataRead, compute, write, total,tempd;

@@ -3,10 +3,9 @@
 # Created By:  David Tarboton
 # Date:        1/25/14
 
-# Import ArcPy site-package and os modules
 import arcpy
 import os
-import subprocess
+import Utils
 
 # Inputs
 inlyr = arcpy.GetParameterAsText(0)
@@ -53,25 +52,19 @@ if idf != '':
 
 arcpy.AddMessage("\nCommand Line: " + cmd)
 
-# Submit command to operating system
-os.system(cmd)
+# Run the command using the shared utility function
+return_code = Utils.run_taudem_command(cmd, arcpy.AddMessage)
 
-# Capture the contents of shell command and print it to the arcgis dialog box
-process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-
-message = "\n"
-for line in process.stdout.readlines():
-    if isinstance(line, bytes):	    # true in Python 3
-        line = line.decode()
-    message = message + line
-arcpy.AddMessage(message)
-
-# Calculate statistics on the output so that it displays properly
-arcpy.AddMessage('Calculate Statistics\n')
-arcpy.CalculateStatistics_management(gw)
 # remove converted json file
 if arcpy.Exists(ogrfile):
-    extn_json = os.path.splitext(shfl)[1]   # get extension of the converted json file
+    # get extension of the converted json file
+    extn_json = os.path.splitext(shfl)[1]
     if extn_json == ".json":
         os.remove(shfl)
 
+# Check return code and add error message BEFORE raising exception
+if return_code != 0:
+    err_msg = f'GageWatershed failed with return code: {return_code}'
+    arcpy.AddError(err_msg)
+    # Include all messages in the exception so they're visible
+    raise arcpy.ExecuteError()

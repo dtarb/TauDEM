@@ -102,6 +102,7 @@ MPI_Init(NULL,NULL);
 	tiffIO srcf(srcfile,LONG_TYPE);
 	if(!pf.compareTiff(srcf)) {
 		printf("File sizes do not match\n%s\n",srcfile);
+		fflush(stdout);
 		MPI_Abort(MCW,5);
 		return 1;  //And maybe an unhappy error message
 	}
@@ -228,7 +229,7 @@ MPI_Init(NULL,NULL);
 
 	//Create and write TIFF file
 	float aNodata = MISSINGFLOAT;
-	tiffIO a(distfile, FLOAT_TYPE, &aNodata, pf);
+	tiffIO a(distfile, FLOAT_TYPE, aNodata, pf);
 	a.write(xstart, ystart, ny, nx, fdarr->getGridPointer());
 	double writet = MPI_Wtime();
         double dataRead, compute, write, total,tempd;

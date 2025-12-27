@@ -207,7 +207,7 @@ int setdir( char* demfile, char* angfile, char *slopefile, char *flowfile, int u
 
 	//Stop timer
 	computeSlopet = MPI_Wtime();
-	tiffIO slopeIO(slopefile, FLOAT_TYPE, &slopeNodata, dem);
+	tiffIO slopeIO(slopefile, FLOAT_TYPE, slopeNodata, dem);
 	slopeIO.write(xstart, ystart, ny, nx, slope->getGridPointer());
 	}  // This bracket intended to destruct slope partition and release memory
 
@@ -243,7 +243,7 @@ int setdir( char* demfile, char* angfile, char *slopefile, char *flowfile, int u
 	double computeFlatt = MPI_Wtime();
 //	printf("Before angwrite rank: %d\n",rank);
 	float flowDirNodata=MISSINGFLOAT;
-	tiffIO flowIO(angfile, FLOAT_TYPE, &flowDirNodata, dem);
+	tiffIO flowIO(angfile, FLOAT_TYPE, flowDirNodata, dem);
 	flowIO.write(xstart, ystart, ny, nx, flowDir->getGridPointer());
 
 	double writet = MPI_Wtime();
@@ -282,12 +282,13 @@ int setdir( char* demfile, char* angfile, char *slopefile, char *flowfile, int u
 	MPI_Finalize();
 	return 0;
 }
-void   VSLOPE(float E0,float E1, float E2,
-			  float D1,float D2,float DD,
-			  float *S,float *A)
+//  DGT 10/28/25 changed vslope to double
+void   VSLOPE(double E0,double E1, double E2,
+			  double D1,double D2,double DD,
+			  double *S,double *A)
 {
 	//SUBROUTINE TO RETURN THE SLOPE AND ANGLE ASSOCIATED WITH A DEM PANEL 
-	float S1,S2,AD;
+	double S1,S2,AD;
 	if(D1!=0)
 		S1=(E0-E1)/D1;
 	if(D2!=0)
@@ -295,8 +296,8 @@ void   VSLOPE(float E0,float E1, float E2,
 
 	if(S2==0 && S1==0) *A=0;
 	else
-		*A= (float) atan2(S2,S1);
-	AD= (float) atan2(D2,D1);
+		*A=  atan2(S2,S1);
+	AD= atan2(D2,D1);
 	if(*A  <   0.)
 	{
 		*A=0.;
@@ -308,18 +309,18 @@ void   VSLOPE(float E0,float E1, float E2,
 		*S=(E0-E2)/DD;
 	}
 	else
-		*S= (float) sqrt(S1*S1+S2*S2);
+		*S= sqrt(S1*S1+S2*S2);
 }
 // Sets only flowDir only where there is a positive slope
 // Returns number of cells which are flat
 
-void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition *flowDir, tdpartition *slope)
+void   SET2(int I, int J,double *DXX,double DD, tdpartition *elevDEM, tdpartition *flowDir, tdpartition *slope)
 {
 	double dxA = elevDEM->getdxA();
 	double dyA = elevDEM->getdyA();
-	float SK[9];
-	float ANGLE[9];
-	float SMAX;
+	double SK[9];
+	double ANGLE[9];
+	double SMAX;
 	float tempFloat;
 	int K;
 	int KD;
@@ -336,10 +337,13 @@ void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition 
 
 	for(K=1; K<=8; K++)
 	{
+		// DGT 10/28/25
+		// Try double precision for elevations given to vslope
+		double a=(double)elevDEM->getData(J,I,tempFloat);
+		double b=(double)elevDEM->getData(J+J1[K],I+I1[K],tempFloat);
+		double c=(double)elevDEM->getData(J+J2[K],I+I2[K],tempFloat);
 		VSLOPE(
-			elevDEM->getData(J,I,tempFloat),//felevg.d[J][I],
-			elevDEM->getData(J+J1[K],I+I1[K],tempFloat),//[felevg.d[J+J1[K]][I+I1[K]],
-			elevDEM->getData(J+J2[K],I+I2[K],tempFloat),//felevg.d[J+J2[K]][I+I2[K]],
+			a,b,c,
 			DXX[ID1[K]],
 			DXX[ID2[K]],
 			DD,
@@ -365,14 +369,14 @@ void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition 
 		tempFloat = (float) (ANGC[KD]*(PI/2)+ANGF[KD]*ANGLE[KD]) ;
 		flowDir->setData(J,I,tempFloat);//set to angle
 	}
-	slope->setData(J,I,SMAX);
+	slope->setData(J,I,(float)SMAX);
 }
 //Overloaded SET2 for use in resolve flats when slope is no longer recorded.  Also uses artificial elevations and actual elevations
-void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition *elev2, tdpartition *flowDir, tdpartition *dn)
+void   SET2(int I, int J,double *DXX,double DD, tdpartition *elevDEM, tdpartition *elev2, tdpartition *flowDir, tdpartition *dn)
 {
-	float SK[9];
-	float ANGLE[9];
-	float SMAX=0.0;
+	double SK[9];
+	double ANGLE[9];
+	double SMAX=0.0;
 	float tempFloat;
 	short tempShort, tempShort1, tempShort2;
 	int K;
@@ -393,9 +397,9 @@ void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition 
 		dn->getData(J+J1[K],I+I1[K],tempShort1);//Check each square to see if it is in the flat.  If it is in the flat, use artifical elevations if not use real elevations
 		dn->getData(J+J2[K],I+I2[K],tempShort2);//dn = 0 if it is not in the flat.  dn = 1 if in flat.
 		if(tempShort1 <= 0 && tempShort2 <= 0) { //Both E1 and E2 are outside the flat get slope and angle
-			float a=elevDEM->getData(J,I,tempFloat);
-			float b=elevDEM->getData(J+J1[K],I+I1[K],tempFloat);
-			float c=elevDEM->getData(J+J2[K],I+I2[K],tempFloat);
+			double a=(double)elevDEM->getData(J,I,tempFloat);
+			double b=(double)elevDEM->getData(J+J1[K],I+I1[K],tempFloat);
+			double c=(double)elevDEM->getData(J+J2[K],I+I2[K],tempFloat);
 			VSLOPE(
 				a,//E0
 				b,//E1
@@ -424,8 +428,8 @@ void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition 
 			}
 
 		}else if(tempShort1 <= 0 && tempShort2 >0){//E1 is outside of the flat and E2 is inside the flat. Use DEM elevations. tempShort2/E2 is in the artificial grid
-			float a=elevDEM->getData(J,I,tempFloat);
-			float b=elevDEM->getData(J+J1[K],I+I1[K],tempFloat);
+			double a=(double)elevDEM->getData(J,I,tempFloat);
+			double b=(double)elevDEM->getData(J+J1[K],I+I1[K],tempFloat);
 
 			if(a>=b)
 			{
@@ -438,9 +442,9 @@ void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition 
 			short c1=elev2->getData(J+J2[K],I+I2[K],tempShort);
 			short b1=max(a1,c1);
 			VSLOPE(
-				(float)a1,//felevg.d[J][I],
-				(float)b1,//[felevg.d[J+J1[K]][I+I1[K]],
-				(float)c1,//felevg.d[J+J2[K]][I+I2[K]],
+				(double)a1,//felevg.d[J][I],
+				(double)b1,//[felevg.d[J+J1[K]][I+I1[K]],
+				(double)c1,//felevg.d[J+J2[K]][I+I2[K]],
 				DXX[ID1[K]],//dx or dy
 				DXX[ID2[K]],//dx or dy
 				DD,//Hypotenuse
@@ -452,14 +456,14 @@ void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition 
 				KD=K;
 			}
 		}else if(tempShort1 > 0 && tempShort2 <= 0){//E2 is out side of the flat and E1 is inside the flat, use DEM elevations
-			float a=elevDEM->getData(J,I,tempFloat);
+			double a=(double)elevDEM->getData(J,I,tempFloat);
 			//float b=elevDEM->getData(J+J1[K],I+I1[K],tempFloat);
-			float c=elevDEM->getData(J+J2[K],I+I2[K],tempFloat);
+			double c=(double)elevDEM->getData(J+J2[K],I+I2[K],tempFloat);
 			if(a>=c) 
 			{
 				if(!diagOutFound)
 				{
-					ANGLE[K]=(float) atan2(DXX[ID2[K]],DXX[ID1[K]]);
+					ANGLE[K]=atan2(DXX[ID2[K]],DXX[ID1[K]]);
 					SK[K]=0.0;
 					KD=K;
 					diagOutFound=true;
@@ -471,9 +475,9 @@ void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition 
 				short b1=elev2->getData(J+J1[K],I+I1[K],tempShort);
 				short c1=max(a1,b1);
 				VSLOPE(
-					(float)a1,//felevg.d[J][I],
-					(float)b1,//[felevg.d[J+J1[K]][I+I1[K]],
-					(float)c1,//felevg.d[J+J2[K]][I+I2[K]],
+					(double)a1,//felevg.d[J][I],
+					(double)b1,//[felevg.d[J+J1[K]][I+I1[K]],
+					(double)c1,//felevg.d[J+J2[K]][I+I2[K]],
 					DXX[ID1[K]],//dx or dy
 					DXX[ID2[K]],//dx or dy
 					DD,//Hypotenuse
@@ -492,9 +496,9 @@ void   SET2(int I, int J,float *DXX,float DD, tdpartition *elevDEM, tdpartition 
 			b = elev2->getData(J+J1[K],I+I1[K],b);
 			c = elev2->getData(J+J2[K],I+I2[K],c);
 			VSLOPE(
-				(float)a,//felevg.d[J][I],
-				(float)b,//[felevg.d[J+J1[K]][I+I1[K]],
-				(float)c,//felevg.d[J+J2[K]][I+I2[K]],
+				(double)a,//felevg.d[J][I],
+				(double)b,//[felevg.d[J+J1[K]][I+I1[K]],
+				(double)c,//felevg.d[J+J2[K]][I+I2[K]],
 				DXX[ID1[K]],//dx or dy
 				DXX[ID2[K]],//dx or dy
 				DD,//Hypotenuse
@@ -568,8 +572,12 @@ long setPosDirDinf(tdpartition *elevDEM, tdpartition *flowDir, tdpartition *slop
 					elevDEM->getdxdyc(j,tempdxc,tempdyc);
 		        
 					
-					float DXX[3] = {0,tempdxc,tempdyc};//tardemlib.cpp ln 1291
-					float DD = sqrt(tempdxc*tempdxc+tempdyc*tempdyc);//tardemlib.cpp ln 1293
+					double DXX[3] = {0,tempdxc,tempdyc};//tardemlib.cpp ln 1291
+					double DD = sqrt(tempdxc*tempdxc+tempdyc*tempdyc);//tardemlib.cpp ln 1293
+//					if(j==553 && i==325)  // DGT Debug code 10/28/25 could delete later
+//					{
+//						int debug=1;
+//					}
 					SET2(j,i,DXX,DD, elevDEM,flowDir,slope);//i=y in function form old code j is x switched on purpose
 					//  Use SET2 from serial code here modified to get what it has as felevg.d from elevDEM partition
 					//  Modify to return 0 if there is a 0 slope.  Modify SET2 to output flowDIR as no data (do nothing 
@@ -611,10 +619,10 @@ long resolveflats( tdpartition *elevDEM, tdpartition *flowDir, queue<node> *que,
 
 	//create and initialize temporary storage for Garbrecht and Martz
 	tdpartition *elev2, *dn, *s;
-	elev2 = CreateNewPartition(SHORT_TYPE, totalx, totaly, dxA, dyA, 1);
+	elev2 = CreateNewPartition(SHORT_TYPE, totalx, totaly, dxA, dyA,(int16_t)1);
 	   //  The assumption here is that resolving a flat does not increment a cell value 
 	   //  more than fits in a short
-	dn = CreateNewPartition(SHORT_TYPE, totalx, totaly, dxA, dyA, 0);
+	dn = CreateNewPartition(SHORT_TYPE, totalx, totaly, dxA, dyA, (int16_t)0);
 
 	node temp;
 	long nflat=0, iflat;
@@ -725,7 +733,7 @@ long resolveflats( tdpartition *elevDEM, tdpartition *flowDir, queue<node> *que,
 		//	done = true;
 	}
 	//  DGT moved from above - write directly into elev2
-	s = CreateNewPartition(SHORT_TYPE, totalx, totaly, dxA, dyA, 0);  //  Use 0 as no data to avoid need to initialize
+	s = CreateNewPartition(SHORT_TYPE, totalx, totaly, dxA, dyA, (int16_t)0);  //  Use 0 as no data to avoid need to initialize
 
 	//incrise - drain away from higher ground
 	done = false;
@@ -799,8 +807,8 @@ long resolveflats( tdpartition *elevDEM, tdpartition *flowDir, queue<node> *que,
 				//  direction based on the artificial elevations
 
 	elevDEM->getdxdyc(j,tempdxc,tempdyc);
-	float DXX[3] = {0,tempdxc,tempdyc};//tardemlib.cpp ln 1291
-	float DD = sqrt(tempdxc*tempdxc+tempdyc*tempdyc);//tardemlib.cpp ln 1293
+	double DXX[3] = {0,tempdxc,tempdyc};//tardemlib.cpp ln 1291
+	double DD = sqrt(tempdxc*tempdxc+tempdyc*tempdyc);//tardemlib.cpp ln 1293
 
 			SET2(j,i,DXX,DD,elevDEM,elev2,flowDir,dn);	//use new elevations to calculate flowDir.	
 			if(!flowDir->isNodata(i,j)&& flowDir->getData(i,j,tempFloat)< 0.) //this is still a flat

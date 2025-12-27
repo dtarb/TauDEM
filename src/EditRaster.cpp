@@ -106,7 +106,7 @@ int editraster(char *rasterfile, char *newfile, char *changefile)
 
 	//Create empty partition to store new information
 	tdpartition *newvals;
-	newvals = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, -32768);
+	newvals = CreateNewPartition(SHORT_TYPE, totalX, totalY, dxA, dyA, (int16_t)-32768);
 
 	// replicate		
 	for (long j = 0; j < ny; j++) {
@@ -158,7 +158,7 @@ int editraster(char *rasterfile, char *newfile, char *changefile)
 
 	//Create and write TIFF file
 	short aNodata = -32768;
-	tiffIO newIO(newfile, SHORT_TYPE, &aNodata, rasterIO);
+	tiffIO newIO(newfile, SHORT_TYPE, aNodata, rasterIO);
 	newIO.write(xstart, ystart, ny, nx, newvals->getGridPointer());
 
 	//Brackets force MPI-dependent objects to go out of scope before Finalize is called

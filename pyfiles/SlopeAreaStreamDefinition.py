@@ -3,10 +3,9 @@
 # Created By:  David Tarboton
 # Date:        9/29/11
 
-# Import ArcPy site-package and os modules
 import arcpy
 import os
-import subprocess
+import Utils
 
 # Inputs
 inlyr = arcpy.GetParameterAsText(0)
@@ -107,19 +106,17 @@ arcpy.AddMessage("Logarithmic Spacing: " + logspace)
 # Construct first command
 cmd = 'mpiexec -n ' + inputProc + ' SlopeArea -slp ' + '"' + slp + '"' + ' -sca ' + '"' + sca + '"' + \
       ' -sa ' + '"' + sa + '"' + ' -par ' + slpexp + ' ' + areaexp
-arcpy.AddMessage("\nCommand Line: " + cmd)
-# Submit command to operating system
-os.system(cmd)
-# Capture the contents of shell command and print it to the arcgis dialog box
-process=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 
-message = "\n"
-for line in process.stdout.readlines():
-    if isinstance(line, bytes):  # true in Python 3
-        line = line.decode()
-    message = message + line
-arcpy.AddMessage(message)
-arcpy.CalculateStatistics_management(sa)
+arcpy.AddMessage("\nCommand Line: " + cmd)
+
+# Run the command using the shared utility function
+return_code = Utils.run_taudem_command(cmd, arcpy.AddMessage)
+
+# Check return code and add error message BEFORE raising exception
+if return_code != 0:
+    err_msg = f'SlopeArea failed with return code: {return_code}'
+    arcpy.AddError(err_msg)
+    raise arcpy.ExecuteError()
 
 # Construct second command
 cmd = 'mpiexec -n ' + inputProc + ' D8FlowPathExtremeUp -p ' + '"' + p + '"' + ' -sa ' + '"' + sa + '"' + \
@@ -132,18 +129,15 @@ if contcheck == 'false':
     cmd = cmd + ' -nc '
 
 arcpy.AddMessage("\nCommand Line: " + cmd)
-# Submit command to operating system
-os.system(cmd)
-# Capture the contents of shell command and print it to the arcgis dialog box
-process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 
-message = "\n"
-for line in process.stdout.readlines():
-    if isinstance(line, bytes):  # true in Python 3
-        line = line.decode()
-    message = message + line
-arcpy.AddMessage(message)
-arcpy.CalculateStatistics_management(ssa)
+# Run the command using the shared utility function
+return_code = Utils.run_taudem_command(cmd, arcpy.AddMessage)
+
+# Check return code and add error message BEFORE raising exception
+if return_code != 0:
+    err_msg = f'D8FlowPathExtremeUp failed with return code: {return_code}'
+    arcpy.AddError(err_msg)
+    raise arcpy.ExecuteError()
 
 if (usedroprange == 'true') and arcpy.Exists(ogrlyr):
     # Construct third command
@@ -157,17 +151,14 @@ if (usedroprange == 'true') and arcpy.Exists(ogrlyr):
         cmd = cmd + '0'
 
     arcpy.AddMessage("\nCommand Line: " + cmd)
-    # Submit command to operating system
-    os.system(cmd)
-    # Capture the contents of shell command and print it to the arcgis dialog box
-    process=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    # Run the command using the shared utility function
+    return_code = Utils.run_taudem_command(cmd, arcpy.AddMessage)
+    # Check return code and add error message BEFORE raising exception
+    if return_code != 0:
+        err_msg = f'DropAnalysis failed with return code: {return_code}'
+        arcpy.AddError(err_msg)
+        raise arcpy.ExecuteError()
 
-    message = "\n"
-    for line in process.stdout.readlines():
-        if isinstance(line, bytes):  # true in Python 3
-            line = line.decode()
-        message = message + line
-    arcpy.AddMessage(message)
     # (threshold,rest)=line.split(' ',1)
 
     drpfile = open(drp,"r")
@@ -183,21 +174,21 @@ else:
     cmd = cmd + ' -thresh ' + thresh
 if arcpy.Exists(masklyr):
     cmd = cmd + ' -mask ' + '"' + mask + '"'
-arcpy.AddMessage("\nCommand Line: " + cmd)
-# Submit command to operating system
-os.system(cmd)
-# Capture the contents of shell command and print it to the arcgis dialog box
-process=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 
-message = "\n"
-for line in process.stdout.readlines():
-    if isinstance(line, bytes):	    # true in Python 3
-        line = line.decode()
-    message = message + line
-arcpy.AddMessage(message)
-arcpy.CalculateStatistics_management(src)   # remove converted json file
+arcpy.AddMessage("\nCommand Line: " + cmd)
+
+# Run the command using the shared utility function
+return_code = Utils.run_taudem_command(cmd, arcpy.AddMessage)
+
+# remove converted json file
 if arcpy.Exists(ogrlyr):
-    extn_json = os.path.splitext(shfl)[1]   # get extension of the converted json file
+    # get extension of the converted json file
+    extn_json = os.path.splitext(shfl)[1]
     if extn_json == ".json":
         os.remove(shfl)
 
+# Check return code and add error message BEFORE raising exception
+if return_code != 0:
+    err_msg = f'Threshold failed with return code: {return_code}'
+    arcpy.AddError(err_msg)
+    raise arcpy.ExecuteError()

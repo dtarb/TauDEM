@@ -161,6 +161,7 @@ int hdisttoridgegrd(char *angfile, char *wfile, char *rtrfile, int statmethod,
 		tiffIO w(wfile, FLOAT_TYPE);
 		if(!ang.compareTiff(w)) {
 			printf("File sizes do not match\n%s\n",wfile);
+			fflush(stdout);
 			MPI_Abort(MCW,5);
 		return 1; 
 		}
@@ -318,7 +319,7 @@ int hdisttoridgegrd(char *angfile, char *wfile, char *rtrfile, int statmethod,
 
 	//Create and write TIFF file
 	float ddNodata = MISSINGFLOAT;
-	tiffIO dd(rtrfile, FLOAT_TYPE, &ddNodata, ang);
+	tiffIO dd(rtrfile, FLOAT_TYPE, ddNodata, ang);
 	dd.write(xstart, ystart, ny, nx, dts->getGridPointer());
 
 	double writet = MPI_Wtime();
@@ -398,6 +399,7 @@ int vrisetoridgegrd(char *angfile, char *felfile, char *rtrfile, int statmethod,
 	tiffIO fel(felfile, FLOAT_TYPE);
 	if(!ang.compareTiff(fel)) {
 		printf("File sizes do not match\n%s\n",felfile);
+		fflush(stdout);
 		MPI_Abort(MCW,5);
 	return 1; 
 	}
@@ -562,7 +564,7 @@ int vrisetoridgegrd(char *angfile, char *felfile, char *rtrfile, int statmethod,
 
 	//Create and write TIFF file
 	float ddNodata = MISSINGFLOAT;
-	tiffIO dd(rtrfile, FLOAT_TYPE, &ddNodata, ang);
+	tiffIO dd(rtrfile, FLOAT_TYPE, ddNodata, ang);
 	dd.write(xstart, ystart, ny, nx, dts->getGridPointer());
 
 	double writet = MPI_Wtime();
@@ -659,6 +661,7 @@ int pdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 	tiffIO fel(felfile, FLOAT_TYPE);
 	if(!ang.compareTiff(fel)) {
 		printf("File sizes do not match\n%s\n",felfile);
+		fflush(stdout);
 		MPI_Abort(MCW,5);
 	return 1; 
 	}
@@ -671,6 +674,7 @@ int pdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 		tiffIO w(wfile, FLOAT_TYPE);
 		if(!ang.compareTiff(w)) {
 			printf("File sizes do not match\n%s\n",wfile);
+			fflush(stdout);
 			MPI_Abort(MCW,5);
 		return 1; 
 		}
@@ -882,7 +886,7 @@ int pdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 
 	//Create and write TIFF file
 	float ddNodata = MISSINGFLOAT;
-	tiffIO dd(rtrfile, FLOAT_TYPE, &ddNodata, ang);
+	tiffIO dd(rtrfile, FLOAT_TYPE, ddNodata, ang);
 	dd.write(xstart, ystart, ny, nx, dtsh->getGridPointer());
 
 	double writet = MPI_Wtime();
@@ -980,6 +984,7 @@ int sdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 	tiffIO fel(felfile, FLOAT_TYPE);
 	if(!ang.compareTiff(fel)) {
 		printf("File sizes do not match\n%s\n",felfile);
+		fflush(stdout);
 		MPI_Abort(MCW,5);
 	return 1; 
 	}
@@ -992,6 +997,7 @@ int sdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 		tiffIO w(wfile, FLOAT_TYPE);
 		if(!ang.compareTiff(w)) {
 			printf("File sizes do not match\n%s\n",wfile);
+			fflush(stdout);
 			MPI_Abort(MCW,5);
 		return 1; 
 		}
@@ -1172,7 +1178,7 @@ int sdisttoridgegrd(char *angfile, char *felfile, char *wfile, char *rtrfile,
 
 	//Create and write TIFF file
 	float ddNodata = MISSINGFLOAT;
-	tiffIO dd(rtrfile, FLOAT_TYPE, &ddNodata, ang);
+	tiffIO dd(rtrfile, FLOAT_TYPE, ddNodata, ang);
 	dd.write(xstart, ystart, ny, nx, dts->getGridPointer());
 
 	double writet = MPI_Wtime();
