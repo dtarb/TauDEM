@@ -49,9 +49,9 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)  
 {
-   char slopefile[MAXLN],scafile[MAXLN], safile[MAXLN];
+   char slopefile[MAXLN] = "", scafile[MAXLN] = "", safile[MAXLN] = "";
    float p[2];
-   int err;
+   int err = 0;
       
    if(argc < 2) goto errexit;
    // Set defaults
@@ -115,10 +115,15 @@ int main(int argc,char **argv)
 		    else goto errexit;
 		}
    }
+
+   	if (slopefile[0] == '\0' || scafile[0] == '\0' || safile[0] == '\0') goto errexit;
+
     if((err=slopearea(slopefile,scafile, safile,p)) != 0)
         printf("SlopeArea Error %d\n",err);
 
+	if (err != 0) return err;
 	return 0;
+
 errexit:
    printf("Simple Use:\n %s <basefilename>\n",argv[0]);
    printf("Use with specific file names:\n %s -slp <slopefile>\n",argv[0]);
@@ -129,6 +134,5 @@ errexit:
    printf("<safile> is the name of the output file with the result slope^m x (contributing area)^n.\n");
    printf("<m> is the exponent on slope, default value 2 if not specified.\n");
    printf("<n> is the exponent on contributing area, default value 1 if not specified.\n");
-   return 0; 
+   return 1; 
 } 
-   

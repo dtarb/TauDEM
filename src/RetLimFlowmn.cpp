@@ -50,8 +50,8 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char angfile[MAXLN],wgfile[MAXLN],rcfile[MAXLN],qrlfile[MAXLN];
-   int err,i;
+   char angfile[MAXLN] = "", wgfile[MAXLN] = "", rcfile[MAXLN] = "", qrlfile[MAXLN] = "";
+   int err = 0, i;
    
    if(argc < 2)
     {  
@@ -122,12 +122,16 @@ int main(int argc,char **argv)
 		nameadd(qrlfile,argv[1],"qrl");
 		nameadd(wgfile,argv[1],"wg");
 	}  
+
+	if (angfile[0] == '\0' || wgfile[0] == '\0' || rcfile[0] == '\0' || qrlfile[0] == '\0') goto errexit;
+
 	if(err=retlimro(angfile, wgfile, rcfile, qrlfile) != 0)
         printf("RetlimFlow error %d\n",err);
 
+	if (err != 0) return err;
 	return 0;
 
-	errexit:
+errexit:
 	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
 	   printf("Usage with specific file names:\n %s -ang <angfile>",argv[0]);
        printf("-rc <rcfile> -wg <wgfile> -qrl <qrlfile>\n");
@@ -142,5 +146,5 @@ int main(int argc,char **argv)
 	   printf("rc    retention capacity (input)\n");
 	   printf("wg     weight grid (input)\n");
 	   printf("qrl   retention limited runoff (output)\n");
-       exit(0); 
+       return 1; 
 }

@@ -49,9 +49,11 @@ int setregion(char *fdrfile, char *regiongwfile, char *newfile, int32_t regionID
 
 int main(int argc,char **argv)  
 {
-   char fdrfile[MAXLN],regiongwfile[MAXLN],newfile[MAXLN];
+   char fdrfile[MAXLN] = "",regiongwfile[MAXLN] = "",newfile[MAXLN] = "";
    int32_t regionID = 1;
    int i = 1;
+   int err = 0;
+
    if(argc <= 2) goto errexit;	
 	while (argc > i)
 	{
@@ -99,16 +101,19 @@ int main(int argc,char **argv)
 		else goto errexit;
 
 	}
-	int err;
-    if( (err= setregion(fdrfile, regiongwfile, newfile, regionID) != 0))
+	
+	if (fdrfile[0] == '\0' || regiongwfile[0] == '\0' || newfile[0] == '\0') goto errexit;
+
+    if( (err= setregion(fdrfile, regiongwfile, newfile, regionID)) != 0)
         printf("Set Region Error %d\n",err);
 
+	if (err != 0) return err;
 	return 0;
+
 errexit:
    printf("SetRetion use:\n %s -p <flow direction file>\n",argv[0]);
    printf("-gw <region gage watershed file> \n");
    printf("-out <output region file> \n");
    printf("[-id <Region identifier> (if ommitted defaults to 1)] \n");
-   return 0; 
+   return 1; 
 } 
-   

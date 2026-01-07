@@ -54,8 +54,8 @@ email:  dtarb@usu.edu
 int flowdircond( char *pfile, char *zfile, char *zfdcfile);
 int main(int argc,char **argv)
 {
-  	char pfile[MAXLN], zfile[MAXLN], zfdcfile[MAXLN];
-  	int err, i;
+  	char pfile[MAXLN] = "", zfile[MAXLN] = "", zfdcfile[MAXLN] = "";
+  	int err = 0, i;
 
 	if(argc < 2)
 	{
@@ -113,9 +113,12 @@ int main(int argc,char **argv)
 		nameadd(zfdcfile,argv[1],"zfdc");	
 	}
 
+	if (pfile[0] == '\0' || zfile[0] == '\0' || zfdcfile[0] == '\0') goto errexit;
+
 	if((err=flowdircond(pfile, zfile, zfdcfile)) != 0)
 		printf("flowdiircond error %d\n",err);
 
+	if (err != 0) return err;
 	return 0;
 
 errexit:
@@ -124,5 +127,5 @@ errexit:
 	printf("<pfile> is the name of the input D8 flow direction raster file.\n");
 	printf("<zfile> is the name of the input elevation raster file.\n");
 	printf("<zfdcfile> is the name of the output conditioned elevation raster file.\n");
-	return 0;
+	return 1;
 }

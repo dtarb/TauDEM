@@ -48,8 +48,8 @@ email:  dtarb@usu.edu
   
 int main(int argc,char **argv)
 {
-   char pfile[MAXLN],afile[MAXLN],wfile[MAXLN],datasrc[MAXLN],lyrname[MAXLN];
-   int err,useOutlets=0,uselyrname=0,usew=0,lyrno=0,contcheck=1,i;
+   char pfile[MAXLN] = "", afile[MAXLN] = "", wfile[MAXLN] = "", datasrc[MAXLN] = "", lyrname[MAXLN] = "";
+   int err = 0,useOutlets=0,uselyrname=0,usew=0,lyrno=0,contcheck=1,i;
       
    if(argc < 2)
     {  
@@ -154,10 +154,12 @@ int main(int argc,char **argv)
 		nameadd(pfile,argv[1],"ang");
 	}   
    
-   if((err=area(pfile,afile,datasrc,lyrname,uselyrname,lyrno,wfile,useOutlets,usew,contcheck)) != 0)
+	if ( afile[0] == '\0' || pfile[0] == '\0') goto errexit;
+
+    if((err=area(pfile,afile,datasrc,lyrname,uselyrname,lyrno,wfile,useOutlets,usew,contcheck)) != 0)
         printf("area error %d\n",err);
    
-
+	if (err != 0) return err;
 	return 0;
 	
 errexit:
@@ -174,5 +176,5 @@ errexit:
        printf("before the files are opened:\n");
        printf("sca   D-infinity contributing area file (output)\n");
 	   printf("ang   D-infinity flow direction output file\n");
-       exit(0); 
+       return 1;
 } 

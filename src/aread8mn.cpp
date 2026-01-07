@@ -48,16 +48,16 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char pfile[MAXLN],afile[MAXLN],wfile[MAXLN],datasrc[MAXLN],lyrname[MAXLN];
-   int err,useOutlets=0,uselyrname=0,usew=0,contcheck=1,i,lyrno=0;
+   char pfile[MAXLN] = "", afile[MAXLN] = "", wfile[MAXLN] = "", datasrc[MAXLN] = "", lyrname[MAXLN] = "";
+   int err = 0, useOutlets = 0, uselyrname = 0, usew = 0, contcheck = 1, i, lyrno = 0;
 
    if(argc < 2)
     {  
 		printf("Error: To run this program, use either the Simple Usage option or\n");
 		printf("the Usage with Specific file names option\n");
-	   goto errexit;
+	    goto errexit;
     }
-   
+
    if(argc > 2)
 	{
 		i = 1;
@@ -153,41 +153,30 @@ int main(int argc,char **argv)
 		nameadd(afile,argv[1],"ad8");
 		nameadd(pfile,argv[1],"p");
 	}
+	if ( afile[0] == '\0' || pfile[0] == '\0') goto errexit;
 
     if( (err=aread8(pfile,afile,datasrc,lyrname,uselyrname,lyrno,wfile,useOutlets,usew,contcheck)) != 0)
+	{
         printf("area error %d\n",err);
+	}
 
+	if (err != 0) return err;
 	return 0;
-	errexit:
-	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
-	   printf("Usage with specific file names:\n %s -p <pfile>\n",argv[0]);
-       printf("-ad8 <afile> [-o <shfile>] [-wg <wfile>]\n");
-	   printf("<basefilename> is the name of the raw digital elevation model\n");
-	   printf("<pfile> is the D8 flow direction input file.\n");
-	   printf("<afile> is the D8 area output file.\n");
-	   printf("[-o <shfile>] is the optional outlet shape input file.\n");
-       printf("[-wg <wfile>] is the optional weight grid input file.\n");
-       printf("The flag -nc overrides edge contamination checking\n");
-	   printf("The following are appended to the file names\n");
-       printf("before the files are opened:\n");
-       printf("ad8   D8 contributing area file (output)\n");
-	   printf("p     D8 flow direction output file\n");
-       exit(0);  
+
+errexit:
+	printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
+	printf("Usage with specific file names:\n %s -p <pfile> -ad8 <afile> [-o <outlets>] [-wg <wfile>] [-nc] [-lyrno <no>] [-lyrname <name>]\n", argv[0]);
+	printf("<basefilename> is the base name for flow direction (input) and area (output) files.\n");
+	printf("<pfile> is the D8 flow direction input file.\n");
+	printf("<afile> is the D8 area output file.\n");
+	printf("[-o <outlets>] is the optional outlet OGR data source (e.g. shapefile).\n");
+	printf("[-wg <wfile>] is the optional weight grid input file.\n");
+	printf("The flag -nc overrides edge contamination checking.\n");
+	printf("[-lyrno <no>] is the optional OGR layer number for outlets.\n");
+	printf("[-lyrname <name>] is the optional OGR layer name for outlets.\n");
+	printf("\nFor Simple Usage, the following suffixes are appended to <basefilename>:\n");
+	printf("p     for flow direction input file\n");
+	printf("ad8   for area output file\n");
+
+	return 1;
 } 
-   
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

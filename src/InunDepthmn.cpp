@@ -50,12 +50,12 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char handfile[MAXLN], catchfile[MAXLN], maskfile[MAXLN], fcfile[MAXLN], hpfile[MAXLN], fcmapfile[MAXLN], depthfile[MAXLN];
-   int err;
+   char handfile[MAXLN] = "", catchfile[MAXLN] = "", maskfile[MAXLN] = "", fcfile[MAXLN] = "", hpfile[MAXLN] = "", fcmapfile[MAXLN] = "", depthfile[MAXLN] = "";
+   int err = 0;
    int hasMask = 0;
    int hasDepth = 0;
-   int minRequiredArgs = 5; // maksfile and depthfile are optional
-      
+   int minRequiredArgs = 5; // maskfile and depthfile are optional
+
    if(argc < minRequiredArgs) goto errexit;
    else
    {
@@ -138,7 +138,8 @@ int main(int argc,char **argv)
 		}
 	}
 
-   	if(handfile == NULL || catchfile == NULL || fcfile == NULL || hpfile == NULL || fcmapfile == NULL) goto errexit;
+   	if (handfile[0] == '\0' || catchfile[0] == '\0' || fcfile[0] == '\0' || hpfile[0] == '\0' || fcmapfile[0] == '\0') goto errexit;
+
 	if (hasMask && hasDepth)
 		err=inundepth(handfile, catchfile, maskfile, fcfile, hpfile, fcmapfile, depthfile);
 	else if (hasMask)
@@ -148,10 +149,11 @@ int main(int argc,char **argv)
 	else
 		err=inundepth(handfile, catchfile, NULL, fcfile, hpfile, fcmapfile, NULL);
 
-	if(err != 0)
-		printf("Inundation Depth Generation Error %d\n",err);
+	if (err != 0) printf("Inundation Depth Generation Error %d\n",err);
 
+	if (err != 0) return err;
 	return 0;
+
 errexit:
    printf("Use with specific file names:\n %s -hand <handfile>\n",argv[0]);
    printf("-catch <catchfile> -mask <maskfile> \n");
@@ -165,5 +167,5 @@ errexit:
    printf("<hydropropertyfile> is the name of the hydro property text file - required file.\n");
    printf("<outputinundationfile> is the name of the output inundation raster file - required file.\n");
    printf("<outputdepthfile> is the name of the output inundation depth text/CSV file - optional file.\n");
-   return 0; 
+   return 1; 
 }

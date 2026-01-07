@@ -52,9 +52,9 @@ int dropan(char *areafile, char *dirfile, char *elevfile, char *ssafile, char *d
 
 int main(int argc,char **argv)  
 {
-   char areafile[MAXLN],dirfile[MAXLN], elevfile[MAXLN], ssafile[MAXLN], dropfile[MAXLN], datasrc[MAXLN],lyrname[MAXLN];
+   char areafile[MAXLN] = "", dirfile[MAXLN] = "", elevfile[MAXLN] = "", ssafile[MAXLN] = "", dropfile[MAXLN] = "", datasrc[MAXLN] = "", lyrname[MAXLN] = "";
    float threshmin, threshmax, threshopt;
-   int err, nthresh, uselyrname=0,lyrno=0,steptype;
+   int err = 0, nthresh, uselyrname=0,lyrno=0,steptype;
       
    if(argc < 2) goto errexit;
    // Set defaults
@@ -181,13 +181,17 @@ int main(int argc,char **argv)
 		    else goto errexit;
 		}
    }
+   	if (areafile[0] == '\0' || dirfile[0] == '\0' || elevfile[0] == '\0' || ssafile[0] == '\0' || dropfile[0] == '\0') goto errexit;
+
     if((err=dropan(areafile, dirfile, elevfile, ssafile, dropfile, 
 			   datasrc,lyrname,uselyrname,lyrno, threshmin, threshmax, nthresh, steptype, 
 			   &threshopt)) != 0)
         printf("Drop Analysis Error %d\n",err);
 //	else printf("%f  Value for optimum that drop analysis selected - see output file for details.\n",threshopt);
 
+	if (err != 0) return err;
 	return 0;
+
 errexit:
    printf("\nUse with specific file names:\n %s -slp <slopefile>\n",argv[0]);
    printf("-ad8 <ad8file> -p <dirfile> -fel <elevfile> -ssa <ssafile> -o <outletsshapefile>\n");
@@ -203,6 +207,5 @@ errexit:
    printf("<max> Upper bound of range used to search for optimum threshold.\n");
    printf("<nthresh> Number of thresholds used to search for optimum threshold.\n");
    printf("<steptype> Type of threshold step to be used (0=log, 1=arithmetic).\n");
-   return 0; 
+   return 1; 
 } 
-   

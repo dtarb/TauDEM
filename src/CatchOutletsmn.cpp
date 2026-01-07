@@ -56,10 +56,10 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char pfile[MAXLN],streamnetsrc[MAXLN], streamnetlyr[MAXLN]="",outletsdatasrc[MAXLN],outletslayer[MAXLN]="";
+   char pfile[MAXLN] = "", streamnetsrc[MAXLN] = "", streamnetlyr[MAXLN] = "", outletsdatasrc[MAXLN] = "", outletslayer[MAXLN] = "";
    double mindist = 0.0;
    double minarea = 0.0;
-   int err,i,uselyrname=0,lyrno=0,gwstartno=1;
+   int err = 0,i,uselyrname=0,lyrno=0,gwstartno=1;
    
    if(argc < 7)
     {  
@@ -167,9 +167,13 @@ int main(int argc,char **argv)
 			goto errexit;
 		}
 	}
+
+	if (pfile[0] == '\0' || streamnetsrc[0] == '\0' || outletsdatasrc[0] == '\0') goto errexit;
+
     if(err=catchoutlets(pfile,streamnetsrc,outletsdatasrc,mindist,gwstartno,minarea) != 0)
        printf("Catchment Outlets error %d\n",err);
 
+	if (err != 0) return err;
 	return 0;
 errexit:
 	   printf("Incorrect input.\n");
@@ -184,6 +188,5 @@ errexit:
 	   printf("<layer name> is the layer name for the outlets layer in the shapefile as a data source (output).\n");
 	   printf("<mindist> is the minimum distance between outlets (input).\n");
 	   printf("Default <mindist> is 0 if not input.\n");
-       exit(0);
+       return 1;
 } 
-

@@ -49,8 +49,8 @@ int threshold(char *ssafile,char *srcfile,char *maskfile, float thresh, int usem
 
 int main(int argc,char **argv)  
 {
-   char ssafile[MAXLN],srcfile[MAXLN], maskfile[MAXLN];
-   int err, usemask;
+   char ssafile[MAXLN] = "",srcfile[MAXLN] = "", maskfile[MAXLN] = "";
+   int err = 0, usemask;
    float thresh;
       
    if(argc < 2) goto errexit;
@@ -112,10 +112,15 @@ int main(int argc,char **argv)
 		   else goto errexit;
 		}
    }
+
+   	if (ssafile[0] == '\0' || srcfile[0] == '\0') goto errexit;
+
     if( (err=threshold(ssafile,srcfile,maskfile,thresh,usemask)) != 0)
         printf("Threshold Error %d\n",err);
 
+	if (err != 0) return err;
 	return 0;
+
 errexit:
    printf("Simple Use:\n %s <basefilename>\n",argv[0]);
    printf("Use with specific file names:\n %s -fel <ssafile>\n",argv[0]);
@@ -126,6 +131,5 @@ errexit:
    printf("<maskfile> is the name of a file that masks the domain.\n");
    printf("<thresholdvalue> is the value of the threshold.\n");
    printf("The threshold logic is src = ((ssa >= thresh) & (mask >=0)) ? 1:0.\n");
-   return 0; 
+   return 1; 
 } 
-   

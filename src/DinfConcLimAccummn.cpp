@@ -49,8 +49,8 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char angfile[MAXLN],ctptfile[MAXLN],dmfile[MAXLN],qfile[MAXLN],dgfile[MAXLN],datasrc[MAXLN],lyrname[MAXLN];
-   int err,useOutlets=0,uselyrname=0,lyrno=0,contcheck=1,i;
+   char angfile[MAXLN] = "", ctptfile[MAXLN] = "", dmfile[MAXLN] = "", qfile[MAXLN] = "", dgfile[MAXLN] = "", datasrc[MAXLN] = "", lyrname[MAXLN] = "";
+   int err = 0,useOutlets=0,uselyrname=0,lyrno=0,contcheck=1,i;
    float cSol=1.;
    
    if(argc < 2)
@@ -189,12 +189,16 @@ int main(int argc,char **argv)
 		nameadd(ctptfile,argv[1],"ctpt");
 
 	}  
+
+	if (angfile[0] == '\0' || ctptfile[0] == '\0' || dmfile[0] == '\0' || qfile[0] == '\0' || dgfile[0] == '\0') goto errexit;
+
 	if((err=dsllArea(angfile,ctptfile,dmfile,datasrc,lyrname,uselyrname,lyrno,qfile,dgfile,useOutlets,contcheck,cSol)) != 0)
         printf("area error %d\n",err);
 
+	if (err != 0) return err;
 	return 0;
 
-	errexit:
+errexit:
 	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
 	   printf("Usage with specific file names:\n %s -ang <angfile>\n",argv[0]);
        printf("-dg <indicatorFile> -dm <dmfile> -ctpt <afile>\n");
@@ -215,6 +219,5 @@ int main(int argc,char **argv)
 	   printf("dm     Decay multiplier grid (input)\n");
 	   printf("q      Specific discharge grid (input)\n");
 	   printf("ctpt   Concentration grid (output)\n");
-       exit(0);  
+       return 1;
 }
-
