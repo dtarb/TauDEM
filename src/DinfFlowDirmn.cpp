@@ -53,8 +53,8 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char demfile[MAXLN],angfile[MAXLN],slopefile[MAXLN],flowfile[MAXLN];
-   int err,useflowfile=0,i;
+   char demfile[MAXLN] = "", angfile[MAXLN] = "", slopefile[MAXLN] = "", flowfile[MAXLN] = "";
+   int err = 0,useflowfile=0,i;
    
    if(argc < 2)
     {
@@ -125,23 +125,29 @@ int main(int argc,char **argv)
 		nameadd(angfile,argv[1],"ang");
 		nameadd(slopefile,argv[1],"slp");
 	}
+
+	if (demfile[0] == '\0' || angfile[0] == '\0' || slopefile[0] == '\0') goto errexit;
+
     if((err=setdir(demfile,angfile,slopefile,flowfile,useflowfile)) != 0)
         printf("Setdir error %d\n",err); 
-    return 0;
+
+	if (err != 0) return err;
+
+	return 0;
 	
-	errexit:
+errexit:
 	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
 	   printf("Usage with specific file names:\n %s -fel <demfile>\n",argv[0]);
        printf("-slp <slopefile> -ang <angfile> [-sfdr <flowfile>]\n");
-	   printf("(The <basefilename> is the name of the raw digital elevation model\n");
-	   printf("(The <demfile> is the pit filled or carved DEM input file.\n");
-	   printf("(The <slopefile> is the slope output file.\n");
-	   printf("(The <angfile> is the output D-infinity flow direction file.\n");
+	   printf("<basefilename> is the name of the raw digital elevation model\n");
+	   printf("<demfile> is the pit filled or carved DEM input file.\n");
+	   printf("<slopefile> is the slope output file.\n");
+	   printf("<angfile> is the output D-infinity flow direction file.\n");
        printf("[-sfdr <flowfile>] is the optional user imposed stream flow direction file.\n");
        printf("The following are appended to the file names\n");
        printf("before the files are opened:\n");
        printf("fel    carved or pit filled input elevation file\n");
        printf("slp    D-infinity slope file (output)\n");
 	   printf("ang   D-infinity flow direction output file\n");
-      return 0; 
-}     
+      return 1; 
+}

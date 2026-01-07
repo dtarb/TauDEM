@@ -50,9 +50,9 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-char angfile[MAXLN],felfile[MAXLN],slpfile[MAXLN],wfile[MAXLN],rtrfile[MAXLN];
-   int err,i,statmethod=0,typemethod=0,usew=0, concheck=1;
-   float thresh=0.0;
+	char angfile[MAXLN] = "", felfile[MAXLN] = "", slpfile[MAXLN] = "", wfile[MAXLN] = "", rtrfile[MAXLN] = "";
+   	int err = 0,i,statmethod=0,typemethod=0,usew=0, concheck=1;
+   	float thresh=0.0;
       
    if(argc < 2)
     {  
@@ -215,10 +215,10 @@ char angfile[MAXLN],felfile[MAXLN],slpfile[MAXLN],wfile[MAXLN],rtrfile[MAXLN];
 		nameadd(wfile,argv[1],"wg");
 		nameadd(rtrfile,argv[1],"du");
 	} 
- 
-if((err=dinfdistup(angfile,felfile,slpfile,wfile,rtrfile,statmethod,
-   typemethod,usew, concheck,thresh)) != 0)
-        printf("area error %d\n",err);   
+	if (angfile[0] == '\0' || felfile[0] == '\0' || rtrfile[0] == '\0') goto errexit;
+
+	if((err=dinfdistup(angfile,felfile,slpfile,wfile,rtrfile,statmethod,typemethod,usew, concheck,thresh)) != 0)
+        printf("area error %d\n",err);
 
 //////Calling function
 ////int dinfdistup(char *angfile,char *felfile,char *slpfile,char *wfile, char *rtrfile,
@@ -245,18 +245,19 @@ if((err=dinfdistup(angfile,felfile,slpfile,wfile,rtrfile,statmethod,
 //}
 ////return (er);
 
+	if (err != 0) return err;
 	return 0;
 
-	errexit:
+errexit:
 	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
 	   printf("Usage with specific file names:\n %s -ang <angfile>\n",argv[0]);
-       printf("-fel <felfile> -slp <slpfile> [-wg <wfile>] -du <rtrfile>\n");
+       printf("-fel <felfile> [-slp <slpfile>] [-wg <wfile>] -du <rtrfile>\n");
   	   printf("[-m ave h] [-nc]\n");
 	   printf("<basefilename> is the name of the raw digital elevation model\n");
 	   printf("<angfile> is the D-infinity flow direction input file.\n");
 	   printf("<felfile> is the pit filled or carved elevation input file.\n");
-	   printf("<slpfile> is the D-infinity slope input file.\n");
-	   printf("<wgfile> is the D-infinity flow direction input file.\n");
+	   printf("<slpfile> is the D-infinity slope input file (optional).\n");
+	   printf("<wfile> is the D-infinity flow direction input file (optional).\n");
 	   printf("<rtrfile> is the D-infinity distance output file.\n");
 	   printf("[-m ave h] is the optional method flag.\n");
 	   printf("The flag -nc overrides edge contamination checking\n");
@@ -267,5 +268,5 @@ if((err=dinfdistup(angfile,felfile,slpfile,wfile,rtrfile,statmethod,
 	   printf("slp   D-infinity slope input file file\n");
 	   printf("wg   weight input file\n");
 	   printf("du   distance to stream output file\n");
-       exit(0);
+       return 1;
 } 
