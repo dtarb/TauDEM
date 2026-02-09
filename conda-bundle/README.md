@@ -9,7 +9,7 @@ This package contains TauDEM (Terrain Analysis Using Digital Elevation Models) e
 - Environment configuration scripts
 - Installation script
 
-**Note:** OpenMPI is bundled with this package to ensure version compatibility with the TauDEM binaries. All libraries are configured to work together seamlessly.
+**Note:** OpenMPI is bundled with this package to ensure version compatibility with the TauDEM binaries. All libraries are configured to work together seamlessly. However, in certain installation evironments, the bundled MPI maynot install properly. If you encounter issues with MPI, please try installing OpenMPI separately using conda as shown in step 7 of the installation instructions.
 
 ## System Requirements
 
@@ -80,6 +80,26 @@ This package contains TauDEM (Terrain Analysis Using Digital Elevation Models) e
    conda activate ~/.local/taudem-env
    ```
 
+6. Test Installation:
+
+   ```bash
+   pitremove
+   ```
+
+   This should print the help message for the pitremove tool.
+
+   ```bash
+   mpiexec
+   ```
+
+   This should print "No executable was specified". However, if you see a different error message (e.g. "prterun-exec-failed"), try installing OpenMPI separately using conda as shown in step 7.
+
+7. **If you encounter issues with MPI**, try installing OpenMPI separately using conda in your taudem conda environment:
+
+   ```bash
+   conda install -c conda-forge openmpi
+   ```
+
 ## Usage
 
 After installation, all TauDEM tools are available in your PATH:
@@ -99,7 +119,7 @@ See the [TauDEM documentation](http://hydrology.usu.edu/taudem/taudem5/documenta
 
 ## Bundle Contents
 
-```
+```text
 taudem-conda-linux64/
 ├── bin/              # TauDEM executable binaries
 ├── lib/              # Runtime shared libraries
