@@ -30,7 +30,7 @@ Build time: ~5-10 minutes depending on your system.
 
 The build produces:
 
-- `../conda-bundle-output/taudem-conda-linux64.tar.gz` (~352MB) - The portable bundle with all dependencies
+- `../conda-bundle-output/taudem-conda-linux64.tar.gz` (~122MB) - The portable bundle with all dependencies
 
 ## Bundle Structure
 
@@ -100,13 +100,13 @@ To test the bundle in a cloud-based JupyterHub environment:
    which pitremove
 
    # Run a simple command to verify
-   pitremove -h
+   pitremove
    ```
 
-6. **Test with MPI** (if your JupyterHub supports it):
+6. **Test MPI** (if your JupyterHub supports it):
 
    ```bash
-   mpirun -n 2 pitremove -h
+   mpiexec
    ```
 
 **Note**: The bundle is compiled for Linux x86_64. For ARM64 systems, you'll need to modify the Dockerfile to remove the `--platform=linux/amd64` flag.
@@ -128,7 +128,12 @@ To test the bundle in a cloud-based JupyterHub environment:
 ## Technical Details
 
 - Executables are **dynamically linked** to included libraries
-- Libraries included: OpenMPI 5.0.8, GDAL 3.12.0, PROJ 9.7.0, and dependencies
+- Libraries included: GDAL 3.11, PROJ, SQLite, libspatialite, OpenMPI, PMIX, PRTE, and dependencies
+- **OpenMPI, PMIX, and PRTE are fully bundled** - no additional conda install needed
+- All MPI components (mpirun, mpiexec, prte, prterun) are included with help files and configuration
+- CUDA-related plugins are excluded to avoid warnings on CPU-only systems
 - No Python TauDEM tools (pyfiles) are included - executables only
 - Users do not need admin/root privileges to install
 - The `install.sh` script copies binaries and libraries to the active conda environment
+- Binaries are RPATH-patched to find libraries in the conda environment's lib directory
+- Environment variables (OPAL_PREFIX, PRTE_PREFIX, PMIX_PREFIX) are set during conda activation

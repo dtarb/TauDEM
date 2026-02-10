@@ -1,0 +1,17 @@
+.git
+.vscode
+build/
+build-debug/
+build-release/
+conda-bundle-output/
+test_data/
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+*.tif
+*.shp
+*.dbf
+*.shx
+*.prj
