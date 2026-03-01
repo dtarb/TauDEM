@@ -50,8 +50,11 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char pfile[MAXLN],srcfile[MAXLN],ordfile[MAXLN],ad8file[MAXLN],elevfile[MAXLN],wfile[MAXLN],outletsds[MAXLN],lyrname[MAXLN],streamnetsrc[MAXLN];
-   char treefile[MAXLN],coordfile[MAXLN];char streamnetlyr[MAXLN]="";
+   char pfile[MAXLN],srcfile[MAXLN],ordfile[MAXLN],ad8file[MAXLN],elevfile[MAXLN],wfile[MAXLN],outletsds[MAXLN],lyrname[MAXLN];
+   char treefile[MAXLN] = "";
+   char coordfile[MAXLN] = "";
+   char streamnetsrc[MAXLN] = "";
+   char streamnetlyr[MAXLN] = "";
    long ordert=1, useoutlets=0,uselayername=0,lyrno=0; 
    int err,i;
     bool verbose=false;  //  Initialize verbose flag
@@ -242,7 +245,7 @@ int main(int argc,char **argv)
 		nameadd(treefile,argv[1],"tree.txt");
 		nameadd(coordfile,argv[1],"coord.txt");
 		nameadd(wfile,argv[1],"w");
-		//nameadd(streamnetshp,argv[1],"net.shp");
+		nameadd(streamnetsrc,argv[1],"net.shp");
 	} 
 
     if(err=netsetup(pfile,srcfile,ordfile,ad8file,elevfile,treefile,coordfile,outletsds,lyrname,uselayername,lyrno,wfile,streamnetsrc,streamnetlyr,useoutlets, ordert,verbose) != 0)

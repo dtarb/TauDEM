@@ -1148,11 +1148,28 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 		long treeBuf[9];
 
 		int ilink, ipoint;
-		if(rank==0){//open output point file
-			FILE *fTreeOut;
-			fTreeOut = fopen(treefile,"w");// process 0 writes all of its stuff
-			FILE *fout;
-			fout = fopen(coordfile,"w");
+		if( treefile[0] == '\0' || coordfile[0] == '\0' || streamnetsrc[0] == '\0' ) {
+			if ( rank == 0 ) {
+				printf("Not writing tree, coord, or net files (specify all three to write).\n");
+				fflush(stdout);
+			}
+		} else if(rank==0){//open output point file
+			VSILFILE *fTreeOut;
+			fTreeOut = VSIFOpenL(treefile,"w");// process 0 writes all of its stuff
+			if (fTreeOut == NULL) {
+				printf("Error creating tree output file %s: %s\n",
+					treefile, strerror(errno));
+				fflush(stdout);
+				MPI_Abort(MCW, 6);
+			}
+			VSILFILE *fout;
+			fout = VSIFOpenL(coordfile,"w");
+			if (fout == NULL) {
+				printf("Error creating coord output file %s: %s\n",
+					coordfile, strerror(errno));
+				fflush(stdout);
+				MPI_Abort(MCW, 7);
+			}
 
 			//  Open shapefile 
 			//need spatial refeence information which is stored in the tiffIO object
@@ -1162,7 +1179,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 			long dotinc=myNumLinks/ndots;
 
 			for(ilink=0;ilink<myNumLinks;ilink++){//only once per link
-				fprintf(fTreeOut,"\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\n",LinkIdU1U2DMagShapeidCoords[ilink][0],LinkIdU1U2DMagShapeidCoords[ilink][1],LinkIdU1U2DMagShapeidCoords[ilink][2],LinkIdU1U2DMagShapeidCoords[ilink][3],LinkIdU1U2DMagShapeidCoords[ilink][4],LinkIdU1U2DMagShapeidCoords[ilink][5],LinkIdU1U2DMagShapeidCoords[ilink][6],LinkIdU1U2DMagShapeidCoords[ilink][7],LinkIdU1U2DMagShapeidCoords[ilink][8]);
+				VSIFPrintfL(fTreeOut,"\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\n",LinkIdU1U2DMagShapeidCoords[ilink][0],LinkIdU1U2DMagShapeidCoords[ilink][1],LinkIdU1U2DMagShapeidCoords[ilink][2],LinkIdU1U2DMagShapeidCoords[ilink][3],LinkIdU1U2DMagShapeidCoords[ilink][4],LinkIdU1U2DMagShapeidCoords[ilink][5],LinkIdU1U2DMagShapeidCoords[ilink][6],LinkIdU1U2DMagShapeidCoords[ilink][7],LinkIdU1U2DMagShapeidCoords[ilink][8]);
 				//fflush(fTreeOut);
 				long i1=LinkIdU1U2DMagShapeidCoords[ilink][1];
 				long i2=LinkIdU1U2DMagShapeidCoords[ilink][2];
@@ -1174,7 +1191,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 				pointx = new double[i2-i1+1];
 				pointy = new double[i2-i1+1];
 				for(ipoint=i1;ipoint<=i2;ipoint++){
-					fprintf(fout,"\t%f\t%f\t%f\t%f\t%f\n",PointXY[ipoint][0],PointXY[ipoint][1],PointElevArea[ipoint][0],PointElevArea[ipoint][1],PointElevArea[ipoint][2]);
+					VSIFPrintfL(fout,"\t%f\t%f\t%f\t%f\t%f\n",PointXY[ipoint][0],PointXY[ipoint][1],PointElevArea[ipoint][0],PointElevArea[ipoint][1],PointElevArea[ipoint][2]);
 					lengthd[ipoint-i1]=PointElevArea[ipoint][0];
 					elev[ipoint-i1]=PointElevArea[ipoint][1];
 					area[ipoint-i1]=PointElevArea[ipoint][2];
@@ -1214,7 +1231,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 					nextdot=0;
 					for(ilink=0;ilink<procNumLinks;++ilink){
 						MPI_Recv(&treeBuf,9,MPI_LONG,i,1,MCW,&mystatus);
-						fprintf(fTreeOut,"\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\n",treeBuf[0],treeBuf[1]+numPointsPrinted,treeBuf[2]+numPointsPrinted,treeBuf[3],treeBuf[4],treeBuf[5],treeBuf[6],treeBuf[7],treeBuf[8]);
+						VSIFPrintfL(fTreeOut,"\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\n",treeBuf[0],treeBuf[1]+numPointsPrinted,treeBuf[2]+numPointsPrinted,treeBuf[3],treeBuf[4],treeBuf[5],treeBuf[6],treeBuf[7],treeBuf[8]);
 
 						MPI_Recv(&procNumPoints,1,MPI_INT,i,0,MCW,&mystatus);//get points one at a time and print them to file
 				// Variables for shape
@@ -1229,7 +1246,7 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 						for(ipoint=0;ipoint<procNumPoints;++ipoint){
 							MPI_Recv(&pbuf1,2,MPI_DOUBLE,i,1,MCW,&mystatus);
 							MPI_Recv(&pbuf,3,MPI_FLOAT,i,1,MCW,&mystatus);
-							fprintf(fout,"\t%f\t%f\t%f\t%f\t%f\n",pbuf1[0],pbuf1[1],pbuf[0],pbuf[1],pbuf[2]); 
+							VSIFPrintfL(fout,"\t%f\t%f\t%f\t%f\t%f\n",pbuf1[0],pbuf1[1],pbuf[0],pbuf[1],pbuf[2]);
 
 							lengthd[ipoint]=pbuf[0];
 							elev[ipoint]=pbuf[1];
@@ -1256,8 +1273,18 @@ int netsetup(char *pfile,char *srcfile,char *ordfile,char *ad8file,char *elevfil
 				numPointsPrinted += treeBuf[2]+1;//might need adjustmetn JJN
 				}
 			} 
-			fclose(fTreeOut);
-			fclose(fout);
+			if (VSIFCloseL(fTreeOut) != 0) {
+				printf("Error closing tree output file %s: %s\n",
+					treefile, strerror(errno));
+				fflush(stdout);
+				MPI_Abort(MCW, 8);
+			}
+			if (VSIFCloseL(fout) != 0) {
+				printf("Error closing coord output file %s: %s\n",
+					coordfile, strerror(errno));
+				fflush(stdout);
+				MPI_Abort(MCW, 9);
+			}
 			//SHPClose(shp1);
 			//DBFClose(dbf1);
 		    OGR_DS_Destroy( hDS1 ); // destroy data source
