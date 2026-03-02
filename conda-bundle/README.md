@@ -6,10 +6,11 @@ This package contains TauDEM (Terrain Analysis Using Digital Elevation Models) e
 
 - All TauDEM command-line tools (pitremove, d8flowdir, aread8, etc.)
 - Runtime libraries (GDAL, PROJ, SQLite, libspatialite, OpenMPI, and other dependencies)
+- GDAL/OGR CLI tools (gdal_translate, gdalwarp, ogr2ogr, etc.)
 - Environment configuration scripts
 - Installation script
 
-**Note:** OpenMPI is bundled with this package to ensure version compatibility with the TauDEM binaries. All libraries are configured to work together seamlessly. However, in certain installation evironments, the bundled MPI maynot install properly. If you encounter issues with MPI, please try installing OpenMPI separately using conda as shown in step 7 of the installation instructions.
+**Note:** OpenMPI is bundled with this package to ensure version compatibility with the TauDEM binaries. All libraries are configured to work together seamlessly. However, in certain installation environments, the bundled MPI may not install properly. If you encounter issues with MPI, please try installing OpenMPI separately using conda as shown in step 7 of the installation instructions.
 
 ## System Requirements
 
