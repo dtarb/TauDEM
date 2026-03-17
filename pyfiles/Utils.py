@@ -93,6 +93,11 @@ def run_taudem_command(cmd, msg_callback=None):
     :return: The return code of the process.
     """
     env = get_adjusted_env()
+
+    # NOTE: Pabitra: Originally (prior to TauDEM 5.4.0) os.system(cmd) was used to display the Windows command prompt window.
+    # However, this fails now as it can't find the GDAL modules and we can't pass the environment (env) variables to it.
+    # os.system(cmd)
+
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
     stdout, stderr = process.communicate()
 
