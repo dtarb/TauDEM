@@ -67,9 +67,9 @@ RUN CONDA_PREFIX=$(conda info --base)/envs/taudem-build && \
 RUN mkdir -p /opt/taudem-bundle/bin /opt/taudem-bundle/lib /opt/taudem-bundle/share && \
     # Copy TauDEM binaries
     cp -Pr /opt/taudem-runtime/taudem/* /opt/taudem-bundle/bin/ && \
-    # Copy OpenMPI executables (mpiexec, mpirun, mpicc, mpicxx, etc.)
-    # Use find with explicit patterns to catch all MPI-related executables
-    find /opt/conda/envs/taudem-build/bin -maxdepth 1 -type f \( -name 'mpi*' -o -name 'ompi*' -o -name 'prte*' \) | \
+    # Copy OpenMPI/PRTE and GDAL/OGR executables
+    # Include both files and symlinks from conda bin
+    find /opt/conda/envs/taudem-build/bin -maxdepth 1 \( -type f -o -type l \) \( -name 'mpi*' -o -name 'ompi*' -o -name 'prte*' -o -name 'gdal*' -o -name 'ogr*' -o -name 'opal_wrapper' -o -name 'ompi_wrapper_exec' \) | \
       xargs -I {} cp -Pr {} /opt/taudem-bundle/bin/ 2>/dev/null || true && \
     # Create mpiexec symlink to mpirun if mpirun exists but mpiexec doesn't
     if [ -f /opt/taudem-bundle/bin/mpirun ] && [ ! -f /opt/taudem-bundle/bin/mpiexec ]; then \
