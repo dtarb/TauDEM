@@ -47,8 +47,8 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char slopefile[MAXLN],areafile[MAXLN],atanbfile[MAXLN];
-   int err,i;
+   char slopefile[MAXLN] = "",areafile[MAXLN] = "",atanbfile[MAXLN] = "";
+   int err = 0,i;
    
    if(argc < 2)
     {  
@@ -107,12 +107,16 @@ int main(int argc,char **argv)
 		nameadd(slopefile,argv[1],"slp");
 		nameadd(atanbfile,argv[1],"sar");
 	}  
+
+	if ( slopefile[0] == '\0' || areafile[0] == '\0') goto errexit;
+
 	if((err=atanbgrid(slopefile,areafile,atanbfile)) != 0)
         printf("Slope area ratio error %d\n",err);
 
+	if (err != 0) return err;
 	return 0;
 
-	errexit:
+errexit:
 	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
 	   printf("Usage with specific file names:\n %s -sca <areafile>\n",argv[0]);
        printf("-slp <slopefile> -sar <atanbfile>\n");
@@ -125,5 +129,5 @@ int main(int argc,char **argv)
        printf("sca    D-infinity specific catchment area grid (input)\n");
 	   printf("slp     D-infinity slope grid (input)\n");
 	   printf("sar    output slope area ratio grid\n");
-       exit(0);
+       return 1;
 }

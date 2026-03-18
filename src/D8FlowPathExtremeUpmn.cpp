@@ -56,8 +56,8 @@ int d8flowpathextremeup(char *pfile, char*safile, char *ssafile, int usemax, cha
 
 int main(int argc,char **argv)  
 {
-   char pfile[MAXLN],safile[MAXLN], ssafile[MAXLN],datasrc[MAXLN],lyrname[MAXLN];
-   int err, useoutlets,contcheck,usemax,lyrno=0,uselyrname=0;
+   char pfile[MAXLN] = "",	safile[MAXLN] = "", ssafile[MAXLN] = "", datasrc[MAXLN] = "", lyrname[MAXLN] = "";
+   int err = 0, useoutlets,contcheck,usemax,lyrno=0,uselyrname=0;
       
    if(argc < 2) goto errexit;
    usemax=1;  // Set defaults
@@ -156,10 +156,15 @@ int main(int argc,char **argv)
 		   else goto errexit;
 		}
    }
+
+	if (pfile[0] == '\0' || safile[0] == '\0' || ssafile[0] == '\0') goto errexit;
+
     if((err=d8flowpathextremeup(pfile, safile, ssafile, usemax, datasrc,lyrname,uselyrname,lyrno, useoutlets, contcheck)) != 0)
         printf("Flow Path Extreme Up Error %d\n",err);
 
+	if (err != 0) return err;
 	return 0;
+
 errexit:
    printf("Simple Use:\n %s <basefilename>\n",argv[0]);
    printf("Use with specific file names:\n %s -p <pfile>\n",argv[0]);
@@ -170,6 +175,5 @@ errexit:
    printf("<ssa> is the name of the output file with extreme upslope values.\n");
    printf("-min indicates to search for a minimum (default is max)\n");
    printf("-nc indicates to override edge contamination checking (checking is on by default)\n");
-   return 0; 
+   return 1; 
 } 
-   

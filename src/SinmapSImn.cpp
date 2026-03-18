@@ -49,7 +49,7 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)  
 {
-   char slopefile[MAXLN], scaterrainfile[MAXLN], scarminroadfile[MAXLN], scarmaxroadfile[MAXLN], tergridfile[MAXLN], terparfile[MAXLN], satfile[MAXLN], sincombinedfile[MAXLN];
+   char slopefile[MAXLN] = "", scaterrainfile[MAXLN] = "", scarminroadfile[MAXLN] = "", scarmaxroadfile[MAXLN] = "", tergridfile[MAXLN] = "", terparfile[MAXLN] = "", satfile[MAXLN] = "", sincombinedfile[MAXLN] = "";
    *scarminroadfile = NULL;
    *scarmaxroadfile = NULL;
    float Rminter = 0.0, Rmaxter = 0.0;
@@ -63,7 +63,7 @@ int main(int argc,char **argv)
    
    float road_impact = false;
    float p[2];
-   int err;
+   int err = 0;
       
    if(argc < 11) goto errexit;
 
@@ -221,10 +221,14 @@ int main(int argc,char **argv)
 		    else goto errexit;
 		}
    }
-    if((err = sindexcombined(slopefile, scaterrainfile, scarminroadfile, scarmaxroadfile, tergridfile, terparfile, satfile, sincombinedfile, Rminter, Rmaxter, par)) != 0)
+    if (slopefile[0] == '\0' || scaterrainfile[0] == '\0' || terparfile[0] == '\0' || tergridfile[0] == '\0' || sincombinedfile[0] == '\0' || satfile[0] == '\0') goto errexit;
+
+	if((err = sindexcombined(slopefile, scaterrainfile, scarminroadfile, scarmaxroadfile, tergridfile, terparfile, satfile, sincombinedfile, Rminter, Rmaxter, par)) != 0)
         printf("Sinmap Stability Index Error %d\n", err);
 	//getchar();
+	if (err != 0) return err;
 	return 0;
+
 errexit:
    // TODO: This needs to be fixed to match arument list and format used in the main function
    printf("Simple Use:\n %s <basefilename>\n", argv[0]);
@@ -245,6 +249,5 @@ errexit:
    printf("<scamaxfile> is the name of input maximum contributing area file.\n");
    
    //getchar();
-   return 0; 
+   return 1; 
 } 
-   

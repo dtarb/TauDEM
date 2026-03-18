@@ -49,8 +49,8 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char pfile[MAXLN],plenfile[MAXLN],tlenfile[MAXLN],gordfile[MAXLN],datasrc[MAXLN],lyrname[MAXLN],maskfile[MAXLN];
-   int err,useOutlets=0,uselyrname=0,lyrno=0,useMask=0,thresh=0,i;
+   char pfile[MAXLN] = "", plenfile[MAXLN] = "", tlenfile[MAXLN] = "", gordfile[MAXLN] = "", datasrc[MAXLN] = "", lyrname[MAXLN] = "", maskfile[MAXLN] = "";
+   int err = 0,useOutlets=0,uselyrname=0,lyrno=0,useMask=0,thresh=0,i;
 
    if(argc < 2)
     {  	
@@ -180,9 +180,12 @@ int main(int argc,char **argv)
 
 	}   
 
+	if (pfile[0] == '\0' || plenfile[0] == '\0' || tlenfile[0] == '\0' || gordfile[0] == '\0') goto errexit;
+
     if( (err=gridnet(pfile,plenfile,tlenfile,gordfile,maskfile,datasrc,lyrname,uselyrname,lyrno,useMask, useOutlets, thresh )) != 0)
         printf("gridnet error %d\n",err);
 
+	if (err != 0) return err;
 	return 0;
 
 errexit:
@@ -210,6 +213,5 @@ errexit:
 	   printf("be immediately following the maskfile on the argument list.  The grid network is evaluated for");
 	   printf("grid cells where values of the maskfile grid read as 4 byte integers are >= threshold.");
 	   
-       exit(0);
+       return 1;
 } 
-

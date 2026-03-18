@@ -52,8 +52,8 @@ int peukerdouglas(char *felfile,char *ssfile,float *p);
 
 int main(int argc,char **argv)  
 {
-   char felfile[MAXLN],ssfile[MAXLN];
-   int err;
+   char felfile[MAXLN] = "",ssfile[MAXLN] = "";
+   int err = 0;
    float p[3];
       
    if(argc < 2) goto errexit;
@@ -108,10 +108,14 @@ int main(int argc,char **argv)
 		   else goto errexit;
 		}
    }
+   	if (felfile[0] == '\0' || ssfile[0] == '\0') goto errexit;
+
     if( (err=peukerdouglas(felfile,ssfile,p)) != 0)
         printf("Peuker Douglas Error %d\n",err);
 
+	if (err != 0) return err;
 	return 0;
+
 errexit:
    printf("Simple Use:\n %s <basefilename>\n",argv[0]);
    printf("Use with specific file names:\n %s -fel <elevationfile>\n",argv[0]);
@@ -124,7 +128,5 @@ errexit:
    printf("<weightSide> is the weight given to the 4 side cells in the smoothing of the input elevations.\n");
    printf("<weightDiagonal> is the weight given to the 4 diagonal cells in the smoothing of the input elevations.\n");
    printf("Default weights are 0.4 0.1 0.05 if -par is not specified.\n");
-   return 0; 
+   return 1; 
 } 
-   
-

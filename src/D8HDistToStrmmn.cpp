@@ -50,8 +50,8 @@ int distgrid(char *pfile, char *srcfile, char *distfile, int thresh);
 
 int main(int argc,char **argv)
 {
-   char pfile[MAXLN],srcfile[MAXLN],distfile[MAXLN];
-   int err,nmain, thresh=1,i;
+   char pfile[MAXLN] = "", srcfile[MAXLN] = "", distfile[MAXLN] = "";
+   int err = 0,nmain, thresh=1,i;
    
    if(argc < 2)
     {  
@@ -125,13 +125,15 @@ int main(int argc,char **argv)
 		nameadd(distfile,argv[1],"dist");
 	}
 
+	if (pfile[0] == '\0' || srcfile[0] == '\0' || distfile[0] == '\0') goto errexit;
+
     if(err=distgrid(pfile,srcfile,distfile,thresh) != 0)
         printf("D8 distance error %d\n",err);
 
-
+	if (err != 0) return err;
 	return 0;
 
-	errexit:
+errexit:
 	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
        printf("Usage with specific file names:\n %s -p <pfile>\n",argv[0]);
 	   printf("-src <srcfile> -dist <distfile> [-thresh <thresh>]\n");
@@ -145,5 +147,5 @@ int main(int argc,char **argv)
        printf("p      D8 flow directions (input)\n");
        printf("src    stream raster file (Input)\n");
        printf("dist   distance to stream file(output)\n");
-       exit(0);
+       return 1;
 } 

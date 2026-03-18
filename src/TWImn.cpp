@@ -47,8 +47,8 @@ email:  dtarb@usu.edu
 int twigrid(char *slopefile,char *areafile,char *twifile);
 int main(int argc,char **argv)
 {
-   char slopefile[MAXLN],areafile[MAXLN],twifile[MAXLN];
-   int err,i,prow=0, pcol=0;
+   char slopefile[MAXLN] = "",areafile[MAXLN] = "",twifile[MAXLN] = "";
+   int err = 0,i,prow=0, pcol=0;
    
    if(argc < 2)
     {  
@@ -106,13 +106,17 @@ int main(int argc,char **argv)
 		nameadd(areafile,argv[1],"sca");
 		nameadd(slopefile,argv[1],"slp");
 		nameadd(twifile,argv[1],"twi");
-	}  
+	}
+
+	if (slopefile[0] == '\0' || areafile[0] == '\0' || twifile[0] == '\0') goto errexit;
+
 	if((err=twigrid(slopefile,areafile,twifile)) != 0)
         printf("TWI error %d\n",err);
 
+	if (err != 0) return err;
 	return 0;
 
-	errexit:
+errexit:
 	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
 	   printf("Usage with specific file names:\n %s -sca <areafile>\n",argv[0]);
        printf("-slp <slopefile> -twi <twifile>\n");
@@ -125,5 +129,5 @@ int main(int argc,char **argv)
        printf("sca    D-infinity specific catchment area grid (input)\n");
 	   printf("slp     D-infinity slope grid (input)\n");
 	   printf("twi    output topographic wetness index grid grid\n");
-       exit(0);
+       return 1;
 }

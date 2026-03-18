@@ -48,15 +48,15 @@ email:  dtarb@usu.edu
 #include "commonLib.h"
 #include "tardemlib.h"
 
-int main(int argc,char **argv)  
+int main(int argc,char **argv)
 {
-   char handfile[MAXLN], catchfile[MAXLN], catchlistfile[MAXLN], slpfile[MAXLN], hfile[MAXLN], hpfile[MAXLN];
-   int err;
+   char handfile[MAXLN] = "", catchfile[MAXLN] = "", catchlistfile[MAXLN] = "", slpfile[MAXLN] = "", hfile[MAXLN] = "", hpfile[MAXLN] = "";
+   int err = 0;
 
-   if(argc < 6) goto errexit;
+   if(argc < 13) goto errexit;
    else
    {
-        int i=1;	
+        int i=1;
 		while(argc > i)
 		{
 			if(strcmp(argv[i],"-hand")==0)
@@ -122,19 +122,25 @@ int main(int argc,char **argv)
 		    else goto errexit;
 		}
    }
-    if((err=catchhydrogeo(handfile, catchfile, catchlistfile, slpfile, hfile, hpfile)) != 0)
-        printf("Catchment Hydraulic Property Error %d\n",err);
 
+   if (handfile[0] == '\0' || catchfile[0] == '\0' || catchlistfile[0] == '\0' || slpfile[0] == '\0' || hfile[0] == '\0' || hpfile[0] == '\0') goto errexit;
+
+    if((err=catchhydrogeo(handfile, catchfile, catchlistfile, slpfile, hfile, hpfile)) != 0)
+	{
+        printf("Catchment Hydraulic Property Error %d\n",err);
+	}
+	if (err != 0) return err;
 	return 0;
 errexit:
-   printf("Incorrect input.\n");
-   printf("Use with specific file names:\n %s -hand <handfile>\n",argv[0]);
-   printf("-catch <catchfile> -catchlist <catchidlistfile> -slp <slpfile> -h <hfile> -table <hpfile> \n");
-   printf("<handfile> is the name of the input hand raster file.\n");
-   printf("<catchfile> is the name of the input catchment raster file.\n");
-   printf("<catchidlistfile> is the name of the input catchment id list CSV file. This file has at least 3 columns: catchment id, catchment slope, catchment length. Optionally, a 4th column for Manning's n can be provided.\n");
-   printf("<slpfile> is the name of the input D-inf slope raster file.\n");
-   printf("<hfile> is the name of the input stage table text file.\n");
-   printf("<hpfile> is the name of the output hydraulic property text file.\n");
-   return 0; 
+	printf("Incorrect input.\n");
+	printf("Use with specific file names:\n %s -hand <handfile>\n",argv[0]);
+	printf("-catch <catchfile> -catchlist <catchidlistfile> -slp <slpfile> -h <hfile> -table <hpfile> \n");
+	printf("<handfile> is the name of the input hand raster file.\n");
+	printf("<catchfile> is the name of the input catchment raster file.\n");
+	printf("<catchidlistfile> is the name of the input catchment id list CSV file. This file has at least 3 columns: catchment id, catchment slope, catchment length. Optionally, a 4th column for Manning's n can be provided.\n");
+	printf("<slpfile> is the name of the input D-inf slope raster file.\n");
+	printf("<hfile> is the name of the input stage table text file.\n");
+	printf("<hpfile> is the name of the output hydraulic property text file.\n");
+
+   return 1;
 } 

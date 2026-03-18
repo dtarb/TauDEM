@@ -48,9 +48,9 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-  char demfile[MAXLN], pointfile[MAXLN], slopefile[MAXLN], flowfile[MAXLN];
-  int err, i;
-    short useflowfile=0;
+  char demfile[MAXLN] = "", pointfile[MAXLN] = "", slopefile[MAXLN] = "", flowfile[MAXLN] = "";
+  int err = 0, i;
+	short useflowfile=0;
 
    if(argc < 2)
     {  
@@ -122,12 +122,15 @@ int main(int argc,char **argv)
 		nameadd(slopefile,argv[1],"sd8");		
 	}
 
+	if (demfile[0] == '\0' || slopefile[0] == '\0' || pointfile[0] == '\0') goto errexit;
+
     if((err=setdird8(demfile, pointfile, slopefile,flowfile,useflowfile)) != 0)
         printf("setdird8 error %d\n",err);
 
+	if (err != 0) return err;
 	return 0;
 
-	errexit:
+errexit:
 	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
 	   printf("Usage with specific file names:\n %s -fel <demfile>\n",argv[0]);
        printf("-sd8 <slopefile> -p <angfile> [-sfdr <flowfile>]\n");
@@ -141,6 +144,5 @@ int main(int argc,char **argv)
        printf("fel    carved or pit filled input elevation file\n");
        printf("sd8    D8 slope file (output)\n");
 	   printf("p   D8 flow direction output file\n");
-       exit(0);
-}    
-
+       return 1;
+}

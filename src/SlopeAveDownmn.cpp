@@ -48,8 +48,8 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char pfile[MAXLN],felfile[MAXLN],slpdfile[MAXLN];
-   int err,i;
+   char pfile[MAXLN] = "", felfile[MAXLN] = "",slpdfile[MAXLN] = "";
+   int err = 0,i;
    double dn=50.0;
    
    if(argc < 2)
@@ -121,13 +121,15 @@ int main(int argc,char **argv)
 		nameadd(slpdfile,argv[1],"slpd");
 	}   
 
-   if((err=sloped(pfile,felfile,slpdfile,dn)) != 0)
+	if (pfile[0] == '\0' || felfile[0] == '\0' || slpdfile[0] == '\0') goto errexit;
+
+   	if((err=sloped(pfile,felfile,slpdfile,dn)) != 0)
          printf("sloped error %d\n",err);
 
-
+	if (err != 0) return err;
 	return 0;
 
-	errexit:
+errexit:
 	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
        printf("Usage with specific file names:\n %s -p <pfile>\n",argv[0]);
 	   printf("-fel <felfile> -slpd <slpdfile> -dn <dn>\n");
@@ -141,5 +143,5 @@ int main(int argc,char **argv)
        printf("fel   pit filled or carved elevation grid (input)\n");
        printf("p   D-infinity flow direction grid (Input)\n");
        printf("slpd   avalanche source site grod (input)\n");
-       exit(0); 
+       return 1; 
 } 

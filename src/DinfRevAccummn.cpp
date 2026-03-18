@@ -48,8 +48,8 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char angfile[MAXLN],wgfile[MAXLN],raccfile[MAXLN],dmaxfile[MAXLN];
-   int err,i;
+   char angfile[MAXLN] = "", wgfile[MAXLN] = "", raccfile[MAXLN] = "", dmaxfile[MAXLN] = "";
+   int err = 0,i;
    
    if(argc < 2)
     {  
@@ -120,9 +120,13 @@ int main(int argc,char **argv)
 		nameadd(raccfile,argv[1],"racc");
 		nameadd(dmaxfile,argv[1],"dmax");
 	}  
+
+	if (angfile[0] == '\0' || wgfile[0] == '\0' || raccfile[0] == '\0' || dmaxfile[0] == '\0') goto errexit;
+
 	if((err=dsaccum(angfile,wgfile,raccfile,dmaxfile)) != 0)
         printf("dsaccum error %d\n",err);
 
+	if (err != 0) return err;
 	return 0;
 
 	errexit:
@@ -141,5 +145,5 @@ int main(int argc,char **argv)
 	   printf("racc   output reverse accumulation grid\n");
 	   printf("dmax    Output transport limitted accumulation grid\n");
 	   printf("tdep   output maximum downslope grid\n");
-       exit(0); 
+       return 1; 
 }
