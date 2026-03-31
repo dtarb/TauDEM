@@ -143,7 +143,7 @@ Filename: "{code:GetPythonExePath}"; Parameters: "-m pip install gdal-installer=
 ; Run the GDAL installer Python script to install GDAL Python bindings - this is needed for TauDEM integration with ArcGIS
 Filename: "{code:GetPythonExePath}"; \
     Parameters: "-m gdal_installer.install-gdal"; \
-    Flags: waituntilterminated; \
+    Flags: waituntilterminated runhidden; \
     StatusMsg: "Running Python GDAL system installation..."; \
     Check: HasPython() and WantsPythonGDAL(); \
     AfterInstall: VerifyGdalInstallation
@@ -373,7 +373,7 @@ begin
   // Check if running on 64-bit Windows
   if not IsWin64 then
   begin
-    MsgBox('This installer requires 64-bit Windows.', mbError, MB_OK);
+    SuppressibleMsgBox('This installer requires 64-bit Windows.', mbError, MB_OK, MB_OK);
     Result := False;
   end;
 end;
@@ -444,7 +444,7 @@ begin
     begin
       HasPythonValue := 2;
       // Show message if Python version is too old or not found
-      MsgBox('Python 3.10 or higher is required for GDAL installation. This step will be skipped.', mbInformation, MB_OK);
+      SuppressibleMsgBox('Python 3.10 or higher is required for GDAL installation. This step will be skipped.', mbInformation, MB_OK, MB_OK);
     end;
   end;
   Result := (HasPythonValue = 1);
@@ -455,7 +455,7 @@ function WantsPythonGDAL(): Boolean;
 begin
   if WantsGdalValue = 0 then
   begin
-    if MsgBox('Python is installed on your system. Would you like to install GDAL Python bindings? (Required for TauDEM integration with ArcGIS)', mbConfirmation, MB_YESNO) = IDYES then
+    if SuppressibleMsgBox('Python is installed on your system. Would you like to install GDAL Python bindings? (Required for TauDEM integration with ArcGIS)', mbConfirmation, MB_YESNO, IDYES) = IDYES then
       WantsGdalValue := 1
     else
       WantsGdalValue := 2;
@@ -486,16 +486,16 @@ procedure VerifyGdalInstallation;
 begin
   if CheckGdalPythonImport() then
   begin
-    MsgBox('GDAL Python bindings and system components were successfully installed and verified.', mbInformation, MB_OK);
+    SuppressibleMsgBox('GDAL Python bindings and system components were successfully installed and verified.', mbInformation, MB_OK, MB_OK);
   end
   else
   begin
-    MsgBox('Warning: GDAL installation could not be verified.' + #13#10 + 
+    SuppressibleMsgBox('Warning: GDAL installation could not be verified.' + #13#10 + 
            'You may need to manually install GDAL after setup completes:' + #13#10 + 
            '1. Open a command prompt and run:' + #13#10 + 
            'python -m pip install gdal-installer==' + ExpandConstant('{#GdalInstallerVersion}') + #13#10 + 
            '2. Then run:' + #13#10 + 
-           'python -m gdal_installer install-gdal', mbError, MB_OK);
+           'python -m gdal_installer install-gdal', mbError, MB_OK, MB_OK);
   end;
 end;
 
@@ -586,6 +586,6 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
   begin
-    MsgBox('TauDEM installation is complete. You must reboot your computer before using TauDEM to ensure all environment variables and dependencies are available.', mbInformation, MB_OK);
+    SuppressibleMsgBox('TauDEM installation is complete. You must reboot your computer before using TauDEM to ensure all environment variables and dependencies are available.', mbInformation, MB_OK, MB_OK);
   end;
 end;
