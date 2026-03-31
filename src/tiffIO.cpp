@@ -86,7 +86,7 @@ tiffIO::tiffIO(char *fname, DATA_TYPE newtype) {
 	ss=OSRGetLinearUnits(hSRS,&test_unit); // provide linear units
 	//cout<<ss<<endl;// for test
 	bandh = GDALGetRasterBand(fh, 1);
-	valueUnit=GDALGetRasterUnitType(fh); // provide value units
+	valueUnit=GDALGetRasterUnitType(bandh); // provide value units
 	//cout<<valueUnit<<endl; // for test
 
 	totalX = GDALGetRasterXSize(fh);
