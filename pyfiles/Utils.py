@@ -50,7 +50,7 @@ def initialize_output_raster_file(base_raster_file, output_raster_file, initial_
         grid_initial_data = np.zeros((rows, cols), dtype=np.float32)
         grid_initial_data[:] = float(initial_data)
     else:
-        grid_initial_data = np.zeros((rows, cols), dtype=np.int)
+        grid_initial_data = np.zeros((rows, cols), dtype=np.int32)
         grid_initial_data[:] = int(initial_data)
 
     outband = outRaster.GetRasterBand(1)
