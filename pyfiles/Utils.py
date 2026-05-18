@@ -4,7 +4,7 @@ from collections import namedtuple
 import os
 import subprocess
 
-from osgeo import gdal, osr
+from osgeo import gdal
 from osgeo.gdalconst import GA_ReadOnly
 import numpy as np
 
@@ -57,10 +57,15 @@ def initialize_output_raster_file(base_raster_file, output_raster_file, initial_
     outband.SetNoDataValue(NO_DATA_VALUE)
     outband.WriteArray(grid_initial_data)
 
-    # set the projection of the tif file same as that of the base_raster file
-    outRasterSRS = osr.SpatialReference()
-    outRasterSRS.ImportFromWkt(base_raster.GetProjectionRef())
-    outRaster.SetProjection(outRasterSRS.ExportToWkt())
+    # Set projection from the source raster without reparsing WKT because
+    # some ArcGIS binary DEM projections can fail ImportFromWkt with corrupt data errors.
+    source_srs = base_raster.GetSpatialRef() if hasattr(base_raster, 'GetSpatialRef') else None
+    if source_srs:
+        outRaster.SetProjection(source_srs.ExportToWkt())
+    else:
+        source_wkt = base_raster.GetProjectionRef()
+        if source_wkt and source_wkt.strip():
+            outRaster.SetProjection(source_wkt)
 
     outRaster = None
 
