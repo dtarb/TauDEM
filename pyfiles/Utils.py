@@ -61,8 +61,11 @@ def initialize_output_raster_file(base_raster_file, output_raster_file, initial_
     # some ArcGIS binary DEM projections can fail ImportFromWkt with corrupt data errors.
     source_srs = base_raster.GetSpatialRef() if hasattr(base_raster, 'GetSpatialRef') else None
     if source_srs:
+        # GetSpatialRef is the preferred modern GDAL path and returns a spatial reference object that we export to WKT
         outRaster.SetProjection(source_srs.ExportToWkt())
     else:
+        # GetProjectionRef is retained only as a fallback for datasets/drivers where no spatial reference object is exposed
+        # Rely on dataset's raw projection string
         source_wkt = base_raster.GetProjectionRef()
         if source_wkt and source_wkt.strip():
             outRaster.SetProjection(source_wkt)
