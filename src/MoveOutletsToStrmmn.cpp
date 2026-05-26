@@ -64,8 +64,8 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char pfile[MAXLN],srcfile[MAXLN],outletsdatasrc[MAXLN],outletslayer[MAXLN],outletmoveddatasrc[MAXLN],outletmovedlayer[MAXLN]="";
-   int err,i,maxdist=50,uselyrname=0,lyrno=0;
+   char pfile[MAXLN] = "",srcfile[MAXLN] = "",outletsdatasrc[MAXLN] = "",outletslayer[MAXLN] = "",outletmoveddatasrc[MAXLN] = "",outletmovedlayer[MAXLN] = "";
+   int err = 0,i = 0,maxdist = 50,uselyrname = 0,lyrno = 0;
    
    if(argc < 9)
     {  
@@ -171,10 +171,15 @@ int main(int argc,char **argv)
 			goto errexit;
 		}
 	}
+
+	if (pfile[0] == '\0' || srcfile[0] == '\0' || outletsdatasrc[0] == '\0' || outletmoveddatasrc[0] == '\0') goto errexit;
+
     if(err=outletstosrc(pfile,srcfile,outletsdatasrc,outletslayer,uselyrname,lyrno,outletmoveddatasrc,outletmovedlayer,maxdist) != 0)
        printf("Move outlets to stream error %d\n",err);
 
+	if (err != 0) return err;
 	return 0;
+
 errexit:
 	   printf("Incorrect input.\n");
 	   printf("Use with specific file names:\n %s -p <pfile>\n",argv[0]);
@@ -186,6 +191,5 @@ errexit:
 	   printf("<outletsmoved> is the name of the moved outlet shape file (output).\n");
 	   printf("<max dist> is the maximum number of grid cells to move an outlet (input).\n");
 	   printf("Default <max dist> is 50 if not input.\n");
-       exit(0);
+       return 1;
 } 
-

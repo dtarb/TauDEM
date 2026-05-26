@@ -47,12 +47,12 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char demfile[MAXLN],newfile[MAXLN],flowfile[MAXLN];
-   int err,order,subbno,i;
-   short useflowfile=0;
-   bool verbose=false;  //  Initialize verbose flag
+   char demfile[MAXLN] = "", newfile[MAXLN] = "", flowfile[MAXLN] = "";
+   int err = 0, order = 0, subbno = 0, i = 0;
+   short useflowfile = 0;
+   bool verbose = false;  //  Initialize verbose flag
    bool is_4p = false; // four-point flow method versus eight-point, arb 5/31/11
-   char maskfile[MAXLN]; // mask out actual depressions, arb 5/31/11
+   char maskfile[MAXLN] = ""; // mask out actual depressions, arb 5/31/11
    bool use_mask = false; // flag to specify the optional mask file, arb 5/31/11
    
    if(argc < 2)
@@ -140,33 +140,36 @@ int main(int argc,char **argv)
 	{
 		printf("On input demfile: %s\n",demfile);
 		printf("On input newfile: %s\n",newfile);
-    printf("%ssing mask file: %s\n",use_mask?"U":"Not U", use_mask?maskfile:"N/A");
+    	printf("%ssing mask file: %s\n",use_mask?"U":"Not U", use_mask?maskfile:"N/A");
 		fflush(stdout);
 	}
+
+	if ( demfile[0] == '\0' || newfile[0] == '\0') goto errexit;
+
 	useflowfile=0;  //  useflowfile not implemented
 
 	if((err=flood(demfile,newfile,flowfile,useflowfile,verbose,is_4p,use_mask,maskfile)) != 0)
         printf("PitRemove error %d\n",err);
 
+	if (err != 0) return err;
 	return 0;
 
-	errexit:
+errexit:
 	// 5/11/23 dgt Fixing usage text (noting that sfdr option is currently commented out in main code)
-	   printf("Simple use:\n %s <demfile>\n",argv[0]);
-	   printf("Simple use takes as input just the input DEM file name and the name of the output file is\n");
-	   printf("created by inserting 'fel' into the input file name.\n");
-	   printf("It is not possible to use a depression mask, or specify 4 way pit removal with the simple input pattern.\n\n");
-	   
-	   printf("General use with specific file names:\n %s -z <demfile> ",argv[0]);
-           printf("-fel <newfile> [-depmask <maskfile>] [ -4way] [-v] \n");
-	   printf("General use requires specification of the file name for each input/output, preceded by a flag indicating\n");
-	   printf("the file content.\n"); 
-	   printf("<demfile> is the name of the input elevation grid file.\n");
-	   printf("<newfile> is the output elevation grid with pits filled.\n");
-	   //printf("<flowfile> (optional) is the input grid of flow directions to be imposed.\n");
-	   printf("<depmaskfile> is depression mask indicator grid.\n");
-	   printf("-4way (optional) is flag to set 4 way depression filling.\n");
-           printf("-v (optional) is flag to set verbose (more detailed) output messages.\n");
-       exit(0);
-}
+	printf("Simple use:\n %s <demfile>\n",argv[0]);
+	printf("Simple use takes as input just the input DEM file name and the name of the output file is\n");
+	printf("created by inserting 'fel' into the input file name.\n");
+	printf("It is not possible to use a depression mask, or specify 4 way pit removal with the simple input pattern.\n\n");
 
+	printf("General use with specific file names:\n %s -z <demfile> ",argv[0]);
+    printf("-fel <newfile> [-depmask <maskfile>] [ -4way] [-v] \n");
+	printf("General use requires specification of the file name for each input/output, preceded by a flag indicating\n");
+	printf("the file content.\n"); 
+	printf("<demfile> is the name of the input elevation grid file.\n");
+	printf("<newfile> is the output elevation grid with pits filled.\n");
+	//printf("<flowfile> (optional) is the input grid of flow directions to be imposed.\n");
+	printf("<depmaskfile> is depression mask indicator grid.\n");
+	printf("-4way (optional) is flag to set 4 way depression filling.\n");
+    printf("-v (optional) is flag to set verbose (more detailed) output messages.\n");
+    return 1;
+}

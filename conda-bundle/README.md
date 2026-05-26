@@ -5,9 +5,12 @@ This package contains TauDEM (Terrain Analysis Using Digital Elevation Models) e
 ## What's Included
 
 - All TauDEM command-line tools (pitremove, d8flowdir, aread8, etc.)
-- Runtime libraries (OpenMPI, GDAL, PROJ, SQLite, libspatialite, etc.)
+- Runtime libraries (GDAL, PROJ, SQLite, libspatialite, OpenMPI, and other dependencies)
+- GDAL/OGR CLI tools (gdal_translate, gdalwarp, ogr2ogr, etc.)
 - Environment configuration scripts
 - Installation script
+
+**Note:** OpenMPI is bundled with this package to ensure version compatibility with the TauDEM binaries. All libraries are configured to work together seamlessly. However, in certain installation environments, the bundled MPI may not install properly. If you encounter issues with MPI, please try installing OpenMPI separately using conda as shown in step 7 of the installation instructions.
 
 ## System Requirements
 
@@ -65,11 +68,9 @@ This package contains TauDEM (Terrain Analysis Using Digital Elevation Models) e
 
    This will:
    - Copy TauDEM executables to your conda environment's bin directory
-   - Copy all runtime libraries to your conda environment's lib directory
+   - Copy all runtime libraries (GDAL, PROJ, OpenMPI, etc.) to your conda environment's lib directory
    - Set up necessary environment variables in your conda activate.d scripts
    - Configure library paths
-
-   **Note:** Most dependencies are bundled, but you must install OpenMPI separately (see next step).
 
 5. Restart your shell or run:
 
@@ -80,9 +81,21 @@ This package contains TauDEM (Terrain Analysis Using Digital Elevation Models) e
    conda activate ~/.local/taudem-env
    ```
 
-6. **Install OpenMPI:**
+6. Test Installation:
 
-   Since OpenMPI is system-dependent, you must install it separately in your environment:
+   ```bash
+   pitremove
+   ```
+
+   This should print the help message for the pitremove tool.
+
+   ```bash
+   mpiexec
+   ```
+
+   This should print "No executable was specified". However, if you see a different error message (e.g. "prterun-exec-failed"), try installing OpenMPI separately using conda as shown in step 7.
+
+7. **If you encounter issues with MPI**, try installing OpenMPI separately using conda in your taudem conda environment:
 
    ```bash
    conda install -c conda-forge openmpi
@@ -107,7 +120,7 @@ See the [TauDEM documentation](http://hydrology.usu.edu/taudem/taudem5/documenta
 
 ## Bundle Contents
 
-```
+```text
 taudem-conda-linux64/
 ├── bin/              # TauDEM executable binaries
 ├── lib/              # Runtime shared libraries
@@ -179,7 +192,7 @@ These should include paths to your conda environment.
 
 ### MPI errors
 
-This bundle relies on OpenMPI installed in your conda environment. If you have other MPI implementations installed system-wide, ensure you are using the `mpiexec` from your conda environment. You can verify this with `which mpiexec`.
+This bundle includes OpenMPI configured to work with the TauDEM binaries. If you have other MPI implementations installed system-wide, ensure you are using the `mpiexec` from your conda environment. You can verify this with `which mpiexec`.
 
 ## License
 

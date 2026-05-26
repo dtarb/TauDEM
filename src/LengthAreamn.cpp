@@ -49,9 +49,9 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)  
 {
-   char plenfile[MAXLN],ad8file[MAXLN], ssfile[MAXLN];
+   char plenfile[MAXLN] = "", ad8file[MAXLN] = "", ssfile[MAXLN] = "";
    float p[2];
-   int err;
+   int err = 0;
       
    if(argc < 2) goto errexit;
    // Set defaults
@@ -115,10 +115,14 @@ int main(int argc,char **argv)
 		    else goto errexit;
 		}
    }
+    if (plenfile[0] == '\0' || ad8file[0] == '\0' || ssfile[0] == '\0') goto errexit;
+
     if((err=lengtharea(plenfile,ad8file, ssfile,p)) != 0)
         printf("Length Area Error %d\n",err);
 
+	if (err != 0) return err;
 	return 0;
+
 errexit:
    printf("Simple Use:\n %s <basefilename>\n",argv[0]);
    printf("Use with specific file names:\n %s -plen <plenfile>\n",argv[0]);
@@ -129,6 +133,5 @@ errexit:
    printf("<ssfile> is the name of the output file with the result A >= M L^y ? 1:0.\n");
    printf("<M> is the coefficient, default value 0.03 if not specified.\n");
    printf("<y> is the exponent on upslope length, default value 1.3 if not specified.\n");
-   return 0; 
+   return 1;
 } 
-   

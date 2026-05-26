@@ -49,8 +49,8 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char angfile[MAXLN],felfile[MAXLN],assfile[MAXLN],rzfile[MAXLN],dmfile[MAXLN];
-   int err,i;
+   char angfile[MAXLN] = "", felfile[MAXLN] = "", assfile[MAXLN] = "", rzfile[MAXLN] = "", dmfile[MAXLN] = "";
+   int err = 0,i;
    int path=1;
    float thresh=0.2, alpha=18.0;
 
@@ -161,10 +161,12 @@ int main(int argc,char **argv)
 		nameadd(dmfile,argv[1],"dfs");
 	}   
 
+	if (felfile[0] == '\0' || angfile[0] == '\0' || assfile[0] == '\0' || rzfile[0] == '\0' || dmfile[0] == '\0') goto errexit;
+
    if(err=avalancherunoutgrd(angfile,felfile,assfile,rzfile,dmfile,thresh,alpha,path) != 0)
          printf("DinfAvalanche error %d\n",err);
 
-
+	if (err != 0) return err;
 	return 0;
 	
 errexit:
@@ -188,5 +190,5 @@ errexit:
        printf("ass   avalanche source site grod (input)\n");
 	   printf("rz    avalanche runout zone grid (output)\n");
 	   printf("dm    avalanche runout zone grid (output)\n");
-       exit(0); 
+       return 1; 
 } 

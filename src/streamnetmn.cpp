@@ -50,11 +50,11 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char pfile[MAXLN],srcfile[MAXLN],ordfile[MAXLN],ad8file[MAXLN],elevfile[MAXLN],wfile[MAXLN],outletsds[MAXLN],lyrname[MAXLN],streamnetsrc[MAXLN];
+   char pfile[MAXLN] = "", srcfile[MAXLN] = "", ordfile[MAXLN] = "", ad8file[MAXLN] = "", elevfile[MAXLN] = "", wfile[MAXLN] = "", outletsds[MAXLN] = "", lyrname[MAXLN] = "", streamnetsrc[MAXLN] = "";
    char treefile[MAXLN],coordfile[MAXLN];char streamnetlyr[MAXLN]="";
    long ordert=1, useoutlets=0,uselayername=0,lyrno=0; 
-   int err,i;
-    bool verbose=false;  //  Initialize verbose flag
+   int err = 0,i;
+	bool verbose=false;  //  Initialize verbose flag
    
    if(argc < 2)
     {  	
@@ -245,12 +245,15 @@ int main(int argc,char **argv)
 		//nameadd(streamnetshp,argv[1],"net.shp");
 	} 
 
+	if (pfile[0] == '\0' || srcfile[0] == '\0' || ad8file[0] == '\0' || elevfile[0] == '\0') goto errexit;
+
     if(err=netsetup(pfile,srcfile,ordfile,ad8file,elevfile,treefile,coordfile,outletsds,lyrname,uselayername,lyrno,wfile,streamnetsrc,streamnetlyr,useoutlets, ordert,verbose) != 0)
        printf("StreamNet error %d\n",err);
 
+	if (err != 0) return err;
 	return 0;
 
-	errexit:
+errexit:
 	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
        printf("Usage with specific file names:\n %s -p <pfile>\n",argv[0]);
 	   printf("-fel <elevfile> -ad8 <ad8file> -src <srcfile>\n");
@@ -266,6 +269,5 @@ int main(int argc,char **argv)
        printf("fel   pit filled or carved elevation grid (input)\n");
        printf("p   D-infinity flow direction grid (Input)\n");
        printf("slpd   avalanche source site grod (input)\n");
-       exit(0);
+       return 1;
 } 
-

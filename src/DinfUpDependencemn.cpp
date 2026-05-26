@@ -49,8 +49,8 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char angfile[MAXLN],dgfile[MAXLN],depfile[MAXLN];
-   int err,useOutlets=0,usew=0,contcheck=1,i;
+   char angfile[MAXLN] = "", dgfile[MAXLN] = "", depfile[MAXLN] = "";
+   int err = 0,useOutlets=0,usew=0,contcheck=1,i;
    
    if(argc < 2)
     {  
@@ -110,12 +110,16 @@ int main(int argc,char **argv)
 		nameadd(dgfile,argv[1],"dg");
 		nameadd(depfile,argv[1],"dep");
 	}  
+
+	if (angfile[0] == '\0' || dgfile[0] == '\0' || depfile[0] == '\0') goto errexit;
+
 	if((err=depgrd(angfile,dgfile,depfile)) != 0)
         printf("depgrd error %d\n",err);
 
+	if (err != 0) return err;
 	return 0;
 
-	errexit:
+errexit:
 	   printf("Simple Usage:\n %s <basefilename>\n",argv[0]);
 	   printf("Usage with specific file names:\n %s -ang <angfile>\n",argv[0]);
        printf("-dg <dgfile> -dp <depfile>\n");
@@ -128,5 +132,5 @@ int main(int argc,char **argv)
        printf("ang    D-infinity flow direction input file\n");
 	   printf("dg     disturbance grid (input)\n");
 	   printf("dep    dependence grid (input)\n");
-       exit(0);  
+       return 1;  
 }

@@ -4,7 +4,7 @@ from collections import namedtuple
 import os
 import subprocess
 
-from osgeo import gdal, osr
+from osgeo import gdal
 from osgeo.gdalconst import GA_ReadOnly
 import numpy as np
 
@@ -50,17 +50,25 @@ def initialize_output_raster_file(base_raster_file, output_raster_file, initial_
         grid_initial_data = np.zeros((rows, cols), dtype=np.float32)
         grid_initial_data[:] = float(initial_data)
     else:
-        grid_initial_data = np.zeros((rows, cols), dtype=np.int)
+        grid_initial_data = np.zeros((rows, cols), dtype=np.int32)
         grid_initial_data[:] = int(initial_data)
 
     outband = outRaster.GetRasterBand(1)
     outband.SetNoDataValue(NO_DATA_VALUE)
     outband.WriteArray(grid_initial_data)
 
-    # set the projection of the tif file same as that of the base_raster file
-    outRasterSRS = osr.SpatialReference()
-    outRasterSRS.ImportFromWkt(base_raster.GetProjectionRef())
-    outRaster.SetProjection(outRasterSRS.ExportToWkt())
+    # Set projection from the source raster without reparsing WKT because
+    # some ArcGIS binary DEM projections can fail ImportFromWkt with corrupt data errors.
+    source_srs = base_raster.GetSpatialRef() if hasattr(base_raster, 'GetSpatialRef') else None
+    if source_srs:
+        # GetSpatialRef is the preferred modern GDAL path and returns a spatial reference object that we export to WKT
+        outRaster.SetProjection(source_srs.ExportToWkt())
+    else:
+        # GetProjectionRef is retained only as a fallback for datasets/drivers where no spatial reference object is exposed
+        # Rely on dataset's raw projection string
+        source_wkt = base_raster.GetProjectionRef()
+        if source_wkt and source_wkt.strip():
+            outRaster.SetProjection(source_wkt)
 
     outRaster = None
 
@@ -93,6 +101,11 @@ def run_taudem_command(cmd, msg_callback=None):
     :return: The return code of the process.
     """
     env = get_adjusted_env()
+
+    # NOTE: Pabitra: Originally (prior to TauDEM 5.4.0) os.system(cmd) was used to display the Windows command prompt window.
+    # However, this fails now as it can't find the GDAL modules and we can't pass the environment (env) variables to it.
+    # os.system(cmd)
+
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
     stdout, stderr = process.communicate()
 

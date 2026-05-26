@@ -49,8 +49,8 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char pfile[MAXLN],wfile[MAXLN],swfile[MAXLN],datasrc[MAXLN],lyrname[MAXLN],idfile[MAXLN],upidfile[MAXLN];
-   int err,useOutlets=0,useMask=0,uselyrname=0,lyrno=0,thresh=0,i=1,writeid=0,useswg=0,writeupid=0;
+   char pfile[MAXLN] = "", wfile[MAXLN] = "", swfile[MAXLN] = "", datasrc[MAXLN] = "", lyrname[MAXLN] = "", idfile[MAXLN] = "", upidfile[MAXLN] = "";
+   int err = 0,useOutlets=0,useMask=0,uselyrname=0,lyrno=0,thresh=0,i=1,writeid=0,useswg=0,writeupid=0;
    if(argc <= 2)
     {  	
 	   goto errexit;
@@ -149,9 +149,12 @@ int main(int argc,char **argv)
 		}
 	}
 
-    if( (err=gagewatershed(pfile,wfile,datasrc,lyrname,uselyrname,lyrno,idfile,writeid,writeupid,upidfile)) != 0)
+	if (pfile[0] == '\0' || wfile[0] == '\0' || datasrc[0] == '\0') goto errexit;
+
+    if((err=gagewatershed(pfile,wfile,datasrc,lyrname,uselyrname,lyrno,idfile,writeid,writeupid,upidfile)) != 0)
         printf("Gage watershed error %d\n",err);
 
+	if (err != 0) return err;
 	return 0;
 
 errexit:
@@ -160,6 +163,5 @@ errexit:
 	   printf("<outletshape> is the name of the input outlet shapefile.\n");
 	   printf("<gagewatershed> is the output gagewatershed grid file.\n");
 	   printf("<idfile> is optional output text file giving watershed downslope connectivity.\n\n");
-       exit(0);
+       return 1;
 } 
-

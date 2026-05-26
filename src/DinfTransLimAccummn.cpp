@@ -50,9 +50,9 @@ email:  dtarb@usu.edu
 
 int main(int argc,char **argv)
 {
-   char angfile[MAXLN],tsupfile[MAXLN],tcfile[MAXLN],tlafile[MAXLN],depfile[MAXLN];
-   char cinfile[MAXLN],coutfile[MAXLN],datasrc[MAXLN],lyrname[MAXLN];
-   int err,useOutlets=0,usec=0,uselyrname=0,lyrno=0,compctpt=0,contcheck=1,i;
+   char angfile[MAXLN] = "", tsupfile[MAXLN] = "", tcfile[MAXLN] = "", tlafile[MAXLN] = "", depfile[MAXLN] = "";
+   char cinfile[MAXLN] = "", coutfile[MAXLN] = "", datasrc[MAXLN] = "", lyrname[MAXLN] = "";
+   int err = 0,useOutlets=0,usec=0,uselyrname=0,lyrno=0,compctpt=0,contcheck=1,i;
    
    if(argc < 2)
     {  
@@ -198,12 +198,16 @@ int main(int argc,char **argv)
 		nameadd(tlafile,argv[1],"tla");
 		nameadd(depfile,argv[1],"tdep");
 
-	}  
+	}
+
+	if (angfile[0] == '\0' || tsupfile[0] == '\0' || tcfile[0] == '\0' || tlafile[0] == '\0' || depfile[0] == '\0') goto errexit;
+
 	usec=usec*compctpt;  //  This ensures that both cinfile and coutfile have to be provided for concentration to be evaluated
 	if((err=tlaccum(angfile,tsupfile,tcfile,tlafile,depfile,cinfile,coutfile,datasrc,lyrname,uselyrname,lyrno,
 		useOutlets,usec,contcheck)) != 0)
         printf("tlaccum error %d\n",err);
 	
+	if (err != 0) return err;
 	return 0;
 	
 errexit:
@@ -228,5 +232,5 @@ errexit:
 	   printf("tc     Input transport capacity grid\n");
 	   printf("tla    Output transport limitted accumulation grid\n");
 	   printf("tdep   output deposition grid\n");
-       exit(0); 
+       return 1; 
 }
