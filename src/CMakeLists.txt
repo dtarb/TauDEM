@@ -55,6 +55,8 @@ set (RETLIMFLOW RetLimFlowmn.cpp RetlimFlow.cpp ${common_srcs})
 set (SETREGION SetRegionmn.cpp SetRegion.cpp ${common_srcs})
 set (SINMAPSI SinmapSImn.cpp SinmapSI.cpp ${common_srcs})
 set (INUNDEPTH InunDepthmn.cpp InunDepth.cpp ${common_srcs})
+set (SIREGION SIRegionToolmn.cpp)
+set (STABILITYINDEX StabilityIndexmn.cpp)
 
 # MPI configuration for Windows
 if(WIN32)
@@ -137,6 +139,8 @@ add_executable (retlimflow ${RETLIMFLOW})
 add_executable (setregion ${SETREGION})
 add_executable (sinmapsi ${SINMAPSI})
 add_executable (inundepth ${INUNDEPTH})
+add_executable (siregion ${SIREGION})
+add_executable (stabilityindex ${STABILITYINDEX})
 
 set (MY_TARGETS aread8
                 areadinf
@@ -173,7 +177,9 @@ set (MY_TARGETS aread8
                 retlimflow
                 setregion
                 sinmapsi
-                inundepth)
+                inundepth
+                siregion
+                stabilityindex)
 
 
 foreach(c_target ${MY_TARGETS})
