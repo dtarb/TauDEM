@@ -31,18 +31,18 @@ try:
 
     # Construct siregion command line. Put quotes around file names in case there are spaces.
     cmd = 'siregion' + \
-          ' --dem ' + Utils.quote(dem_grid) + \
-          ' --parreg ' + Utils.quote(output_region_grid) + \
-          ' --att ' + Utils.quote(calibration_table_text_file)
+          ' -dem ' + Utils.quote(dem_grid) + \
+          ' -parreg ' + Utils.quote(output_region_grid) + \
+          ' -att ' + Utils.quote(calibration_table_text_file)
 
     if region_grid:
-        cmd += ' --parreg-in ' + Utils.quote(region_grid)
+        cmd += ' -parreg-in ' + Utils.quote(region_grid)
 
     if region_feature_class:
-        cmd += ' --shp ' + Utils.quote(region_feature_class)
+        cmd += ' -shp ' + Utils.quote(region_feature_class)
 
     if region_feature_class_selected_attribute:
-        cmd += ' --shp-att-name ' + Utils.quote(region_feature_class_selected_attribute)
+        cmd += ' -shp-att-name ' + Utils.quote(region_feature_class_selected_attribute)
 
     arcpy.AddMessage('\nCommand Line: ' + cmd)
 

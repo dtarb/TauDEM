@@ -36,18 +36,18 @@ struct Args {
 
 static void PrintUsage(const char* prog) {
     std::cout
-        << "Usage: " << prog << " --dem <dem.tif> --parreg <out_parreg.tif> --att <out_att.txt> [options]\n"
+        << "Usage: " << prog << " -dem <dem.tif> -parreg <out_parreg.tif> -att <out_att.txt> [options]\n"
         << "Options:\n"
-        << "  --parreg-in <region.tif>        Input region raster (mutually exclusive with --shp)\n"
-        << "  --shp <regions.shp>             Input region polygon feature class\n"
-        << "  --shp-att-name <field>          Field used during rasterization (default: ID)\n"
-        << "  --att-tmin <v>                  Default: 2.708\n"
-        << "  --att-tmax <v>                  Default: 2.708\n"
-        << "  --att-cmin <v>                  Default: 0.0\n"
-        << "  --att-cmax <v>                  Default: 0.25\n"
-        << "  --att-phimin <v>                Default: 30.0\n"
-        << "  --att-phimax <v>                Default: 45.0\n"
-        << "  --att-soildens <v>              Default: 2000.0\n";
+        << "  -parreg-in <region.tif>         Input region raster (mutually exclusive with -shp)\n"
+        << "  -shp <regions.shp>              Input region polygon feature class\n"
+        << "  -shp-att-name <field>           Field used during rasterization (default: ID)\n"
+        << "  -att-tmin <v>                   Default: 2.708\n"
+        << "  -att-tmax <v>                   Default: 2.708\n"
+        << "  -att-cmin <v>                   Default: 0.0\n"
+        << "  -att-cmax <v>                   Default: 0.25\n"
+        << "  -att-phimin <v>                 Default: 30.0\n"
+        << "  -att-phimax <v>                 Default: 45.0\n"
+        << "  -att-soildens <v>               Default: 2000.0\n";
 }
 
 static bool StartsWith(const std::string& s, const std::string& prefix) {
@@ -91,27 +91,27 @@ static Args ParseArgs(int argc, char** argv) {
             return false;
         };
 
-        if (parseLong("--dem", args.dem)) continue;
-        if (parseLong("--parreg", args.parreg)) continue;
-        if (parseLong("--att", args.att)) continue;
-        if (parseLong("--parreg-in", args.parregIn)) continue;
-        if (parseLong("--shp", args.shp)) continue;
-        if (parseLong("--shp-att-name", args.shpAttName)) continue;
+        if (parseLong("-dem", args.dem)) continue;
+        if (parseLong("-parreg", args.parreg)) continue;
+        if (parseLong("-att", args.att)) continue;
+        if (parseLong("-parreg-in", args.parregIn)) continue;
+        if (parseLong("-shp", args.shp)) continue;
+        if (parseLong("-shp-att-name", args.shpAttName)) continue;
 
-        if (parseLong("--att-tmin", args.attTmin)) continue;
-        if (parseLong("--att-tmax", args.attTmax)) continue;
-        if (parseLong("--att-cmin", args.attCmin)) continue;
-        if (parseLong("--att-cmax", args.attCmax)) continue;
-        if (parseLong("--att-phimin", args.attPhimin)) continue;
-        if (parseLong("--att-phimax", args.attPhimax)) continue;
-        if (parseLong("--att-soildens", args.attSoildens)) continue;
+        if (parseLong("-att-tmin", args.attTmin)) continue;
+        if (parseLong("-att-tmax", args.attTmax)) continue;
+        if (parseLong("-att-cmin", args.attCmin)) continue;
+        if (parseLong("-att-cmax", args.attCmax)) continue;
+        if (parseLong("-att-phimin", args.attPhimin)) continue;
+        if (parseLong("-att-phimax", args.attPhimax)) continue;
+        if (parseLong("-att-soildens", args.attSoildens)) continue;
 
         throw std::runtime_error("Unknown argument: " + a);
     }
 
-    if (args.dem.empty()) throw std::runtime_error("Required option missing: --dem");
-    if (args.parreg.empty()) throw std::runtime_error("Required option missing: --parreg");
-    if (args.att.empty()) throw std::runtime_error("Required option missing: --att");
+    if (args.dem.empty()) throw std::runtime_error("Required option missing: -dem");
+    if (args.parreg.empty()) throw std::runtime_error("Required option missing: -parreg");
+    if (args.att.empty()) throw std::runtime_error("Required option missing: -att");
 
     return args;
 }
@@ -142,24 +142,24 @@ static void ValidateArgs(const Args& args) {
         GDALRasterBand* b = ds->GetRasterBand(1);
         if (!b) {
             GDALClose(ds);
-            throw std::runtime_error("Invalid '--parreg-in' file: missing band 1.");
+            throw std::runtime_error("Invalid '-parreg-in' file: missing band 1.");
         }
 
         const GDALDataType dt = b->GetRasterDataType();
         if (!(dt == GDT_Byte || dt == GDT_UInt16 || dt == GDT_UInt32)) {
             GDALClose(ds);
-            throw std::runtime_error("Not a valid file (" + args.parregIn + ") provided for '--parreg-in'. Data type must be integer (Byte/UInt16/UInt32).");
+            throw std::runtime_error("Not a valid file (" + args.parregIn + ") provided for '-parreg-in'. Data type must be integer (Byte/UInt16/UInt32).");
         }
         GDALClose(ds);
     }
 
     if (!args.parregIn.empty() && !args.shp.empty()) {
-        throw std::runtime_error("Either '--parreg-in' or '--shp' should be provided, but not both.");
+        throw std::runtime_error("Either '-parreg-in' or '-shp' should be provided, but not both.");
     }
 
     if (!args.shp.empty()) {
         if (args.shpAttName.empty()) {
-            throw std::runtime_error("'--shp-att-name' is required when '--shp' is provided.");
+            throw std::runtime_error("'-shp-att-name' is required when '-shp' is provided.");
         }
         if (args.shpAttName == "FID") {
             throw std::runtime_error("'FID' is an invalid shape file attribute for calibration region calculation.");
@@ -167,7 +167,7 @@ static void ValidateArgs(const Args& args) {
 
         GDALDataset* vds = static_cast<GDALDataset*>(GDALOpenEx(args.shp.c_str(), GDAL_OF_VECTOR, nullptr, nullptr, nullptr));
         if (!vds) {
-            throw std::runtime_error("Not a valid shape file (" + args.shp + ") provided for '--shp'.");
+            throw std::runtime_error("Not a valid shape file (" + args.shp + ") provided for '-shp'.");
         }
 
         OGRLayer* layer = vds->GetLayer(0);
@@ -186,10 +186,10 @@ static void ValidateArgs(const Args& args) {
     }
 
     if (!PathParentExists(args.parreg)) {
-        throw std::runtime_error("File path for '--parreg' does not exist.");
+        throw std::runtime_error("File path for '-parreg' does not exist.");
     }
     if (!PathParentExists(args.att)) {
-        throw std::runtime_error("File path for '--att' does not exist.");
+        throw std::runtime_error("File path for '-att' does not exist.");
     }
 }
 
