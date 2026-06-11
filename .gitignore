@@ -166,6 +166,7 @@ pyfiles/.idea/
 install
 
 # ignore folder related to build
+build-local/
 src/build/
 src/build-release/
 src/build-debug/
