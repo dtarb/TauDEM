@@ -133,6 +133,17 @@ static GDALDataset* OpenRasterOrThrow(const std::string& path) {
     return ds;
 }
 
+static bool GetBandNoDataValue(GDALDataset* ds, double& noData) {
+    if (!ds) {
+        return false;
+    }
+
+    GDALRasterBand* band = ds->GetRasterBand(1);
+    int hasNoData = FALSE;
+    noData = band ? band->GetNoDataValue(&hasNoData) : 0.0;
+    return hasNoData != 0;
+}
+
 static void ValidateArgs(const Args& args) {
     GDALDataset* dem = OpenRasterOrThrow(args.dem);
     GDALClose(dem);
@@ -146,9 +157,9 @@ static void ValidateArgs(const Args& args) {
         }
 
         const GDALDataType dt = b->GetRasterDataType();
-        if (!(dt == GDT_Byte || dt == GDT_UInt16 || dt == GDT_UInt32)) {
+        if (!(dt == GDT_Byte || dt == GDT_UInt16 || dt == GDT_UInt32 || dt == GDT_Int32)) {
             GDALClose(ds);
-            throw std::runtime_error("Not a valid file (" + args.parregIn + ") provided for '-parreg-in'. Data type must be integer (Byte/UInt16/UInt32).");
+            throw std::runtime_error("Not a valid file (" + args.parregIn + ") provided for '-parreg-in'. Data type must be integer (Byte/UInt16/UInt32/Int32).");
         }
         GDALClose(ds);
     }
@@ -208,6 +219,9 @@ static void CopyDEMGeometry(GDALDataset* dem, GDALDataset* out) {
 static void CreateConstantRegionRaster(const std::string& demPath, const std::string& outPath) {
     GDALDataset* dem = OpenRasterOrThrow(demPath);
 
+    double demNoData = 0.0;
+    const bool hasDemNoData = GetBandNoDataValue(dem, demNoData);
+
     GDALDriver* drv = GetGDALDriverManager()->GetDriverByName("GTiff");
     if (!drv) {
         GDALClose(dem);
@@ -217,7 +231,7 @@ static void CreateConstantRegionRaster(const std::string& demPath, const std::st
     const int cols = dem->GetRasterXSize();
     const int rows = dem->GetRasterYSize();
 
-    GDALDataset* out = drv->Create(outPath.c_str(), cols, rows, 1, GDT_UInt32, nullptr);
+    GDALDataset* out = drv->Create(outPath.c_str(), cols, rows, 1, GDT_Int32, nullptr);
     if (!out) {
         GDALClose(dem);
         throw std::runtime_error("Failed to create output raster: " + outPath);
@@ -226,11 +240,13 @@ static void CreateConstantRegionRaster(const std::string& demPath, const std::st
     CopyDEMGeometry(dem, out);
 
     GDALRasterBand* band = out->GetRasterBand(1);
-    band->SetNoDataValue(-9999);
+    if (band && hasDemNoData) {
+        band->SetNoDataValue(demNoData);
+    }
 
-    std::vector<uint32_t> row(cols, 1U);
+    std::vector<int32_t> row(cols, 1);
     for (int y = 0; y < rows; ++y) {
-        if (band->RasterIO(GF_Write, 0, y, cols, 1, row.data(), cols, 1, GDT_UInt32, 0, 0, nullptr) != CE_None) {
+        if (band->RasterIO(GF_Write, 0, y, cols, 1, row.data(), cols, 1, GDT_Int32, 0, 0, nullptr) != CE_None) {
             GDALClose(out);
             GDALClose(dem);
             throw std::runtime_error("Failed writing constant region raster.");
@@ -244,6 +260,9 @@ static void CreateConstantRegionRaster(const std::string& demPath, const std::st
 
 static GDALDataset* CreateMemLikeDEM(const std::string& demPath, GDALDataType dt) {
     GDALDataset* dem = OpenRasterOrThrow(demPath);
+
+    double demNoData = 0.0;
+    const bool hasDemNoData = GetBandNoDataValue(dem, demNoData);
 
     GDALDriver* memDrv = GetGDALDriverManager()->GetDriverByName("MEM");
     if (!memDrv) {
@@ -259,14 +278,17 @@ static GDALDataset* CreateMemLikeDEM(const std::string& demPath, GDALDataType dt
 
     CopyDEMGeometry(dem, mem);
     GDALRasterBand* b = mem->GetRasterBand(1);
-    b->SetNoDataValue(0);
+    if (b && hasDemNoData) {
+        b->SetNoDataValue(demNoData);
+        b->Fill(demNoData);
+    }
 
     GDALClose(dem);
     return mem;
 }
 
 static void RasterizeShapefileToRegion(const Args& args) {
-    GDALDataset* mem = CreateMemLikeDEM(args.dem, GDT_UInt32);
+    GDALDataset* mem = CreateMemLikeDEM(args.dem, GDT_Int32);
 
     GDALDataset* vds = static_cast<GDALDataset*>(GDALOpenEx(args.shp.c_str(), GDAL_OF_VECTOR, nullptr, nullptr, nullptr));
     if (!vds) {
@@ -334,7 +356,7 @@ static void ResampleParregInToDEM(const Args& args) {
     co = CSLAddString(co, "BLOCKYSIZE=256");
     co = CSLAddString(co, "BIGTIFF=YES");
 
-    GDALDataset* dst = tifDrv->Create(args.parreg.c_str(), dem->GetRasterXSize(), dem->GetRasterYSize(), 1, GDT_UInt32, co);
+    GDALDataset* dst = tifDrv->Create(args.parreg.c_str(), dem->GetRasterXSize(), dem->GetRasterYSize(), 1, GDT_Int32, co);
     CSLDestroy(co);
     if (!dst) {
         GDALClose(src);
@@ -344,10 +366,17 @@ static void ResampleParregInToDEM(const Args& args) {
 
     CopyDEMGeometry(dem, dst);
 
-    // Match Python SIRegionTool behavior where 0 is treated as no-data for region IDs.
+    double srcNoData = 0.0;
+    bool hasSrcNoData = GetBandNoDataValue(src, srcNoData);
+    if (!hasSrcNoData) {
+        GDALDataset* demNoDataDs = dem;
+        hasSrcNoData = GetBandNoDataValue(demNoDataDs, srcNoData);
+    }
+
     GDALRasterBand* dstBand = dst->GetRasterBand(1);
-    if (dstBand) {
-        dstBand->SetNoDataValue(0);
+    if (dstBand && hasSrcNoData) {
+        dstBand->SetNoDataValue(srcNoData);
+        dstBand->Fill(srcNoData);
     }
 
     CPLErr reprojectErr = GDALReprojectImage(
@@ -393,8 +422,8 @@ static void CreateParameterRegionGrid(const Args& args) {
     }
 }
 
-static std::set<uint32_t> CollectParamIds(const std::string& parregPath) {
-    std::set<uint32_t> ids;
+static std::set<int32_t> CollectParamIds(const std::string& parregPath) {
+    std::set<int32_t> ids;
     GDALDataset* ds = OpenRasterOrThrow(parregPath);
 
     GDALRasterBand* band = ds->GetRasterBand(1);
@@ -408,24 +437,39 @@ static std::set<uint32_t> CollectParamIds(const std::string& parregPath) {
 
     const int cols = band->GetXSize();
     const int rows = band->GetYSize();
-    std::vector<uint32_t> row(cols, 0);
+    if (band->GetRasterDataType() == GDT_Int32) {
+        std::vector<int32_t> row(cols, 0);
 
-    for (int y = 0; y < rows; ++y) {
-        if (band->RasterIO(GF_Read, 0, y, cols, 1, row.data(), cols, 1, GDT_UInt32, 0, 0, nullptr) != CE_None) {
-            GDALClose(ds);
-            throw std::runtime_error("Failed reading parameter region raster.");
+        for (int y = 0; y < rows; ++y) {
+            if (band->RasterIO(GF_Read, 0, y, cols, 1, row.data(), cols, 1, GDT_Int32, 0, 0, nullptr) != CE_None) {
+                GDALClose(ds);
+                throw std::runtime_error("Failed reading parameter region raster.");
+            }
+
+            for (int x = 0; x < cols; ++x) {
+                const int32_t v = row[x];
+                if (hasNoData && static_cast<double>(v) == noData) {
+                    continue;
+                }
+                ids.insert(v);
+            }
         }
+    } else {
+        std::vector<uint32_t> row(cols, 0);
 
-        for (int x = 0; x < cols; ++x) {
-            const uint32_t v = row[x];
-            // Region ID 0 is reserved as no-data in SI region workflows.
-            if (v == 0) {
-                continue;
+        for (int y = 0; y < rows; ++y) {
+            if (band->RasterIO(GF_Read, 0, y, cols, 1, row.data(), cols, 1, GDT_UInt32, 0, 0, nullptr) != CE_None) {
+                GDALClose(ds);
+                throw std::runtime_error("Failed reading parameter region raster.");
             }
-            if (hasNoData && static_cast<double>(v) == noData) {
-                continue;
+
+            for (int x = 0; x < cols; ++x) {
+                const uint32_t v = row[x];
+                if (hasNoData && static_cast<double>(v) == noData) {
+                    continue;
+                }
+                ids.insert(static_cast<int32_t>(v));
             }
-            ids.insert(v);
         }
     }
 
@@ -434,7 +478,7 @@ static std::set<uint32_t> CollectParamIds(const std::string& parregPath) {
 }
 
 static void CreateAttributeTable(const Args& args) {
-    std::set<uint32_t> ids;
+    std::set<int32_t> ids;
     if (!args.shp.empty() || !args.parregIn.empty()) {
         ids = CollectParamIds(args.parreg);
     } else {
