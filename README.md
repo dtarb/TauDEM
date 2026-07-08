@@ -672,7 +672,7 @@ TauDEM requires the following dependencies:
 
 - **C++17 Compiler**: GCC 7+, Clang 5+, or Visual Studio 2022
 - **MPI**: Message Passing Interface for parallel processing
-- **GDAL**: Geospatial Data Abstraction Library for raster/vector I/O
+- **GDAL**: Geospatial Data Abstraction Library for raster/vector I/O (version 3.10+)
 - **CMake**: Build system (version 3.10+)
 
 ### Platform-Specific Installation
@@ -745,7 +745,7 @@ TauDEM provides a Windows installer for easy installation on Windows. The instal
 
 ## 📁 Project Structure
 
-```
+```text
 TauDEM/
 ├── src/                    # Source code
 │   ├── *.cpp, *.h          # TauDEM algorithms implementation
