@@ -1,76 +1,14 @@
 __author__ = 'Pabitra'
 
-from collections import namedtuple
 import os
 import subprocess
-
-from osgeo import gdal
-from osgeo.gdalconst import GA_ReadOnly
-import numpy as np
-
-NO_DATA_VALUE = -9999
-
 
 class ValidationException(Exception):
     pass
 
 
-FileDriver = namedtuple('FileDriver', 'ShapeFile, TifFile')
-GDALFileDriver = FileDriver("ESRI Shapefile", "GTiff")
-
-
-def initialize_output_raster_file(base_raster_file, output_raster_file, initial_data=0.0, data_type=gdal.GDT_Float32):
-
-    """
-    Creates an raster file based on the dimension, projection, and cell size of an input raster file using specified
-    initial data value of specified data type
-
-    :param base_raster_file: raster file based on which the new raster file to be created with initial_data
-    :param output_raster_file: name and location of of the output raster file to be created
-    :param initial_data: data to be used in creating the output raster file
-    :param data_type: GDAL data type to be used in creating the output raster file
-    :return: None
-    """
-    base_raster = gdal.Open(base_raster_file, GA_ReadOnly)
-    geotransform = base_raster.GetGeoTransform()
-    originX = geotransform[0]
-    originY = geotransform[3]
-    pixelWidth = geotransform[1]
-    pixelHeight = geotransform[5]
-    rows = base_raster.RasterYSize
-    cols = base_raster.RasterXSize
-
-    driver = gdal.GetDriverByName(GDALFileDriver.TifFile)
-    number_of_bands = 1
-    outRaster = driver.Create(output_raster_file, cols, rows, number_of_bands, data_type)
-    outRaster.SetGeoTransform((originX, pixelWidth, 0, originY, 0, pixelHeight))
-
-    # initialize the newly created tif file with zeros
-    if data_type == gdal.GDT_Float32:
-        grid_initial_data = np.zeros((rows, cols), dtype=np.float32)
-        grid_initial_data[:] = float(initial_data)
-    else:
-        grid_initial_data = np.zeros((rows, cols), dtype=np.int32)
-        grid_initial_data[:] = int(initial_data)
-
-    outband = outRaster.GetRasterBand(1)
-    outband.SetNoDataValue(NO_DATA_VALUE)
-    outband.WriteArray(grid_initial_data)
-
-    # Set projection from the source raster without reparsing WKT because
-    # some ArcGIS binary DEM projections can fail ImportFromWkt with corrupt data errors.
-    source_srs = base_raster.GetSpatialRef() if hasattr(base_raster, 'GetSpatialRef') else None
-    if source_srs:
-        # GetSpatialRef is the preferred modern GDAL path and returns a spatial reference object that we export to WKT
-        outRaster.SetProjection(source_srs.ExportToWkt())
-    else:
-        # GetProjectionRef is retained only as a fallback for datasets/drivers where no spatial reference object is exposed
-        # Rely on dataset's raw projection string
-        source_wkt = base_raster.GetProjectionRef()
-        if source_wkt and source_wkt.strip():
-            outRaster.SetProjection(source_wkt)
-
-    outRaster = None
+def quote(text):
+    return '"' + str(text) + '"'
 
 
 def get_adjusted_env():

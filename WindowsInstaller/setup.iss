@@ -18,7 +18,7 @@
 
 
 #define MyAppName "TauDEM"
-#define MyAppVersion "5.5.0"
+#define MyAppVersion "5.5.1"
 #define MyAppPublisher "Utah State University"
 #define MyAppURL "http://hydrology.usu.edu/taudem/taudem5/index.html"
 #define VcpkgDir "C:\dev\vcpkg"
@@ -26,7 +26,6 @@
 #define GdalPluginsDir VcpkgDir + "\installed\x64-windows\lib\gdalplugins"
 #define LibcurlPath VcpkgDir + "\installed\x64-windows\bin\libcurl.dll"
 #define GdalVersion "3.10.3"
-#define GdalInstallerVersion "1.0.2"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
@@ -134,19 +133,7 @@ Filename: "{app}\setup_files\VC_redist.x64.exe"; Flags: waituntilterminated; Che
 ; Install Microsoft MPI
 Filename: "{app}\setup_files\msmpisetup.exe"; Flags: waituntilterminated shellexec; Check: NeedsToInstallMPI()
 
-; First install GDAL installer package - needed for installing GDAL Python bindings for TauDEM integration with ArcGIS
-Filename: "{code:GetPythonExePath}"; Parameters: "-m pip install gdal-installer=={#GdalInstallerVersion}"; \
-    Flags: waituntilterminated runhidden; \
-    StatusMsg: "Installing GDAL installer package..."; \
-    Check: HasPython() and WantsPythonGDAL()
 
-; Run the GDAL installer Python script to install GDAL Python bindings - this is needed for TauDEM integration with ArcGIS
-Filename: "{code:GetPythonExePath}"; \
-    Parameters: "-m gdal_installer.install-gdal"; \
-    Flags: waituntilterminated runhidden; \
-    StatusMsg: "Running Python GDAL system installation..."; \
-    Check: HasPython() and WantsPythonGDAL(); \
-    AfterInstall: VerifyGdalInstallation
 
 [Registry]
 ; Set TauDEM application path to PATH - only add paths that don't exist
@@ -262,25 +249,19 @@ Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environmen
     Flags: uninsdeletevalue preservestringtype
 
 [code]
-var
-  WantsGdalValue: Integer; // Use Integer for tri-state: 0=unset, 1=yes, 2=no
-  HasPythonValue: Integer; // Use Integer for tri-state: 0=unset, 1=yes, 2=no
-  PythonExePath: string;   // Store detected Python executable path
 
 // add a custom wizard page after the welcome page to show the list of programs that will be installed
 procedure InitializeWizard();
 var UserPage: TInputQueryWizardPage;
 var notes_string: string;
 begin
-  WantsGdalValue := 0;
-  HasPythonValue := 0;
   notes_string := 'NOTES:'#13'1. The redistributables listed above will only be installed if they are not already installed.'#13 +
       '2. You will need to accept the license agreements associated with this software and click through several screens.'#13 +
       '3. The installer will also add firewall exceptions to allow TauDEM programs to run. These allow MPI interprocess communication used in the parallel computations. This is communication within your computer and not over any external network.'#13 +
       '4. The installer will also configure the necessary environment variables for TauDEM, GDAL, and MPI.'; 
   UserPage := CreateInputQueryPage(wpWelcome,
     'The following components will be installed', '',
-    'TauDEM version 5.5.0, GDAL (from vcpkg), Python GDAL bindings (if Python 3.10+ is available), ' +
+    'TauDEM version 5.5.1, GDAL (from vcpkg), ' +
     'Microsoft Visual C++ 2022 Redistributable Package (x64), Microsoft MPI'#13#13 + notes_string);   
 end;
 
@@ -386,118 +367,6 @@ begin
            FileExists(ExpandConstant('{app}\bin\sqlite3_mod_spatialite.dll'));
 end;
 
-// Check if Python is installed
-function HasPython(): Boolean;
-var
-  ResultCode: Integer;
-  PythonFound: Boolean;
-  ArcGISPythonPath: string;
-begin
-  if HasPythonValue = 0 then
-  begin
-    PythonFound := False;
-    PythonExePath := ''; // Reset
-
-    // Try with python command
-    if Exec('python', '-c "import sys; exit(0 if sys.version_info >= (3, 10) else 1)"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
-    begin
-      if ResultCode = 0 then
-      begin
-        PythonFound := True;
-        PythonExePath := 'python';
-      end;
-    end;
-
-    // Try with py command as fallback
-    if not PythonFound then
-    begin
-      if Exec('py', '-c "import sys; exit(0 if sys.version_info >= (3, 10) else 1)"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
-      begin
-        if ResultCode = 0 then
-        begin
-          PythonFound := True;
-          PythonExePath := 'py';
-        end;
-      end;
-    end;
-
-    if not PythonFound then
-    begin
-      // Check for ArcGIS Pro Python
-      ArcGISPythonPath := 'C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe';
-      if FileExists(ArcGISPythonPath) then
-      begin
-        if Exec(ArcGISPythonPath, '-c "import sys; exit(0 if sys.version_info >= (3, 10) else 1)"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
-        begin
-          if ResultCode = 0 then
-          begin
-            PythonFound := True;
-            PythonExePath := ArcGISPythonPath;
-          end;
-        end;
-      end;
-    end;
-
-    if PythonFound then
-      HasPythonValue := 1
-    else
-    begin
-      HasPythonValue := 2;
-      // Show message if Python version is too old or not found
-      SuppressibleMsgBox('Python 3.10 or higher is required for GDAL installation. This step will be skipped.', mbInformation, MB_OK, MB_OK);
-    end;
-  end;
-  Result := (HasPythonValue = 1);
-end;
-
-// Ask user if they want to install GDAL Python bindings
-function WantsPythonGDAL(): Boolean;
-begin
-  if WantsGdalValue = 0 then
-  begin
-    if SuppressibleMsgBox('Python is installed on your system. Would you like to install GDAL Python bindings? (Required for TauDEM integration with ArcGIS)', mbConfirmation, MB_YESNO, IDYES) = IDYES then
-      WantsGdalValue := 1
-    else
-      WantsGdalValue := 2;
-  end;
-  Result := (WantsGdalValue = 1);
-end;
-
-// Check if GDAL Python bindings are installed correctly
-function CheckGdalPythonImport(): Boolean;
-var
-  ResultCode: Integer;
-  PythonCmd: string;
-begin
-  Result := False;
-  PythonCmd := PythonExePath;
-  if PythonCmd = '' then
-    PythonCmd := 'python';
-
-  // Try to import GDAL in Python and check version is 3.10+
-  if Exec(PythonCmd, '-c "from osgeo import gdal; import sys; version = tuple(map(int, gdal.__version__.split(''.''))); sys.exit(0 if version >= (3, 10) else 1)"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
-  begin
-    Result := (ResultCode = 0);
-  end;
-end;
-
-// Verify GDAL installation
-procedure VerifyGdalInstallation;
-begin
-  if CheckGdalPythonImport() then
-  begin
-    SuppressibleMsgBox('GDAL Python bindings and system components were successfully installed and verified.', mbInformation, MB_OK, MB_OK);
-  end
-  else
-  begin
-    SuppressibleMsgBox('Warning: GDAL installation could not be verified.' + #13#10 + 
-           'You may need to manually install GDAL after setup completes:' + #13#10 + 
-           '1. Open a command prompt and run:' + #13#10 + 
-           'python -m pip install gdal-installer==' + ExpandConstant('{#GdalInstallerVersion}') + #13#10 + 
-           '2. Then run:' + #13#10 + 
-           'python -m gdal_installer install-gdal', mbError, MB_OK, MB_OK);
-  end;
-end;
 
 // Helper function to remove trailing backslash for consistent comparison
 function RemoveBackslash(const Path: string): string;
@@ -572,14 +441,6 @@ begin
   end;
 end;
 
-// Helper to return the detected Python executable path for [Run] section
-function GetPythonExePath(Value: string): string;
-begin
-  if PythonExePath <> '' then
-    Result := PythonExePath
-  else
-    Result := 'python';
-end;
 
 // Inform user to reboot at the end of installation
 procedure CurStepChanged(CurStep: TSetupStep);
