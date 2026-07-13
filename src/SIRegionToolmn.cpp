@@ -339,11 +339,6 @@ static void RasterizeShapefileToRegion(const Args& args) {
             geomHandles[i] = reinterpret_cast<OGRGeometryH>(geomClones[i]);
         }
 
-        char* opt = CPLStrdup("ALL_TOUCHED=TRUE");
-        char** opts = nullptr;
-        opts = CSLAddString(opts, opt);
-        CPLFree(opt);
-
         int bands[1] = {1};
         CPLErr rerr = GDALRasterizeGeometries(
             mem,
@@ -354,11 +349,9 @@ static void RasterizeShapefileToRegion(const Args& args) {
             nullptr,
             nullptr,
             burnValues.data(),
-            opts,
+            nullptr,
             nullptr,
             nullptr);
-
-        CSLDestroy(opts);
 
         // free cloned geometries
         for (OGRGeometry* g : geomClones) {
