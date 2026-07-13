@@ -9,13 +9,37 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <set>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
+#include "commonLib.h"
+
 namespace fs = std::filesystem;
+
+static double DefaultNoDataForDataType(GDALDataType dt) {
+    switch (dt) {
+        case GDT_Byte:
+            return 255.0;
+        case GDT_Int16:
+            return static_cast<double>(MISSINGSHORT);
+        case GDT_UInt16:
+            return static_cast<double>(std::numeric_limits<uint16_t>::max());
+        case GDT_Int32:
+            return static_cast<double>(MISSINGLONG);
+        case GDT_UInt32:
+            return static_cast<double>(std::numeric_limits<uint32_t>::max());
+        case GDT_Float32:
+            return static_cast<double>(MISSINGFLOAT);
+        case GDT_Float64:
+            return std::numeric_limits<double>::lowest();
+        default:
+            return 0.0;
+    }
+}
 
 struct Args {
     std::string dem;
@@ -221,9 +245,6 @@ static void CopyDEMGeometry(GDALDataset* dem, GDALDataset* out) {
 static void CreateConstantRegionRaster(const std::string& demPath, const std::string& outPath) {
     GDALDataset* dem = OpenRasterOrThrow(demPath);
 
-    double demNoData = 0.0;
-    const bool hasDemNoData = GetBandNoDataValue(dem, demNoData);
-
     GDALDriver* drv = GetGDALDriverManager()->GetDriverByName("GTiff");
     if (!drv) {
         GDALClose(dem);
@@ -241,9 +262,12 @@ static void CreateConstantRegionRaster(const std::string& demPath, const std::st
 
     CopyDEMGeometry(dem, out);
 
+    const GDALDataType outDT = GDT_Int32;
+    const double outNoData = DefaultNoDataForDataType(outDT);
+
     GDALRasterBand* band = out->GetRasterBand(1);
-    if (band && hasDemNoData) {
-        band->SetNoDataValue(demNoData);
+    if (band) {
+        band->SetNoDataValue(outNoData);
     }
 
     std::vector<int32_t> row(cols, 1);
@@ -263,9 +287,6 @@ static void CreateConstantRegionRaster(const std::string& demPath, const std::st
 static GDALDataset* CreateMemLikeDEM(const std::string& demPath, GDALDataType dt) {
     GDALDataset* dem = OpenRasterOrThrow(demPath);
 
-    double demNoData = 0.0;
-    const bool hasDemNoData = GetBandNoDataValue(dem, demNoData);
-
     GDALDriver* memDrv = GetGDALDriverManager()->GetDriverByName("MEM");
     if (!memDrv) {
         GDALClose(dem);
@@ -280,9 +301,10 @@ static GDALDataset* CreateMemLikeDEM(const std::string& demPath, GDALDataType dt
 
     CopyDEMGeometry(dem, mem);
     GDALRasterBand* b = mem->GetRasterBand(1);
-    if (b && hasDemNoData) {
-        b->SetNoDataValue(demNoData);
-        b->Fill(demNoData);
+    if (b) {
+        const double noData = DefaultNoDataForDataType(dt);
+        b->SetNoDataValue(noData);
+        b->Fill(noData);
     }
 
     GDALClose(dem);
@@ -450,17 +472,13 @@ static void ResampleParregInToDEM(const Args& args) {
 
     CopyDEMGeometry(dem, dst);
 
-    double srcNoData = 0.0;
-    bool hasSrcNoData = GetBandNoDataValue(src, srcNoData);
-    if (!hasSrcNoData) {
-        GDALDataset* demNoDataDs = dem;
-        hasSrcNoData = GetBandNoDataValue(demNoDataDs, srcNoData);
-    }
+    const GDALDataType outDT = GDT_Int32;
+    const double outNoData = DefaultNoDataForDataType(outDT);
 
     GDALRasterBand* dstBand = dst->GetRasterBand(1);
-    if (dstBand && hasSrcNoData) {
-        dstBand->SetNoDataValue(srcNoData);
-        dstBand->Fill(srcNoData);
+    if (dstBand) {
+        dstBand->SetNoDataValue(outNoData);
+        dstBand->Fill(outNoData);
     }
 
     CPLErr reprojectErr = GDALReprojectImage(
