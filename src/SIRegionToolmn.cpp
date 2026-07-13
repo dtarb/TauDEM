@@ -172,9 +172,6 @@ static void ValidateArgs(const Args& args) {
         if (args.shpAttName.empty()) {
             throw std::runtime_error("'-shp-att-name' is required when '-shp' is provided.");
         }
-        if (args.shpAttName == "FID") {
-            throw std::runtime_error("'FID' is an invalid shape file attribute for calibration region calculation.");
-        }
 
         GDALDataset* vds = static_cast<GDALDataset*>(GDALOpenEx(args.shp.c_str(), GDAL_OF_VECTOR, nullptr, nullptr, nullptr));
         if (!vds) {
@@ -187,10 +184,15 @@ static void ValidateArgs(const Args& args) {
             throw std::runtime_error("Invalid shapefile: no layer found.");
         }
 
-        OGRFeatureDefn* defn = layer->GetLayerDefn();
-        if (!defn || defn->GetFieldIndex(args.shpAttName.c_str()) < 0) {
-            GDALClose(vds);
-            throw std::runtime_error("Invalid shapefile. Attribute '" + args.shpAttName + "' is missing.");
+        // If the user requested to rasterize using the feature FID, we accept it and
+        // will synthesize an integer attribute later during rasterization. Otherwise
+        // ensure the provided attribute exists on the input layer.
+        if (args.shpAttName != "FID") {
+            OGRFeatureDefn* defn = layer->GetLayerDefn();
+            if (!defn || defn->GetFieldIndex(args.shpAttName.c_str()) < 0) {
+                GDALClose(vds);
+                throw std::runtime_error("Invalid shapefile. Attribute '" + args.shpAttName + "' is missing.");
+            }
         }
 
         GDALClose(vds);
@@ -303,7 +305,96 @@ static void RasterizeShapefileToRegion(const Args& args) {
         throw std::runtime_error("Shapefile has no layers: " + args.shp);
     }
 
-    char* opt = CPLStrdup((std::string("ATTRIBUTE=") + args.shpAttName).c_str());
+    // If the user asked to use the feature FID as the rasterized attribute,
+    // we will rasterize geometries directly using their FID values as burn
+    // values. This avoids creating a temporary layer or datasource and
+    // sidesteps driver compatibility issues.
+    std::string attrName = args.shpAttName;
+
+    if (args.shpAttName == "FID") {
+        std::vector<OGRGeometry*> geomClones;
+        std::vector<double> burnValues;
+
+        layer->ResetReading();
+        OGRFeature* feat = nullptr;
+        while ((feat = layer->GetNextFeature()) != nullptr) {
+            OGRGeometry* g = nullptr;
+            if (feat->GetGeometryRef()) {
+                g = feat->GetGeometryRef()->clone();
+            }
+            geomClones.push_back(g);
+            burnValues.push_back(static_cast<double>(feat->GetFID()));
+            OGRFeature::DestroyFeature(feat);
+        }
+
+        if (geomClones.empty()) {
+            GDALClose(vds);
+            GDALClose(mem);
+            throw std::runtime_error("No features found in shapefile for FID rasterization.");
+        }
+
+        // Prepare arrays for GDALRasterizeGeometries
+        std::vector<OGRGeometryH> geomHandles(geomClones.size());
+        for (size_t i = 0; i < geomClones.size(); ++i) {
+            geomHandles[i] = reinterpret_cast<OGRGeometryH>(geomClones[i]);
+        }
+
+        char* opt = CPLStrdup("ALL_TOUCHED=TRUE");
+        char** opts = nullptr;
+        opts = CSLAddString(opts, opt);
+        CPLFree(opt);
+
+        int bands[1] = {1};
+        CPLErr rerr = GDALRasterizeGeometries(
+            mem,
+            1,
+            bands,
+            static_cast<int>(geomHandles.size()),
+            geomHandles.data(),
+            nullptr,
+            nullptr,
+            burnValues.data(),
+            opts,
+            nullptr,
+            nullptr);
+
+        CSLDestroy(opts);
+
+        // free cloned geometries
+        for (OGRGeometry* g : geomClones) {
+            if (g) OGRGeometryFactory::destroyGeometry(g);
+        }
+
+        if (rerr != CE_None) {
+            GDALClose(vds);
+            GDALClose(mem);
+            throw std::runtime_error("Rasterization (FID) failed.");
+        }
+
+        // After direct rasterization, write out to GTiff below (skip ATTR path)
+        char** optsOut = nullptr; // no special options
+        GDALDriver* tifDrv = GetGDALDriverManager()->GetDriverByName("GTiff");
+        if (!tifDrv) {
+            GDALClose(vds);
+            GDALClose(mem);
+            throw std::runtime_error("GDAL GTiff driver not available.");
+        }
+
+        GDALDataset* out = tifDrv->CreateCopy(args.parreg.c_str(), mem, FALSE, nullptr, nullptr, nullptr);
+        if (!out) {
+            GDALClose(vds);
+            GDALClose(mem);
+            throw std::runtime_error("Failed writing output raster: " + args.parreg);
+        }
+
+        GDALClose(out);
+        GDALClose(vds);
+        GDALClose(mem);
+        return;
+    }
+
+    // Non-FID path: rasterize using an attribute field on the layer
+    char* opt = CPLStrdup((std::string("ATTRIBUTE=") + attrName).c_str());
     char** opts = nullptr;
     opts = CSLAddString(opts, opt);
     CPLFree(opt);
