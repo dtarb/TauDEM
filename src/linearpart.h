@@ -62,6 +62,7 @@ class linearpart : public tdpartition {
 		int rank, size;
 		MPI_Datatype MPI_type;
 		datatype noData;
+		bool isNodataNan;
 		datatype *gridData;
 		datatype *topBorder;
 		datatype *bottomBorder;
@@ -136,6 +137,7 @@ void linearpart<datatype>::init(long totalx, long totaly, double dx_in, double d
 	dyA = dy_in;
 	MPI_type = MPIt;
 	noData = nd;
+	isNodataNan = isnan(noData);
 
 	//Allocate memory for data and fill with noData value.  Catch exceptions
 	uint64_t prod;  //   use long 64 bit number to hold the product to allocate
@@ -473,11 +475,11 @@ bool linearpart<datatype>::isNodata(long inx, long iny){
 	x = inx;
 	y = iny;
 //DGT to avoid nested calls and type inconsistency
-	if(x>=0 && x<nx && y>=0 && y<ny)return (abs((float)(gridData[x+y*nx]-noData))<MINEPS);  
-//	if(isInPartition(x,y)) return (abs(gridData[x+y*nx]-noData)<MINEPS);
+	if(x>=0 && x<nx && y>=0 && y<ny)return (isNodataNan && isnan(gridData[x+y*nx])) || (!isNodataNan && abs((float)(gridData[x+y*nx]-noData))<MINEPS);
+//	if(isInPartition(x,y)) return (isNodataNan && isnan(gridData[x+y*nx])) || (!isNodataNan && abs(gridData[x+y*nx]-noData)<MINEPS);
 	else if(x>=0 && x<nx){
-		if(y==-1) return (abs((float)(topBorder[x]-noData))<MINEPS);
-		else if(y==ny) return (abs((float)(bottomBorder[x]-noData))<MINEPS);
+		if(y==-1) return (isNodataNan && isnan(topBorder[x])) || (!isNodataNan && abs((float)(topBorder[x]-noData))<MINEPS);
+		else if(y==ny) return (isNodataNan && isnan(bottomBorder[x])) || (!isNodataNan && abs((float)(bottomBorder[x]-noData))<MINEPS);
 	}
 	return true;
 }
