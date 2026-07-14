@@ -168,6 +168,94 @@ static bool GetBandNoDataValue(GDALDataset* ds, double& noData) {
     return hasNoData != 0;
 }
 
+static GDALDataset* BuildTempFIDLayer(GDALDataset* srcVds, OGRLayer* srcLayer, const std::string& tempFieldName) {
+    if (!srcVds || !srcLayer) {
+        throw std::runtime_error("Invalid source datasource/layer.");
+    }
+
+    GDALDriver* memDrv = GetGDALDriverManager()->GetDriverByName("Memory");
+    if (!memDrv) {
+        throw std::runtime_error("GDAL Memory driver not available.");
+    }
+
+    GDALDataset* memDs = memDrv->Create("", 0, 0, 0, GDT_Unknown, nullptr);
+    if (!memDs) {
+        throw std::runtime_error("Failed to create in-memory datasource.");
+    }
+
+    const OGRSpatialReference* srs = srcLayer->GetSpatialRef();
+    OGRLayer* memLayer = memDs->CreateLayer(
+        srcLayer->GetName(),
+        const_cast<OGRSpatialReference*>(srs),
+        srcLayer->GetGeomType(),
+        nullptr);
+    if (!memLayer) {
+        GDALClose(memDs);
+        throw std::runtime_error("Failed to create in-memory layer.");
+    }
+
+    OGRFeatureDefn* srcDefn = srcLayer->GetLayerDefn();
+    if (!srcDefn) {
+        GDALClose(memDs);
+        throw std::runtime_error("Source layer definition is missing.");
+    }
+
+    for (int i = 0; i < srcDefn->GetFieldCount(); ++i) {
+        OGRFieldDefn fieldDefn(srcDefn->GetFieldDefn(i));
+        if (memLayer->CreateField(&fieldDefn) != OGRERR_NONE) {
+            GDALClose(memDs);
+            throw std::runtime_error("Failed to copy fields into in-memory layer.");
+        }
+    }
+
+    OGRFieldDefn fidField(tempFieldName.c_str(), OFTInteger64);
+    if (memLayer->CreateField(&fidField) != OGRERR_NONE) {
+        GDALClose(memDs);
+        throw std::runtime_error("Failed to create temporary FID field.");
+    }
+
+    const int fidFieldIndex = memLayer->GetLayerDefn()->GetFieldIndex(tempFieldName.c_str());
+    if (fidFieldIndex < 0) {
+        GDALClose(memDs);
+        throw std::runtime_error("Temporary FID field not found.");
+    }
+
+    srcLayer->ResetReading();
+    OGRFeature* srcFeat = nullptr;
+    while ((srcFeat = srcLayer->GetNextFeature()) != nullptr) {
+        OGRFeature* outFeat = OGRFeature::CreateFeature(memLayer->GetLayerDefn());
+        if (!outFeat) {
+            OGRFeature::DestroyFeature(srcFeat);
+            GDALClose(memDs);
+            throw std::runtime_error("Failed to create in-memory feature.");
+        }
+
+        if (srcFeat->GetGeometryRef()) {
+            if (outFeat->SetGeometry(srcFeat->GetGeometryRef()) != OGRERR_NONE) {
+                OGRFeature::DestroyFeature(outFeat);
+                OGRFeature::DestroyFeature(srcFeat);
+                GDALClose(memDs);
+                throw std::runtime_error("Failed to copy feature geometry.");
+            }
+        }
+
+        outFeat->SetFrom(srcFeat, TRUE);
+        outFeat->SetField(fidFieldIndex, static_cast<GIntBig>(srcFeat->GetFID()));
+
+        if (memLayer->CreateFeature(outFeat) != OGRERR_NONE) {
+            OGRFeature::DestroyFeature(outFeat);
+            OGRFeature::DestroyFeature(srcFeat);
+            GDALClose(memDs);
+            throw std::runtime_error("Failed to create in-memory feature.");
+        }
+
+        OGRFeature::DestroyFeature(outFeat);
+        OGRFeature::DestroyFeature(srcFeat);
+    }
+
+    return memDs;
+}
+
 static void ValidateArgs(const Args& args) {
     GDALDataset* dem = OpenRasterOrThrow(args.dem);
     GDALClose(dem);
@@ -333,61 +421,41 @@ static void RasterizeShapefileToRegion(const Args& args) {
     // sidesteps driver compatibility issues.
     std::string attrName = args.shpAttName;
 
-    if (args.shpAttName == "FID") {
-        std::vector<OGRGeometry*> geomClones;
-        std::vector<double> burnValues;
-
-        layer->ResetReading();
-        OGRFeature* feat = nullptr;
-        while ((feat = layer->GetNextFeature()) != nullptr) {
-            OGRGeometry* g = nullptr;
-            if (feat->GetGeometryRef()) {
-                g = feat->GetGeometryRef()->clone();
-            }
-            geomClones.push_back(g);
-            burnValues.push_back(static_cast<double>(feat->GetFID()));
-            OGRFeature::DestroyFeature(feat);
-        }
-
-        if (geomClones.empty()) {
+        if (args.shpAttName == "FID") {
+        const std::string tempFieldName = "__tau_dem_fid";
+        GDALDataset* tempVds = BuildTempFIDLayer(vds, layer, tempFieldName);
+        if (!tempVds) {
             GDALClose(vds);
             GDALClose(mem);
-            throw std::runtime_error("No features found in shapefile for FID rasterization.");
+            throw std::runtime_error("Failed to prepare temporary FID layer.");
         }
 
-        // Prepare arrays for GDALRasterizeGeometries
-        std::vector<OGRGeometryH> geomHandles(geomClones.size());
-        for (size_t i = 0; i < geomClones.size(); ++i) {
-            geomHandles[i] = reinterpret_cast<OGRGeometryH>(geomClones[i]);
+        OGRLayer* tempLayer = tempVds->GetLayer(0);
+        if (!tempLayer) {
+            GDALClose(tempVds);
+            GDALClose(vds);
+            GDALClose(mem);
+            throw std::runtime_error("Temporary FID layer has no layer.");
         }
+
+        char* opt = CPLStrdup((std::string("ATTRIBUTE=") + tempFieldName).c_str());
+        char** opts = nullptr;
+        opts = CSLAddString(opts, opt);
+        CPLFree(opt);
 
         int bands[1] = {1};
-        CPLErr rerr = GDALRasterizeGeometries(
-            mem,
-            1,
-            bands,
-            static_cast<int>(geomHandles.size()),
-            geomHandles.data(),
-            nullptr,
-            nullptr,
-            burnValues.data(),
-            nullptr,
-            nullptr,
-            nullptr);
+        OGRLayerH hLayer = reinterpret_cast<OGRLayerH>(tempLayer);
+        const int err = GDALRasterizeLayers(mem, 1, bands, 1, &hLayer, nullptr, nullptr, nullptr, opts, nullptr, nullptr);
+        CSLDestroy(opts);
 
-        // free cloned geometries
-        for (OGRGeometry* g : geomClones) {
-            if (g) OGRGeometryFactory::destroyGeometry(g);
-        }
+        GDALClose(tempVds);
 
-        if (rerr != CE_None) {
+        if (err != CE_None) {
             GDALClose(vds);
             GDALClose(mem);
-            throw std::runtime_error("Rasterization (FID) failed.");
+            throw std::runtime_error("Rasterization failed.");
         }
 
-        // After direct rasterization, write out to GTiff below (skip ATTR path)
-        char** optsOut = nullptr; // no special options
         GDALDriver* tifDrv = GetGDALDriverManager()->GetDriverByName("GTiff");
         if (!tifDrv) {
             GDALClose(vds);
