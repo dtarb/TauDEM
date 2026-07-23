@@ -486,7 +486,6 @@ long resolveflats( tdpartition *elevDEM, tdpartition *flowDir, queue<node> *que,
 	dn = CreateNewPartition(SHORT_TYPE, totalx, totaly, dxA, dyA, (int16_t)0);
 
 	node temp;
-	long nflat=0, iflat;
 	//  First time through add flat grid cells indicated by flowdir = 0 on to queue
 	//  The queue is retained for later passes so this only needs be done at beginning
 	if(first)
@@ -496,13 +495,37 @@ long resolveflats( tdpartition *elevDEM, tdpartition *flowDir, queue<node> *que,
 			for(i=0; i<nx; i++){
 				if(flowDir->getData(i,j,tempShort)==0)
 				{
-					temp.x=i; temp.y=j; que->push(temp); nflat++;
+					temp.x=i; temp.y=j; que->push(temp);
 				}
 			}
 		}
 	}
-	else
- 		nflat=que->size();
+
+	//  Grid cells in interior of flat are incremented implicitly
+	long nimplicit=0;
+	long nflat=que->size(), iflat;
+	for(iflat=0; iflat < nflat; iflat++)
+	{
+		temp=que->front(); que->pop(); i=temp.x; j=temp.y;
+		short nborHasFlowDir = 0;
+		if ( i == 0 || i == nx-1 || j == 0 || j == ny-1 ) {
+			nborHasFlowDir = 1;  // do edges explicitly
+		}
+		// check if any neighbor has flow direction set
+		for(k=1; k<=8 && nborHasFlowDir == 0; k++){
+			jn = j + d2[k];
+			in = i + d1[k];
+			nborHasFlowDir=flowDir->getData(in,jn,tempShort);
+		}
+		if ( nborHasFlowDir == 0 ) {
+			// set to 0 to indicate implicit incrementing
+			// default of 1 will be explicitly updated
+			elev2->setData(i,j,nborHasFlowDir);
+			nimplicit++;
+		} else {
+			que->push(temp);
+		}
+	}
 	dn->share();
 	elev2->share();
 
@@ -520,16 +543,31 @@ long resolveflats( tdpartition *elevDEM, tdpartition *flowDir, queue<node> *que,
 		fflush(stderr);
 	}
 
+	// Avoid repeated calling of dontCross() function
+	// Use bit per direction (1<<k) plus ones bit indicating data present
+	{ vector<short> dontCrossCache(nx*ny, 0);
+
 	while(numIncTotal != numIncOld){  // Continue to loop as long as grid cells are being incremented
-		numInc = 0;
+		numInc = nimplicit;
 		numIncOld = numIncTotal;
+		nflat=que->size();
 		for(iflat=0; iflat < nflat; iflat++)
 		{
-			temp=que->front(); que->pop(); i=temp.x; j=temp.y; que->push(temp);
+			temp=que->front(); que->pop(); i=temp.x; j=temp.y;
 
+				int dccval = dontCrossCache[nx*j+i];
+				if ( ! dccval ) { // cell not cached
+					dccval = 1;
+					for(k=1; k<=8; k++) {
+						if ( dontCross(k,i,j, flowDir) ) {
+							dccval |= (1<<k);
+						}
+					}
+					dontCrossCache[nx*j+i] = (short) dccval;
+				}
 				doNothing=false;
-				for(k=1; k<=8; k++){
-					if(dontCross(k,i,j, flowDir)==0){
+				for(k=1; k<=8 && ! doNothing; k++){
+					if((dccval&(1<<k))==0){ // dontCross(k,...) == 0
 						jn = j + d2[k];
 						in = i + d1[k];
 						elevDiff = elevDEM->getData(i,j,tempFloat) - elevDEM->getData(in,jn,tempFloat);
@@ -537,13 +575,28 @@ long resolveflats( tdpartition *elevDEM, tdpartition *flowDir, queue<node> *que,
 						if(elevDiff >= 0 && tempShort > 0 && tempShort < 9) //adjacent cell drains and is equal or lower in elevation so this is a low boundary
 								doNothing = true;
 						else if(elevDiff == 0) //if neighbor is in flat
-							if(elev2->getData(in,jn,tempShort) >=0 && elev2->getData(in,jn,tempShort)<st) //neighbor is not being incremented
+							if(elev2->getData(in,jn,tempShort) > 0 && elev2->getData(in,jn,tempShort)<st) //neighbor is not being incremented
 								doNothing = true;
 					}
 				}
-				if(!doNothing){
+				if(!doNothing){  // explicitly increment and re-queue
 					elev2->addToData(i,j,short(1));
 					numInc++;
+					que->push(temp);
+				} else {  // add any neighbors that were not on the queue
+					for(k=1; k<=8; k++){
+						jn = j + d2[k];
+						if ( jn < 0 || jn >= ny ) continue;
+						in = i + d1[k];
+						if ( in < 0 || in >= nx ) continue;
+						if ( elev2->getData(in,jn,tempShort) == 0 ) {
+							// switch to explicit incrementing
+							elev2->setData(in,jn,short(st+1));
+							temp.x=in; temp.y=jn;
+							que->push(temp);
+							nimplicit--;
+						}
+					}
 				}
 		}
 		elev2->share();
@@ -555,31 +608,29 @@ long resolveflats( tdpartition *elevDEM, tdpartition *flowDir, queue<node> *que,
 			fprintf(stderr,".");  // print a . at each pass to give an indication of progress
 			fflush(stderr);
 		}
-	}
+	} // while loop
+	} // scope of dontCrossCache
+
 	if(numIncTotal > 0)  // Not all grid cells were resolved - pits remain
 		// Remaining grid cells are unresolvable pits
 	{
 		//There are pits remaining - set direction to no data
-		for(iflat=0; iflat < nflat; iflat++)
-		{
-			temp=que->front(); que->pop(); i=temp.x; j=temp.y; que->push(temp);
-			doNothing=false;
-				for(k=1; k<=8; k++){
-					if(dontCross(k,i,j, flowDir)==0){
-						jn = j + d2[k];
-						in = i + d1[k];
-						elevDiff = elevDEM->getData(i,j,tempFloat) - elevDEM->getData(in,jn,tempFloat);
-						tempShort=flowDir->getData(in,jn,tempShort); 
-						if(elevDiff >= 0 && tempShort > 0 && tempShort < 9) //adjacent cell drains and is equal or lower in elevation so this is a low boundary
-								doNothing = true;
-						else if(elevDiff == 0) //if neighbor is in flat
-							if(elev2->getData(in,jn,tempShort) >=0 && elev2->getData(in,jn,tempShort)<st) //neighbor is not being incremented
-								doNothing = true;
-					}
+		while ( que->size() ) {
+			temp=que->front(); que->pop(); i=temp.x; j=temp.y;
+			flowDir->setToNodata(i,j);  // mark pit
+			// add any neighbors that were not on the queue
+			for(k=1; k<=8; k++){
+				jn = j + d2[k];
+				if ( jn < 0 || jn >= ny ) continue;
+				in = i + d1[k];
+				if ( in < 0 || in >= nx ) continue;
+				if ( elev2->getData(in,jn,tempShort) == 0 ) {
+					elev2->setData(in,jn,short(st));
+					temp.x=in; temp.y=jn;
+					que->push(temp);
+					nimplicit--;
 				}
-				if(!doNothing)
-					flowDir->setToNodata(i,j);  // mark pit
-					//flowDir->setData(i,j,short(9));  // mark pit
+			}
 		}
 		flowDir->share();
 		
@@ -603,27 +654,88 @@ long resolveflats( tdpartition *elevDEM, tdpartition *flowDir, queue<node> *que,
 		fflush(stderr);
 	}
 
-	while(!done){
-		numInc = 0;
-		for(iflat=0; iflat < nflat; iflat++)
-		{
-				temp=que->front(); que->pop(); i=temp.x; j=temp.y; que->push(temp);
-				for(k=1; k<=8; k++){
+	vector<node> flats;  // cells that will need final update
+
+	st = 1;
+	numInc = 0;
+	for(j=0; j<ny; j++){
+		for(i=0; i<nx; i++){
+			if(flowDir->getData(i,j,tempShort)==0)
+			{
+				temp.x=i; temp.y=j; flats.push_back(temp);
+				bool setdn = false;
+				for(k=1; k<=8 && ! setdn; k++){
 					jn = j + d2[k];
 					in = i + d1[k];
 					if(elevDEM->getData(i,j,tempFloat) - elevDEM->getData(in,jn,tempFloat)<0)	//adjacent cell is higher
-						dn->setData(i,j,short(1));
-					if(dn->getData(in,jn,tempShort)>0 && s->getData(in,jn,tempShort)>0) //adjacent cell has been marked already
-						dn->setData(i,j,short(1));
+						setdn = true;
 				}
-		} 
-		dn->share();
-		for(j=0; j<ny; j++){
-			for(i=0; i<nx; i++){
-				dn->getData(i,j,tempShort);
-				s->addToData(i,j,(tempShort>0 ? short(1) : short(0)));
-				if(tempShort>0) numInc++;
+				if ( setdn ) {
+					s->setData(i,j,short(-st));
+					dn->setData(i,j,short(1));
+					numInc++;
+					for(k=1; k<=8; k++){
+						jn = j + d2[k];
+						if(jn < 0 || jn >= ny) continue;
+						in = i + d1[k];
+						if(in < 0 || in >= nx) continue;
+						if(flowDir->getData(in,jn,tempShort)!=0) continue;
+						if(dn->getData(in,jn,tempShort)!=0) continue;
+						dn->setData(in,jn,short(2));
+						temp.x=in; temp.y=jn;
+						que->push(temp);
+					}
+				}
 			}
+		}
+	}
+	s->share();
+
+	while(!done){
+		st++;
+		// always check the borders
+		for(j=0; j<ny; j+=ny-1){
+			for(i=0; i<nx; i++){
+				if(flowDir->getData(i,j,tempShort)!=0) continue;
+				if(dn->getData(i,j,tempShort)!=0) continue;
+				dn->setData(i,j,short(2));
+				temp.x=i; temp.y=j;
+				que->push(temp);
+			}
+		}
+		long nque = que->size();
+		for(iflat=0; iflat < nque; iflat++)
+		{
+				temp=que->front(); que->pop(); i=temp.x; j=temp.y;
+				if ( s->getData(i,j,tempShort)<0 ) continue;
+				dn->setData(i,j,short(0));
+				bool setdn = false;
+				for(k=1; k<=8 && ! setdn; k++){
+					jn = j + d2[k];
+					in = i + d1[k];
+					if(s->getData(in,jn,tempShort)<0) //adjacent cell has been marked already
+						setdn = true;
+				}
+				if ( setdn ) que->push(temp);
+		}
+		nque = que->size();
+		for(iflat=0; iflat < nque; iflat++)
+		{
+				temp=que->front(); que->pop(); i=temp.x; j=temp.y;
+				s->setData(i,j,short(-st));
+				dn->setData(i,j,short(1));
+				numInc++;
+				for(k=1; k<=8; k++){
+					jn = j + d2[k];
+					if(jn < 0 || jn >= ny) continue;
+					in = i + d1[k];
+					if(in < 0 || in >= nx) continue;
+					if(flowDir->getData(in,jn,tempShort)!=0) continue;
+					if(dn->getData(in,jn,tempShort)!=0) continue;
+					dn->setData(in,jn,short(2));
+					temp.x=in; temp.y=jn;
+					que->push(temp);
+				}
 		}
 		s->share();
 		dn->share();
@@ -637,11 +749,15 @@ long resolveflats( tdpartition *elevDEM, tdpartition *flowDir, queue<node> *que,
 		}
 	}
 
+	st++;
+	nflat = flats.size();
 	for(iflat=0; iflat < nflat; iflat++)
 	{
-			temp=que->front(); que->pop(); i=temp.x; j=temp.y; que->push(temp);
-
-			elev2->addToData(i,j,s->getData(i,j,tempShort));
+			temp = flats[iflat]; i=temp.x; j=temp.y;
+			if ( s->getData(i,j,tempShort) ) {
+				s->setData(i,j,short(tempShort+st));
+				elev2->addToData(i,j,short(tempShort+st));
+			}
 	}
 	elev2->share();
 
@@ -655,7 +771,7 @@ long resolveflats( tdpartition *elevDEM, tdpartition *flowDir, queue<node> *que,
 	}
 	for(iflat=0; iflat < nflat; iflat++)
 	{
-				temp=que->front(); que->pop(); i=temp.x; j=temp.y; //  Do not push que on this last one - so que is empty at end
+				temp = flats[iflat]; i=temp.x; j=temp.y;
 
 				setFlow2( i, j, flowDir, elevDEM, elev2, dn) ;
 				if(flowDir->getData(i,j,tempShort) == 0)
