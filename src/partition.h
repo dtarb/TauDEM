@@ -69,7 +69,6 @@ class tdpartition{
 		virtual bool globalToLocal(int globalX, int globalY, int &localX, int &localY) = 0;
 		virtual void localToGlobal(int localX, int localY, int &globalX, int &globalY) = 0;
 
-		virtual int getGridXY(int x, int y, int *i, int *j) = 0;
 		virtual void transferPack(int*, int*, int*, int*) = 0;
 
 		int getnx(){return nx;}
