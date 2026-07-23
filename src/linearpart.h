@@ -515,22 +515,23 @@ datatype linearpart<datatype>::getData(long inx, long iny, datatype &val) {
 
 template <class datatype>
 void linearpart<datatype>::savedxdyc( tiffIO &obj) {
-    dxc=new double[ny];
-	dyc=new double[ny];
-    for (int i=0;i<ny;i++){
-		int globalY = rank * ny +i;
-	if(rank == size-1) globalY = rank * (ny - totaly%size) + i;
-	    dxc[i]=obj.getdxc(globalY);
-		dyc[i]=obj.getdyc(globalY);
-
-	         }
-    }
+	dxc = new double[ny+2];
+	dyc = new double[ny+2];
+	int ilo = ( rank == 0 ? 0 : -1 );
+	int ihi = ( rank == size-1 ? ny : ny+1 );
+	for ( int i = ilo; i < ihi; i++ ) {
+		int globalX, globalY;
+		localToGlobal(0, i, globalX, globalY);
+		dxc[i+1] = obj.getdxc(globalY);
+		dyc[i+1] = obj.getdyc(globalY);
+	}
+}
 	
 
 template <class datatype>
 void linearpart<datatype>::getdxdyc(long iny, double &val_dxc,double &val_dyc){
 	 int64_t y;y = iny;
-	 if(y>=0 && y<ny){ val_dxc=dxc[y];val_dyc=dyc[y];}
+	 if ( y >= -1 && y < ny+1 ) { val_dxc = dxc[y+1]; val_dyc = dyc[y+1]; }
 }
 
 
