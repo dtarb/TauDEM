@@ -9,13 +9,37 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <set>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
+#include "commonLib.h"
+
 namespace fs = std::filesystem;
+
+static double DefaultNoDataForDataType(GDALDataType dt) {
+    switch (dt) {
+        case GDT_Byte:
+            return 255.0;
+        case GDT_Int16:
+            return static_cast<double>(MISSINGSHORT);
+        case GDT_UInt16:
+            return static_cast<double>(std::numeric_limits<uint16_t>::max());
+        case GDT_Int32:
+            return static_cast<double>(MISSINGLONG);
+        case GDT_UInt32:
+            return static_cast<double>(std::numeric_limits<uint32_t>::max());
+        case GDT_Float32:
+            return static_cast<double>(MISSINGFLOAT);
+        case GDT_Float64:
+            return std::numeric_limits<double>::lowest();
+        default:
+            return 0.0;
+    }
+}
 
 struct Args {
     std::string dem;
@@ -133,6 +157,105 @@ static GDALDataset* OpenRasterOrThrow(const std::string& path) {
     return ds;
 }
 
+static bool GetBandNoDataValue(GDALDataset* ds, double& noData) {
+    if (!ds) {
+        return false;
+    }
+
+    GDALRasterBand* band = ds->GetRasterBand(1);
+    int hasNoData = FALSE;
+    noData = band ? band->GetNoDataValue(&hasNoData) : 0.0;
+    return hasNoData != 0;
+}
+
+static GDALDataset* BuildTempFIDLayer(GDALDataset* srcVds, OGRLayer* srcLayer, const std::string& tempFieldName) {
+    if (!srcVds || !srcLayer) {
+        throw std::runtime_error("Invalid source datasource/layer.");
+    }
+
+    GDALDriver* memDrv = GetGDALDriverManager()->GetDriverByName("Memory");
+    if (!memDrv) {
+        throw std::runtime_error("GDAL Memory driver not available.");
+    }
+
+    GDALDataset* memDs = memDrv->Create("", 0, 0, 0, GDT_Unknown, nullptr);
+    if (!memDs) {
+        throw std::runtime_error("Failed to create in-memory datasource.");
+    }
+
+    const OGRSpatialReference* srs = srcLayer->GetSpatialRef();
+    OGRLayer* memLayer = memDs->CreateLayer(
+        srcLayer->GetName(),
+        const_cast<OGRSpatialReference*>(srs),
+        srcLayer->GetGeomType(),
+        nullptr);
+    if (!memLayer) {
+        GDALClose(memDs);
+        throw std::runtime_error("Failed to create in-memory layer.");
+    }
+
+    OGRFeatureDefn* srcDefn = srcLayer->GetLayerDefn();
+    if (!srcDefn) {
+        GDALClose(memDs);
+        throw std::runtime_error("Source layer definition is missing.");
+    }
+
+    for (int i = 0; i < srcDefn->GetFieldCount(); ++i) {
+        OGRFieldDefn fieldDefn(srcDefn->GetFieldDefn(i));
+        if (memLayer->CreateField(&fieldDefn) != OGRERR_NONE) {
+            GDALClose(memDs);
+            throw std::runtime_error("Failed to copy fields into in-memory layer.");
+        }
+    }
+
+    OGRFieldDefn fidField(tempFieldName.c_str(), OFTInteger64);
+    if (memLayer->CreateField(&fidField) != OGRERR_NONE) {
+        GDALClose(memDs);
+        throw std::runtime_error("Failed to create temporary FID field.");
+    }
+
+    const int fidFieldIndex = memLayer->GetLayerDefn()->GetFieldIndex(tempFieldName.c_str());
+    if (fidFieldIndex < 0) {
+        GDALClose(memDs);
+        throw std::runtime_error("Temporary FID field not found.");
+    }
+
+    srcLayer->ResetReading();
+    OGRFeature* srcFeat = nullptr;
+    while ((srcFeat = srcLayer->GetNextFeature()) != nullptr) {
+        OGRFeature* outFeat = OGRFeature::CreateFeature(memLayer->GetLayerDefn());
+        if (!outFeat) {
+            OGRFeature::DestroyFeature(srcFeat);
+            GDALClose(memDs);
+            throw std::runtime_error("Failed to create in-memory feature.");
+        }
+
+        if (srcFeat->GetGeometryRef()) {
+            if (outFeat->SetGeometry(srcFeat->GetGeometryRef()) != OGRERR_NONE) {
+                OGRFeature::DestroyFeature(outFeat);
+                OGRFeature::DestroyFeature(srcFeat);
+                GDALClose(memDs);
+                throw std::runtime_error("Failed to copy feature geometry.");
+            }
+        }
+
+        outFeat->SetFrom(srcFeat, TRUE);
+        outFeat->SetField(fidFieldIndex, static_cast<GIntBig>(srcFeat->GetFID()));
+
+        if (memLayer->CreateFeature(outFeat) != OGRERR_NONE) {
+            OGRFeature::DestroyFeature(outFeat);
+            OGRFeature::DestroyFeature(srcFeat);
+            GDALClose(memDs);
+            throw std::runtime_error("Failed to create in-memory feature.");
+        }
+
+        OGRFeature::DestroyFeature(outFeat);
+        OGRFeature::DestroyFeature(srcFeat);
+    }
+
+    return memDs;
+}
+
 static void ValidateArgs(const Args& args) {
     GDALDataset* dem = OpenRasterOrThrow(args.dem);
     GDALClose(dem);
@@ -146,9 +269,9 @@ static void ValidateArgs(const Args& args) {
         }
 
         const GDALDataType dt = b->GetRasterDataType();
-        if (!(dt == GDT_Byte || dt == GDT_UInt16 || dt == GDT_UInt32)) {
+        if (!(dt == GDT_Byte || dt == GDT_UInt16 || dt == GDT_UInt32 || dt == GDT_Int32)) {
             GDALClose(ds);
-            throw std::runtime_error("Not a valid file (" + args.parregIn + ") provided for '-parreg-in'. Data type must be integer (Byte/UInt16/UInt32).");
+            throw std::runtime_error("Not a valid file (" + args.parregIn + ") provided for '-parreg-in'. Data type must be integer (Byte/UInt16/UInt32/Int32).");
         }
         GDALClose(ds);
     }
@@ -160,9 +283,6 @@ static void ValidateArgs(const Args& args) {
     if (!args.shp.empty()) {
         if (args.shpAttName.empty()) {
             throw std::runtime_error("'-shp-att-name' is required when '-shp' is provided.");
-        }
-        if (args.shpAttName == "FID") {
-            throw std::runtime_error("'FID' is an invalid shape file attribute for calibration region calculation.");
         }
 
         GDALDataset* vds = static_cast<GDALDataset*>(GDALOpenEx(args.shp.c_str(), GDAL_OF_VECTOR, nullptr, nullptr, nullptr));
@@ -176,10 +296,15 @@ static void ValidateArgs(const Args& args) {
             throw std::runtime_error("Invalid shapefile: no layer found.");
         }
 
-        OGRFeatureDefn* defn = layer->GetLayerDefn();
-        if (!defn || defn->GetFieldIndex(args.shpAttName.c_str()) < 0) {
-            GDALClose(vds);
-            throw std::runtime_error("Invalid shapefile. Attribute '" + args.shpAttName + "' is missing.");
+        // If the user requested to rasterize using the feature FID, we accept it and
+        // will synthesize an integer attribute later during rasterization. Otherwise
+        // ensure the provided attribute exists on the input layer.
+        if (args.shpAttName != "FID") {
+            OGRFeatureDefn* defn = layer->GetLayerDefn();
+            if (!defn || defn->GetFieldIndex(args.shpAttName.c_str()) < 0) {
+                GDALClose(vds);
+                throw std::runtime_error("Invalid shapefile. Attribute '" + args.shpAttName + "' is missing.");
+            }
         }
 
         GDALClose(vds);
@@ -217,7 +342,7 @@ static void CreateConstantRegionRaster(const std::string& demPath, const std::st
     const int cols = dem->GetRasterXSize();
     const int rows = dem->GetRasterYSize();
 
-    GDALDataset* out = drv->Create(outPath.c_str(), cols, rows, 1, GDT_UInt32, nullptr);
+    GDALDataset* out = drv->Create(outPath.c_str(), cols, rows, 1, GDT_Int32, nullptr);
     if (!out) {
         GDALClose(dem);
         throw std::runtime_error("Failed to create output raster: " + outPath);
@@ -225,12 +350,17 @@ static void CreateConstantRegionRaster(const std::string& demPath, const std::st
 
     CopyDEMGeometry(dem, out);
 
-    GDALRasterBand* band = out->GetRasterBand(1);
-    band->SetNoDataValue(-9999);
+    const GDALDataType outDT = GDT_Int32;
+    const double outNoData = DefaultNoDataForDataType(outDT);
 
-    std::vector<uint32_t> row(cols, 1U);
+    GDALRasterBand* band = out->GetRasterBand(1);
+    if (band) {
+        band->SetNoDataValue(outNoData);
+    }
+
+    std::vector<int32_t> row(cols, 1);
     for (int y = 0; y < rows; ++y) {
-        if (band->RasterIO(GF_Write, 0, y, cols, 1, row.data(), cols, 1, GDT_UInt32, 0, 0, nullptr) != CE_None) {
+        if (band->RasterIO(GF_Write, 0, y, cols, 1, row.data(), cols, 1, GDT_Int32, 0, 0, nullptr) != CE_None) {
             GDALClose(out);
             GDALClose(dem);
             throw std::runtime_error("Failed writing constant region raster.");
@@ -259,14 +389,18 @@ static GDALDataset* CreateMemLikeDEM(const std::string& demPath, GDALDataType dt
 
     CopyDEMGeometry(dem, mem);
     GDALRasterBand* b = mem->GetRasterBand(1);
-    b->SetNoDataValue(0);
+    if (b) {
+        const double noData = DefaultNoDataForDataType(dt);
+        b->SetNoDataValue(noData);
+        b->Fill(noData);
+    }
 
     GDALClose(dem);
     return mem;
 }
 
 static void RasterizeShapefileToRegion(const Args& args) {
-    GDALDataset* mem = CreateMemLikeDEM(args.dem, GDT_UInt32);
+    GDALDataset* mem = CreateMemLikeDEM(args.dem, GDT_Int32);
 
     GDALDataset* vds = static_cast<GDALDataset*>(GDALOpenEx(args.shp.c_str(), GDAL_OF_VECTOR, nullptr, nullptr, nullptr));
     if (!vds) {
@@ -281,7 +415,69 @@ static void RasterizeShapefileToRegion(const Args& args) {
         throw std::runtime_error("Shapefile has no layers: " + args.shp);
     }
 
-    char* opt = CPLStrdup((std::string("ATTRIBUTE=") + args.shpAttName).c_str());
+    // If the user asked to use the feature FID as the rasterized attribute,
+    // we will rasterize geometries directly using their FID values as burn
+    // values. This avoids creating a temporary layer or datasource and
+    // sidesteps driver compatibility issues.
+    std::string attrName = args.shpAttName;
+
+        if (args.shpAttName == "FID") {
+        const std::string tempFieldName = "__tau_dem_fid";
+        GDALDataset* tempVds = BuildTempFIDLayer(vds, layer, tempFieldName);
+        if (!tempVds) {
+            GDALClose(vds);
+            GDALClose(mem);
+            throw std::runtime_error("Failed to prepare temporary FID layer.");
+        }
+
+        OGRLayer* tempLayer = tempVds->GetLayer(0);
+        if (!tempLayer) {
+            GDALClose(tempVds);
+            GDALClose(vds);
+            GDALClose(mem);
+            throw std::runtime_error("Temporary FID layer has no layer.");
+        }
+
+        char* opt = CPLStrdup((std::string("ATTRIBUTE=") + tempFieldName).c_str());
+        char** opts = nullptr;
+        opts = CSLAddString(opts, opt);
+        CPLFree(opt);
+
+        int bands[1] = {1};
+        OGRLayerH hLayer = reinterpret_cast<OGRLayerH>(tempLayer);
+        const int err = GDALRasterizeLayers(mem, 1, bands, 1, &hLayer, nullptr, nullptr, nullptr, opts, nullptr, nullptr);
+        CSLDestroy(opts);
+
+        GDALClose(tempVds);
+
+        if (err != CE_None) {
+            GDALClose(vds);
+            GDALClose(mem);
+            throw std::runtime_error("Rasterization failed.");
+        }
+
+        GDALDriver* tifDrv = GetGDALDriverManager()->GetDriverByName("GTiff");
+        if (!tifDrv) {
+            GDALClose(vds);
+            GDALClose(mem);
+            throw std::runtime_error("GDAL GTiff driver not available.");
+        }
+
+        GDALDataset* out = tifDrv->CreateCopy(args.parreg.c_str(), mem, FALSE, nullptr, nullptr, nullptr);
+        if (!out) {
+            GDALClose(vds);
+            GDALClose(mem);
+            throw std::runtime_error("Failed writing output raster: " + args.parreg);
+        }
+
+        GDALClose(out);
+        GDALClose(vds);
+        GDALClose(mem);
+        return;
+    }
+
+    // Non-FID path: rasterize using an attribute field on the layer
+    char* opt = CPLStrdup((std::string("ATTRIBUTE=") + attrName).c_str());
     char** opts = nullptr;
     opts = CSLAddString(opts, opt);
     CPLFree(opt);
@@ -334,7 +530,7 @@ static void ResampleParregInToDEM(const Args& args) {
     co = CSLAddString(co, "BLOCKYSIZE=256");
     co = CSLAddString(co, "BIGTIFF=YES");
 
-    GDALDataset* dst = tifDrv->Create(args.parreg.c_str(), dem->GetRasterXSize(), dem->GetRasterYSize(), 1, GDT_UInt32, co);
+    GDALDataset* dst = tifDrv->Create(args.parreg.c_str(), dem->GetRasterXSize(), dem->GetRasterYSize(), 1, GDT_Int32, co);
     CSLDestroy(co);
     if (!dst) {
         GDALClose(src);
@@ -344,10 +540,13 @@ static void ResampleParregInToDEM(const Args& args) {
 
     CopyDEMGeometry(dem, dst);
 
-    // Match Python SIRegionTool behavior where 0 is treated as no-data for region IDs.
+    const GDALDataType outDT = GDT_Int32;
+    const double outNoData = DefaultNoDataForDataType(outDT);
+
     GDALRasterBand* dstBand = dst->GetRasterBand(1);
     if (dstBand) {
-        dstBand->SetNoDataValue(0);
+        dstBand->SetNoDataValue(outNoData);
+        dstBand->Fill(outNoData);
     }
 
     CPLErr reprojectErr = GDALReprojectImage(
@@ -393,8 +592,8 @@ static void CreateParameterRegionGrid(const Args& args) {
     }
 }
 
-static std::set<uint32_t> CollectParamIds(const std::string& parregPath) {
-    std::set<uint32_t> ids;
+static std::set<int32_t> CollectParamIds(const std::string& parregPath) {
+    std::set<int32_t> ids;
     GDALDataset* ds = OpenRasterOrThrow(parregPath);
 
     GDALRasterBand* band = ds->GetRasterBand(1);
@@ -408,24 +607,39 @@ static std::set<uint32_t> CollectParamIds(const std::string& parregPath) {
 
     const int cols = band->GetXSize();
     const int rows = band->GetYSize();
-    std::vector<uint32_t> row(cols, 0);
+    if (band->GetRasterDataType() == GDT_Int32) {
+        std::vector<int32_t> row(cols, 0);
 
-    for (int y = 0; y < rows; ++y) {
-        if (band->RasterIO(GF_Read, 0, y, cols, 1, row.data(), cols, 1, GDT_UInt32, 0, 0, nullptr) != CE_None) {
-            GDALClose(ds);
-            throw std::runtime_error("Failed reading parameter region raster.");
+        for (int y = 0; y < rows; ++y) {
+            if (band->RasterIO(GF_Read, 0, y, cols, 1, row.data(), cols, 1, GDT_Int32, 0, 0, nullptr) != CE_None) {
+                GDALClose(ds);
+                throw std::runtime_error("Failed reading parameter region raster.");
+            }
+
+            for (int x = 0; x < cols; ++x) {
+                const int32_t v = row[x];
+                if (hasNoData && static_cast<double>(v) == noData) {
+                    continue;
+                }
+                ids.insert(v);
+            }
         }
+    } else {
+        std::vector<uint32_t> row(cols, 0);
 
-        for (int x = 0; x < cols; ++x) {
-            const uint32_t v = row[x];
-            // Region ID 0 is reserved as no-data in SI region workflows.
-            if (v == 0) {
-                continue;
+        for (int y = 0; y < rows; ++y) {
+            if (band->RasterIO(GF_Read, 0, y, cols, 1, row.data(), cols, 1, GDT_UInt32, 0, 0, nullptr) != CE_None) {
+                GDALClose(ds);
+                throw std::runtime_error("Failed reading parameter region raster.");
             }
-            if (hasNoData && static_cast<double>(v) == noData) {
-                continue;
+
+            for (int x = 0; x < cols; ++x) {
+                const uint32_t v = row[x];
+                if (hasNoData && static_cast<double>(v) == noData) {
+                    continue;
+                }
+                ids.insert(static_cast<int32_t>(v));
             }
-            ids.insert(v);
         }
     }
 
@@ -434,7 +648,7 @@ static std::set<uint32_t> CollectParamIds(const std::string& parregPath) {
 }
 
 static void CreateAttributeTable(const Args& args) {
-    std::set<uint32_t> ids;
+    std::set<int32_t> ids;
     if (!args.shp.empty() || !args.parregIn.empty()) {
         ids = CollectParamIds(args.parreg);
     } else {
