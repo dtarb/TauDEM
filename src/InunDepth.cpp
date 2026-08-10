@@ -222,6 +222,8 @@ int inundepth(char *handfile, char*catchfile, char *maskfile, char*fcfile, char*
 					fclose(fp);
 					exit(1);
 				}
+				// Remove trailing newline characters
+                hpline[strcspn(hpline, "\r\n")] = '\0';
 
 				char *token = strtok(hpline, ",");
 				if (!token) {
@@ -268,8 +270,8 @@ int inundepth(char *handfile, char*catchfile, char *maskfile, char*fcfile, char*
 					}
 				}
 
-				// Column 14: Flow_m3s (flows)
-				token = strtok(NULL, ",\n\r");  // Include newline chars in delimiter
+				// Column 14: Flow_m3s (last column)
+				token = strtok(NULL, ",");
 				if (!token) {
 					fprintf(stderr, "Error: Failed to parse Flow at line %ld in file %s\n", hp_idx+2, hpfile);
 					fclose(fp);
